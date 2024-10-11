@@ -24,6 +24,7 @@ class JWTToken
     public ?string   $token_id;
     public ?string   $iss;
     public ?string   $role;
+    public ?array    $permissions;
     public ?int      $company_id;
     public ?int      $employee_id;
     public ?string   $error;
@@ -39,6 +40,7 @@ class JWTToken
         $this->employee_id = null;
         $this->company_id = null;
         $this->role = null;
+        $this->permissions = [];
         $this->exp = 0;
         $this->isTokenValid = false;
         $this->payload = [];
@@ -87,7 +89,8 @@ class JWTToken
             'exp' => (time() + $timeToLiveSecond),
             'type' => $this->type,
             'payload' => $this->payload,
-            'role' => $this->role
+            'role' => $this->role,
+            'permissions' => $this->permissions
         ];
         if(isset($this->company_id)) {
             $payloadArray['company_id'] = $this->company_id;
@@ -123,6 +126,7 @@ class JWTToken
                 $this->isTokenValid = true;
                 $this->type = $decodedToken->type;
                 $this->role = $decodedToken->role;
+                $this->permissions = $decodedToken->permissions;
                 if(isset($decodedToken->company_id)) {
                     $this->company_id = $decodedToken->company_id;
                 }
