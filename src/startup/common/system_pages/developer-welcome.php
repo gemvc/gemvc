@@ -70,7 +70,7 @@ try {
     <?php if ($databaseReady): ?>
         <strong class="text-gemvc-green">✓ Database:</strong> Database is connected and accessible<br>
     <?php else: ?>
-        <strong class="text-gemvc-green">⚠ Database Status:</strong> Database not initialized<br>
+        <strong class="text-red-500">⚠ Database Status:</strong> Database not initialized<br>
     <?php endif; ?>
     <strong class="text-gemvc-green">✓ CurrentWebserver: </strong><?php echo htmlspecialchars($webserverName); ?>
 </div>
@@ -159,9 +159,8 @@ try {
     </div>
 </div>
 
-<div class="bg-blue-50 border-l-4 border-yellow-400 p-5 mt-5 rounded">
-    <p class="text-yellow-800 m-0">
-        <strong>Note:</strong> this page is only accessible on a development environment. In production, only a standard 404
-        page will be accessible for security reasons. easily switch to  production mode by setting the environment variable APP_ENV= "to any value rather than dev".
+<div class="bg-yellow-600 border-l-4 border-yellow-400 p-5 mt-5 rounded">
+    <p class="text-white m-0">
+    <strong>Development Mode is Active:</strong> This detailed view is visible only in the <code>dev</code> environment. A standard 404 page is automatically enforced in production. To switch modes, set the <code>APP_ENV</code> variable to any value other than 'dev'.
     </p>
 </div>
