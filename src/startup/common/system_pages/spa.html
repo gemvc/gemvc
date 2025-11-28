@@ -100,9 +100,14 @@
 
         <script>
             // SPA Router and Application
-            (function () { // Detect if Swoole (port 9501) - Swoole doesn't use /api prefix
-                const isSwoole = window.location.port === '9501' || window.location.hostname === 'localhost' && window.location.port === '';
-                const API_BASE = isSwoole ? window.location.protocol + '//' + window.location.host : window.location.protocol + '//' + window.location.host + '/api';
+            (function () { 
+                // Detect if Swoole (port 9501) - Swoole doesn't use /api prefix
+                // For Apache/Nginx: default ports (80/443) show as empty string, so we default to Apache/Nginx behavior
+                // Only explicitly detect Swoole when port is '9501'
+                const isSwoole = window.location.port === '9501';
+                const API_BASE = isSwoole 
+                    ? window.location.protocol + '//' + window.location.host 
+                    : window.location.protocol + '//' + window.location.host + '/api';
 
                 console.log('Detected server type:', isSwoole ? 'Swoole' : 'Apache/Nginx');
                 console.log('API Base URL:', API_BASE);

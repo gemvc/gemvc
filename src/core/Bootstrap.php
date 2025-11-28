@@ -93,13 +93,7 @@ class Bootstrap
             
             // Create controller instance
             $serviceInstance = new $serviceClass($this->request);
-            
-            // Verify it's a web service
-            // @phpstan-ignore-next-line
-            if (!($serviceInstance instanceof WebService)) {
-                throw new \Exception("Web controller must extend WebService class");
-            }
-            
+                       
             // Check if the requested method exists
             $method = $this->requested_method ?: 'index';
             if (!method_exists($serviceInstance, $method)) {
@@ -129,6 +123,29 @@ class Bootstrap
     {
         $method = "index";
         $segments = explode('/', $this->request->requestedUrl);
+        
+        // Check if this is a root URL (/) in development mode - route to SPA
+        $isRootUrl = empty($this->request->requestedUrl) ||
+            $this->request->requestedUrl === '/' ||
+            (count($segments) <= 1 && empty(array_filter($segments)));
+        
+        if ($isRootUrl) {
+            // Load environment to check APP_ENV
+            try {
+                \Gemvc\Helper\ProjectHelper::loadEnv();
+                $isDevelopment = ($_ENV['APP_ENV'] ?? '') === 'dev';
+                
+                if ($isDevelopment) {
+                    // Route root URL to Developer/app (SPA shell) in dev mode
+                    $this->is_web = false;
+                    $this->requested_service = "Developer";
+                    $this->requested_method = "app";
+                    return;
+                }
+            } catch (\Exception $e) {
+                // If env can't be loaded, continue with normal routing
+            }
+        }
         
         // Get the first segment (service indicator)
         $serviceIndex = is_numeric($_ENV["SERVICE_IN_URL_SECTION"] ?? 1) ? (int) ($_ENV["SERVICE_IN_URL_SECTION"] ?? 1) : 1;

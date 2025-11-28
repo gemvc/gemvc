@@ -64,6 +64,18 @@ class ApacheRequest
 
     private function sanitizeAllHTTPPostRequest():void
     {   
+        // Check if Content-Type is JSON and parse it
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+        if (empty($_POST) && strpos($contentType, 'application/json') !== false) {
+            $rawContent = file_get_contents('php://input');
+            if ($rawContent) {
+                $jsonData = json_decode($rawContent, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+                    $_POST = $jsonData;
+                }
+            }
+        }
+        
         foreach ($_POST as $key => $value) {
             if(is_string($value)) {
                 $_POST[$key] = $this->sanitizeInput($value);
@@ -72,7 +84,7 @@ class ApacheRequest
                 foreach($_POST[$key] as $subKey => $subValue)
                 {
                     if(is_string($subValue)) {
-                        $_POST[$key][$subKey] = $this->sanitizeInput($value);
+                        $_POST[$key][$subKey] = $this->sanitizeInput($subValue);
                     }
                 }
             }

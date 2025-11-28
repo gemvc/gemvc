@@ -125,9 +125,10 @@ try {
         </div>
         <?php
         // For Swoole: use baseUrl/Index/document, for others: use apiBaseUrl/Index/document
+        // Note: $apiBaseUrl already includes '/api' at the end
         $docsUrl = ($webserverType === 'swoole') 
             ? $baseUrl . ':9501/index/document'
-            : $apiBaseUrl . 'api/index/document';
+            : $apiBaseUrl . '/index/document';
         ?>
         <a href="<?php echo htmlspecialchars($docsUrl); ?>" 
             class="text-white no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline"
