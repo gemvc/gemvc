@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEMVC Framework - Development Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                    colors: {
+                        gemvc: {
+                            green: '#10b981',
+                            'green-dark': '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gemvc-green to-gemvc-green-dark font-sans font-normal pt-20 pb-24">
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 w-full bg-white shadow-md z-50 hidden">
+        <div class="max-w-6xl mx-auto px-10 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <a id="logoLink" href="#" class="inline-flex items-center p-0 m-0 bg-transparent border-0 cursor-pointer no-underline">
+                        <img id="gemvcLogo" class="h-8 w-auto" src="" alt="GEMVC Framework" />
+                    </a>
+                    <a href="#" data-route="welcome" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Home</a>
+                    <a href="#" data-route="database" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Database</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="logout()" class="text-base font-medium transition-colors text-gray-600 hover:text-red-600 bg-transparent border-0 cursor-pointer">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="app" class="flex items-center justify-center p-5">
+        <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10">
+            <div id="content">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="fixed bottom-0 left-0 right-0 w-full bg-gray-900 border-t border-gray-700 shadow-md z-50 hidden">
+        <div class="max-w-6xl mx-auto px-10 py-4">
+            <div class="flex flex-col items-center gap-3">
+                <div class="flex items-center justify-center gap-6 flex-wrap">
+                    <a href="https://gemvc.de" target="_blank" 
+                        class="text-gray-300 hover:text-gemvc-green no-underline font-medium transition-colors text-sm">
+                        gemvc.de
+                    </a>
+                    <span class="text-gray-600">|</span>
+                    <a href="https://github.com/gemvc/gemvc/fork" target="_blank" 
+                        class="text-gray-300 hover:text-gemvc-green no-underline font-medium transition-colors text-sm">
+                        Fork on GitHub
+                    </a>
+                    <span class="text-gray-600">|</span>
+                    <a href="https://github.com/gemvc/gemvc" target="_blank" 
+                        class="text-gray-300 hover:text-gemvc-green no-underline font-medium transition-colors text-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>GEMVC on GitHub</span>
+                    </a>
+                </div>
+                <div class="text-xs text-gray-400 text-center">
+                    Made with ❤️ | <a href="https://opensource.org/licenses/MIT" target="_blank" class="text-gray-400 hover:text-gemvc-green transition-colors">MIT License</a> | Forever Free
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // SPA Router and Application
+        (function() {
+            // Detect if Swoole (port 9501) - Swoole doesn't use /api prefix
+            const isSwoole = window.location.port === '9501' || window.location.hostname === 'localhost' && window.location.port === '';
+            const API_BASE = isSwoole 
+                ? window.location.protocol + '//' + window.location.host
+                : window.location.protocol + '//' + window.location.host + '/api';
+            
+            console.log('Detected server type:', isSwoole ? 'Swoole' : 'Apache/Nginx');
+            console.log('API Base URL:', API_BASE);
+            
+            let currentRoute = 'login';
+            let token = localStorage.getItem('gemvc_admin_token');
+            
+            // JWT Token Management
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                if (token) {
+                    options.headers = options.headers || {};
+                    if (!options.headers['Authorization']) {
+                        options.headers['Authorization'] = 'Bearer ' + token;
+                    }
+                }
+                return originalFetch(url, options);
+            };
+            
+            // Router
+            function getRoute() {
+                const hash = window.location.hash.slice(1) || 'login';
+                return hash;
+            }
+            
+            function setRoute(route) {
+                window.location.hash = route;
+                currentRoute = route;
+            }
+            
+            async function loadPage(route) {
+                try {
+                    // Check authentication for protected routes
+                    if (route !== 'login' && !token) {
+                        setRoute('login');
+                        return;
+                    }
+                    
+                    // Show/hide navbar and footer
+                    const navbar = document.getElementById('navbar');
+                    const footer = document.getElementById('footer');
+                    if (route === 'login') {
+                        navbar.classList.add('hidden');
+                        footer.classList.add('hidden');
+                    } else {
+                        navbar.classList.remove('hidden');
+                        footer.classList.remove('hidden');
+                        updateNavbar(route);
+                    }
+                    
+                    // Load page content
+                    const content = document.getElementById('content');
+                    content.innerHTML = '<div class="text-center">Loading...</div>';
+                    
+                    switch(route) {
+                        case 'login':
+                            await renderLogin();
+                            break;
+                        case 'welcome':
+                            await renderWelcome();
+                            break;
+                        case 'database':
+                            await renderDatabase();
+                            break;
+                        default:
+                            content.innerHTML = '<div class="text-center text-red-600">Page not found</div>';
+                    }
+                } catch (error) {
+                    console.error('Error loading page:', error);
+                    document.getElementById('content').innerHTML = 
+                        '<div class="text-center text-red-600">Error loading page: ' + error.message + '</div>';
+                }
+            }
+            
+            function updateNavbar(activeRoute) {
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const route = link.getAttribute('data-route');
+                    if (route === activeRoute) {
+                        link.classList.add('text-gemvc-green', 'border-b-2', 'border-gemvc-green', 'pb-1');
+                        link.classList.remove('text-gray-600');
+                    } else {
+                        link.classList.remove('text-gemvc-green', 'border-b-2', 'border-gemvc-green', 'pb-1');
+                        link.classList.add('text-gray-600');
+                    }
+                });
+            }
+            
+            async function renderLogin() {
+                // Change content area styling for login page
+                const appDiv = document.getElementById('app');
+                appDiv.className = 'flex items-center justify-center min-h-screen p-5';
+                const contentWrapper = appDiv.querySelector('div');
+                contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-md w-full p-10';
+                
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="text-center mb-8">
+                        <img id="loginLogo" src="" alt="GEMVC Logo" class="h-16 mx-auto mb-4 hidden">
+                        <h1 class="text-3xl font-bold text-gemvc-green mb-2 tracking-tight">Admin Login</h1>
+                        <p class="text-gray-600">Enter your admin password to access system pages</p>
+                    </div>
+                    <div id="loginError" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
+                        <p class="text-red-800 text-sm" id="loginErrorText"></p>
+                    </div>
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
+                            <input type="password" id="password" name="password" required autofocus
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gemvc-green focus:border-transparent transition-colors"
+                                placeholder="Enter your admin password">
+                        </div>
+                        <button type="submit" id="loginButton"
+                            class="w-full bg-gemvc-green hover:bg-gemvc-green-dark text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg">
+                            Login
+                        </button>
+                    </form>
+                    <div id="adminPasswordHint" class="mt-6 text-center hidden">
+                        <p class="text-sm text-gray-600">
+                            Set admin password using:<br>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-xs">php vendor/bin/gemvc admin:setpassword</code>
+                        </p>
+                    </div>
+                `;
+                
+                // Load logo and check if admin password is set
+                const logoResponse = await fetch(API_BASE + '/Developer/logo');
+                if (logoResponse.ok) {
+                    const logoData = await logoResponse.json();
+                    if (logoData.data && logoData.data.gemvcLogo) {
+                        document.getElementById('loginLogo').src = logoData.data.gemvcLogo;
+                        document.getElementById('loginLogo').classList.remove('hidden');
+                    }
+                    // Show hint if admin password not set
+                    if (logoData.data && logoData.data.adminPasswordSet === false) {
+                        document.getElementById('adminPasswordHint').classList.remove('hidden');
+                    }
+                }
+                
+                // Handle login form
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const errorDiv = document.getElementById('loginError');
+                    const errorText = document.getElementById('loginErrorText');
+                    const loginButton = document.getElementById('loginButton');
+                    
+                    errorDiv.classList.add('hidden');
+                    loginButton.disabled = true;
+                    loginButton.textContent = 'Logging in...';
+                    
+                    try {
+                        const response = await fetch(API_BASE + '/Developer/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                password: document.getElementById('password').value,
+                                admin_login: '1'
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.data && data.data.token) {
+                            token = data.data.token;
+                            localStorage.setItem('gemvc_admin_token', token);
+                            setRoute('welcome');
+                        } else {
+                            errorText.textContent = data.message || 'Login failed. Please try again.';
+                            errorDiv.classList.remove('hidden');
+                            loginButton.disabled = false;
+                            loginButton.textContent = 'Login';
+                        }
+                    } catch (error) {
+                        errorText.textContent = 'Network error. Please try again.';
+                        errorDiv.classList.remove('hidden');
+                        loginButton.disabled = false;
+                        loginButton.textContent = 'Login';
+                    }
+                });
+            }
+            
+            async function renderWelcome() {
+                // Reset content area styling for normal pages
+                const appDiv = document.getElementById('app');
+                appDiv.className = 'flex items-center justify-center p-5';
+                const contentWrapper = appDiv.querySelector('div');
+                contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
+                
+                const response = await fetch(API_BASE + '/Developer/welcome');
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        setRoute('login');
+                        return;
+                    }
+                    throw new Error('Failed to load welcome page');
+                }
+                
+                const data = await response.json();
+                const content = document.getElementById('content');
+                content.innerHTML = data.data.html || '<div>Welcome page content</div>';
+                
+                // Convert "View Database" button to SPA navigation
+                const dbButton = content.querySelector('form[method="POST"] button');
+                if (dbButton) {
+                    dbButton.type = 'button';
+                    dbButton.onclick = () => setRoute('database');
+                    dbButton.closest('form').remove();
+                    const dbCard = dbButton.closest('.bg-gray-50');
+                    if (dbCard) {
+                        const link = document.createElement('a');
+                        link.href = '#';
+                        link.className = 'text-gemvc-green no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline cursor-pointer';
+                        link.textContent = 'View Database →';
+                        link.onclick = (e) => {
+                            e.preventDefault();
+                            setRoute('database');
+                        };
+                        dbCard.querySelector('div').parentNode.replaceChild(link, dbButton.parentNode);
+                    }
+                }
+            }
+            
+            async function renderDatabase(tableName = null) {
+                // Reset content area styling for normal pages
+                const appDiv = document.getElementById('app');
+                appDiv.className = 'flex items-center justify-center p-5';
+                const contentWrapper = appDiv.querySelector('div');
+                contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
+                
+                // Build URL with table parameter if provided
+                let url = API_BASE + '/Developer/database';
+                if (tableName) {
+                    url += '?table=' + encodeURIComponent(tableName);
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        setRoute('login');
+                        return;
+                    }
+                    throw new Error('Failed to load database page');
+                }
+                
+                const data = await response.json();
+                const content = document.getElementById('content');
+                content.innerHTML = data.data.html || '<div>Database page content</div>';
+                
+                // Convert "Back to Home" button to SPA navigation
+                const backButton = content.querySelector('form[method="POST"] button');
+                if (backButton && backButton.textContent.includes('Back')) {
+                    backButton.type = 'button';
+                    backButton.onclick = () => setRoute('welcome');
+                    backButton.closest('form').remove();
+                }
+                
+                // Convert "View Structure" buttons to SPA navigation
+                // Convert NodeList to Array to avoid issues with DOM mutations
+                Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
+                    const setTableInput = form.querySelector('input[name="set_table"]');
+                    if (setTableInput) {
+                        const tableName = setTableInput.value;
+                        const button = form.querySelector('button[type="submit"]');
+                        if (button && button.textContent.includes('View Structure')) {
+                            // Extract button from form before removing form
+                            const parent = form.parentNode;
+                            if (parent) {
+                                button.type = 'button';
+                            button.onclick = async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Reload database page with selected table
+                                await renderDatabase(tableName);
+                            };
+                                // Replace form with button
+                                parent.replaceChild(button, form);
+                            }
+                        }
+                    }
+                });
+                
+                // Convert export buttons to AJAX
+                // Convert NodeList to Array to avoid issues with DOM mutations
+                Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
+                    const exportTableInput = form.querySelector('input[name="export_table"]');
+                    const exportFormatInput = form.querySelector('input[name="export_format"]');
+                    if (exportTableInput && exportFormatInput) {
+                        const button = form.querySelector('button[type="submit"]');
+                        if (button) {
+                            // Extract button from form before removing form
+                            const parent = form.parentNode;
+                            button.type = 'button';
+                            button.onclick = async () => {
+                                const tableName = exportTableInput.value;
+                                const format = exportFormatInput.value;
+                                
+                                try {
+                                    const exportResponse = await fetch(API_BASE + '/Developer/export', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            table: tableName,
+                                            format: format
+                                        })
+                                    });
+                                    
+                                    if (exportResponse.ok) {
+                                        const blob = await exportResponse.blob();
+                                        const contentDisposition = exportResponse.headers.get('Content-Disposition');
+                                        let filename = `${tableName}.${format}`;
+                                        if (contentDisposition) {
+                                            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                                            if (filenameMatch) {
+                                                filename = filenameMatch[1];
+                                            }
+                                        }
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = filename;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        window.URL.revokeObjectURL(url);
+                                    } else {
+                                        const errorText = await exportResponse.text();
+                                        alert('Export failed: ' + errorText);
+                                    }
+                                } catch (error) {
+                                    console.error('Error exporting:', error);
+                                    alert('Export failed: ' + error.message);
+                                }
+                            };
+                            // Replace form with button
+                            parent.replaceChild(button, form);
+                        }
+                    }
+                    
+                    // Convert import form to AJAX
+                    const importTableInput = form.querySelector('input[name="import_table"]');
+                    const importFileInput = form.querySelector('input[name="import_file"]');
+                    const importFormatSelect = form.querySelector('select[name="import_format"]');
+                    if (importTableInput && importFileInput && importFormatSelect) {
+                        const button = form.querySelector('button[type="submit"]');
+                        if (button) {
+                            button.type = 'button';
+                            button.onclick = async () => {
+                                const tableName = importTableInput.value;
+                                const format = importFormatSelect.value;
+                                const file = importFileInput.files[0];
+                                
+                                if (!file) {
+                                    alert('Please select a file to import');
+                                    return;
+                                }
+                                
+                                try {
+                                    const formData = new FormData();
+                                    formData.append('table', tableName);
+                                    formData.append('format', format);
+                                    formData.append('import_file', file);
+                                    
+                                    const importResponse = await fetch(API_BASE + '/Developer/import', {
+                                        method: 'POST',
+                                        body: formData
+                                    });
+                                    
+                                    if (importResponse.ok) {
+                                        const result = await importResponse.json();
+                                        alert('Import successful: ' + (result.data?.message || 'Data imported'));
+                                        // Reload database page to show updated data
+                                        await renderDatabase(tableName);
+                                    } else {
+                                        const errorData = await importResponse.json();
+                                        alert('Import failed: ' + (errorData.message || 'Unknown error'));
+                                    }
+                                } catch (error) {
+                                    console.error('Error importing:', error);
+                                    alert('Import failed: ' + error.message);
+                                }
+                            };
+                        }
+                    }
+                });
+            }
+            
+            window.logout = function() {
+                token = null;
+                localStorage.removeItem('gemvc_admin_token');
+                setRoute('login');
+            };
+            
+            // Navigation links
+            document.addEventListener('click', (e) => {
+                if (e.target.matches('.nav-link')) {
+                    e.preventDefault();
+                    const route = e.target.getAttribute('data-route');
+                    setRoute(route);
+                }
+                // Logo link navigation
+                if (e.target.closest('#logoLink')) {
+                    e.preventDefault();
+                    setRoute('welcome');
+                }
+            });
+            
+            // Hash change handler
+            window.addEventListener('hashchange', () => {
+                loadPage(getRoute());
+            });
+            
+            // Load navbar logo
+            async function loadNavbarLogo() {
+                try {
+                    const logoResponse = await fetch(API_BASE + '/Developer/logo');
+                    if (logoResponse.ok) {
+                        const logoData = await logoResponse.json();
+                        if (logoData.data && logoData.data.gemvcLogo) {
+                            const logoImg = document.getElementById('gemvcLogo');
+                            logoImg.src = logoData.data.gemvcLogo;
+                            logoImg.style.display = 'block';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading navbar logo:', error);
+                }
+            }
+            
+            // Initial load
+            loadNavbarLogo();
+            loadPage(getRoute());
+        })();
+    </script>
+</body>
+</html>
+

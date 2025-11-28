@@ -45,12 +45,12 @@ abstract class AbstractInit extends Command
         'bin'
     ];
     
-    // User template files mapping (common for all webservers)
-    protected const USER_FILE_MAPPINGS = [
-        'app/api' => ['User.php'],
-        'app/controller' => ['UserController.php'],
-        'app/model' => ['UserModel.php'],
-        'app/table' => ['UserTable.php']
+    // App directory structure that init_example can mirror
+    protected const APP_DIRECTORIES = [
+        'api',
+        'controller',
+        'model',
+        'table'
     ];
     
     /**
@@ -223,7 +223,7 @@ abstract class AbstractInit extends Command
         $this->info("📄 Copying common project files...");
         $startupPath = $this->findStartupPath();
         
-        // Copy user files to app directory
+        // Copy init example files to app directory
         $this->copyUserFiles($startupPath);
         
         $this->info("✅ Common files copied");
@@ -311,14 +311,18 @@ abstract class AbstractInit extends Command
     }
     
     /**
-     * Copy user-related files to appropriate directories
+     * Copy init example files to appropriate directories
+     * 
+     * This method mirrors the folder structure from init_example to app directory.
+     * Any folder in init_example that matches app structure (api, controller, model, table)
+     * will be copied to the corresponding app directory.
      * 
      * @param string $startupPath
      * @return void
      */
     protected function copyUserFiles(string $startupPath): void
     {
-        // User files are always in common directory (cross-platform)
+        // Init example files are always in common directory (cross-platform)
         $commonPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common';
         
         // Try Composer package path with package name from property
@@ -326,31 +330,41 @@ abstract class AbstractInit extends Command
             $commonPath = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common';
         }
         
-        $userDir = $commonPath . DIRECTORY_SEPARATOR . 'user';
-        if (!is_dir($userDir)) {
-            $this->warning("User template directory not found: {$userDir}");
+        $initExampleDir = $commonPath . DIRECTORY_SEPARATOR . 'init_example';
+        if (!is_dir($initExampleDir)) {
+            $this->warning("Init example directory not found: {$initExampleDir}");
             return;
         }
         
-        // Create target directories
-        foreach (array_keys(self::USER_FILE_MAPPINGS) as $dir) {
-            $targetDir = $this->basePath . '/' . $dir;
-            $this->fileSystem->createDirectoryIfNotExists($targetDir);
-        }
+        $this->info("📁 Copying init example files from: {$initExampleDir}");
         
-        // Copy files
-        foreach (self::USER_FILE_MAPPINGS as $targetDir => $files) {
-            foreach ($files as $file) {
-                $sourceFile = $userDir . '/' . $file;
-                $targetFile = $this->basePath . '/' . $targetDir . '/' . $file;
-                
-                if (!file_exists($sourceFile)) {
-                    $this->warning("Source file not found: {$sourceFile}");
-                    continue;
-                }
-                
-                $this->fileSystem->copyFileWithConfirmation($sourceFile, $targetFile, $file);
+        // Scan init_example directory for folders that match app structure
+        $folders = array_diff(scandir($initExampleDir), ['.', '..']);
+        
+        foreach ($folders as $folder) {
+            $sourceFolderPath = $initExampleDir . DIRECTORY_SEPARATOR . $folder;
+            
+            // Skip if not a directory
+            if (!is_dir($sourceFolderPath)) {
+                continue;
             }
+            
+            // Check if folder matches app directory structure
+            if (!in_array($folder, self::APP_DIRECTORIES, true)) {
+                $this->warning("Skipping folder '{$folder}' - does not match app structure (expected: " . implode(', ', self::APP_DIRECTORIES) . ")");
+                continue;
+            }
+            
+            // Target directory in app folder
+            $targetFolderPath = $this->basePath . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . $folder;
+            
+            // Ensure target directory exists
+            $this->fileSystem->createDirectoryIfNotExists($targetFolderPath);
+            
+            // Copy all contents from source folder to target folder
+            $this->fileSystem->copyDirectoryContents($sourceFolderPath, $targetFolderPath);
+            
+            $this->info("✅ Copied init example folder: {$folder}");
         }
     }
     

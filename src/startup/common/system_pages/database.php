@@ -22,7 +22,8 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
 $databaseReady = false;
 $connection = null;
 $tables = [];
-$selectedTable = $_SESSION['selected_table'] ?? null;
+// Get selected table from variable (passed from API) or default to null
+$selectedTable = $selectedTable ?? null;
 $tableStructure = null;
 $tableRelationships = null;
 

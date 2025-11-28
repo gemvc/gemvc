@@ -76,33 +76,6 @@ try {
 </div>
 
 <div class="mb-8">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-gemvc-green pb-2.5 tracking-tight">Developer Tools</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between shadow-md border border-gray-300">
-            <div>
-                <strong class="block">Test API Endpoint</strong>
-                <small class="text-gray-600">Verify server is responding</small>
-            </div>
-            <a href="<?php echo htmlspecialchars($apiBaseUrl); ?>/Index/index" 
-                class="text-gemvc-green no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline"
-                target="_blank">Test API →</a>
-        </div>
-        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between shadow-md border border-gray-300">
-            <div>
-                <strong class="block">Database Management</strong>
-                <small class="text-gray-600">View and manage your database</small>
-            </div>
-            <form method="POST" class="inline m-0 p-0">
-                <input type="hidden" name="set_page" value="database">
-                <button type="submit" class="bg-transparent border-0 text-gemvc-green no-underline font-medium cursor-pointer text-base p-0 m-0 transition-colors hover:text-gemvc-green-dark hover:underline">
-                    View Database →
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="mb-8">
     <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-gemvc-green pb-2.5 tracking-tight">Quick Start</h2>
     <?php if (!$databaseReady): ?>
         <div class="bg-gray-50 rounded-lg p-4 mb-2.5 flex items-center justify-between">
@@ -144,14 +117,20 @@ try {
         <code class="font-mono bg-gray-800 text-green-400 px-3 py-2 rounded text-sm">php vendor/bin/gemvc db:migrate ProductTable</code>
     </div>
 
-    <div class="bg-gray-50 rounded-lg p-4 mb-2.5 flex items-center justify-between">
+    <div class="bg-green-500 text-white rounded-lg p-4 mb-2.5 flex items-center justify-between">
         <div>
-            <strong class="block">3. Visit Interactive API documentation</strong>
+            <strong class="block  p-2 rounded-lg">3. Visit Interactive API documentation</strong>
             <small class="text-gray-600">Verify your newly created Service input parameters in the documentation and enjoy one
                 click Export to postman collection to test your API!</small>
         </div>
-        <a href="<?php echo htmlspecialchars($apiBaseUrl); ?>/Index/document" 
-            class="text-gemvc-green no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline"
+        <?php
+        // For Swoole: use baseUrl/Index/document, for others: use apiBaseUrl/Index/document
+        $docsUrl = ($webserverType === 'swoole') 
+            ? $baseUrl . ':9501/index/document'
+            : $apiBaseUrl . 'api/index/document';
+        ?>
+        <a href="<?php echo htmlspecialchars($docsUrl); ?>" 
+            class="text-white no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline"
             target="_blank">View Docs →</a>
     </div>
 </div>
