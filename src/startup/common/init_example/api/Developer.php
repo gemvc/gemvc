@@ -513,13 +513,33 @@ class Developer extends ApiService
     private function preparePageVariables(): array
     {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $port = $_SERVER['SERVER_PORT'] ?? '';
-        $portDisplay = ($port && $port !== '80' && $port !== '443') ? ':' . $port : '';
-        $baseUrl = $protocol . '://' . $host . $portDisplay;
-        $apiBaseUrl = rtrim($baseUrl, '/') . '/api';
-
         $webserverType = WebserverDetector::get();
+        
+        // Construct base URL based on webserver type
+        if ($webserverType === 'swoole') {
+            // Swoole: Use explicit port 9501 (from env or default), NO /api prefix
+            $swoolePort = is_numeric($_ENV["SWOOLE_SERVER_PORT"] ?? 9501) ? (int) ($_ENV["SWOOLE_SERVER_PORT"] ?? 9501) : 9501;
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            // Remove port from HTTP_HOST if it exists, then add our explicit port
+            $host = preg_replace('/:\d+$/', '', $host);
+            $baseUrl = $protocol . '://' . $host . ':' . $swoolePort;
+            // Swoole: apiBaseUrl is same as baseUrl (no /api prefix)
+            $apiBaseUrl = rtrim($baseUrl, '/');
+        } else {
+            // Apache/Nginx: HTTP_HOST may already include port, WITH /api prefix
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            // If HTTP_HOST already has a port, use it as-is
+            if (strpos($host, ':') !== false) {
+                $baseUrl = $protocol . '://' . $host;
+            } else {
+                // HTTP_HOST doesn't have port, check SERVER_PORT
+                $port = $_SERVER['SERVER_PORT'] ?? '';
+                $portDisplay = ($port && $port !== '80' && $port !== '443') ? ':' . $port : '';
+                $baseUrl = $protocol . '://' . $host . $portDisplay;
+            }
+            // Apache/Nginx: apiBaseUrl includes /api prefix
+            $apiBaseUrl = rtrim($baseUrl, '/') . '/api';
+        }
         $webserverName = match($webserverType) {
             'swoole' => 'OpenSwoole',
             'apache' => 'Apache',

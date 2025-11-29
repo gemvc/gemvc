@@ -101,12 +101,12 @@
         <script>
             // SPA Router and Application
             (function () { 
-                // Detect if Swoole (port 9501) - Swoole doesn't use /api prefix
-                // For Apache/Nginx: default ports (80/443) show as empty string, so we default to Apache/Nginx behavior
-                // Only explicitly detect Swoole when port is '9501'
+                // Detect if Swoole (port 9501)
+                // Swoole: NO /api prefix - localhost:9501/developer/database
+                // Apache/Nginx: WITH /api prefix - localhost/api/developer/database
                 const isSwoole = window.location.port === '9501';
                 const API_BASE = isSwoole 
-                    ? window.location.protocol + '//' + window.location.host 
+                    ? window.location.protocol + '//' + window.location.host
                     : window.location.protocol + '//' + window.location.host + '/api';
 
                 console.log('Detected server type:', isSwoole ? 'Swoole' : 'Apache/Nginx');
@@ -229,7 +229,7 @@
                 `;
 
                     // Load logo and check if admin password is set
-                    const logoResponse = await fetch(API_BASE + '/Developer/logo');
+                    const logoResponse = await fetch(API_BASE + '/developer/logo');
                     if (logoResponse.ok) {
                         const logoData = await logoResponse.json();
                         if (logoData.data && logoData.data.gemvcLogo) {
@@ -254,7 +254,7 @@
                         loginButton.textContent = 'Logging in...';
 
                         try {
-                            const response = await fetch(API_BASE + '/Developer/login', {
+                            const response = await fetch(API_BASE + '/developer/login', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -291,7 +291,7 @@
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/Developer/welcome');
+                    const response = await fetch(API_BASE + '/developer/welcome');
                     if (! response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
@@ -332,7 +332,7 @@
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
                     // Build URL with table parameter if provided
-                    let url = API_BASE + '/Developer/database';
+                    let url = API_BASE + '/developer/database/';
                     if (tableName) {
                         url += '?table=' + encodeURIComponent(tableName);
                     }
@@ -397,7 +397,7 @@
                                     const format = exportFormatInput.value;
 
                                     try {
-                                        const exportResponse = await fetch(API_BASE + '/Developer/export', {
+                                        const exportResponse = await fetch(API_BASE + '/developer/export', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json'
@@ -463,7 +463,7 @@
                                         formData.append('format', format);
                                         formData.append('import_file', file);
 
-                                        const importResponse = await fetch(API_BASE + '/Developer/import', {
+                                        const importResponse = await fetch(API_BASE + '/developer/import', {
                                             method: 'POST',
                                             body: formData
                                         });
@@ -519,7 +519,7 @@
                 // Load navbar logo
                 async function loadNavbarLogo() {
                     try {
-                        const logoResponse = await fetch(API_BASE + '/Developer/logo');
+                        const logoResponse = await fetch(API_BASE + '/developer/logo');
                         if (logoResponse.ok) {
                             const logoData = await logoResponse.json();
                             if (logoData.data && logoData.data.gemvcLogo) {
