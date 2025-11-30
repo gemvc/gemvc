@@ -3,21 +3,10 @@ parameters:
     paths:
         - tests
     excludePaths:
-        - tests/Fixtures
+        - tests/Fixtures (?)
         - tests/bootstrap.php
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
     stubFiles:
         - src/stubs/OpenSwoole.php
         - src/stubs/Redis.php
-    ignoreErrors:
-        # PHPUnit specific - MockObject dynamic methods
-        - '#Call to an undefined method PHPUnit\\Framework\\MockObject\\MockObject::.*#'
-        - '#Access to an undefined property PHPUnit\\Framework\\MockObject\\MockObject::\$.*#'
-        # Test helpers may use dynamic properties for test data
-        - '#Access to an undefined property Tests\\Helpers\\.*::\$.*#'
-        # PHPUnit assertions are dynamically typed
-        - '#Parameter \#\d+ \$actual of method PHPUnit\\Framework\\Assert::.* expects .*, .* given\.#'
-        # Test data factories may return mixed types
-        - '#Method Tests\\Helpers\\TestDataFactory::.* returns .* but should return .*\.#'
+    ignoreErrors: []
 
