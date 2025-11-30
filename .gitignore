@@ -1,5 +1,6 @@
 composer.phar
 /vendor/
+/coverage/
 composer.lock
 app/config.php
 

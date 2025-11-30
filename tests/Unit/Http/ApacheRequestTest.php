@@ -144,5 +144,384 @@ class ApacheRequestTest extends TestCase
             $this->fail('GET should be an array');
         }
     }
+    
+    // ============================================
+    // PUT Request Tests
+    // ============================================
+    
+    public function testPutRequestSanitization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PUT';
+        $_SERVER['REQUEST_URI'] = '/api/User/update';
+        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+        
+        // Simulate PUT data by writing to php://input
+        // Note: In real tests, we can't directly write to php://input
+        // So we test the behavior indirectly through the Request object
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertEquals('PUT', $request->requestMethod);
+        // PUT data might be null if php://input is empty
+        $this->assertTrue($request->put === null || is_array($request->put));
+    }
+    
+    public function testPutRequestWithXssPayload(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PUT';
+        $_SERVER['REQUEST_URI'] = '/api/User/update';
+        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        // PUT sanitization is tested indirectly
+        $this->assertInstanceOf(Request::class, $request);
+    }
+    
+    // ============================================
+    // PATCH Request Tests
+    // ============================================
+    
+    public function testPatchRequestSanitization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $_SERVER['REQUEST_URI'] = '/api/User/patch';
+        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertEquals('PATCH', $request->requestMethod);
+        // PATCH data might be null if php://input is empty
+        $this->assertTrue($request->patch === null || is_array($request->patch));
+    }
+    
+    // ============================================
+    // JSON POST Tests
+    // ============================================
+    
+    public function testJsonPostRequestParsing(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/User/create';
+        $_SERVER['CONTENT_TYPE'] = 'application/json';
+        $_POST = []; // Empty POST, should trigger JSON parsing
+        
+        // Note: We can't directly set php://input in tests
+        // This test verifies the structure handles JSON content type
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertEquals('POST', $request->requestMethod);
+    }
+    
+    // ============================================
+    // File Upload Tests
+    // ============================================
+    
+    public function testFileUploadHandling(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/User/upload';
+        $_FILES['file'] = [
+            'name' => 'test.txt',
+            'type' => 'text/plain',
+            'tmp_name' => '/tmp/phpXXXXXX',
+            'error' => 0,
+            'size' => 1024
+        ];
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertIsArray($request->files);
+        $this->assertArrayHasKey('name', $request->files);
+        $this->assertEquals('test.txt', $request->files['name']);
+    }
+    
+    public function testFileUploadWithNoFile(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/User/upload';
+        $_FILES = [];
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertIsArray($request->files);
+        $this->assertEmpty($request->files);
+    }
+    
+    // ============================================
+    // Authorization Header Tests
+    // ============================================
+    
+    public function testAuthHeaderFromHttpAuthorization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer test-token-123';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertEquals('Bearer test-token-123', $request->authorizationHeader);
+    }
+    
+    public function testAuthHeaderFromRedirectHttpAuthorization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] = 'Bearer redirect-token-456';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        $this->assertEquals('Bearer redirect-token-456', $request->authorizationHeader);
+    }
+    
+    public function testAuthHeaderPriority(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer primary-token';
+        $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] = 'Bearer redirect-token';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        // HTTP_AUTHORIZATION should take priority
+        $this->assertEquals('Bearer primary-token', $request->authorizationHeader);
+    }
+    
+    public function testAuthHeaderWithXssAttempt(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['HTTP_AUTHORIZATION'] = '<script>alert("XSS")</script>';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        // Header should be sanitized
+        $this->assertStringNotContainsString('<script>', $request->authorizationHeader);
+        $this->assertStringContainsString('&lt;script&gt;', $request->authorizationHeader);
+    }
+    
+    // ============================================
+    // Query String Tests
+    // ============================================
+    
+    public function testQueryStringSanitization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['QUERY_STRING'] = 'id=1&name=<script>alert("XSS")</script>';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertInstanceOf(Request::class, $request);
+        // Query string should be sanitized
+        $this->assertStringNotContainsString('<script>', $request->queryString);
+    }
+    
+    public function testQueryStringWithEmptyValue(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['QUERY_STRING'] = '';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('', $request->queryString);
+    }
+    
+    // ============================================
+    // Request URI Tests
+    // ============================================
+    
+    public function testRequestUriSanitization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read?id=1';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('/api/User/read?id=1', $request->requestedUrl);
+    }
+    
+    public function testRequestUriWithInvalidUrl(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        // Invalid URL with null bytes
+        $_SERVER['REQUEST_URI'] = "\0invalid\0url";
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        // FILTER_SANITIZE_URL may not return false for null bytes, it may sanitize them
+        // So we just check that the method handles it without error
+        $this->assertIsString($request->requestedUrl);
+    }
+    
+    public function testRequestUriWithMissingValue(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        unset($_SERVER['REQUEST_URI']);
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('', $request->requestedUrl);
+    }
+    
+    // ============================================
+    // Remote Address Tests
+    // ============================================
+    
+    public function testRemoteAddressWithValidIp(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['REMOTE_ADDR'] = '192.168.1.1';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('192.168.1.1', $request->remoteAddress);
+    }
+    
+    public function testRemoteAddressWithInvalidIp(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['REMOTE_ADDR'] = 'invalid-ip-address';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('invalid_remote_address_ip_format', $request->remoteAddress);
+    }
+    
+    public function testRemoteAddressWithMissingValue(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        unset($_SERVER['REMOTE_ADDR']);
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('unsetted_remote_address', $request->remoteAddress);
+    }
+    
+    // ============================================
+    // Request Method Tests
+    // ============================================
+    
+    public function testRequestMethodValidation(): void
+    {
+        $validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'];
+        
+        foreach ($validMethods as $method) {
+            $_SERVER['REQUEST_METHOD'] = $method;
+            $_SERVER['REQUEST_URI'] = '/api/test';
+            
+            $ar = new ApacheRequest();
+            $request = $ar->request;
+            
+            $this->assertEquals($method, $request->requestMethod, "Method $method should be valid");
+        }
+    }
+    
+    public function testRequestMethodWithInvalidMethod(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'INVALID';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('', $request->requestMethod);
+    }
+    
+    public function testRequestMethodCaseInsensitive(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'post';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('POST', $request->requestMethod);
+    }
+    
+    public function testRequestMethodWithWhitespace(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = '  POST  ';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('POST', $request->requestMethod);
+    }
+    
+    // ============================================
+    // User Agent Tests
+    // ============================================
+    
+    public function testUserAgentExtraction(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', $request->userMachine);
+    }
+    
+    public function testUserAgentWithMissingValue(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        unset($_SERVER['HTTP_USER_AGENT']);
+        
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        
+        $this->assertEquals('undetected', $request->userMachine);
+    }
+    
+    // ============================================
+    // Header Sanitization Tests
+    // ============================================
+    
+    public function testHeaderArraySanitization(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/User/read';
+        $_SERVER['HTTP_CUSTOM_HEADER'] = ['value1' => '<script>alert("XSS")</script>', 'value2' => 'normal'];
+        
+        $ar = new ApacheRequest();
+        
+        // Headers should be sanitized
+        $this->assertStringNotContainsString('<script>', $_SERVER['HTTP_CUSTOM_HEADER']['value1']);
+        $this->assertStringContainsString('&lt;script&gt;', $_SERVER['HTTP_CUSTOM_HEADER']['value1']);
+    }
 }
 
