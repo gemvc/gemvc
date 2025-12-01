@@ -44,7 +44,7 @@ class SwooleDatabaseManagerAdapter implements DatabaseManagerInterface
      * @param string $poolName Connection pool name
      * @return \PDO|null Active PDO connection or null on error
      */
-    public function getConnection(string $poolName = 'default'): ?\PDO
+    public function getConnection(string $poolName = 'default'): ?PDO
     {
         $connection = $this->swooleManager->getConnection($poolName);
         if ($connection === null) {

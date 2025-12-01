@@ -404,5 +404,592 @@ class TableTest extends TestCase
         // Before any query, should return 0
         $this->assertEquals(0, $table->getTotalCounts());
     }
+    
+    // ==========================================
+    // Soft Delete Operations
+    // ==========================================
+    
+    public function testSafeDeleteQuery(): void
+    {
+        $table = new TestTable();
+        $table->id = 1;
+        
+        // Mock a property for soft delete
+        $result = $table->safeDeleteQuery();
+        
+        // Without deleted_at property, should set error
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+        $this->assertStringContainsString('deleted_at', $table->getError());
+    }
+    
+    public function testRestoreQuery(): void
+    {
+        $table = new TestTable();
+        $table->id = 1;
+        
+        // Without deleted_at property, should set error
+        $result = $table->restoreQuery();
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+        $this->assertStringContainsString('deleted_at', $table->getError());
+    }
+    
+    public function testDeleteSingleQuery(): void
+    {
+        $table = new TestTable();
+        $table->id = 1;
+        
+        // Without id property properly set (in database), should return null
+        $result = $table->deleteSingleQuery();
+        
+        // Since we're not connected to a database, this should return null
+        $this->assertNull($result);
+    }
+    
+    public function testRemoveConditionalQuery(): void
+    {
+        $table = new TestTable();
+        
+        // Third parameter should be a column name (string) or null
+        $result = $table->removeConditionalQuery('email', 'test@example.com', 'status', 'active');
+        
+        // Without proper database connection, should return null
+        $this->assertNull($result);
+    }
+    
+    // ==========================================
+    // Conditional Update Operations
+    // ==========================================
+    
+    public function testSetNullQuery(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->setNullQuery('description', 'id', 1);
+        
+        // Without proper database connection, should return null
+        $this->assertNull($result);
+    }
+    
+    public function testSetTimeNowQuery(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->setTimeNowQuery('updated_at', 'id', 1);
+        
+        // Without proper database connection, should return null
+        $this->assertNull($result);
+    }
+    
+    public function testActivateQuery(): void
+    {
+        $table = new TestTable();
+        
+        // Without is_active property, should set error
+        $result = $table->activateQuery(1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+        $this->assertStringContainsString('is_active', $table->getError());
+    }
+    
+    public function testDeactivateQuery(): void
+    {
+        $table = new TestTable();
+        
+        // Without is_active property, should set error
+        $result = $table->deactivateQuery(1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+        $this->assertStringContainsString('is_active', $table->getError());
+    }
+    
+    // ==========================================
+    // Additional WHERE Clause Methods
+    // ==========================================
+    
+    public function testOrWhere(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->where('name', 'John')->orWhere('name', 'Jane');
+        
+        // Test fluent interface returns same instance
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testOrWhereAsFirstCondition(): void
+    {
+        $table = new TestTable();
+        $table->select()->orWhere('name', 'John');
+        
+        $query = $table->getSelectQueryString();
+        $this->assertNotNull($query);
+        // First orWhere should not have OR prefix
+        $this->assertStringNotContainsString('OR', $query);
+    }
+    
+    // ==========================================
+    // Pagination Methods
+    // ==========================================
+    
+    public function testSetPage(): void
+    {
+        $table = new TestTable();
+        $table->setPage(3);
+        
+        // setPage(3) sets offset to (3-1) * limit = 2 * 10 = 20
+        // getCurrentPage() returns offset + 1 = 20 + 1 = 21
+        $this->assertEquals(21, $table->getCurrentPage());
+    }
+    
+    public function testSetPageWithZero(): void
+    {
+        $table = new TestTable();
+        $table->setPage(0);
+        
+        // Page should be set to 1 minimum
+        $this->assertEquals(1, $table->getCurrentPage());
+    }
+    
+    public function testSetPageWithNegative(): void
+    {
+        $table = new TestTable();
+        $table->setPage(-5);
+        
+        // Page should be set to 1 minimum
+        $this->assertEquals(1, $table->getCurrentPage());
+    }
+    
+    public function testGetCurrentPage(): void
+    {
+        $table = new TestTable();
+        // Default should be 1
+        $this->assertEquals(1, $table->getCurrentPage());
+    }
+    
+    public function testGetCount(): void
+    {
+        $table = new TestTable();
+        // Before any query, should return 0
+        $this->assertEquals(0, $table->getCount());
+    }
+    
+    public function testGetLimit(): void
+    {
+        $table = new TestTable();
+        // Should return default limit (10 or from env)
+        $limit = $table->getLimit();
+        $this->assertIsInt($limit);
+        $this->assertGreaterThan(0, $limit);
+    }
+    
+    public function testGetLimitWithCustomValue(): void
+    {
+        $table = new TestTable();
+        $table->limit(25);
+        
+        $this->assertEquals(25, $table->getLimit());
+    }
+    
+    // ==========================================
+    // Query Getters
+    // ==========================================
+    
+    public function testGetQuery(): void
+    {
+        $table = new TestTable();
+        // Before select, query should be null
+        $this->assertNull($table->getQuery());
+        
+        $table->select();
+        $query = $table->getQuery();
+        $this->assertIsString($query);
+        $this->assertStringContainsString('SELECT', $query);
+    }
+    
+    public function testGetBind(): void
+    {
+        $table = new TestTable();
+        $table->select()->where('id', 1)->where('name', 'test');
+        
+        // Bindings are populated immediately when where() is called
+        $binds = $table->getBind();
+        $this->assertIsArray($binds);
+        $this->assertNotEmpty($binds);
+        $this->assertArrayHasKey(':id', $binds);
+        $this->assertEquals(1, $binds[':id']);
+        $this->assertArrayHasKey(':name', $binds);
+        $this->assertEquals('test', $binds[':name']);
+    }
+    
+    public function testGetSelectQueryString(): void
+    {
+        $table = new TestTable();
+        // Before select, should return null
+        $this->assertNull($table->getSelectQueryString());
+        
+        $table->select()->where('id', 1);
+        $query = $table->getSelectQueryString();
+        
+        // getSelectQueryString() returns only the SELECT part before run() is called
+        $this->assertIsString($query);
+        $this->assertStringContainsString('SELECT', $query);
+    }
+    
+    public function testGetSelectQueryStringWithoutSelect(): void
+    {
+        $table = new TestTable();
+        // where() without select() doesn't set an error immediately
+        $table->where('id', 1);
+        
+        $query = $table->getSelectQueryString();
+        // Query will be null since select() was not called
+        $this->assertNull($query);
+    }
+    
+    // ==========================================
+    // Transaction Methods
+    // ==========================================
+    
+    public function testBeginTransaction(): void
+    {
+        $table = new TestTable();
+        // Without active connection, should return false
+        $result = $table->beginTransaction();
+        $this->assertIsBool($result);
+    }
+    
+    public function testCommit(): void
+    {
+        $table = new TestTable();
+        // Without active transaction, should return false
+        $result = $table->commit();
+        $this->assertIsBool($result);
+    }
+    
+    public function testRollback(): void
+    {
+        $table = new TestTable();
+        // Without active transaction, should return false
+        $result = $table->rollback();
+        $this->assertIsBool($result);
+    }
+    
+    // ==========================================
+    // Connection Management
+    // ==========================================
+    
+    public function testDisconnect(): void
+    {
+        $table = new TestTable();
+        $this->assertFalse($table->isConnected());
+        
+        // Call disconnect (should not throw error even if not connected)
+        $table->disconnect();
+        $this->assertFalse($table->isConnected());
+    }
+    
+    public function testIsConnectedAfterSelect(): void
+    {
+        $table = new TestTable();
+        $this->assertFalse($table->isConnected());
+        
+        // After calling select, connection should not be established until run()
+        $table->select();
+        $this->assertFalse($table->isConnected());
+    }
+    
+    // ==========================================
+    // Select Method Variations
+    // ==========================================
+    
+    public function testSelectWithSpecificColumns(): void
+    {
+        $table = new TestTable();
+        $table->select('id, name, email');
+        
+        $query = $table->getQuery();
+        $this->assertNotNull($query);
+        $this->assertStringContainsString('id, name, email', $query);
+        $this->assertStringNotContainsString('*', $query);
+    }
+    
+    public function testSelectWithoutColumns(): void
+    {
+        $table = new TestTable();
+        $table->select();
+        
+        $query = $table->getQuery();
+        $this->assertNotNull($query);
+        $this->assertStringContainsString('SELECT *', $query);
+    }
+    
+    public function testSelectCalledMultipleTimes(): void
+    {
+        $table = new TestTable();
+        $table->select('id')->select('name')->select('email');
+        
+        $query = $table->getQuery();
+        $this->assertNotNull($query);
+        $this->assertStringContainsString('id', $query);
+        $this->assertStringContainsString('name', $query);
+        $this->assertStringContainsString('email', $query);
+    }
+    
+    public function testSelectWithNullAppend(): void
+    {
+        $table = new TestTable();
+        $table->select('id')->select(null);
+        
+        $query = $table->getQuery();
+        $this->assertNotNull($query);
+        $this->assertStringContainsString('id', $query);
+    }
+    
+    // ==========================================
+    // Join Clause Variations
+    // ==========================================
+    
+    public function testJoinWithLeftType(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->join('profiles', 'test_users.id = profiles.user_id', 'LEFT');
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testJoinWithRightType(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->join('orders', 'test_users.id = orders.user_id', 'RIGHT');
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testJoinWithInnerType(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->join('roles', 'test_users.role_id = roles.id', 'INNER');
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testJoinWithDefaultType(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->join('categories', 'test_users.category_id = categories.id');
+        
+        // Test fluent interface (default type is INNER)
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testJoinWithLowercaseType(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->join('tags', 'test_users.id = user_tags.user_id', 'left');
+        
+        // Test fluent interface (type should be converted to uppercase internally)
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    // ==========================================
+    // OrderBy Variations
+    // ==========================================
+    
+    public function testOrderByWithNullColumn(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->orderBy(null, true);
+        
+        // Test fluent interface (should use default column internally)
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testOrderByWithNullAscending(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->orderBy('name', null);
+        
+        // Test fluent interface (should use default ascending internally)
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testOrderByCalledMultipleTimes(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->orderBy('name', true)->orderBy('email', false);
+        
+        // Test fluent interface (second call should override first internally)
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    // ==========================================
+    // Edge Cases and Error Handling
+    // ==========================================
+    
+    public function testSetErrorBeforeConnection(): void
+    {
+        $table = new TestTable();
+        $table->setError('Test error before connection');
+        
+        $this->assertEquals('Test error before connection', $table->getError());
+        $this->assertFalse($table->isConnected());
+    }
+    
+    public function testSetErrorAfterConnection(): void
+    {
+        $table = new TestTable();
+        // Force connection by calling select()
+        $table->select();
+        
+        $table->setError('Test error after connection');
+        $this->assertEquals('Test error after connection', $table->getError());
+    }
+    
+    public function testGetErrorWithoutConnection(): void
+    {
+        $table = new TestTable();
+        $this->assertNull($table->getError());
+    }
+    
+    public function testLimitWithZero(): void
+    {
+        $table = new TestTable();
+        $table->limit(0);
+        
+        $this->assertEquals(0, $table->getLimit());
+    }
+    
+    public function testLimitWithNegative(): void
+    {
+        $table = new TestTable();
+        $table->limit(-10);
+        
+        $this->assertEquals(-10, $table->getLimit());
+    }
+    
+    public function testNoLimitSetsInternalFlag(): void
+    {
+        $table = new TestTable();
+        $result = $table->noLimit();
+        
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result); // Fluent interface
+    }
+    
+    public function testAllSetsInternalFlag(): void
+    {
+        $table = new TestTable();
+        $result = $table->all();
+        
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result); // Fluent interface
+    }
+    
+    public function testWhereWithArrayValue(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->where('status', ['active', 'pending']);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereWithNullValue(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->where('deleted_at', null);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereBetweenWithSameValues(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereBetween('id', 5, 5);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereLikeWithSpecialCharacters(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereLike('name', '%test_name%');
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereLikeLastWithMultipleConditions(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->where('status', 'active')->whereLikeLast('name', '%test%');
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereOrWithMultipleValues(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereOr('status', ['active', 'pending', 'approved']);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereBiggerThanWithFloatValue(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereBiggerThan('price', 99.99);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testWhereLessThanWithNegativeValue(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereLessThan('balance', -100);
+        
+        // Test fluent interface
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertSame($table, $result);
+    }
+    
+    public function testDestructor(): void
+    {
+        $table = new TestTable();
+        $table->select();
+        
+        // Destructor should not throw any errors
+        unset($table);
+        
+        $this->assertTrue(true); // If we reach here, destructor worked
+    }
 }
 

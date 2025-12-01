@@ -421,7 +421,7 @@ class Table
      * @param string|null $columns Columns to select (defaults to *)
      * @return self For method chaining
      */
-    public function select(string $columns = null): self
+    public function select(?string $columns = null): self
     {
         if (!$this->_isSelectSet) {
             $this->_query = $columns ? "SELECT $columns " : "SELECT * ";
@@ -488,7 +488,7 @@ class Table
      * @param bool|null $ascending Whether to sort in ascending order (true) or descending (false/null)
      * @return self For method chaining
      */
-    public function orderBy(string $columnName = null, bool $ascending = null): self
+    public function orderBy(?string $columnName = null, ?bool $ascending = null): self
     {
         $columnName = $columnName ?: 'id';
         $ascending = $ascending ? ' ASC ' : ' DESC ';

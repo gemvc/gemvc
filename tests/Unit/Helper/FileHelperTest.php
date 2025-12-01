@@ -414,5 +414,203 @@ class FileHelperTest extends TestCase
         $result = $fileHelper->moveAndEncrypt();
         $this->assertFalse($result);
     }
+    
+    // ============================================
+    // Additional Coverage Tests
+    // ============================================
+    
+    public function testConstructorWithNullOutputFileUsesSourceFile(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $fileHelper = new FileHelper($sourceFile, null);
+        
+        $this->assertEquals($sourceFile, $fileHelper->outputFile);
+        $this->assertEquals($sourceFile, $fileHelper->sourceFile);
+    }
+    
+    public function testErrorPropertyIsNullInitially(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $fileHelper = new FileHelper($sourceFile);
+        
+        // Error should be null for valid file
+        $this->assertNull($fileHelper->error);
+    }
+    
+    public function testSecretPropertyCanBeSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $fileHelper = new FileHelper($sourceFile);
+        $fileHelper->secret = 'test-secret-key';
+        
+        $this->assertEquals('test-secret-key', $fileHelper->secret);
+    }
+    
+    public function testReadFileContentsReturnsActualContents(): void
+    {
+        $content = 'Specific test content';
+        $sourceFile = $this->createTempFile($content);
+        $fileHelper = new FileHelper($sourceFile);
+        
+        $result = $fileHelper->readFileContents();
+        
+        $this->assertEquals($content, $result);
+    }
+    
+    public function testGetFileSizeWithLargerFile(): void
+    {
+        $content = str_repeat('A', 1024); // 1KB
+        $sourceFile = $this->createTempFile($content);
+        $fileHelper = new FileHelper($sourceFile);
+        
+        $size = $fileHelper->getFileSize($sourceFile);
+        
+        $this->assertIsString($size);
+        $this->assertStringContainsString('KB', $size);
+    }
+    
+    public function testGetFileSizeWithMegabyteFile(): void
+    {
+        $content = str_repeat('A', 1024 * 1024); // 1MB
+        $sourceFile = $this->createTempFile($content);
+        $fileHelper = new FileHelper($sourceFile);
+        
+        $size = $fileHelper->getFileSize($sourceFile);
+        
+        $this->assertIsString($size);
+        $this->assertStringContainsString('MB', $size);
+    }
+    
+    public function testDeleteSourceFileWithActualDeletion(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $this->assertFileExists($sourceFile);
+        
+        $fileHelper = new FileHelper($sourceFile);
+        $result = $fileHelper->deleteSourceFile();
+        
+        $this->assertTrue($result);
+        $this->assertFileDoesNotExist($sourceFile);
+    }
+    
+    public function testDeleteDestinationFileWithActualDeletion(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $destFile = $this->tempDir . DIRECTORY_SEPARATOR . 'dest_' . uniqid() . '.txt';
+        copy($sourceFile, $destFile);
+        $this->tempFiles[] = $destFile;
+        
+        $this->assertFileExists($destFile);
+        
+        $fileHelper = new FileHelper($sourceFile, $destFile);
+        $result = $fileHelper->deleteDestinationFile();
+        
+        $this->assertTrue($result);
+        $this->assertFileDoesNotExist($destFile);
+    }
+    
+    public function testDecryptReturnsOutputFilePath(): void
+    {
+        $sourceFile = $this->createTempFile('test content');
+        $destFile = $this->tempDir . DIRECTORY_SEPARATOR . 'encrypted_' . uniqid() . '.txt';
+        $this->tempFiles[] = $destFile;
+        
+        $fileHelper = new FileHelper($sourceFile, $destFile);
+        $fileHelper->secret = 'test-secret-key-123';
+        
+        // Encrypt first
+        $encryptResult = $fileHelper->encrypt();
+        $this->assertIsString($encryptResult);
+        
+        // Now decrypt
+        $fileHelper2 = new FileHelper($destFile);
+        $fileHelper2->secret = 'test-secret-key-123';
+        $decryptResult = $fileHelper2->decrypt();
+        
+        $this->assertIsString($decryptResult);
+        $this->assertEquals($destFile, $decryptResult);
+    }
+    
+    public function testEncryptReturnsOutputFilePath(): void
+    {
+        $sourceFile = $this->createTempFile('test content');
+        $destFile = $this->tempDir . DIRECTORY_SEPARATOR . 'encrypted_' . uniqid() . '.txt';
+        $this->tempFiles[] = $destFile;
+        
+        $fileHelper = new FileHelper($sourceFile, $destFile);
+        $fileHelper->secret = 'test-secret-key-123';
+        
+        $result = $fileHelper->encrypt();
+        
+        $this->assertIsString($result);
+        $this->assertEquals($destFile, $result);
+    }
+    
+    public function testToBase64FileReturnsOutputFilePath(): void
+    {
+        $sourceFile = $this->createTempFile('test content');
+        $destFile = $this->tempDir . DIRECTORY_SEPARATOR . 'base64_' . uniqid() . '.txt';
+        $this->tempFiles[] = $destFile;
+        
+        $fileHelper = new FileHelper($sourceFile, $destFile);
+        $result = $fileHelper->toBase64File();
+        
+        $this->assertIsString($result);
+        $this->assertEquals($destFile, $result);
+        $this->assertFileExists($destFile);
+    }
+    
+    public function testFromBase64ToOriginReturnsOutputFilePath(): void
+    {
+        $content = 'test content';
+        $sourceFile = $this->createTempFile($content);
+        $base64File = $this->tempDir . DIRECTORY_SEPARATOR . 'base64_' . uniqid() . '.txt';
+        $this->tempFiles[] = $base64File;
+        
+        // Create base64 file first
+        $fileHelper1 = new FileHelper($sourceFile, $base64File);
+        $fileHelper1->toBase64File();
+        
+        // Now decode it
+        $decodedFile = $this->tempDir . DIRECTORY_SEPARATOR . 'decoded_' . uniqid() . '.txt';
+        $this->tempFiles[] = $decodedFile;
+        
+        $fileHelper2 = new FileHelper($base64File, $decodedFile);
+        $result = $fileHelper2->fromBase64ToOrigin();
+        
+        $this->assertIsString($result);
+        $this->assertEquals($decodedFile, $result);
+        $this->assertFileExists($decodedFile);
+        
+        // Verify content matches
+        $decodedContent = file_get_contents($decodedFile);
+        $this->assertEquals($content, $decodedContent);
+    }
+    
+    public function testEncryptSetsErrorWhenSecretNotSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $fileHelper = new FileHelper($sourceFile);
+        $fileHelper->secret = null;
+        
+        $result = $fileHelper->encrypt();
+        
+        $this->assertFalse($result);
+        $this->assertNotNull($fileHelper->error);
+        $this->assertStringContainsString('secret', strtolower($fileHelper->error));
+    }
+    
+    public function testDecryptSetsErrorWhenSecretNotSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $fileHelper = new FileHelper($sourceFile);
+        $fileHelper->secret = null;
+        
+        $result = $fileHelper->decrypt();
+        
+        $this->assertFalse($result);
+        $this->assertNotNull($fileHelper->error);
+        $this->assertStringContainsString('secret', strtolower($fileHelper->error));
+    }
 }
 

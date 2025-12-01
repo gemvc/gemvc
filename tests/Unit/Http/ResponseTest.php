@@ -116,5 +116,57 @@ class ResponseTest extends TestCase
         $this->assertEquals('internal error', $response->message);
         $this->assertEquals('internal error: Server error', $response->service_message);
     }
+    
+    public function testSuccessButNoContentToShowResponse(): void
+    {
+        $response = Response::successButNoContentToShow(['data'], 1, 'No content');
+        
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(204, $response->response_code);
+        $this->assertEquals('no-content', $response->message);
+        $this->assertEquals(1, $response->count);
+        $this->assertEquals('success but no content to show: No content', $response->service_message);
+    }
+    
+    public function testUnknownErrorResponse(): void
+    {
+        $response = Response::unknownError('Unknown error occurred', ['debug' => 'info']);
+        
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(0, $response->response_code);
+        $this->assertEquals('unknown error', $response->message);
+        $this->assertEquals('unknown error: Unknown error occurred', $response->service_message);
+        $this->assertEquals(['debug' => 'info'], $response->data);
+    }
+    
+    public function testNotAcceptableResponse(): void
+    {
+        $response = Response::notAcceptable('Not acceptable');
+        
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(406, $response->response_code);
+        $this->assertEquals('not acceptable', $response->message);
+        $this->assertEquals('not acceptable: Not acceptable', $response->service_message);
+    }
+    
+    public function testConflictResponse(): void
+    {
+        $response = Response::conflict('Resource conflict');
+        
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(409, $response->response_code);
+        $this->assertEquals('conflict', $response->message);
+        $this->assertEquals('conflict: Resource conflict', $response->service_message);
+    }
+    
+    public function testUnsupportedMediaTypeResponse(): void
+    {
+        $response = Response::unsupportedMediaType('Unsupported media type');
+        
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(415, $response->response_code);
+        $this->assertEquals('unsupported media type', $response->message);
+        $this->assertEquals('unsupported media type: Unsupported media type', $response->service_message);
+    }
 }
 

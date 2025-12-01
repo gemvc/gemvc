@@ -513,5 +513,53 @@ class ImageHelperTest extends TestCase
         $result = $imageHelper->moveAndEncrypt();
         $this->assertFalse($result);
     }
+    
+    // ============================================
+    // Additional Coverage Tests
+    // ============================================
+    
+    public function testConstructorWithNullOutputFileUsesSourceFile(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $imageHelper = new ImageHelper($sourceFile, null);
+        
+        $this->assertEquals($sourceFile, $imageHelper->outputFile);
+        $this->assertEquals($sourceFile, $imageHelper->sourceFile);
+    }
+    
+    public function testErrorPropertyInitialization(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $imageHelper = new ImageHelper($sourceFile);
+        
+        // Error should be null for valid file
+        $this->assertNull($imageHelper->error);
+    }
+    
+    public function testSecretPropertyCanBeSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $imageHelper = new ImageHelper($sourceFile);
+        $imageHelper->secret = 'test-secret-key-123';
+        
+        $this->assertEquals('test-secret-key-123', $imageHelper->secret);
+    }
+    
+    public function testSourceFilePropertyIsSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $imageHelper = new ImageHelper($sourceFile);
+        
+        $this->assertEquals($sourceFile, $imageHelper->sourceFile);
+    }
+    
+    public function testOutputFilePropertyIsSet(): void
+    {
+        $sourceFile = $this->createTempFile();
+        $destFile = $this->tempDir . DIRECTORY_SEPARATOR . 'output.txt';
+        $imageHelper = new ImageHelper($sourceFile, $destFile);
+        
+        $this->assertEquals($destFile, $imageHelper->outputFile);
+    }
 }
 
