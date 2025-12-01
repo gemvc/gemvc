@@ -120,7 +120,7 @@ class Request
      * @param array<string>|null $authRules
      * @return bool
      */
-    public function auth(array $authRules=null): bool
+    public function auth(?array $authRules=null): bool
     {
         if(!$this->authenticate())
         {
@@ -659,7 +659,7 @@ class Request
      * @return JsonResponse
      * this function forward incomming post request as post to remote API and return remote api response as JsonResponse Object
      */
-    public function forwardPost(string $remoteApiUrl, string $authorizationHeader = null): JsonResponse
+    public function forwardPost(string $remoteApiUrl, ?string $authorizationHeader = null): JsonResponse
     {
 
         $jsonResponse = new JsonResponse();
@@ -687,7 +687,7 @@ class Request
      * @param array<string>|null  $manualMap
      * @return object|null
      */
-    public function mapPostToObject(object $object, array $manualMap = null): null|object  
+    public function mapPostToObject(object $object, ?array $manualMap = null): null|object  
     {
         if(count($this->post) == 0){
             $this->setErrorResponse(["No post data available"], 422);
@@ -742,7 +742,7 @@ class Request
      * @param array<string>|null  $manualMap
      * @return object|null
      */
-    public function mapPutToObject(object $object, array $manualMap = null): null|object  
+    public function mapPutToObject(object $object, ?array $manualMap = null): null|object  
     {
         if(!is_array($this->put) || count($this->put) == 0){
             $this->setErrorResponse(["No put data available"], 422);
