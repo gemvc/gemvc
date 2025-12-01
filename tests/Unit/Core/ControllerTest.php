@@ -117,29 +117,8 @@ class ControllerTest extends TestCase
     }
     
     // ============================================
-    // ListObjects Tests
+    // Pagination, Sorting, Filtering Tests (test private _listObjects indirectly via createList)
     // ============================================
-    
-    public function testListObjectsWithValidModel(): void
-    {
-        $controller = new TestController($this->request);
-        $model = new MockControllerTable();
-        
-        $result = $controller->ListObjects($model);
-        
-        $this->assertIsArray($result);
-        $this->assertCount(1, $result);
-    }
-    
-    public function testListObjectsWithColumns(): void
-    {
-        $controller = new TestController($this->request);
-        $model = new MockControllerTable();
-        
-        $result = $controller->ListObjects($model, 'id,name');
-        
-        $this->assertIsArray($result);
-    }
     
     public function testListObjectsWithPagination(): void
     {
@@ -151,9 +130,9 @@ class ControllerTest extends TestCase
         $controller = new TestController($request);
         $model = new MockControllerTable();
         
-        $result = $controller->ListObjects($model);
+        $result = $controller->createList($model);
         
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(\Gemvc\Http\JsonResponse::class, $result);
     }
     
     public function testListObjectsWithInvalidPageNumber(): void
@@ -167,8 +146,9 @@ class ControllerTest extends TestCase
         $model = new MockControllerTable();
         
         // This should trigger badRequest and die()
-        // We can't easily test die() in unit tests, so we verify the method exists
-        $this->assertTrue(method_exists($controller, 'ListObjects'));
+        // We can't easily test die() in unit tests, so we verify the public methods exist
+        $this->assertTrue(method_exists($controller, 'createList'));
+        $this->assertTrue(method_exists($controller, 'listJsonResponse'));
     }
     
     public function testListObjectsWithNegativePageNumber(): void
@@ -182,7 +162,7 @@ class ControllerTest extends TestCase
         $model = new MockControllerTable();
         
         // This should trigger badRequest and die()
-        $this->assertTrue(method_exists($controller, 'ListObjects'));
+        $this->assertTrue(method_exists($controller, 'createList'));
     }
     
     public function testListObjectsWithSorting(): void
@@ -196,9 +176,9 @@ class ControllerTest extends TestCase
         $controller = new TestController($request);
         $model = new MockControllerTable();
         
-        $result = $controller->ListObjects($model);
+        $result = $controller->createList($model);
         
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(\Gemvc\Http\JsonResponse::class, $result);
     }
     
     public function testListObjectsWithSortAscending(): void
@@ -212,9 +192,9 @@ class ControllerTest extends TestCase
         $controller = new TestController($request);
         $model = new MockControllerTable();
         
-        $result = $controller->ListObjects($model);
+        $result = $controller->createList($model);
         
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(\Gemvc\Http\JsonResponse::class, $result);
     }
     
     public function testListObjectsWithFiltering(): void
@@ -228,9 +208,9 @@ class ControllerTest extends TestCase
         $controller = new TestController($request);
         $model = new MockControllerTable();
         
-        $result = $controller->ListObjects($model);
+        $result = $controller->createList($model);
         
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(\Gemvc\Http\JsonResponse::class, $result);
     }
     
     public function testListObjectsWithFindable(): void
@@ -244,9 +224,9 @@ class ControllerTest extends TestCase
         $controller = new TestController($request);
         $model = new MockControllerTable();
         
-        $result = $controller->ListObjects($model);
+        $result = $controller->createList($model);
         
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(\Gemvc\Http\JsonResponse::class, $result);
     }
     
     // ============================================
