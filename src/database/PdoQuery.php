@@ -95,10 +95,10 @@ class PdoQuery
             $this->handleInsertError($e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool
-            // secure(false) releases connection without forcing rollback
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(!$success);
+            // PERFORMANCE: Only call secure() if query failed - successful queries already released connection
+            // This avoids redundant release attempts when connection is already back in pool
+            if ($this->executer !== null && !$success) {
+                $this->getExecuter()->secure(true);
             }
         }
     }
@@ -113,13 +113,16 @@ class PdoQuery
         $sqlState = $e->getCode();
         $errorInfo = $e->errorInfo ?? [];
         
-        // Log the full PDO exception details
-        error_log("PdoQuery::handleInsertError() - PDO Exception: " . json_encode([
-            'message' => $e->getMessage(),
-            'code' => $e->getCode(),
-            'errorInfo' => $errorInfo,
-            'trace' => $e->getTraceAsString()
-        ]));
+        // PERFORMANCE: Log errors only in dev mode - removed from production path
+        // This eliminates expensive error_log() and json_encode() calls on every error
+        if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+            error_log("PdoQuery::handleInsertError() - PDO Exception: " . json_encode([
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'errorInfo' => $errorInfo,
+                'trace' => $e->getTraceAsString()
+            ]));
+        }
         
         // Check for duplicate key/unique constraint violations
         // MySQL: SQLSTATE 23000, Error code 1062
@@ -162,9 +165,9 @@ class PdoQuery
             $this->handleUpdateError($e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(!$success);
+            // PERFORMANCE: Only call secure() if query failed - successful queries already released connection
+            if ($this->executer !== null && !$success) {
+                $this->getExecuter()->secure(true);
             }
         }
     }
@@ -220,9 +223,9 @@ class PdoQuery
             $this->handleDeleteError($e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(!$success);
+            // PERFORMANCE: Only call secure() if query failed - successful queries already released connection
+            if ($this->executer !== null && !$success) {
+                $this->getExecuter()->secure(true);
             }
         }
     }
@@ -279,11 +282,8 @@ class PdoQuery
             $this->handleQueryError('Select objects', $e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool for SELECT queries
-            // secure(false) releases without rollback
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(false);
-            }
+            // PERFORMANCE: Connection already released in fetchAllObjects(), skip redundant call
+            // secure() only needed on error path
         }
     }
 
@@ -311,11 +311,8 @@ class PdoQuery
             $this->handleQueryError('Select', $e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool for SELECT queries
-            // secure(false) releases without rollback
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(false);
-            }
+            // PERFORMANCE: Connection already released in fetchAll(), skip redundant call
+            // secure() only needed on error path
         }
     }
 
@@ -348,11 +345,8 @@ class PdoQuery
             $this->handleQueryError('Count', $e);
             return null;
         } finally {
-            // Ensure connection is returned to the appropriate pool for COUNT queries
-            // secure(false) releases without rollback
-            if ($this->executer !== null) {
-                $this->getExecuter()->secure(false);
-            }
+            // PERFORMANCE: Connection already released in fetchColumn(), skip redundant call
+            // secure() only needed on error path
         }
     }
 
@@ -377,14 +371,16 @@ class PdoQuery
                 return false;
             }
             
+            // PERFORMANCE: Bind all parameters in one pass, check errors only at the end
+            // This reduces error checking overhead in the loop
             foreach ($params as $key => $value) {
                 $executer->bind($key, $value);
-                
-                // Check for binding errors
-                if ($executer->getError() !== null) {
-                    $this->setError($executer->getError());
-                    return false;
-                }
+            }
+            
+            // Check for binding errors after all binds (more efficient)
+            if ($executer->getError() !== null) {
+                $this->setError($executer->getError());
+                return false;
             }
             
             $result = $executer->execute();

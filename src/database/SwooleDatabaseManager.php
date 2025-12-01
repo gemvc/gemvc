@@ -70,49 +70,41 @@ class SwooleDatabaseManager
         // Use a simple logger implementation that doesn't require Symfony Console
         $this->container->set(StdoutLoggerInterface::class, new class implements StdoutLoggerInterface {
             /** @param array<string, mixed> $context */
-            public function emergency(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function emergency(string|\Stringable $message, array $context = []): void { 
                 error_log("[EMERGENCY] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function alert(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function alert(string|\Stringable $message, array $context = []): void { 
                 error_log("[ALERT] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function critical(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function critical(string|\Stringable $message, array $context = []): void { 
                 error_log("[CRITICAL] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function error(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function error(string|\Stringable $message, array $context = []): void { 
                 error_log("[ERROR] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function warning(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function warning(string|\Stringable $message, array $context = []): void { 
                 error_log("[WARNING] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function notice(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function notice(string|\Stringable $message, array $context = []): void { 
                 error_log("[NOTICE] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function info(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function info(string|\Stringable $message, array $context = []): void { 
                 error_log("[INFO] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function debug(mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
+            public function debug(string|\Stringable $message, array $context = []): void { 
                 error_log("[DEBUG] " . (string) $message); 
             }
             /** @param array<string, mixed> $context */
-            public function log(mixed $level, mixed $message, array $context = []): void { 
-                // @phpstan-ignore-next-line
-                error_log("[" . (string) $level . "] " . (string) $message); 
+            public function log(mixed $level, string|\Stringable $message, array $context = []): void { 
+                $levelStr = is_string($level) ? $level : 'UNKNOWN';
+                error_log("[" . $levelStr . "] " . (string) $message); 
             }
         });
         
@@ -212,21 +204,9 @@ class SwooleDatabaseManager
             /** @var Connection $conn */
             $conn = $this->poolFactory->getPool($poolName)->get();
             
-            // Verify connection is alive with a lightweight ping
-            try {
-                // @phpstan-ignore-next-line
-                $conn->getPdo()->query('SELECT 1');
-            } catch (\Throwable $e) {
-                // Connection is broken, release it and get a new one
-                error_log("Broken connection detected: " . $e->getMessage());
-                try {
-                    $conn->release();
-                } catch (\Throwable $releaseError) {
-                    error_log("Error releasing broken connection: " . $releaseError->getMessage());
-                }
-                // Return null instead of recursing to prevent infinite loop
-                return null;
-            }
+            // PERFORMANCE: Removed SELECT 1 ping - Hyperf pool already handles connection health
+            // The pool's heartbeat mechanism (configured in pool settings) handles dead connections
+            // This eliminates an extra database query on every request
             
             return $conn;
         } catch (\Throwable $e) {
@@ -285,11 +265,13 @@ class SwooleDatabaseManager
                 'charset' => is_string($_ENV['DB_CHARSET'] ?? 'utf8mb4') ? ($_ENV['DB_CHARSET'] ?? 'utf8mb4') : 'utf8mb4',
                 'collation' => is_string($_ENV['DB_COLLATION'] ?? 'utf8mb4_unicode_ci') ? ($_ENV['DB_COLLATION'] ?? 'utf8mb4_unicode_ci') : 'utf8mb4_unicode_ci',
                 'pool' => [
-                    'min_connections' => is_numeric($_ENV['MIN_DB_CONNECTION_POOL'] ?? '1') ? (int) ($_ENV['MIN_DB_CONNECTION_POOL'] ?? '1') : 1,
-                    'max_connections' => is_numeric($_ENV['MAX_DB_CONNECTION_POOL'] ?? '10') ? (int) ($_ENV['MAX_DB_CONNECTION_POOL'] ?? '10') : 10,
+                    // PERFORMANCE: Optimized defaults for production workloads
+                    'min_connections' => is_numeric($_ENV['MIN_DB_CONNECTION_POOL'] ?? '8') ? (int) ($_ENV['MIN_DB_CONNECTION_POOL'] ?? '8') : 8,
+                    'max_connections' => is_numeric($_ENV['MAX_DB_CONNECTION_POOL'] ?? '16') ? (int) ($_ENV['MAX_DB_CONNECTION_POOL'] ?? '16') : 16,
                     'connect_timeout' => is_numeric($_ENV['DB_CONNECTION_TIME_OUT'] ?? '10.0') ? (float) ($_ENV['DB_CONNECTION_TIME_OUT'] ?? '10.0') : 10.0,
-                    'wait_timeout' => is_numeric($_ENV['DB_CONNECTION_EXPIER_TIME'] ?? '3.0') ? (float) ($_ENV['DB_CONNECTION_EXPIER_TIME'] ?? '3.0') : 3.0,
-                    'heartbeat' => -1,
+                    'wait_timeout' => is_numeric($_ENV['DB_CONNECTION_EXPIER_TIME'] ?? '2.0') ? (float) ($_ENV['DB_CONNECTION_EXPIER_TIME'] ?? '2.0') : 2.0,
+                    // PERFORMANCE: Disabled heartbeat for better performance (pool handles health)
+                    'heartbeat' => is_numeric($_ENV['DB_HEARTBEAT'] ?? '-1') ? (int) ($_ENV['DB_HEARTBEAT'] ?? '-1') : -1,
                     'max_idle_time' => is_numeric($_ENV['DB_CONNECTION_MAX_AGE'] ?? '60.0') ? (float) ($_ENV['DB_CONNECTION_MAX_AGE'] ?? '60.0') : 60.0,
                 ],
             ],

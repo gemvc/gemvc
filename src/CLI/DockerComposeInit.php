@@ -306,7 +306,24 @@ class DockerComposeInit extends Command
      */
     private function generateDockerComposeContent(): string
     {
-        $content = "services:\n";
+        $content = "# ============================================================================\n";
+        $content .= "# GEMVC Docker Compose Configuration - DEVELOPMENT ENVIRONMENT\n";
+        $content .= "# ============================================================================\n";
+        $content .= "#\n";
+        $content .= "# ⚠️  WARNING: This configuration is optimized for DEVELOPMENT ONLY!\n";
+        $content .= "#\n";
+        $content .= "# For PRODUCTION deployments:\n";
+        $content .= "#   1. Change MySQL innodb-flush-log-at-trx-commit from 2 to 1 (CRITICAL)\n";
+        $content .= "#   2. Enable binary logging (remove skip-log-bin, add --log-bin=mysql-bin)\n";
+        $content .= "#   3. Enable SSL/TLS with proper certificates\n";
+        $content .= "#   4. Use secrets management for passwords (not plain text)\n";
+        $content .= "#   5. Configure automated backups and monitoring\n";
+        $content .= "#   6. Review and adjust resource limits for production load\n";
+        $content .= "#\n";
+        $content .= "# See: MYSQL_PRODUCTION_GUIDE.md for complete production configuration\n";
+        $content .= "#\n";
+        $content .= "# ============================================================================\n\n";
+        $content .= "services:\n";
         
         // Add webserver service
         $content .= $this->generateWebserverService();
@@ -395,7 +412,7 @@ EOT;
             '--character-set-server=utf8mb4',
             '--collation-server=utf8mb4_unicode_ci',
             '--authentication-policy=caching_sha2_password',
-            '--host-cache-size=0',
+            '--host-cache-size=128',
             '--pid-file=/var/lib/mysql/mysql.pid',
             '--disable-ssl'
         ];
@@ -403,12 +420,32 @@ EOT;
         if ($this->developmentMode) {
             // Development mode: Clean logs, optimized for development
             $baseCommand = array_merge($baseCommand, [
+                // Logging
                 '--log-error-verbosity=1',
                 '--skip-log-bin',
                 '--skip-name-resolve',
                 '--skip-symbolic-links',
+                // InnoDB optimization
                 '--innodb-flush-log-at-trx-commit=2',
-                '--innodb-buffer-pool-size=128M'
+                '--innodb-buffer-pool-size=1G',
+                '--innodb-log-file-size=128M',
+                '--innodb-flush-method=O_DIRECT',
+                '--innodb-file-per-table=1',
+                // Connection optimization
+                '--max-connections=200',
+                '--thread-cache-size=50',
+                '--table-open-cache=2000',
+                '--table-definition-cache=1400',
+                // Buffer optimization
+                '--net-buffer-length=16384',
+                '--max-allowed-packet=64M',
+                '--bulk-insert-buffer-size=16M',
+                '--read-buffer-size=512K',
+                '--read-rnd-buffer-size=1M',
+                '--sort-buffer-size=1M',
+                '--join-buffer-size=1M',
+                '--tmp-table-size=64M',
+                '--max-heap-table-size=64M'
             ]);
         }
         // Production mode: Use base command only (verbose logs)
@@ -427,6 +464,11 @@ EOT;
         
         // Handle MySQL command dynamically
         if ($serviceKey === 'db') {
+            // Add resource limits for MySQL
+            $content .= "    mem_limit: 2g\n";
+            $content .= "    mem_reservation: 1g\n";
+            $content .= "    cpus: 2\n";
+            
             $command = $this->getMySQLCommand();
             $content .= "    command:\n";
             foreach ($command as $cmd) {

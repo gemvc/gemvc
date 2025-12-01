@@ -82,6 +82,7 @@ class InitProject extends Command
         $webserver = self::WEBSERVER_OPTIONS[$webserverChoice];
         
         // Check if webserver is available
+        // @phpstan-ignore-next-line identical.alwaysFalse - Defensive code for future webservers
         if ($webserver['status'] === 'coming_soon') {
             $this->warning("{$webserver['name']} support is coming soon!");
             $this->info("For now, please use OpenSwoole (option 1)");
@@ -190,6 +191,7 @@ class InitProject extends Command
         $this->write("\033[1;94m└─────────────────────────────────────────────────────────────┘\033[0m\n\n", 'white');
         
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
+            // @phpstan-ignore-next-line identical.alwaysTrue - Defensive code for future webservers
             $statusBadge = $option['status'] === 'available' 
                 ? "\033[1;32m[AVAILABLE]\033[0m" 
                 : "\033[1;33m[COMING SOON]\033[0m";

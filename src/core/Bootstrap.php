@@ -60,7 +60,7 @@ class Bootstrap
         } elseif ($response instanceof \Gemvc\Http\HtmlResponse) {
             // For Apache/Nginx, use the show() method
             $response->show();
-        } elseif (method_exists($response, 'show')) {
+        } elseif (is_object($response) && method_exists($response, 'show')) {
             // For any response with a show() method
             $response->show();
         } else {
@@ -229,7 +229,9 @@ class Bootstrap
         // Construct base URL from server information
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $host = is_string($host) ? $host : 'localhost';
         $port = $_SERVER['SERVER_PORT'] ?? '';
+        $port = is_string($port) || is_int($port) ? (string)$port : '';
         $portDisplay = ($port && $port !== '80' && $port !== '443') ? ':' . $port : '';
         $baseUrl = $protocol . '://' . $host . $portDisplay;
         $apiBaseUrl = rtrim($baseUrl, '/') . '/api';

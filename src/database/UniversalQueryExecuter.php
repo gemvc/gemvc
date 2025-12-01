@@ -200,14 +200,21 @@ class UniversalQueryExecuter
         try {
             $this->statement->execute();
             $this->affectedRows = $this->statement->rowCount();
-            if (stripos(trim($this->query), 'INSERT') === 0 && $this->db !== null) {
+            
+            // PERFORMANCE: Cache trimmed query and check first char instead of stripos
+            $queryUpper = strtoupper(ltrim($this->query));
+            $isInsert = ($queryUpper[0] ?? '') === 'I' && str_starts_with($queryUpper, 'INSERT');
+            $isSelect = ($queryUpper[0] ?? '') === 'S' && str_starts_with($queryUpper, 'SELECT');
+            
+            if ($isInsert && $this->db !== null) {
                 $this->lastInsertedId = $this->db->lastInsertId();
             }
             $this->endExecutionTime = microtime(true);
             
-            // Auto-release connection for non-SELECT queries if not in transaction
+            // PERFORMANCE: Release connection immediately after INSERT/UPDATE/DELETE
+            // Don't wait for destructor - release as soon as we're done
             // SELECT queries need to keep connection open for fetching
-            if (!$this->inTransaction && stripos(trim($this->query), 'SELECT') !== 0) {
+            if (!$this->inTransaction && !$isSelect) {
                 $this->statement->closeCursor();
                 $this->releaseConnection();
             }
@@ -222,8 +229,11 @@ class UniversalQueryExecuter
                 'error_code' => $e->getCode()
             ];
             
-            $errorDetails = json_encode(['message' => $e->getMessage(), 'code' => $e->getCode(), 'query' => $this->query, 'bindings' => $this->bindings]);
-            error_log("UniversalQueryExecuter::execute() - PDO Exception: " . $errorDetails);
+            // PERFORMANCE: Log errors only in dev mode
+            if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                $errorDetails = json_encode(['message' => $e->getMessage(), 'code' => $e->getCode(), 'query' => $this->query, 'bindings' => $this->bindings]);
+                error_log("UniversalQueryExecuter::execute() - PDO Exception: " . $errorDetails);
+            }
             
             $this->setError($e->getMessage(), $context);
             $this->endExecutionTime = microtime(true);

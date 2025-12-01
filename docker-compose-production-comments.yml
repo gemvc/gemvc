@@ -1,0 +1,244 @@
+# ====================================================================================
+# GEMVC MySQL Docker Configuration
+# ====================================================================================
+#
+# ⚠️  IMPORTANT: DEVELOPMENT CONFIGURATION
+# This configuration is optimized for LOCAL DEVELOPMENT ONLY!
+#
+# For PRODUCTION deployments, see comments marked with "PRODUCTION:" below.
+# Full production guide: MYSQL_PRODUCTION_GUIDE.md
+#
+# ====================================================================================
+
+services:
+  db:
+    image: mysql:8.0
+    
+    # ------------------------------------------------------------------
+    # RESOURCE LIMITS
+    # ------------------------------------------------------------------
+    # Development: 2GB RAM, 2 CPUs
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2
+    
+    # PRODUCTION: Increase based on your server capacity
+    # Example for 8GB RAM server:
+    #   mem_limit: 8g
+    #   mem_reservation: 4g
+    #   cpus: 4
+    
+    command:
+      # ------------------------------------------------------------------
+      # CHARACTER SET & COLLATION
+      # ------------------------------------------------------------------
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --authentication-policy=caching_sha2_password
+      
+      # ------------------------------------------------------------------
+      # NETWORK OPTIMIZATION
+      # ------------------------------------------------------------------
+      - --host-cache-size=128
+      - --skip-name-resolve                      # Skip DNS lookups (faster connections)
+      - --skip-symbolic-links                    # Disable symlinks for security
+      - --pid-file=/var/lib/mysql/mysql.pid
+      
+      # PRODUCTION: Consider increasing host cache
+      #   - --host-cache-size=256
+      
+      # ------------------------------------------------------------------
+      # SSL/TLS CONFIGURATION
+      # ------------------------------------------------------------------
+      - --disable-ssl                            # DEV: SSL disabled for simplicity
+      
+      # PRODUCTION: ENABLE SSL (CRITICAL for security)
+      # Replace above line with:
+      #   - --require-secure-transport=ON
+      #   - --ssl-ca=/etc/mysql/certs/ca.pem
+      #   - --ssl-cert=/etc/mysql/certs/server-cert.pem
+      #   - --ssl-key=/etc/mysql/certs/server-key.pem
+      # Don't forget to mount certificates volume!
+      
+      # ------------------------------------------------------------------
+      # LOGGING CONFIGURATION
+      # ------------------------------------------------------------------
+      - --log-error-verbosity=1                  # DEV: Minimal error logging
+      - --skip-log-bin                           # DEV: Binary logging disabled
+      
+      # PRODUCTION: ENABLE BINARY LOGGING (CRITICAL for backups/recovery)
+      # Remove --skip-log-bin and add:
+      #   - --log-bin=mysql-bin
+      #   - --binlog-format=ROW
+      #   - --expire-logs-days=7
+      #   - --sync-binlog=1
+      #   - --slow-query-log=1
+      #   - --slow-query-log-file=/var/log/mysql/slow.log
+      #   - --long-query-time=2
+      
+      # ------------------------------------------------------------------
+      # INNODB CONFIGURATION
+      # ------------------------------------------------------------------
+      
+      # DATA DURABILITY
+      - --innodb-flush-log-at-trx-commit=2       # DEV: Fast but can lose 1s of data
+      
+      # PRODUCTION: CHANGE TO FULL ACID COMPLIANCE (CRITICAL)
+      #   - --innodb-flush-log-at-trx-commit=1   # Every transaction persisted to disk
+      
+      # BUFFER POOL
+      - --innodb-buffer-pool-size=1G             # DEV: 50% of container RAM
+      
+      # PRODUCTION: Scale with your RAM (50-70% of available RAM)
+      # For 8GB server:
+      #   - --innodb-buffer-pool-size=5G
+      #   - --innodb-buffer-pool-instances=8
+      
+      # LOG FILES
+      - --innodb-log-file-size=128M
+      
+      # PRODUCTION: Increase for better write performance
+      #   - --innodb-log-file-size=512M
+      #   - --innodb-log-buffer-size=64M
+      
+      # I/O OPTIMIZATION
+      - --innodb-flush-method=O_DIRECT           # Avoid double buffering
+      - --innodb-file-per-table=1                # Each table in separate file
+      
+      # PRODUCTION: Add thread optimization
+      #   - --innodb-read-io-threads=8
+      #   - --innodb-write-io-threads=8
+      
+      # ------------------------------------------------------------------
+      # CONNECTION CONFIGURATION
+      # ------------------------------------------------------------------
+      - --max-connections=200                    # DEV: Max concurrent connections
+      - --thread-cache-size=50                   # Connection reuse
+      
+      # PRODUCTION: Scale based on your application
+      #   - --max-connections=500
+      #   - --thread-cache-size=100
+      
+      # ------------------------------------------------------------------
+      # TABLE CACHE
+      # ------------------------------------------------------------------
+      - --table-open-cache=2000
+      - --table-definition-cache=1400
+      
+      # PRODUCTION: Increase for many tables
+      #   - --table-open-cache=4000
+      #   - --table-definition-cache=2000
+      
+      # ------------------------------------------------------------------
+      # BUFFER SIZES (Per-Connection)
+      # ------------------------------------------------------------------
+      # Note: These are allocated PER CONNECTION, keep moderate
+      - --net-buffer-length=16384
+      - --max-allowed-packet=64M
+      - --bulk-insert-buffer-size=16M
+      - --read-buffer-size=512K
+      - --read-rnd-buffer-size=1M
+      - --sort-buffer-size=1M
+      - --join-buffer-size=1M
+      
+      # PRODUCTION: Can increase slightly if needed
+      #   - --max-allowed-packet=128M
+      #   - --sort-buffer-size=2M
+      #   - --join-buffer-size=2M
+      
+      # ------------------------------------------------------------------
+      # TEMPORARY TABLES
+      # ------------------------------------------------------------------
+      - --tmp-table-size=64M
+      - --max-heap-table-size=64M
+      
+      # PRODUCTION: Increase for complex queries
+      #   - --tmp-table-size=128M
+      #   - --max-heap-table-size=128M
+    
+    ports:
+      - "3306:3306"
+    
+    volumes:
+      - mysql-data:/var/lib/mysql
+      
+      # PRODUCTION: Add log volume for persistence
+      #   - mysql-logs:/var/log/mysql
+      #   - mysql-certs:/etc/mysql/certs:ro    # For SSL certificates
+    
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword"      # DEV: Default password
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+      
+      # PRODUCTION: USE SECRETS (CRITICAL)
+      # Never use plain text passwords in production!
+      # Use Docker secrets, environment variables from vault, or secret management:
+      #   MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      #   MYSQL_DATABASE: ${MYSQL_DATABASE}
+      #   MYSQL_USER: ${MYSQL_USER}
+      #   MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    
+    networks:
+      - backend-network
+    
+    # PRODUCTION: Add health check and restart policy
+    # healthcheck:
+    #   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
+    # 
+    # restart: unless-stopped
+    # 
+    # security_opt:
+    #   - no-new-privileges:true
+
+# ====================================================================================
+# PRODUCTION DEPLOYMENT CHECKLIST
+# ====================================================================================
+#
+# Before deploying to production, ensure you:
+#
+#   [X] Change innodb-flush-log-at-trx-commit to 1 (CRITICAL)
+#   [X] Enable binary logging (remove skip-log-bin) (CRITICAL)
+#   [X] Enable SSL/TLS with proper certificates (CRITICAL)
+#   [X] Use secrets management for passwords (CRITICAL)
+#   [X] Configure automated backups
+#   [X] Set up monitoring and alerting
+#   [X] Test disaster recovery procedures
+#   [X] Document backup/restore procedures
+#   [X] Adjust resource limits for production load
+#   [X] Configure log rotation
+#   [X] Set up health checks
+#   [X] Review security hardening
+#   [X] Consider managed database services (AWS RDS, Azure, etc.)
+#
+# For detailed production configuration guide, see: MYSQL_PRODUCTION_GUIDE.md
+#
+# ====================================================================================
+# MANAGED DATABASE ALTERNATIVES (RECOMMENDED)
+# ====================================================================================
+#
+# For production, consider using managed database services:
+#
+#   • AWS RDS for MySQL       - Automated backups, HA, monitoring
+#   • Azure Database MySQL    - Microsoft Azure managed service
+#   • Google Cloud SQL        - Automatic failover and scaling
+#   • PlanetScale            - Serverless MySQL with branching
+#   • DigitalOcean Managed   - Simple and cost-effective
+#
+# Benefits: Automated backups, patches, monitoring, HA, professional support
+#
+# ====================================================================================
+
+volumes:
+  mysql-data:
+  # PRODUCTION: Add additional volumes
+  # mysql-logs:
+  # mysql-certs:
+
+networks:
+  backend-network:
+    driver: bridge
+

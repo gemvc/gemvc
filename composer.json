@@ -8,6 +8,24 @@
         "symfony/dotenv": "^6.4 || ^7.2"
     },
     "license": "MIT",
+    "archive": {
+        "exclude": [
+            "/tests",
+            "/.phpunit.cache",
+            "/phpunit.xml",
+            "/phpstan.neon",
+            "/phpstan-tests.neon",
+            "/coverage",
+            "/test-results.xml",
+            "/.github",
+            "/.gitignore",
+            "/.gitattributes",
+            "/MYSQL_PRODUCTION_GUIDE.md",
+            "/SESSION_CHANGES_SUMMARY.md",
+            "/PerformanceOptimizazion.md",
+            "/docker-compose-production-comments.yml"
+        ]
+    },
     "autoload": {
         "psr-4": {
             "Gemvc\\": "src/",

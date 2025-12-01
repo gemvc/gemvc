@@ -163,14 +163,35 @@ class Table
      */
     public function insertSingleQuery(): ?static
     {
-        $this->validateProperties([]);
-
-        $query = $this->buildInsertQuery();
-        $arrayBind = $this->getInsertBindings();
+        // PERFORMANCE: Skip validateProperties([]) - empty array means no validation needed
+        // This eliminates unnecessary function call overhead
         
-        // Debug logging to capture the actual SQL and parameters
-        error_log("Table::insertSingleQuery() - Executing query: " . $query);
-        error_log("Table::insertSingleQuery() - With bindings: " . json_encode($arrayBind));
+        // PERFORMANCE: Build query and bindings in single pass instead of two iterations
+        $columns = [];
+        $params = [];
+        $arrayBind = [];
+        
+        // Single iteration over object properties (was done twice before)
+        // @phpstan-ignore-next-line
+        foreach ($this as $key => $value) {
+            if ($key[0] === '_') {
+                continue;
+            }
+            $columns[] = $key;
+            $params[] = ':' . $key;
+            $arrayBind[':' . $key] = $value;
+        }
+        
+        // Build query string efficiently
+        $columnsStr = implode(',', $columns);
+        $paramsStr = implode(',', $params);
+        $query = "INSERT INTO {$this->_internalTable()} ({$columnsStr}) VALUES ({$paramsStr})";
+        
+        // PERFORMANCE: Debug logging only in dev mode - removed from production path
+        if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+            error_log("Table::insertSingleQuery() - Executing query: " . $query);
+            error_log("Table::insertSingleQuery() - With bindings: " . json_encode($arrayBind));
+        }
         
         $result = $this->getPdoQuery()->insertQuery($query, $arrayBind);
         
@@ -185,7 +206,10 @@ class Table
                 'bindings' => $arrayBind,
                 'error' => $currentError
             ];
-            error_log("Table::insertSingleQuery() - Insert failed with full details: " . json_encode($errorInfo));
+            // PERFORMANCE: Error logging only in dev mode
+            if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                error_log("Table::insertSingleQuery() - Insert failed with full details: " . json_encode($errorInfo));
+            }
             
             $this->setError("Insert failed in {$this->_internalTable()}: {$currentError}");
             return null;
@@ -1162,50 +1186,9 @@ class Table
         return trim($query);
     }
     
-    /**
-     * Builds bindings for INSERT operation
-     * 
-     * @return array<string,mixed> Bindings for insert query
-     */
-    private function getInsertBindings(): array
-    {
-        $arrayBind = [];
-        
-        // @phpstan-ignore-next-line
-        foreach ($this as $key => $value) {
-            if ($key[0] === '_') {
-                continue;
-            }
-            $arrayBind[':' . $key] = $value;
-        }
-        
-        return $arrayBind;
-    }
-    
-    /**
-     * Builds an INSERT query
-     * 
-     * @return string Complete INSERT query
-     */
-    private function buildInsertQuery(): string
-    {
-        $columns = '';
-        $params = '';
-        
-        // @phpstan-ignore-next-line
-        foreach ($this as $key => $value) {
-            if ($key[0] === '_') {
-                continue;
-            }
-            $columns .= $key . ',';
-            $params .= ':' . $key . ',';
-        }
-
-        $columns = rtrim($columns, ',');
-        $params = rtrim($params, ',');
-
-        return "INSERT INTO {$this->_internalTable()} ({$columns}) VALUES ({$params})";
-    }
+    // REMOVED: getInsertBindings() and buildInsertQuery() methods
+    // These methods became unused after performance optimization 3.1
+    // The logic was inlined in insertSingleQuery() for single-pass iteration
     
     /**
      * Builds an UPDATE query with bindings

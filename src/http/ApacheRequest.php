@@ -66,6 +66,7 @@ class ApacheRequest
     {   
         // Check if Content-Type is JSON and parse it
         $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+        $contentType = is_string($contentType) ? $contentType : '';
         if (empty($_POST) && strpos($contentType, 'application/json') !== false) {
             $rawContent = file_get_contents('php://input');
             if ($rawContent) {
