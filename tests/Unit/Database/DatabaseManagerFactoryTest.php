@@ -6,9 +6,9 @@ namespace Tests\Unit\Database;
 
 use PHPUnit\Framework\TestCase;
 use Gemvc\Database\DatabaseManagerFactory;
-use Gemvc\Database\DatabaseManagerInterface;
-use Gemvc\Database\SimplePdoDatabaseManager;
-use Gemvc\Core\WebserverDetector;
+use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
+use Gemvc\Database\Connection\Pdo\PdoConnection;
+use Gemvc\Database\Connection\OpenSwoole\SwooleConnection;
 
 /**
  * @outputBuffering enabled
@@ -21,14 +21,16 @@ class DatabaseManagerFactoryTest extends TestCase
         $this->expectOutputString('');
         // Reset factory before each test
         DatabaseManagerFactory::resetInstance();
-        // Reset SimplePdoDatabaseManager singleton
-        SimplePdoDatabaseManager::resetInstance();
+        // Reset package singletons
+        PdoConnection::resetInstance();
+        SwooleConnection::resetInstance();
     }
     
     protected function tearDown(): void
     {
         DatabaseManagerFactory::resetInstance();
-        SimplePdoDatabaseManager::resetInstance();
+        PdoConnection::resetInstance();
+        SwooleConnection::resetInstance();
         parent::tearDown();
     }
     
@@ -44,10 +46,10 @@ class DatabaseManagerFactoryTest extends TestCase
         $this->assertSame($manager1, $manager2);
     }
     
-    public function testGetManagerReturnsDatabaseManagerInterface(): void
+    public function testGetManagerReturnsConnectionManagerInterface(): void
     {
         $manager = DatabaseManagerFactory::getManager();
-        $this->assertInstanceOf(DatabaseManagerInterface::class, $manager);
+        $this->assertInstanceOf(ConnectionManagerInterface::class, $manager);
     }
     
     // ============================================
@@ -74,7 +76,7 @@ class DatabaseManagerFactoryTest extends TestCase
         
         // Get manager again - should create new instance
         $manager = DatabaseManagerFactory::getManager();
-        $this->assertInstanceOf(DatabaseManagerInterface::class, $manager);
+        $this->assertInstanceOf(ConnectionManagerInterface::class, $manager);
     }
     
     // ============================================
@@ -153,7 +155,7 @@ class DatabaseManagerFactoryTest extends TestCase
         $info = DatabaseManagerFactory::getManagerInfo();
         $this->assertArrayHasKey('pdo_config', $info);
         $this->assertIsArray($info['pdo_config']);
-        $this->assertArrayHasKey('enhanced_connection', $info['pdo_config']);
+        $this->assertArrayHasKey('persistent_connections', $info['pdo_config']);
         $this->assertArrayHasKey('persistent_enabled', $info['pdo_config']);
         $this->assertArrayHasKey('implementation', $info['pdo_config']);
         
@@ -173,66 +175,66 @@ class DatabaseManagerFactoryTest extends TestCase
         unset($_ENV['WEBSERVER_TYPE']);
     }
     
-    public function testGetManagerInfoPdoConfigEnhancedConnectionEnabled(): void
+    public function testGetManagerInfoPdoConfigPersistentConnectionsEnabled(): void
     {
-        // Force apache environment with enhanced connection
+        // Force apache environment with persistent connections
         $_ENV['WEBSERVER_TYPE'] = 'apache';
-        $_ENV['DB_ENHANCED_CONNECTION'] = '1';
+        $_ENV['DB_PERSISTENT_CONNECTIONS'] = '1';
         DatabaseManagerFactory::resetInstance();
         
         $info = DatabaseManagerFactory::getManagerInfo();
-        $this->assertEquals('1', $info['pdo_config']['enhanced_connection']);
+        $this->assertEquals('1', $info['pdo_config']['persistent_connections']);
         $this->assertTrue($info['pdo_config']['persistent_enabled']);
-        $this->assertEquals('EnhancedPdoDatabaseManager', $info['pdo_config']['implementation']);
+        $this->assertStringContainsString('PdoConnection', $info['pdo_config']['implementation']);
         
         unset($_ENV['WEBSERVER_TYPE']);
-        unset($_ENV['DB_ENHANCED_CONNECTION']);
+        unset($_ENV['DB_PERSISTENT_CONNECTIONS']);
     }
     
-    public function testGetManagerInfoPdoConfigEnhancedConnectionDisabled(): void
+    public function testGetManagerInfoPdoConfigPersistentConnectionsDisabled(): void
     {
-        // Force apache environment without enhanced connection
+        // Force apache environment without persistent connections
         $_ENV['WEBSERVER_TYPE'] = 'apache';
-        $_ENV['DB_ENHANCED_CONNECTION'] = '0';
+        $_ENV['DB_PERSISTENT_CONNECTIONS'] = '0';
         DatabaseManagerFactory::resetInstance();
         
         $info = DatabaseManagerFactory::getManagerInfo();
-        $this->assertEquals('0', $info['pdo_config']['enhanced_connection']);
+        $this->assertEquals('0', $info['pdo_config']['persistent_connections']);
         $this->assertFalse($info['pdo_config']['persistent_enabled']);
-        $this->assertEquals('SimplePdoDatabaseManager', $info['pdo_config']['implementation']);
+        $this->assertStringContainsString('PdoConnection', $info['pdo_config']['implementation']);
         
         unset($_ENV['WEBSERVER_TYPE']);
-        unset($_ENV['DB_ENHANCED_CONNECTION']);
+        unset($_ENV['DB_PERSISTENT_CONNECTIONS']);
     }
     
-    public function testGetManagerInfoPdoConfigEnhancedConnectionTrue(): void
+    public function testGetManagerInfoPdoConfigPersistentConnectionsTrue(): void
     {
-        // Force apache environment with enhanced connection as 'true'
+        // Force apache environment with persistent connections as 'true'
         $_ENV['WEBSERVER_TYPE'] = 'apache';
-        $_ENV['DB_ENHANCED_CONNECTION'] = 'true';
+        $_ENV['DB_PERSISTENT_CONNECTIONS'] = 'true';
         DatabaseManagerFactory::resetInstance();
         
         $info = DatabaseManagerFactory::getManagerInfo();
         $this->assertTrue($info['pdo_config']['persistent_enabled']);
-        $this->assertEquals('EnhancedPdoDatabaseManager', $info['pdo_config']['implementation']);
+        $this->assertStringContainsString('PdoConnection', $info['pdo_config']['implementation']);
         
         unset($_ENV['WEBSERVER_TYPE']);
-        unset($_ENV['DB_ENHANCED_CONNECTION']);
+        unset($_ENV['DB_PERSISTENT_CONNECTIONS']);
     }
     
-    public function testGetManagerInfoPdoConfigEnhancedConnectionYes(): void
+    public function testGetManagerInfoPdoConfigPersistentConnectionsYes(): void
     {
-        // Force apache environment with enhanced connection as 'yes'
+        // Force apache environment with persistent connections as 'yes'
         $_ENV['WEBSERVER_TYPE'] = 'apache';
-        $_ENV['DB_ENHANCED_CONNECTION'] = 'yes';
+        $_ENV['DB_PERSISTENT_CONNECTIONS'] = 'yes';
         DatabaseManagerFactory::resetInstance();
         
         $info = DatabaseManagerFactory::getManagerInfo();
         $this->assertTrue($info['pdo_config']['persistent_enabled']);
-        $this->assertEquals('EnhancedPdoDatabaseManager', $info['pdo_config']['implementation']);
+        $this->assertStringContainsString('PdoConnection', $info['pdo_config']['implementation']);
         
         unset($_ENV['WEBSERVER_TYPE']);
-        unset($_ENV['DB_ENHANCED_CONNECTION']);
+        unset($_ENV['DB_PERSISTENT_CONNECTIONS']);
     }
     
     // ============================================
@@ -314,29 +316,25 @@ class DatabaseManagerFactoryTest extends TestCase
         DatabaseManagerFactory::resetInstance();
         $manager = DatabaseManagerFactory::getManager();
         
-        // Should default to SimplePdoDatabaseManager (Apache/Nginx default)
-        $this->assertInstanceOf(DatabaseManagerInterface::class, $manager);
+        // Should default to PdoConnection (Apache/Nginx default)
+        $this->assertInstanceOf(ConnectionManagerInterface::class, $manager);
     }
     
     // ============================================
     // Manager Creation Tests
     // ============================================
     
-    public function testGetManagerCreatesSimplePdoManagerByDefault(): void
+    public function testGetManagerCreatesPdoConnectionByDefault(): void
     {
         // Ensure default environment
         unset($_ENV['WEBSERVER_TYPE']);
-        unset($_ENV['DB_ENHANCED_CONNECTION']);
+        unset($_ENV['DB_PERSISTENT_CONNECTIONS']);
         
         DatabaseManagerFactory::resetInstance();
         $manager = DatabaseManagerFactory::getManager();
         
-        // Should be SimplePdoDatabaseManager or EnhancedPdoDatabaseManager
-        $managerClass = get_class($manager);
-        $this->assertTrue(
-            $managerClass === 'Gemvc\Database\SimplePdoDatabaseManager' ||
-            $managerClass === 'Gemvc\Database\EnhancedPdoDatabaseManager'
-        );
+        // Should be PdoConnection
+        $this->assertInstanceOf(PdoConnection::class, $manager);
     }
     
     public function testGetManagerUsesCachedEnvironment(): void

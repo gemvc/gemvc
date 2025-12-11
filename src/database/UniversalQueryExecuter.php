@@ -5,6 +5,8 @@ namespace Gemvc\Database;
 use PDO;
 use PDOStatement;
 use Throwable;
+use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
+use Gemvc\Database\Connection\Contracts\ConnectionInterface;
 
 /**
  * Universal Query Executer for Multiple Web Server Environments
@@ -34,8 +36,11 @@ class UniversalQueryExecuter
     /** @var \PDO|null The database connection */
     private ?\PDO $db = null;
 
-    /** @var DatabaseManagerInterface The database manager */
-    private DatabaseManagerInterface $dbManager;
+    /** @var ConnectionInterface|null The active connection interface */
+    private ?ConnectionInterface $activeConnection = null;
+
+    /** @var ConnectionManagerInterface The database manager */
+    private ConnectionManagerInterface $dbManager;
 
     /**
      * Constructor - automatically detects environment and uses appropriate manager
@@ -54,14 +59,25 @@ class UniversalQueryExecuter
      */
     private function getConnection(string $poolName = 'default'): ?\PDO
     {
-        $conn = $this->dbManager->getConnection($poolName);
-        
-        // Propagate error from DatabaseManager to QueryExecuter
-        if ($conn === null) {
+        $this->activeConnection = $this->dbManager->getConnection($poolName);
+        if ($this->activeConnection === null) {
             $this->setError('Connection error: ' . ($this->dbManager->getError() ?? 'Unknown error'));
+            return null;
         }
-        
-        return $conn;
+
+        $driver = $this->activeConnection->getConnection();
+        if ($driver instanceof PDO) {
+            return $driver;
+        }
+
+        $this->setError('Connection did not return a PDO instance');
+        // Release non-PDO connection
+        $connection = $this->activeConnection;
+        if ($connection !== null) {
+            $this->dbManager->releaseConnection($connection);
+        }
+        $this->activeConnection = null;
+        return null;
     }
 
     /**
@@ -440,15 +456,18 @@ class UniversalQueryExecuter
             $this->statement->closeCursor();
             $this->statement = null;
         }
-        if ($this->db) {
+        if ($this->activeConnection !== null) {
             try {
-                $this->dbManager->releaseConnection($this->db);
+                /** @var ConnectionInterface $connection */
+                $connection = $this->activeConnection;
+                $this->dbManager->releaseConnection($connection);
                 if ($isBroken) {
                     $this->debug("Broken connection released back to pool.");
                 }
             } catch (Throwable $e) {
                 error_log('Error releasing connection: ' . $e->getMessage());
             }
+            $this->activeConnection = null;
         }
         $this->db = null;
         $this->inTransaction = false;

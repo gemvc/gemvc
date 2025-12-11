@@ -342,11 +342,9 @@ class PdoQueryTest extends TestCase
         // Use reflection to inject mock executer
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'John']);
@@ -366,11 +364,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'John']);
@@ -396,11 +392,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'John']);
@@ -413,7 +407,7 @@ class PdoQueryTest extends TestCase
     {
         // Create exception with message that will trigger the duplicate key handler
         // The handler checks: stripos($e->getMessage(), 'duplicate') !== false
-        $pdoException = new \PDOException('Duplicate entry for key', 23000);
+        $pdoException = new PDOException('Duplicate entry for key', 23000);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
         $errorState = null;
@@ -431,11 +425,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (email) VALUES (:email)', [':email' => 'test@example.com']);
@@ -461,11 +453,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->updateQuery('UPDATE users SET name = :name WHERE id = :id', [':name' => 'John', ':id' => 1]);
@@ -484,11 +474,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->updateQuery('UPDATE users SET name = :name WHERE id = :id', [':name' => 'John', ':id' => 999]);
@@ -499,7 +487,7 @@ class PdoQueryTest extends TestCase
     public function testUpdateQueryDuplicateKeyError(): void
     {
         // Create exception with message that will trigger the duplicate key handler
-        $pdoException = new \PDOException('Duplicate entry for key', 23000);
+        $pdoException = new PDOException('Duplicate entry for key', 23000);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
         $errorState = null;
@@ -517,11 +505,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->updateQuery('UPDATE users SET email = :email WHERE id = :id', [':email' => 'test@example.com', ':id' => 1]);
@@ -547,11 +533,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -570,11 +554,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 999]);
@@ -586,7 +568,7 @@ class PdoQueryTest extends TestCase
     {
         // Create exception with message that will trigger the foreign key handler
         // The handler checks: stripos($e->getMessage(), 'foreign key constraint') !== false
-        $pdoException = new \PDOException('Foreign key constraint fails', 23000);
+        $pdoException = new PDOException('Foreign key constraint fails', 23000);
         $pdoException->errorInfo = ['23000', 1451, 'Foreign key constraint fails'];
         
         $errorState = null;
@@ -604,11 +586,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -634,11 +614,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users WHERE id = :id', [':id' => 1]);
@@ -659,11 +637,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users WHERE id = :id', [':id' => 999]);
@@ -683,11 +659,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQueryObjects('SELECT * FROM users WHERE id = :id', [':id' => 1]);
@@ -709,11 +683,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectCountQuery('SELECT COUNT(*) FROM users', []);
@@ -732,11 +704,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectCountQuery('SELECT COUNT(*) FROM users WHERE id > :id', [':id' => 1000]);
@@ -766,11 +736,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectCountQuery('SELECT COUNT(*) FROM users', []);
@@ -790,11 +758,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->beginTransaction();
@@ -808,11 +774,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->beginTransaction();
@@ -826,7 +790,6 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $result = $this->pdoQuery->commit();
@@ -848,7 +811,6 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $result = $this->pdoQuery->rollback();
@@ -870,11 +832,10 @@ class PdoQueryTest extends TestCase
     public function testGetEnvironmentInfoWithExecuter(): void
     {
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
-        $mockExecuter->method('getManagerInfo')->willReturn(['environment' => 'apache', 'manager_class' => 'SimplePdoDatabaseManager']);
+        $mockExecuter->method('getManagerInfo')->willReturn(['environment' => 'apache', 'manager_class' => 'Gemvc\\Database\\Connection\\Pdo\\PdoConnection']);
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $info = $this->pdoQuery->getEnvironmentInfo();
@@ -901,7 +862,6 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $error = $this->pdoQuery->getError();
@@ -917,7 +877,6 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $this->pdoQuery->setError('Test error', ['key' => 'value']);
@@ -932,7 +891,6 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $this->pdoQuery->clearError();
@@ -948,11 +906,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $this->assertTrue($this->pdoQuery->isConnected());
@@ -966,11 +922,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $this->pdoQuery->disconnect();
@@ -995,11 +949,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1033,11 +985,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users WHERE id = :id', [':id' => 1]);
@@ -1071,11 +1021,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1100,11 +1048,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1125,11 +1071,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1150,11 +1094,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1175,11 +1117,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1201,11 +1141,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1226,11 +1164,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1240,7 +1176,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithErrorCodeMatch(): void
     {
         // Test isTransientError when errorCode (not sqlState) matches transient codes
-        $pdoException = new \PDOException('Connection exception', 8000);
+        $pdoException = new PDOException('Connection exception', 8000);
         $pdoException->errorInfo = ['00000', 0, 'Connection exception'];
         
         $errorState = null;
@@ -1258,11 +1194,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1274,7 +1208,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithSerializationFailure(): void
     {
         // Test serialization failure (40001)
-        $pdoException = new \PDOException('Serialization failure', 0);
+        $pdoException = new PDOException('Serialization failure', 0);
         $pdoException->errorInfo = ['40001', 0, 'Serialization failure'];
         
         $errorState = null;
@@ -1292,11 +1226,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1308,7 +1240,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithConnectionDoesNotExist(): void
     {
         // Test 08003 - Connection does not exist
-        $pdoException = new \PDOException('Connection does not exist', 0);
+        $pdoException = new PDOException('Connection does not exist', 0);
         $pdoException->errorInfo = ['08003', 0, 'Connection does not exist'];
         
         $errorState = null;
@@ -1326,11 +1258,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1342,7 +1272,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithConnectionMessage(): void
     {
         // Test message-based detection (contains "connection")
-        $pdoException = new \PDOException('Lost connection to MySQL server', 0);
+        $pdoException = new PDOException('Lost connection to MySQL server', 0);
         $pdoException->errorInfo = ['HY000', 2006, 'Lost connection to MySQL server'];
         
         $errorState = null;
@@ -1360,11 +1290,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1376,7 +1304,7 @@ class PdoQueryTest extends TestCase
     public function testHandleQueryErrorWithTransientErrorSetsContext(): void
     {
         // Test that handleQueryError sets retryable context for transient errors
-        $pdoException = new \PDOException('Connection timeout', 0);
+        $pdoException = new PDOException('Connection timeout', 0);
         $pdoException->errorInfo = ['08000', 0, 'Connection timeout'];
         
         $errorState = null;
@@ -1396,11 +1324,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1423,16 +1349,13 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         // Access getExecuter() indirectly by calling a method that uses it
         $method = $reflection->getMethod('getExecuter');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery);
         
         // Error should be propagated to PdoQuery
@@ -1446,11 +1369,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, false);
         
         $this->assertFalse($this->pdoQuery->isConnected());
@@ -1461,7 +1382,6 @@ class PdoQueryTest extends TestCase
         // Test isConnected when executer is null even if flag is true
         $reflection = new \ReflectionClass($this->pdoQuery);
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $this->assertFalse($this->pdoQuery->isConnected());
@@ -1485,11 +1405,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1517,11 +1435,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQueryObjects('SELECT * FROM users', []);
@@ -1549,11 +1465,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectCountQuery('SELECT COUNT(*) FROM users', []);
@@ -1566,7 +1480,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorWithNonDuplicateError(): void
     {
         // Test that handleInsertError calls handleQueryError for non-duplicate errors
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -1584,11 +1498,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1602,7 +1514,7 @@ class PdoQueryTest extends TestCase
     
     public function testHandleUpdateErrorWithNonDuplicateError(): void
     {
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -1620,11 +1532,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->updateQuery('UPDATE users SET name = :name WHERE id = :id', [':name' => 'Test', ':id' => 1]);
@@ -1638,7 +1548,7 @@ class PdoQueryTest extends TestCase
     
     public function testHandleDeleteErrorWithNonForeignKeyError(): void
     {
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -1656,11 +1566,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -1675,7 +1583,7 @@ class PdoQueryTest extends TestCase
     public function testHandleQueryErrorWithTransientError(): void
     {
         // Test transient error detection (isTransientError method)
-        $pdoException = new \PDOException('Connection timeout', 0);
+        $pdoException = new PDOException('Connection timeout', 0);
         $pdoException->errorInfo = ['08000', 0, 'Connection timeout'];
         
         $errorState = null;
@@ -1693,11 +1601,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1718,16 +1624,13 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         // Access getExecuter() indirectly by calling a method that uses it
         $method = $reflection->getMethod('getExecuter');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery);
         
         // Error should be propagated
@@ -1744,11 +1647,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($pdoQuery, true);
         
         // Trigger destructor
@@ -1761,7 +1662,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithDeadlock(): void
     {
         // Test deadlock detection
-        $pdoException = new \PDOException('Deadlock detected', 0);
+        $pdoException = new PDOException('Deadlock detected', 0);
         $pdoException->errorInfo = ['40P01', 0, 'Deadlock detected'];
         
         $errorState = null;
@@ -1779,11 +1680,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1796,7 +1695,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithConnectionFailure(): void
     {
         // Test connection failure detection
-        $pdoException = new \PDOException('Connection failure', 0);
+        $pdoException = new PDOException('Connection failure', 0);
         $pdoException->errorInfo = ['08006', 0, 'Connection failure'];
         
         $errorState = null;
@@ -1814,11 +1713,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -1847,11 +1744,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectCountQuery('SELECT COUNT(*) FROM users', []);
@@ -1864,7 +1759,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorWithPostgreSQLCode(): void
     {
         // Test PostgreSQL unique violation (23505)
-        $pdoException = new \PDOException('Unique violation', 0);
+        $pdoException = new PDOException('Unique violation', 0);
         $pdoException->errorInfo = ['23505', 0, 'Unique violation'];
         
         $errorState = null;
@@ -1882,11 +1777,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1898,7 +1791,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorWithSQLiteCode19(): void
     {
         // Test SQLite unique constraint (error code 19)
-        $pdoException = new \PDOException('UNIQUE constraint failed', 0);
+        $pdoException = new PDOException('UNIQUE constraint failed', 0);
         $pdoException->errorInfo = ['23000', 19, 'UNIQUE constraint failed'];
         
         $errorState = null;
@@ -1916,11 +1809,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -1932,7 +1823,7 @@ class PdoQueryTest extends TestCase
     public function testHandleUpdateErrorWithPostgreSQLCode(): void
     {
         // Test PostgreSQL unique violation (23505) in update
-        $pdoException = new \PDOException('Unique violation', 0);
+        $pdoException = new PDOException('Unique violation', 0);
         $pdoException->errorInfo = ['23505', 0, 'Unique violation'];
         
         $errorState = null;
@@ -1950,11 +1841,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->updateQuery('UPDATE users SET name = :name WHERE id = :id', [':name' => 'Test', ':id' => 1]);
@@ -1966,7 +1855,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorWithPostgreSQLCode(): void
     {
         // Test PostgreSQL foreign key violation (23503) in delete
-        $pdoException = new \PDOException('Foreign key violation', 0);
+        $pdoException = new PDOException('Foreign key violation', 0);
         $pdoException->errorInfo = ['23503', 0, 'Foreign key violation'];
         
         $errorState = null;
@@ -1984,11 +1873,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -2000,7 +1887,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorWithSQLiteCode787(): void
     {
         // Test SQLite foreign key constraint (error code 787)
-        $pdoException = new \PDOException('FOREIGN KEY constraint failed', 0);
+        $pdoException = new PDOException('FOREIGN KEY constraint failed', 0);
         $pdoException->errorInfo = ['23000', 787, 'FOREIGN KEY constraint failed'];
         
         $errorState = null;
@@ -2018,11 +1905,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -2034,7 +1919,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithSQLClientUnableToConnect(): void
     {
         // Test 08001 - SQL client unable to establish SQL connection
-        $pdoException = new \PDOException('SQL client unable to establish SQL connection', 0);
+        $pdoException = new PDOException('SQL client unable to establish SQL connection', 0);
         $pdoException->errorInfo = ['08001', 0, 'SQL client unable to establish SQL connection'];
         
         $errorState = null;
@@ -2052,11 +1937,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -2068,7 +1951,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithSQLServerRejected(): void
     {
         // Test 08004 - SQL server rejected establishment of SQL connection
-        $pdoException = new \PDOException('SQL server rejected establishment of SQL connection', 0);
+        $pdoException = new PDOException('SQL server rejected establishment of SQL connection', 0);
         $pdoException->errorInfo = ['08004', 0, 'SQL server rejected establishment of SQL connection'];
         
         $errorState = null;
@@ -2086,11 +1969,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -2102,7 +1983,7 @@ class PdoQueryTest extends TestCase
     public function testIsTransientErrorWithTransactionResolutionUnknown(): void
     {
         // Test 08007 - Transaction resolution unknown
-        $pdoException = new \PDOException('Transaction resolution unknown', 0);
+        $pdoException = new PDOException('Transaction resolution unknown', 0);
         $pdoException->errorInfo = ['08007', 0, 'Transaction resolution unknown'];
         
         $errorState = null;
@@ -2120,11 +2001,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->selectQuery('SELECT * FROM users', []);
@@ -2136,7 +2015,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorWithMessageContainsDuplicate(): void
     {
         // Test message-based duplicate detection
-        $pdoException = new \PDOException('Duplicate entry for key', 0);
+        $pdoException = new PDOException('Duplicate entry for key', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Duplicate entry for key'];
         
         $errorState = null;
@@ -2154,11 +2033,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->insertQuery('INSERT INTO users (name) VALUES (:name)', [':name' => 'Test']);
@@ -2170,7 +2047,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorWithMessageContainsForeignKey(): void
     {
         // Test message-based foreign key detection
-        $pdoException = new \PDOException('Foreign key constraint fails', 0);
+        $pdoException = new PDOException('Foreign key constraint fails', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Foreign key constraint fails'];
         
         $errorState = null;
@@ -2188,11 +2065,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $result = $this->pdoQuery->deleteQuery('DELETE FROM users WHERE id = :id', [':id' => 1]);
@@ -2208,7 +2083,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithDuplicateKey(): void
     {
         // Test handleInsertError directly via reflection
-        $pdoException = new \PDOException('Duplicate entry for key', 0);
+        $pdoException = new PDOException('Duplicate entry for key', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
         $errorState = null;
@@ -2222,11 +2097,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleInsertError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2237,7 +2110,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithNonDuplicateError(): void
     {
         // Test handleInsertError directly with non-duplicate error (calls handleQueryError)
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -2251,11 +2124,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleInsertError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2266,7 +2137,7 @@ class PdoQueryTest extends TestCase
     public function testHandleUpdateErrorDirectlyWithDuplicateKey(): void
     {
         // Test handleUpdateError directly via reflection
-        $pdoException = new \PDOException('Duplicate entry for key', 0);
+        $pdoException = new PDOException('Duplicate entry for key', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
         $errorState = null;
@@ -2280,11 +2151,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleUpdateError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2295,7 +2164,7 @@ class PdoQueryTest extends TestCase
     public function testHandleUpdateErrorDirectlyWithNonDuplicateError(): void
     {
         // Test handleUpdateError directly with non-duplicate error (calls handleQueryError)
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -2309,11 +2178,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleUpdateError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2324,7 +2191,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorDirectlyWithForeignKey(): void
     {
         // Test handleDeleteError directly via reflection
-        $pdoException = new \PDOException('Foreign key constraint fails', 0);
+        $pdoException = new PDOException('Foreign key constraint fails', 0);
         $pdoException->errorInfo = ['23000', 1451, 'Foreign key constraint fails'];
         
         $errorState = null;
@@ -2338,11 +2205,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleDeleteError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2353,7 +2218,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorDirectlyWithNonForeignKeyError(): void
     {
         // Test handleDeleteError directly with non-foreign-key error (calls handleQueryError)
-        $pdoException = new \PDOException('Syntax error', 42000);
+        $pdoException = new PDOException('Syntax error', 42000);
         $pdoException->errorInfo = ['42000', 1064, 'Syntax error'];
         
         $errorState = null;
@@ -2367,11 +2232,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleDeleteError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2382,7 +2245,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithMySQLErrorCode1062(): void
     {
         // Test handleInsertError with MySQL error code 1062
-        $pdoException = new \PDOException('Duplicate entry', 0);
+        $pdoException = new PDOException('Duplicate entry', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry'];
         
         $errorState = null;
@@ -2396,11 +2259,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleInsertError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2411,7 +2272,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithSQLiteErrorCode1555(): void
     {
         // Test handleInsertError with SQLite error code 1555
-        $pdoException = new \PDOException('UNIQUE constraint failed', 0);
+        $pdoException = new PDOException('UNIQUE constraint failed', 0);
         $pdoException->errorInfo = ['23000', 1555, 'UNIQUE constraint failed'];
         
         $errorState = null;
@@ -2425,11 +2286,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleInsertError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2440,7 +2299,7 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithMessageContainsAlreadyExists(): void
     {
         // Test handleInsertError with message containing "already exists"
-        $pdoException = new \PDOException('Record already exists', 0);
+        $pdoException = new PDOException('Record already exists', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Record already exists'];
         
         $errorState = null;
@@ -2454,11 +2313,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleInsertError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2469,7 +2326,7 @@ class PdoQueryTest extends TestCase
     public function testHandleDeleteErrorDirectlyWithMessageContainsCannotDelete(): void
     {
         // Test handleDeleteError with message containing "cannot delete"
-        $pdoException = new \PDOException('Cannot delete record', 0);
+        $pdoException = new PDOException('Cannot delete record', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Cannot delete record'];
         
         $errorState = null;
@@ -2483,11 +2340,9 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $method = $reflection->getMethod('handleDeleteError');
-        $method->setAccessible(true);
         $method->invoke($this->pdoQuery, $pdoException);
         
         $error = $this->pdoQuery->getError();
@@ -2510,15 +2365,12 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $method = $reflection->getMethod('executeQuery');
-        $method->setAccessible(true);
         $result = $method->invoke($this->pdoQuery, 'SELECT * FROM users', [':id' => 1]);
         
         $this->assertTrue($result);
@@ -2539,15 +2391,12 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $method = $reflection->getMethod('executeQuery');
-        $method->setAccessible(true);
         $result = $method->invoke($this->pdoQuery, 'SELECT * FROM users', []);
         
         $this->assertFalse($result);
@@ -2579,15 +2428,12 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $method = $reflection->getMethod('executeQuery');
-        $method->setAccessible(true);
         $result = $method->invoke($this->pdoQuery, 'SELECT * FROM users WHERE id = :id', [':id' => 1]);
         
         $this->assertFalse($result);
@@ -2616,15 +2462,12 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $method = $reflection->getMethod('executeQuery');
-        $method->setAccessible(true);
         $result = $method->invoke($this->pdoQuery, 'SELECT * FROM users', []);
         
         $this->assertFalse($result);
@@ -2636,7 +2479,7 @@ class PdoQueryTest extends TestCase
     public function testExecuteQueryDirectlyWithException(): void
     {
         // Test executeQuery directly when it throws PDOException
-        $pdoException = new \PDOException('Database error', 0);
+        $pdoException = new PDOException('Database error', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Database error'];
         
         $errorState = null;
@@ -2651,15 +2494,12 @@ class PdoQueryTest extends TestCase
         
         $reflection = new \ReflectionClass($this->pdoQuery);
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $executerProperty->setValue($this->pdoQuery, $mockExecuter);
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $isConnectedProperty->setValue($this->pdoQuery, true);
         
         $method = $reflection->getMethod('executeQuery');
-        $method->setAccessible(true);
         $result = $method->invoke($this->pdoQuery, 'SELECT * FROM users', []);
         
         $this->assertFalse($result);
@@ -2673,11 +2513,9 @@ class PdoQueryTest extends TestCase
         // Test getExecuter directly via reflection to ensure it initializes connection
         $reflection = new \ReflectionClass($this->pdoQuery);
         $method = $reflection->getMethod('getExecuter');
-        $method->setAccessible(true);
         
         // Initially, executer should be null
         $executerProperty = $reflection->getProperty('executer');
-        $executerProperty->setAccessible(true);
         $this->assertNull($executerProperty->getValue($this->pdoQuery));
         
         // Call getExecuter - it should create a new UniversalQueryExecuter
@@ -2687,7 +2525,6 @@ class PdoQueryTest extends TestCase
         $this->assertNotNull($executerProperty->getValue($this->pdoQuery));
         
         $isConnectedProperty = $reflection->getProperty('isConnected');
-        $isConnectedProperty->setAccessible(true);
         $this->assertTrue($isConnectedProperty->getValue($this->pdoQuery));
     }
 }

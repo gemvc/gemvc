@@ -7,7 +7,8 @@ namespace Tests\Unit\Database;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Gemvc\Database\UniversalQueryExecuter;
-use Gemvc\Database\DatabaseManagerInterface;
+use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
+use Gemvc\Database\Connection\Contracts\ConnectionInterface;
 use Gemvc\Database\DatabaseManagerFactory;
 use PDO;
 use PDOStatement;
@@ -19,7 +20,8 @@ use PDOException;
 class UniversalQueryExecuterTest extends TestCase
 {
     private ?PDO $mockPdo = null;
-    private ?DatabaseManagerInterface $mockDbManager = null;
+    private ?ConnectionInterface $mockConnection = null;
+    private ?ConnectionManagerInterface $mockDbManager = null;
     
     protected function setUp(): void
     {
@@ -29,10 +31,15 @@ class UniversalQueryExecuterTest extends TestCase
         // Create mock PDO
         $this->mockPdo = $this->createMock(PDO::class);
         
-        // Create mock database manager
-        $this->mockDbManager = $this->createMock(DatabaseManagerInterface::class);
-        $this->mockDbManager->method('getConnection')
+        // Create mock ConnectionInterface that wraps PDO
+        $this->mockConnection = $this->createMock(ConnectionInterface::class);
+        $this->mockConnection->method('getConnection')
             ->willReturn($this->mockPdo);
+        
+        // Create mock database manager
+        $this->mockDbManager = $this->createMock(ConnectionManagerInterface::class);
+        $this->mockDbManager->method('getConnection')
+            ->willReturn($this->mockConnection);
         $this->mockDbManager->method('getError')
             ->willReturn(null);
         // releaseConnection is void - PHPUnit handles void methods automatically
@@ -58,7 +65,6 @@ class UniversalQueryExecuterTest extends TestCase
         $reflection = new \ReflectionClass($executer);
         
         $dbManagerProperty = $reflection->getProperty('dbManager');
-        $dbManagerProperty->setAccessible(true);
         $dbManagerProperty->setValue($executer, $this->mockDbManager);
         
         return $executer;
@@ -163,7 +169,7 @@ class UniversalQueryExecuterTest extends TestCase
         $executer = new UniversalQueryExecuter();
         
         // Mock manager that returns null (connection error)
-        $mockManager = $this->createMock(DatabaseManagerInterface::class);
+        $mockManager = $this->createMock(ConnectionManagerInterface::class);
         $mockManager->method('getConnection')
             ->willReturn(null);
         $mockManager->method('getError')
@@ -410,7 +416,7 @@ class UniversalQueryExecuterTest extends TestCase
         
         $this->mockDbManager->expects($this->once())
             ->method('releaseConnection')
-            ->with($this->mockPdo);
+            ->with($this->mockConnection);
         
         $executer->query('UPDATE users SET name = :name');
         $executer->execute();
@@ -911,8 +917,8 @@ class UniversalQueryExecuterTest extends TestCase
     {
         $executer = $this->createExecuterWithMockManager();
         
-        // secure() calls releaseConnection() which checks if $this->db exists
-        // If no connection exists, releaseConnection() does nothing (checks if ($this->db))
+        // secure() calls releaseConnection() which checks if $this->activeConnection exists
+        // If no connection exists, releaseConnection() does nothing (checks if ($this->activeConnection))
         // So we need to have a connection first
         $this->mockPdo->method('beginTransaction')
             ->willReturn(true);
@@ -920,7 +926,7 @@ class UniversalQueryExecuterTest extends TestCase
         // Set up expectation BEFORE calling beginTransaction
         $this->mockDbManager->expects($this->atLeastOnce())
             ->method('releaseConnection')
-            ->with($this->mockPdo);
+            ->with($this->mockConnection);
         
         $executer->beginTransaction();
         

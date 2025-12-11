@@ -4,7 +4,6 @@ parameters:
         - src
     excludePaths:
         - src/http/SwooleWebSocketHandler.php
-        - src/database/SwooleDatabaseManagerAdapter.php
         - vendor/*
         - src/startup/*
     stubFiles:

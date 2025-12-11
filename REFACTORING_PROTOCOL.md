@@ -1,4 +1,4 @@
-git add .# Database Layer Refactoring Protocol
+# Database Layer Refactoring Protocol
 
 ## Overview
 
@@ -96,15 +96,20 @@ This document details the refactoring of the GEMVC framework's database connecti
 - ✅ Uses `PdoConnection::getInstance()` and `SwooleConnection::getInstance()` directly
 - ✅ Simplified from ~200 lines to ~140 lines
 - ✅ Removed unnecessary adapter layer
+- ⚠️ **Environment Variable Change:** No longer uses `DB_ENHANCED_CONNECTION`. `PdoConnection` uses `DB_PERSISTENT_CONNECTIONS` internally.
 
 **Before:**
 ```php
-return new LegacyDatabaseManagerAdapter(PdoConnection::getInstance());
+$useEnhanced = $_ENV['DB_ENHANCED_CONNECTION'] ?? '0';
+if ($useEnhanced === '1' || $useEnhanced === 'true' || $useEnhanced === 'yes') {
+    return EnhancedPdoDatabaseManager::getInstance(true);
+}
+return SimplePdoDatabaseManager::getInstance();
 ```
 
 **After:**
 ```php
-return PdoConnection::getInstance();
+return PdoConnection::getInstance(); // Uses DB_PERSISTENT_CONNECTIONS internally
 ```
 
 ### 2. `src/database/UniversalQueryExecuter.php`
@@ -150,6 +155,29 @@ private ?ConnectionInterface $activeConnection = null;
 **Changes:**
 - ✅ Fixed PHPStan error: Cast `floor()` result to `int` for array key
 - ✅ Added bounds check for array access safety
+
+### 7. Environment Variable Migration
+**⚠️ BREAKING CHANGE for Configuration:**
+
+The framework previously used `DB_ENHANCED_CONNECTION` to choose between two PDO managers. The new `PdoConnection` package uses a different environment variable.
+
+**Old Configuration:**
+- `DB_ENHANCED_CONNECTION=1` → Used `EnhancedPdoDatabaseManager` (with persistent connections)
+- `DB_ENHANCED_CONNECTION=0` or not set → Used `SimplePdoDatabaseManager` (without persistent connections)
+
+**New Configuration:**
+- `DB_PERSISTENT_CONNECTIONS=1` → `PdoConnection` with persistent connections enabled (default)
+- `DB_PERSISTENT_CONNECTIONS=0` → `PdoConnection` with persistent connections disabled
+
+**Migration Steps:**
+1. Update `.env` files:
+   - Replace `DB_ENHANCED_CONNECTION=1` with `DB_PERSISTENT_CONNECTIONS=1`
+   - Replace `DB_ENHANCED_CONNECTION=0` with `DB_PERSISTENT_CONNECTIONS=0`
+   - Remove `DB_ENHANCED_CONNECTION` (no longer used)
+2. Update documentation to reflect new variable name
+3. Test connection behavior after migration
+
+**Note:** `PdoConnection` replaces BOTH `SimplePdoDatabaseManager` and `EnhancedPdoDatabaseManager`. The distinction is now controlled by `DB_PERSISTENT_CONNECTIONS` instead of `DB_ENHANCED_CONNECTION`.
 
 ---
 
@@ -297,6 +325,13 @@ Packages
 **Problem:** Type mismatches during refactoring.
 
 **Solution:** Fixed all type issues, maintained Level 9 compliance throughout.
+
+### Challenge 4: Environment Variable Migration
+**Problem:** Framework used `DB_ENHANCED_CONNECTION` to choose between Simple and Enhanced managers, but new `PdoConnection` package uses `DB_PERSISTENT_CONNECTIONS`.
+
+**Solution:** Documented the migration path. Users must update their `.env` files. This is a breaking change for configuration (not code).
+
+**Impact:** Low (configuration change only, no code changes needed)
 
 ---
 

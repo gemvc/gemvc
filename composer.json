@@ -5,7 +5,10 @@
     "homepage": "https://gemvc.de",
     "require": {
         "firebase/php-jwt": "^6.8",
-        "symfony/dotenv": "^6.4 || ^7.2"
+        "symfony/dotenv": "^6.4 || ^7.2",
+        "gemvc/connection-contracts": "^1.0",
+        "gemvc/connection-pdo": "^1.0",
+        "gemvc/connection-openswoole": "^1.0"
     },
     "license": "MIT",
     "archive": {
