@@ -26,7 +26,7 @@ class ApacheRequest
         $this->request->requestMethod = $this->getRequestMethod();
         $this->request->userMachine = $this->getUserAgent();
         $this->request->remoteAddress = $this->getRemoteAddress();
-        $this->request->queryString = is_string($_SERVER['QUERY_STRING']) ?$_SERVER['QUERY_STRING'] : '' ;
+        $this->request->queryString = is_string($_SERVER['QUERY_STRING'] ?? null) ? $_SERVER['QUERY_STRING'] : '';
         $this->request->post = $_POST;
         // Remove '_gemvc_url_path' parameter added by Apache rewrite rule - it's not used by the framework
         // The framework uses $this->request->requestedUrl from $_SERVER['REQUEST_URI'] instead

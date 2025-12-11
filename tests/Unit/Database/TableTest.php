@@ -991,5 +991,953 @@ class TableTest extends TestCase
         
         $this->assertTrue(true); // If we reach here, destructor worked
     }
+    
+    // ==========================================
+    // Additional Coverage Tests with Mocked PdoQuery
+    // ==========================================
+    
+    /**
+     * Create a Table instance with mocked PdoQuery injected via reflection
+     */
+    private function createTableWithMockPdoQuery(): TestTable
+    {
+        $table = new TestTable();
+        $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
+        
+        // Inject mock via reflection - property is in parent Table class
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        
+        return $table;
+    }
+    
+    public function testInsertSingleQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->name = 'John';
+        $table->email = 'john@example.com';
+        $table->description = 'Test';
+        
+        // Get the mock from reflection - property is in parent Table class
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('insertQuery')
+            ->willReturn(1);
+        
+        $result = $table->insertSingleQuery();
+        
+        $this->assertSame($table, $result);
+        $this->assertEquals(1, $table->id);
+    }
+    
+    public function testInsertSingleQueryFailure(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->name = 'John';
+        $table->email = 'john@example.com';
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('insertQuery')
+            ->willReturn(null);
+        
+        $mockPdoQuery->method('getError')
+            ->willReturn('Database error');
+        
+        $result = $table->insertSingleQuery();
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testUpdateSingleQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->id = 1;
+        $table->name = 'Updated Name';
+        $table->email = 'updated@example.com';
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $result = $table->updateSingleQuery();
+        
+        $this->assertSame($table, $result);
+    }
+    
+    public function testUpdateSingleQueryWithoutId(): void
+    {
+        // Create table without id property to test the property_exists check
+        $table = new class extends Table {
+            public string $name;
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $table->name = 'Test';
+        
+        // updateSingleQuery checks property_exists($this, 'id') first (line 231)
+        // Since this table has no 'id' property, it should return null immediately
+        $result = $table->updateSingleQuery();
+        
+        $this->assertNull($result);
+        $error = $table->getError();
+        $this->assertNotNull($error);
+        $this->assertStringContainsString('id', $error);
+    }
+    
+    public function testDeleteByIdQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('deleteQuery')
+            ->willReturn(1);
+        
+        $result = $table->deleteByIdQuery(1);
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testDeleteByIdQueryFailure(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('deleteQuery')
+            ->willReturn(null);
+        
+        $mockPdoQuery->method('getError')
+            ->willReturn('Delete failed');
+        
+        $result = $table->deleteByIdQuery(1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testSafeDeleteQuerySuccess(): void
+    {
+        // Create table with deleted_at property
+        $table = new class extends Table {
+            public int $id;
+            public ?string $deleted_at = null;
+            public int $is_active = 1;
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $table->id = 1;
+        
+        $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        
+        $result = $table->safeDeleteQuery();
+        
+        $this->assertSame($table, $result);
+    }
+    
+    public function testRestoreQuerySuccess(): void
+    {
+        $table = new class extends Table {
+            public int $id;
+            public ?string $deleted_at = '2024-01-01 00:00:00';
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $table->id = 1;
+        
+        $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        
+        $result = $table->restoreQuery();
+        
+        $this->assertSame($table, $result);
+        $this->assertNull($table->deleted_at);
+    }
+    
+    public function testRemoveConditionalQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('deleteQuery')
+            ->willReturn(5);
+        
+        $result = $table->removeConditionalQuery('email', 'test@example.com');
+        
+        $this->assertEquals(5, $result);
+    }
+    
+    public function testRemoveConditionalQueryWithTwoConditions(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('deleteQuery')
+            ->willReturn(2);
+        
+        $result = $table->removeConditionalQuery('email', 'test@example.com', 'name', 'Test');
+        
+        $this->assertEquals(2, $result);
+    }
+    
+    public function testRemoveConditionalQueryWithEmptyColumn(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->removeConditionalQuery('', 'value');
+        
+        $this->assertNull($result);
+        $this->assertStringContainsString('empty', $table->getError() ?? '');
+    }
+    
+    public function testRemoveConditionalQueryWithNullValue(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->removeConditionalQuery('email', null);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testSetNullQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $result = $table->setNullQuery('description', 'id', 1);
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testSetTimeNowQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $result = $table->setTimeNowQuery('updated_at', 'id', 1);
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testActivateQuerySuccess(): void
+    {
+        $table = new class extends Table {
+            public int $id;
+            public int $is_active = 0;
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        
+        $result = $table->activateQuery(1);
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testDeactivateQuerySuccess(): void
+    {
+        $table = new class extends Table {
+            public int $id;
+            public int $is_active = 1;
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
+        $mockPdoQuery->expects($this->once())
+            ->method('updateQuery')
+            ->willReturn(1);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        
+        $result = $table->deactivateQuery(1);
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testRunWithEmptyResults(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+    
+    public function testRunWithResults(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([
+                ['id' => 1, 'name' => 'Test', 'email' => 'test@example.com', 'description' => null]
+            ]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf(TestTable::class, $result[0]);
+        $this->assertEquals(1, $result[0]->id);
+        $this->assertEquals('Test', $result[0]->name);
+    }
+    
+    public function testRunWithError(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn(null);
+        
+        $mockPdoQuery->method('getError')
+            ->willReturn('Query failed');
+        
+        $result = $table->run();
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testSelectByIdWithResult(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        // selectById calls selectQuery twice: once for the main query, once for count (if needed)
+        $mockPdoQuery->expects($this->atLeastOnce())
+            ->method('selectQuery')
+            ->willReturnCallback(function ($query) {
+                if (strpos($query, 'COUNT(*)') !== false) {
+                    // Count query
+                    return [['total' => 1]];
+                }
+                // Main query
+                return [
+                    ['id' => 1, 'name' => 'Test', 'email' => 'test@example.com', 'description' => null]
+                ];
+            });
+        
+        $result = $table->selectById(1);
+        
+        $this->assertInstanceOf(TestTable::class, $result);
+        $this->assertEquals(1, $result->id);
+    }
+    
+    public function testSelectByIdWithNoResult(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        // Track error set via setError()
+        $storedError = null;
+        $mockPdoQuery->method('setError')
+            ->willReturnCallback(function ($error) use (&$storedError) {
+                $storedError = $error;
+            });
+        
+        $mockPdoQuery->method('getError')
+            ->willReturnCallback(function () use (&$storedError) {
+                return $storedError;
+            });
+        
+        // selectById calls select()->where()->limit()->run() which calls selectQuery
+        // When result is empty array, selectById sets error 'Record not found'
+        // Note: run() may also call selectQuery for count, so use atLeastOnce
+        $mockPdoQuery->expects($this->atLeastOnce())
+            ->method('selectQuery')
+            ->willReturnCallback(function ($query) {
+                if (strpos($query, 'COUNT(*)') !== false) {
+                    return [['total' => 0]];
+                }
+                // Main query returns empty
+                return [];
+            });
+        
+        $result = $table->selectById(1);
+        
+        $this->assertNull($result);
+        // Error should be set by selectById when result is empty (line 927 in Table.php)
+        // selectById calls $this->setError('Record not found') which calls mock's setError
+        $error = $table->getError();
+        $this->assertNotNull($error, 'Error should be set when record not found');
+        $this->assertStringContainsString('not found', $error);
+    }
+    
+    
+    public function testValidateProperties(): void
+    {
+        $table = new TestTable();
+        $table->name = 'Test';
+        $table->email = 'test@example.com';
+        
+        // Test with existing properties - validateProperties is protected, test via reflection
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $method = $reflection->getMethod('validateProperties');
+        $result = $method->invoke($table, ['name', 'email']);
+        
+        $this->assertTrue($result);
+        
+        // Test with non-existent property
+        $result = $method->invoke($table, ['nonexistent']);
+        $this->assertFalse($result);
+        // Error should be set by validateProperties
+        $error = $table->getError();
+        $this->assertNotNull($error);
+        $this->assertStringContainsString('nonexistent', $error);
+    }
+    
+    public function testCastValue(): void
+    {
+        $table = new TestTable();
+        
+        $reflection = new \ReflectionClass($table);
+        $method = $reflection->getMethod('castValue');
+        
+        // Test int casting
+        $result = $method->invoke($table, 'id', '123');
+        $this->assertIsInt($result);
+        $this->assertEquals(123, $result);
+        
+        // Test float casting
+        $tableWithFloat = new class extends Table {
+            protected array $_type_map = ['price' => 'float'];
+            
+            public function getTable(): string {
+                return 'test';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $reflection = new \ReflectionClass($tableWithFloat);
+        $method = $reflection->getMethod('castValue');
+        $result = $method->invoke($tableWithFloat, 'price', '99.99');
+        $this->assertIsFloat($result);
+        $this->assertEquals(99.99, $result);
+        
+        // Test bool casting
+        $tableWithBool = new class extends Table {
+            protected array $_type_map = ['active' => 'bool'];
+            
+            public function getTable(): string {
+                return 'test';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $reflection = new \ReflectionClass($tableWithBool);
+        $method = $reflection->getMethod('castValue');
+        $result = $method->invoke($tableWithBool, 'active', '1');
+        $this->assertIsBool($result);
+        $this->assertTrue($result);
+    }
+    
+    public function testFetchRow(): void
+    {
+        $table = new TestTable();
+        
+        $reflection = new \ReflectionClass($table);
+        $method = $reflection->getMethod('fetchRow');
+        
+        $row = [
+            'id' => 1,
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'description' => 'Test description'
+        ];
+        
+        $method->invoke($table, $row);
+        
+        $this->assertEquals(1, $table->id);
+        $this->assertEquals('Test User', $table->name);
+        $this->assertEquals('test@example.com', $table->email);
+        $this->assertEquals('Test description', $table->description);
+    }
+    
+    public function testCommitWithoutTransaction(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->commit();
+        
+        $this->assertFalse($result);
+        $this->assertStringContainsString('No active transaction', $table->getError() ?? '');
+    }
+    
+    public function testRollbackWithoutTransaction(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->rollback();
+        
+        $this->assertFalse($result);
+        $this->assertStringContainsString('No active transaction', $table->getError() ?? '');
+    }
+    
+    
+    public function testRunWithSkipCount(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select();
+        
+        // Use reflection to set _skip_count - property is in parent Table class
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $skipCountProperty = $reflection->getProperty('_skip_count');
+        $skipCountProperty->setValue($table, true);
+        
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([
+                ['id' => 1, 'name' => 'Test']
+            ]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+    }
+    
+    public function testRunWithNoLimit(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select()->noLimit();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([
+                ['id' => 1, 'name' => 'Test']
+            ]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+    }
+    
+    public function testRunWithOrderBy(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select()->orderBy('name', true);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+    }
+    
+    public function testRunWithJoins(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select()->join('other_table', 'test_users.id = other_table.user_id');
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+    }
+    
+    public function testRunWithMultipleWhereConditions(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select()
+            ->where('name', 'Test')
+            ->where('email', 'test@example.com')
+            ->whereLike('description', 'test');
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('selectQuery')
+            ->willReturn([]);
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+    }
+    
+    public function testRunWithPagination(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->select();
+        $table->setPage(2); // setPage returns void, can't chain
+        $table->limit(10);
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        // run() may call selectQuery twice: once for main query, once for count
+        $mockPdoQuery->expects($this->atLeastOnce())
+            ->method('selectQuery')
+            ->willReturnCallback(function ($query) {
+                if (strpos($query, 'COUNT(*)') !== false) {
+                    return [['total' => 1]];
+                }
+                return [
+                    ['id' => 1, 'name' => 'Test']
+                ];
+            });
+        
+        $result = $table->run();
+        
+        $this->assertIsArray($result);
+    }
+    
+    public function testDeleteSingleQuerySuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        $table->id = 1;
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('deleteQuery')
+            ->willReturn(1);
+        
+        $result = $table->deleteSingleQuery();
+        
+        $this->assertEquals(1, $result);
+    }
+    
+    public function testDeleteSingleQueryWithoutId(): void
+    {
+        // Create table without id property
+        $table = new class extends Table {
+            public string $name;
+            
+            public function getTable(): string {
+                return 'test_table';
+            }
+            
+            public function defineSchema(): array {
+                return [];
+            }
+        };
+        
+        $result = $table->deleteSingleQuery();
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testSetNullQueryWithEmptyColumn(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->setNullQuery('', 'id', 1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testSetTimeNowQueryWithEmptyColumn(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->setTimeNowQuery('', 'id', 1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testActivateQueryWithoutIsActiveProperty(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->activateQuery(1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testDeactivateQueryWithoutIsActiveProperty(): void
+    {
+        $table = new TestTable();
+        
+        $result = $table->deactivateQuery(1);
+        
+        $this->assertNull($result);
+        $this->assertNotNull($table->getError());
+    }
+    
+    public function testIsConnectedWhenPdoQueryExists(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->method('isConnected')
+            ->willReturn(true);
+        
+        $this->assertTrue($table->isConnected());
+    }
+    
+    public function testGetErrorAfterConnection(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->method('getError')
+            ->willReturn('Connection error');
+        
+        $this->assertEquals('Connection error', $table->getError());
+    }
+    
+    
+    public function testBeginTransactionSuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('beginTransaction')
+            ->willReturn(true);
+        
+        $result = $table->beginTransaction();
+        
+        $this->assertTrue($result);
+    }
+    
+    public function testCommitSuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('commit')
+            ->willReturn(true);
+        
+        $result = $table->commit();
+        
+        $this->assertTrue($result);
+    }
+    
+    public function testRollbackSuccess(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('rollback')
+            ->willReturn(true);
+        
+        $result = $table->rollback();
+        
+        $this->assertTrue($result);
+    }
+    
+    public function testDisconnectWithConnection(): void
+    {
+        $table = $this->createTableWithMockPdoQuery();
+        
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        
+        $mockPdoQuery->expects($this->once())
+            ->method('disconnect');
+        
+        $table->disconnect();
+        
+        // After disconnect, _pdoQuery should be null
+        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        $this->assertNull($pdoQueryProperty->getValue($table));
+    }
 }
 

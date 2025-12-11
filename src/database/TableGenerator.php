@@ -51,7 +51,6 @@ class TableGenerator {
         $properties = $reflection->getProperties();
         $columns = [];
         foreach ($properties as $property) {
-            $property->setAccessible(true);
             $propertyName = $property->getName();
             if ($this->shouldSkipProperty($property)) continue;
             $propertyType = $this->getPropertyType($property, $object);
@@ -459,7 +458,6 @@ class TableGenerator {
 
             // Get all property names from the object
             foreach ($properties as $property) {
-                $property->setAccessible(true);
                 $propertyName = $property->getName();
                 if ($this->shouldSkipProperty($property)) continue;
                 
@@ -676,7 +674,6 @@ class TableGenerator {
             $reflection = new \ReflectionClass($object);
             if ($reflection->hasProperty('_type_map')) {
                 $typeMapProperty = $reflection->getProperty('_type_map');
-                $typeMapProperty->setAccessible(true);
                 $typeMap = $typeMapProperty->getValue($object);
                 if (is_array($typeMap) && isset($typeMap[$propertyName]) && is_string($typeMap[$propertyName])) {
                     return $typeMap[$propertyName];

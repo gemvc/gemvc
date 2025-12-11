@@ -36,7 +36,7 @@ class JWTToken
     {
         $this->_token = null;
         $this->error = null;
-        $this->iss = is_string($_ENV['TOKEN_ISSUER']) ? $_ENV['TOKEN_ISSUER'] : 'undefined' ;
+        $this->iss = is_string($_ENV['TOKEN_ISSUER'] ?? null) ? $_ENV['TOKEN_ISSUER'] : 'undefined';
         $this->type = 'not defined';
         $this->user_id = 0;
         $this->employee_id = null;

@@ -35,7 +35,9 @@ class SwooleRequest
             $this->request->requestedUrl = $this->sanitizeRequestURI($swooleRequest->server['request_uri']);
             $this->request->queryString = isset($swooleRequest->server['query_string']) ? 
                 $this->sanitizeInput((string) $swooleRequest->server['query_string']) : null;
-            $this->request->remoteAddress = $swooleRequest->server['remote_addr'] . ':' . $swooleRequest->server['remote_port'];
+            $remoteAddr = $swooleRequest->server['remote_addr'] ?? '';
+            $remotePort = $swooleRequest->server['remote_port'] ?? '';
+            $this->request->remoteAddress = $remoteAddr . ($remotePort ? ':' . $remotePort : '');
 
             if (isset($swooleRequest->header['user-agent'])) {
                 $this->request->userMachine = $this->sanitizeInput((string) $swooleRequest->header['user-agent']);

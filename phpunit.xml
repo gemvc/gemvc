@@ -26,7 +26,9 @@
     
     <!-- Coverage enabled - PCOV is installed and working -->
     <source>
-        <directory suffix=".php">src</directory>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
         <exclude>
             <directory>src/stubs</directory>
             <directory>src/startup</directory>
