@@ -243,7 +243,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to set lastQuery
         $reflection = new \ReflectionClass($this->queryBuilder);
         $lastQueryProperty = $reflection->getProperty('lastQuery');
-        $lastQueryProperty->setAccessible(true);
         $lastQueryProperty->setValue($this->queryBuilder, $mockQuery);
         
         $error = $this->queryBuilder->getError();
@@ -263,7 +262,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to set lastQuery
         $reflection = new \ReflectionClass($this->queryBuilder);
         $lastQueryProperty = $reflection->getProperty('lastQuery');
-        $lastQueryProperty->setAccessible(true);
         $lastQueryProperty->setValue($this->queryBuilder, $mockQuery);
         
         // Builder error should take priority
@@ -282,12 +280,10 @@ class QueryBuilderTest extends TestCase
         // Use reflection to access setLastQuery
         $reflection = new \ReflectionClass($this->queryBuilder);
         $method = $reflection->getMethod('setLastQuery');
-        $method->setAccessible(true);
         $method->invoke($this->queryBuilder, $mockQuery);
         
         // Verify lastQuery was set
         $lastQueryProperty = $reflection->getProperty('lastQuery');
-        $lastQueryProperty->setAccessible(true);
         $this->assertEquals($mockQuery, $lastQueryProperty->getValue($this->queryBuilder));
     }
     
@@ -315,7 +311,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $this->queryBuilder->getPdoQuery();
@@ -344,7 +339,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $this->assertTrue($this->queryBuilder->isConnected());
@@ -366,7 +360,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->beginTransaction();
@@ -386,7 +379,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->beginTransaction();
@@ -417,7 +409,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->commit();
@@ -439,7 +430,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->commit();
@@ -470,7 +460,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->rollback();
@@ -492,7 +481,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $result = $this->queryBuilder->rollback();
@@ -518,7 +506,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         $this->queryBuilder->disconnect();
@@ -551,7 +538,6 @@ class QueryBuilderTest extends TestCase
         // Use reflection to inject mock
         $reflection = new \ReflectionClass($this->queryBuilder);
         $pdoQueryProperty = $reflection->getProperty('pdoQuery');
-        $pdoQueryProperty->setAccessible(true);
         $pdoQueryProperty->setValue($this->queryBuilder, $mockPdoQuery);
         
         // Destructor will be called when object goes out of scope

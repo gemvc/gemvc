@@ -65,15 +65,12 @@ class SchemaGeneratorTest extends TestCase
         $reflection = new ReflectionClass($generator);
         
         $pdoProperty = $reflection->getProperty('pdo');
-        $pdoProperty->setAccessible(true);
         $this->assertSame($this->mockPdo, $pdoProperty->getValue($generator));
         
         $tableNameProperty = $reflection->getProperty('tableName');
-        $tableNameProperty->setAccessible(true);
         $this->assertEquals($this->tableName, $tableNameProperty->getValue($generator));
         
         $schemaProperty = $reflection->getProperty('schema');
-        $schemaProperty->setAccessible(true);
         $this->assertEquals($schema, $schemaProperty->getValue($generator));
     }
 
@@ -87,7 +84,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $schemaProperty = $reflection->getProperty('schema');
-        $schemaProperty->setAccessible(true);
         
         $storedSchema = $schemaProperty->getValue($generator);
         $this->assertCount(2, $storedSchema);
@@ -117,7 +113,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $schemaProperty = $reflection->getProperty('schema');
-        $schemaProperty->setAccessible(true);
         $schemaProperty->setValue($generator, [$invalidConstraint]);
         
         $result = $generator->applyConstraints();
@@ -138,7 +133,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('processSchemaConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -153,7 +147,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('processSchemaConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -168,7 +161,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('processSchemaConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -183,7 +175,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('processSchemaConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -292,7 +283,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyUniqueConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -315,7 +305,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyUniqueConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -338,7 +327,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyUniqueConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -358,7 +346,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyUniqueConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -385,7 +372,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyIndexConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -408,7 +394,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyIndexConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -428,7 +413,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyIndexConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -459,7 +443,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyForeignKeyConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -491,7 +474,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyForeignKeyConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -506,7 +488,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyForeignKeyConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -532,7 +513,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyForeignKeyConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -551,7 +531,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyPrimaryKeyConstraint');
-        $method->setAccessible(true);
         
         // Primary key is typically handled during table creation, so this should do nothing
         $method->invoke($generator, $constraint);
@@ -583,7 +562,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyCheckConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -610,7 +588,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyCheckConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -625,7 +602,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyCheckConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -649,7 +625,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyCheckConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -679,7 +654,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyFulltextConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -705,7 +679,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyFulltextConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -720,7 +693,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyFulltextConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -744,7 +716,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('applyFulltextConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, $constraint);
         
@@ -765,7 +736,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('constraintExists');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'test_constraint');
         
@@ -782,7 +752,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('constraintExists');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'test_constraint');
         
@@ -799,7 +768,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('indexExists');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'test_index');
         
@@ -816,7 +784,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('indexExists');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'test_index');
         
@@ -835,7 +802,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('executeConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, $constraints);
         
@@ -851,7 +817,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('executeConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, $constraints);
         
@@ -874,7 +839,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('executeConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, $constraints);
         
@@ -890,7 +854,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('executeConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, $constraints);
         
@@ -1012,7 +975,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $schemaProperty = $reflection->getProperty('schema');
-        $schemaProperty->setAccessible(true);
         $schemaProperty->setValue($generator, [$invalidConstraint]);
         
         $generator->applyConstraints();
@@ -1038,7 +1000,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('removeObsoleteConstraints');
-        $method->setAccessible(true);
         
         $method->invoke($generator, []);
         
@@ -1093,7 +1054,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('removeObsoleteConstraints');
-        $method->setAccessible(true);
         
         // Current schema is empty, so old_unique should be removed
         $method->invoke($generator, []);
@@ -1122,7 +1082,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('removeObsoleteConstraints');
-        $method->setAccessible(true);
         
         $processedConstraints = $constraint->toArray();
         $method->invoke($generator, [$processedConstraints]);
@@ -1147,7 +1106,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('getExistingConstraints');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -1163,7 +1121,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('getExistingIndexes');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -1178,7 +1135,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('getExistingIndexes');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator);
         
@@ -1198,7 +1154,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('getConstraintColumns');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'test_constraint');
         
@@ -1216,7 +1171,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('isUniqueConstraintIndex');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'unique_index');
         
@@ -1233,7 +1187,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('isUniqueConstraintIndex');
-        $method->setAccessible(true);
         
         $result = $method->invoke($generator, 'regular_index');
         
@@ -1251,7 +1204,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('dropConstraint');
-        $method->setAccessible(true);
         
         $method->invoke($generator, 'test_constraint');
         
@@ -1269,7 +1221,6 @@ class SchemaGeneratorTest extends TestCase
         
         $reflection = new ReflectionClass($generator);
         $method = $reflection->getMethod('dropIndex');
-        $method->setAccessible(true);
         
         $method->invoke($generator, 'test_index');
         

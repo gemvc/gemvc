@@ -19,9 +19,12 @@ use PDOException;
  */
 class UniversalQueryExecuterTest extends TestCase
 {
-    private ?PDO $mockPdo = null;
-    private ?ConnectionInterface $mockConnection = null;
-    private ?ConnectionManagerInterface $mockDbManager = null;
+    /** @var MockObject&PDO|null */
+    private $mockPdo = null;
+    /** @var MockObject&ConnectionInterface|null */
+    private $mockConnection = null;
+    /** @var MockObject&ConnectionManagerInterface|null */
+    private $mockDbManager = null;
     
     protected function setUp(): void
     {
