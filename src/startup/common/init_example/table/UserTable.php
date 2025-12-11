@@ -25,7 +25,7 @@ class UserTable extends Table
     public string $name;
     public string $email;
     public ?string $description;
-    //password is not shown in the result of the select query , but this property can be setted trough setPassword() method in the UserModel class
+    //password is not shown in the result of the select query , but this property can be set trough setPassword() method in the UserModel class
     protected string $password;
     public string $created_at;
     public ?string $updated_at;
@@ -101,9 +101,9 @@ class UserTable extends Table
      * @return null|static
      * null or UserTable Object
      */
-    public function selectById(int $id): null|static
+    public function selectById(int|string $id): null|static
     {
-        $result = $this->select()->where('id', $id)->limit(1)->run();
+        $result = $this->select()->whereEqual('id', $id)->limit(1)->run();
         return $result[0] ?? null;
     }
 
@@ -118,7 +118,7 @@ class UserTable extends Table
 
     public function selectByEmail(string $email): null|static
     {
-        $arr = $this->select()->where('email', $email)->limit(1)->run();
+        $arr = $this->select()->whereEqual('email', $email)->limit(1)->run();
         return $arr[0] ?? null;
     }
 } 

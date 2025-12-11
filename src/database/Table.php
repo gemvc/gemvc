@@ -8,8 +8,10 @@ use Gemvc\Database\PdoQuery;
  * Base table class for database operations
  * 
  * Provides a fluent interface for database queries and operations using composition with lazy loading
+ * 
+ * All child classes must implement getTable() method to return the database table name.
  */
-class Table
+abstract class Table
 {
     /** @var PdoQuery|null Lazy-loaded database query instance */
     private ?PdoQuery $_pdoQuery = null;
@@ -56,6 +58,27 @@ class Table
     /** @var array<string, string> Type mapping for property casting */
     protected array $_type_map = [];
 
+    /** @var array<string, mixed>|null Primary key configuration (set via setPrimaryKey()) */
+    private ?array $_primaryKeyConfig = null;
+    
+    /** @var string|null Detected primary key column name (set in constructor) */
+    private ?string $_primaryKeyColumn = null;
+    
+    /** @var string|null Detected primary key type: 'int', 'string', 'uuid' (set in constructor) */
+    private ?string $_primaryKeyType = null;
+    
+    /** @var bool Whether primary key auto-generates (UUID) */
+    private bool $_primaryKeyAutoGenerate = false;
+    /**
+     * Get the database table name
+     * 
+     * This method must be implemented by all child classes to return
+     * the name of the database table this class represents.
+     * 
+     * @return string The database table name
+     */
+    abstract public function getTable(): string;
+
     /**
      * Initialize a new Table instance
      * No database connection is created here - lazy loading
@@ -63,6 +86,7 @@ class Table
     public function __construct()
     {
         $this->_limit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT']))  ? (int)$_ENV['QUERY_LIMIT'] : 10;
+        $this->_detectPrimaryKey();
     }
 
     /**
@@ -142,7 +166,7 @@ class Table
     protected function validateId(int $id, string $operation = 'operation'): bool
     {
         if ($id < 1) {
-            $this->setError("ID must be a positive integer for {$operation} in {$this->_internalTable()}");
+            $this->setError("ID must be a positive integer for {$operation} in {$this->getTable()}");
             return false;
         }
         return true;
@@ -164,6 +188,14 @@ class Table
         // PERFORMANCE: Skip validateProperties([]) - empty array means no validation needed
         // This eliminates unnecessary function call overhead
         
+        // Auto-generate UUID if needed
+        if ($this->isPrimaryKeyAutoGenerate() && $this->getPrimaryKeyType() === 'uuid') {
+            $pkValue = $this->getPrimaryKeyValue();
+            if ($pkValue === null || $pkValue === '') {
+                $this->setPrimaryKeyValue($this->generateUuid());
+            }
+        }
+        
         // PERFORMANCE: Build query and bindings in single pass instead of two iterations
         $columns = [];
         $params = [];
@@ -183,7 +215,7 @@ class Table
         // Build query string efficiently
         $columnsStr = implode(',', $columns);
         $paramsStr = implode(',', $params);
-        $query = "INSERT INTO {$this->_internalTable()} ({$columnsStr}) VALUES ({$paramsStr})";
+        $query = "INSERT INTO {$this->getTable()} ({$columnsStr}) VALUES ({$paramsStr})";
         
         // PERFORMANCE: Debug logging only in dev mode - removed from production path
         if (($_ENV['APP_ENV'] ?? '') === 'dev') {
@@ -199,7 +231,7 @@ class Table
             
             // Enhanced error logging with SQL details
             $errorInfo = [
-                'table' => $this->_internalTable(),
+                'table' => $this->getTable(),
                 'query' => $query,
                 'bindings' => $arrayBind,
                 'error' => $currentError
@@ -209,13 +241,20 @@ class Table
                 error_log("Table::insertSingleQuery() - Insert failed with full details: " . json_encode($errorInfo));
             }
             
-            $this->setError("Insert failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Insert failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
-        if (property_exists($this, 'id')) {
-            $this->id = $result;
+        // Set primary key value after insert
+        $pkColumn = $this->getPrimaryKeyColumn();
+        $pkType = $this->getPrimaryKeyType();
+        
+        if ($pkType === 'int' && property_exists($this, $pkColumn)) {
+            // For int IDs, use the returned auto-increment value
+            $this->$pkColumn = $result;
         }
+        // For UUID/string, we already set it before insert (or it was provided)
+        
         return $this;
     }
 
@@ -226,22 +265,25 @@ class Table
      */
     public function updateSingleQuery(): ?static
     {
-        if (!property_exists($this, 'id')) {
-            $this->setError("Property 'id' does not exist in object");
+        $pkColumn = $this->getPrimaryKeyColumn();
+        $pkValue = $this->getPrimaryKeyValue();
+        
+        if ($pkValue === null) {
+            $this->setError("Primary key '{$pkColumn}' must be set for update");
             return null;
         }
         
-        if (!$this->validateId($this->id, 'update')) {
+        if (!$this->validatePrimaryKey($pkValue, 'update')) {
             return null;
         }
         
-        [$query, $arrayBind] = $this->buildUpdateQuery('id', $this->id);
+        [$query, $arrayBind] = $this->buildUpdateQuery($pkColumn, $pkValue);
         
         $result = $this->getPdoQuery()->updateQuery($query, $arrayBind);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Update failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Update failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -254,23 +296,20 @@ class Table
      * @param int $id Record ID to delete
      * @return int|null Deleted ID on success, null on error
      */
-    public function deleteByIdQuery(int $id): ?int
+    public function deleteByIdQuery(int|string $id): int|string|null
     {
-        if (!property_exists($this, 'id')) {
-            $this->setError("Property 'id' does not exist in object");
-            return null;
-        }
+        $pkColumn = $this->getPrimaryKeyColumn();
         
-        if (!$this->validateId($id, 'delete')) {
+        if (!$this->validatePrimaryKey($id, 'delete')) {
             return null;
         }
               
-        $query = "DELETE FROM {$this->_internalTable()} WHERE id = :id";
-        $result = $this->getPdoQuery()->deleteQuery($query, [':id' => $id]);
+        $query = "DELETE FROM {$this->getTable()} WHERE {$pkColumn} = :{$pkColumn}";
+        $result = $this->getPdoQuery()->deleteQuery($query, [":{$pkColumn}" => $id]);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Delete failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Delete failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         return $id;
@@ -282,12 +321,15 @@ class Table
      */
     public function safeDeleteQuery(): ?static
     {
-        if (!property_exists($this, 'id')) {
-            $this->setError("Property 'id' does not exist in object");
+        $pkColumn = $this->getPrimaryKeyColumn();
+        $pkValue = $this->getPrimaryKeyValue();
+        
+        if ($pkValue === null) {
+            $this->setError("Primary key '{$pkColumn}' must be set for safe delete");
             return null;
         }
         
-        if (!$this->validateId($this->id, 'safe delete')) {
+        if (!$this->validatePrimaryKey($pkValue, 'safe delete')) {
             return null;
         }
         
@@ -296,18 +338,17 @@ class Table
             return null;
         }
         
-        $id = $this->id;
-        $query = "UPDATE {$this->_internalTable()} SET deleted_at = NOW() WHERE id = :id";
+        $query = "UPDATE {$this->getTable()} SET deleted_at = NOW() WHERE {$pkColumn} = :{$pkColumn}";
         
         if (property_exists($this, 'is_active')) {
-            $query = "UPDATE {$this->_internalTable()} SET deleted_at = NOW(), is_active = 0 WHERE id = :id";
+            $query = "UPDATE {$this->getTable()} SET deleted_at = NOW(), is_active = 0 WHERE {$pkColumn} = :{$pkColumn}";
         }
         
-        $result = $this->getPdoQuery()->updateQuery($query, [':id' => $id]);
+        $result = $this->getPdoQuery()->updateQuery($query, [":{$pkColumn}" => $pkValue]);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Safe delete failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Safe delete failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -330,12 +371,15 @@ class Table
      */
     public function restoreQuery(): ?static
     {
-        if (!property_exists($this, 'id')) {
-            $this->setError("Property 'id' does not exist in object");
+        $pkColumn = $this->getPrimaryKeyColumn();
+        $pkValue = $this->getPrimaryKeyValue();
+        
+        if ($pkValue === null) {
+            $this->setError("Primary key '{$pkColumn}' must be set for restore");
             return null;
         }
         
-        if (!$this->validateId($this->id, 'restore')) {
+        if (!$this->validatePrimaryKey($pkValue, 'restore')) {
             return null;
         }
         
@@ -344,14 +388,13 @@ class Table
             return null;
         }
         
-        $id = $this->id;
-        $query = "UPDATE {$this->_internalTable()} SET deleted_at = NULL WHERE id = :id";
+        $query = "UPDATE {$this->getTable()} SET deleted_at = NULL WHERE {$pkColumn} = :{$pkColumn}";
                
-        $result = $this->getPdoQuery()->updateQuery($query, [':id' => $id]);
+        $result = $this->getPdoQuery()->updateQuery($query, [":{$pkColumn}" => $pkValue]);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Restore failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Restore failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -368,16 +411,19 @@ class Table
      */
     public function deleteSingleQuery(): ?int
     {
-        if (!property_exists($this, 'id')) {
-            $this->setError("Property 'id' does not exist in object");
+        $pkColumn = $this->getPrimaryKeyColumn();
+        $pkValue = $this->getPrimaryKeyValue();
+        
+        if ($pkValue === null) {
+            $this->setError("Primary key '{$pkColumn}' must be set for delete");
             return null;
         }
         
-        if (!$this->validateId($this->id, 'delete')) {
+        if (!$this->validatePrimaryKey($pkValue, 'delete')) {
             return null;
         }
         
-        return $this->removeConditionalQuery('id', $this->id);
+        return $this->removeConditionalQuery($pkColumn, $pkValue);
     }
 
     /**
@@ -408,7 +454,7 @@ class Table
         
         $this->validateProperties([]);
 
-        $query = "DELETE FROM {$this->_internalTable()} WHERE {$whereColumn} = :{$whereColumn}";
+        $query = "DELETE FROM {$this->getTable()} WHERE {$whereColumn} = :{$whereColumn}";
         $arrayBind = [':' . $whereColumn => $whereValue];
         
         if ($secondWhereColumn !== null) {
@@ -424,7 +470,7 @@ class Table
 
         if ($result === null) { 
             $currentError = $this->getError();
-            $this->setError("Conditional delete failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Conditional delete failed in {$this->getTable()}: {$currentError}");
             return null;
         }
        
@@ -512,7 +558,8 @@ class Table
      */
     public function orderBy(?string $columnName = null, ?bool $ascending = null): self
     {
-        $columnName = $columnName ?: 'id';
+        // Default to primary key column if not specified
+        $columnName = $columnName ?: $this->getPrimaryKeyColumn();
         $ascending = $ascending ? ' ASC ' : ' DESC ';
         $this->_orderBy .= " ORDER BY {$columnName}{$ascending}";
         return $this;
@@ -525,23 +572,16 @@ class Table
      */
 
     /**
-     * Adds a basic WHERE equality condition
-     * 
-     * @param string $column Column name
-     * @param mixed $value Value to match
-     * @return self For method chaining
-     */
-    /**
      * Adds a WHERE condition for equality comparison
      * 
-     * @deprecated This method will be removed in the next major version.
-     *             Use whereEqual() instead for more explicit and precise method naming.
+     * This is the preferred method for equality conditions. It's more explicit
+     * than the deprecated where() method and aligns with QueryBuilder's WhereTrait.
      * 
      * @param string $column Column name
      * @param mixed $value Value to match
      * @return self For method chaining
      */
-    public function where(string $column, mixed $value): self
+    public function whereEqual(string $column, mixed $value): self
     {
         if (empty($column)) {
             $this->setError("Column name cannot be empty in WHERE clause");
@@ -554,6 +594,21 @@ class Table
             
         $this->_binds[':' . $column] = $value;
         return $this;
+    }
+
+    /**
+     * Adds a WHERE condition for equality comparison
+     * 
+     * @deprecated This method will be removed in the next major version.
+     *             Use whereEqual() instead for more explicit and precise method naming.
+     * 
+     * @param string $column Column name
+     * @param mixed $value Value to match
+     * @return self For method chaining
+     */
+    public function where(string $column, mixed $value): self
+    {
+        return $this->whereEqual($column, $value);
     }
 
     /**
@@ -689,7 +744,7 @@ class Table
         
         if (count($this->_arr_where) == 0) {
             // If this is the first condition, use WHERE instead of OR
-            return $this->where($column, $value);
+            return $this->whereEqual($column, $value);
         }
         
         $paramName = $column . '_or_' . count($this->_arr_where);
@@ -791,12 +846,12 @@ class Table
         
         $this->validateProperties([]);
 
-        $query = "UPDATE {$this->_internalTable()} SET {$columnNameSetToNull} = NULL WHERE {$whereColumn} = :whereValue";
+        $query = "UPDATE {$this->getTable()} SET {$columnNameSetToNull} = NULL WHERE {$whereColumn} = :whereValue";
         $result = $this->getPdoQuery()->updateQuery($query, [':whereValue' => $whereValue]);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Set NULL failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Set NULL failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -831,12 +886,12 @@ class Table
         
         $this->validateProperties([]);
 
-        $query = "UPDATE {$this->_internalTable()} SET {$columnNameSetToNowTomeStamp} = NOW() WHERE {$whereColumn} = :whereValue";
+        $query = "UPDATE {$this->getTable()} SET {$columnNameSetToNowTomeStamp} = NOW() WHERE {$whereColumn} = :whereValue";
         $result = $this->getPdoQuery()->updateQuery($query, [':whereValue' => $whereValue]);
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Set timestamp failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Set timestamp failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -849,25 +904,27 @@ class Table
      * @param int $id Record ID to activate
      * @return int|null Number of affected rows on success, null on error
      */
-    public function activateQuery(int $id): ?int
+    public function activateQuery(int|string $id): ?int
     {
         if (!$this->validateProperties(['is_active'])) {
             $this->setError('is_active column is not present in the table');
             return null;
         }
 
-        if (!$this->validateId($id, 'activate')) {
+        $pkColumn = $this->getPrimaryKeyColumn();
+        
+        if (!$this->validatePrimaryKey($id, 'activate')) {
             return null;
         }
         
         $result = $this->getPdoQuery()->updateQuery(
-            "UPDATE {$this->_internalTable()} SET is_active = 1 WHERE id = :id", 
-            [':id' => $id]
+            "UPDATE {$this->getTable()} SET is_active = 1 WHERE {$pkColumn} = :{$pkColumn}", 
+            [":{$pkColumn}" => $id]
         );
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Activate failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Activate failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -880,25 +937,27 @@ class Table
      * @param int $id Record ID to deactivate
      * @return int|null Number of affected rows on success, null on error
      */
-    public function deactivateQuery(int $id): ?int
+    public function deactivateQuery(int|string $id): ?int
     {
         if (!$this->validateProperties(['is_active'])) {
             $this->setError('is_active column is not present in the table');
             return null;
         }
 
-        if (!$this->validateId($id, 'deactivate')) {
+        $pkColumn = $this->getPrimaryKeyColumn();
+        
+        if (!$this->validatePrimaryKey($id, 'deactivate')) {
             return null;
         }
         
         $result = $this->getPdoQuery()->updateQuery(
-            "UPDATE {$this->_internalTable()} SET is_active = 0 WHERE id = :id", 
-            [':id' => $id]
+            "UPDATE {$this->getTable()} SET is_active = 0 WHERE {$pkColumn} = :{$pkColumn}", 
+            [":{$pkColumn}" => $id]
         );
         
         if ($result === null) {
             $currentError = $this->getError();
-            $this->setError("Deactivate failed in {$this->_internalTable()}: {$currentError}");
+            $this->setError("Deactivate failed in {$this->getTable()}: {$currentError}");
             return null;
         }
         
@@ -912,18 +971,20 @@ class Table
      */
 
     /**
-     * Selects a single row by ID
+     * Selects a single row by primary key
      * 
-     * @param int $id Record ID to select
+     * @param int|string $id Primary key value to select
      * @return static|null Found instance or null if not found
      */
-    public function selectById(int $id): ?static
+    public function selectById(int|string $id): ?static
     {
-        if (!$this->validateId($id, 'select')) {
+        $pkColumn = $this->getPrimaryKeyColumn();
+        
+        if (!$this->validatePrimaryKey($id, 'select')) {
             return null;
         }
         
-        $result = $this->select()->where('id', $id)->limit(1)->run();
+        $result = $this->select()->whereEqual($pkColumn, $id)->limit(1)->run();
         
         if ($result === null) {
             $currentError = $this->getError();
@@ -1305,7 +1366,7 @@ class Table
      */
     private function buildUpdateQuery(string $idWhereKey, mixed $idWhereValue): array
     {
-        $query = "UPDATE {$this->_internalTable()} SET ";
+        $query = "UPDATE {$this->getTable()} SET ";
         $arrayBind = [];          
         
         // @phpstan-ignore-next-line
@@ -1337,12 +1398,12 @@ class Table
 
         if ($this->_skip_count) {
             $this->_query = $this->_query . 
-                "FROM {$this->_internalTable()} $joinClause $whereClause ";
+                "FROM {$this->getTable()} $joinClause $whereClause ";
         } else {
             // Avoid duplicate parameter binding by building simple query without subquery
             // The count will be calculated separately if needed
             $this->_query = $this->_query . 
-                "FROM {$this->_internalTable()} $joinClause $whereClause ";
+                "FROM {$this->getTable()} $joinClause $whereClause ";
         }
 
         if (!$this->_no_limit) {
@@ -1408,7 +1469,7 @@ class Table
                 // If we have a limit and got exactly that many results, there might be more
                 if ($this->_limit > 0 && count($queryResult) >= $this->_limit) {
                     // Run a separate count query
-                    $countQuery = "SELECT COUNT(*) as total FROM {$this->_internalTable()}" . $this->whereMaker();
+                    $countQuery = "SELECT COUNT(*) as total FROM {$this->getTable()}" . $this->whereMaker();
                     $countResult = $this->getPdoQuery()->selectQuery($countQuery, $this->_binds);
                     if ($countResult && isset($countResult[0]['total'])) {
                         $this->_total_count = is_numeric($countResult[0]['total']) ? (int)$countResult[0]['total'] : 0;
@@ -1432,15 +1493,251 @@ class Table
         return $object_result;
     }
 
-    private function _internalTable(): string
+    /*
+     * =============================================
+     * PRIMARY KEY CONFIGURATION
+     * =============================================
+     */
+
+    /**
+     * Detect and set primary key configuration
+     * 
+     * Logic:
+     * 1. If 'id' property exists in child class → use 'id' (int)
+     * 2. Else if setPrimaryKey() was called → use configuration
+     * 3. Else → default to 'id' (int) for backward compatibility
+     * 
+     * @return void
+     */
+    private function _detectPrimaryKey(): void
     {
-        if (!method_exists($this, 'getTable')) {
-            throw new \Exception('Method getTable():string must be implemented in child Table class');
+        // Step 1: Check if 'id' property exists in child class
+        if (property_exists($this, 'id')) {
+            $this->_primaryKeyColumn = 'id';
+            $this->_primaryKeyType = 'int';
+            $this->_primaryKeyAutoGenerate = false;
+            return;
         }
-        $table_name = $this->getTable();
-        if (!is_string($table_name)) {
-            throw new \Exception('Method getTable():string must return a string');
+        
+        // Step 2: Check if setPrimaryKey() was called (configuration exists)
+        if ($this->_primaryKeyConfig !== null) {
+            /** @var array{column: string, type: string, auto_generate: bool} $config */
+            $config = $this->_primaryKeyConfig;
+            $this->_primaryKeyColumn = $config['column'];
+            $this->_primaryKeyType = $config['type'];
+            $this->_primaryKeyAutoGenerate = $config['auto_generate'];
+            return;
         }
-        return $table_name;
+        
+        // Step 3: Default to 'id' (int) for backward compatibility
+        // Even if property doesn't exist, we default to 'id' for SQL queries
+        $this->_primaryKeyColumn = 'id';
+        $this->_primaryKeyType = 'int';
+        $this->_primaryKeyAutoGenerate = false;
+    }
+
+    /**
+     * Get primary key column name
+     * 
+     * @return string Primary key column name
+     */
+    protected function getPrimaryKeyColumn(): string
+    {
+        return $this->_primaryKeyColumn ?? 'id';
+    }
+
+    /**
+     * Get primary key type
+     * 
+     * @return string Primary key type: 'int', 'string', 'uuid'
+     */
+    protected function getPrimaryKeyType(): string
+    {
+        return $this->_primaryKeyType ?? 'int';
+    }
+
+    /**
+     * Check if primary key auto-generates (UUID)
+     * 
+     * @return bool True if auto-generates
+     */
+    protected function isPrimaryKeyAutoGenerate(): bool
+    {
+        return $this->_primaryKeyAutoGenerate;
+    }
+
+    /**
+     * Configure primary key column and type
+     * 
+     * By default, tables use 'id' (int) as primary key. This method allows
+     * you to configure a different column name and/or type.
+     * 
+     * **Types:**
+     * - `'int'` - Integer primary key (default, auto-increment)
+     * - `'string'` - String primary key (must be set manually)
+     * - `'uuid'` - UUID primary key (auto-generated if not set)
+     * 
+     * **Example:**
+     * ```php
+     * // Default (no configuration needed)
+     * class UserTable extends Table {
+     *     public int $id; // Works automatically
+     * }
+     * 
+     * // UUID primary key
+     * class ProductTable extends Table {
+     *     public string $uuid;
+     *     
+     *     public function __construct() {
+     *         parent::__construct();
+     *         $this->setPrimaryKey('uuid', 'uuid'); // Auto-generates UUID
+     *     }
+     * }
+     * ```
+     * 
+     * @param string $column Column name (default: 'id')
+     * @param string $type Type: 'int', 'string', 'uuid' (default: 'int')
+     * @return self For method chaining
+     */
+    public function setPrimaryKey(string $column = 'id', string $type = 'int'): self
+    {
+        // Validate type
+        if (!in_array($type, ['int', 'string', 'uuid'], true)) {
+            $this->setError("Invalid primary key type: {$type}. Must be 'int', 'string', or 'uuid'");
+            return $this;
+        }
+        
+        // Validate column name
+        if (empty(trim($column))) {
+            $this->setError("Primary key column name cannot be empty");
+            return $this;
+        }
+        
+        $this->_primaryKeyConfig = [
+            'column' => $column,
+            'type' => $type,
+            'auto_generate' => ($type === 'uuid')
+        ];
+        
+        // Update detected values immediately
+        $this->_primaryKeyColumn = $column;
+        $this->_primaryKeyType = $type;
+        $this->_primaryKeyAutoGenerate = ($type === 'uuid');
+        
+        return $this;
+    }
+
+    /**
+     * Get primary key configuration
+     * Returns default ['id', 'int'] if not configured
+     * 
+     * @return array{column: string, type: string, auto_generate: bool}
+     */
+    protected function getPrimaryKeyConfig(): array
+    {
+        if ($this->_primaryKeyConfig === null) {
+            // Default: 'id' (int) - backward compatible
+            /** @var array{column: string, type: string, auto_generate: bool} */
+            return [
+                'column' => 'id',
+                'type' => 'int',
+                'auto_generate' => false
+            ];
+        }
+        /** @var array{column: string, type: string, auto_generate: bool} */
+        return $this->_primaryKeyConfig;
+    }
+
+    /**
+     * Get primary key value from current object
+     * Auto-generates UUID if needed and type is 'uuid'
+     * 
+     * @return int|string|null Primary key value, or null if property doesn't exist
+     */
+    protected function getPrimaryKeyValue(): int|string|null
+    {
+        $column = $this->getPrimaryKeyColumn();
+        
+        // Check if property exists
+        if (!property_exists($this, $column)) {
+            return null;
+        }
+        
+        $value = $this->$column;
+        
+        // Auto-generate UUID if needed
+        if ($this->getPrimaryKeyType() === 'uuid' && ($value === null || $value === '')) {
+            $value = $this->generateUuid();
+            $this->setPrimaryKeyValue($value);
+        }
+        
+        return $value;
+    }
+
+    /**
+     * Set primary key value on current object
+     * 
+     * @param int|string $value Primary key value
+     * @return void
+     */
+    protected function setPrimaryKeyValue(int|string $value): void
+    {
+        $column = $this->getPrimaryKeyColumn();
+        
+        if (property_exists($this, $column)) {
+            $this->$column = $value;
+        }
+    }
+
+    /**
+     * Generate a UUID v4 string
+     * 
+     * Uses ramsey/uuid if available, otherwise native PHP implementation
+     * 
+     * @return string UUID v4 string
+     */
+    protected function generateUuid(): string
+    {      
+        // Native PHP UUID v4 generation (RFC 4122 compliant)
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+    }
+
+    /**
+     * Validate primary key value
+     * 
+     * @param int|string|null $value Primary key value to validate
+     * @param string $operation Operation name for error message
+     * @return bool True if primary key is valid
+     */
+    protected function validatePrimaryKey(int|string|null $value, string $operation = 'operation'): bool
+    {
+        $column = $this->getPrimaryKeyColumn();
+        $type = $this->getPrimaryKeyType();
+        
+        if ($value === null) {
+            $this->setError("Primary key '{$column}' must be set for {$operation} in {$this->getTable()}");
+            return false;
+        }
+        
+        if ($type === 'int') {
+            if (!is_int($value) || $value < 1) {
+                $this->setError("Primary key '{$column}' must be a positive integer for {$operation} in {$this->getTable()}");
+                return false;
+            }
+        } elseif ($type === 'uuid' || $type === 'string') {
+            if (!is_string($value) || trim($value) === '') {
+                $this->setError("Primary key '{$column}' must be a non-empty string for {$operation} in {$this->getTable()}");
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
