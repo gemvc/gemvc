@@ -3,6 +3,10 @@
 namespace Gemvc\Database;
 
 use Gemvc\Database\PdoQuery;
+use Gemvc\Database\TableComponents\PropertyCaster;
+use Gemvc\Database\TableComponents\TableValidator;
+use Gemvc\Database\TableComponents\PaginationManager;
+use Gemvc\Database\TableComponents\ConnectionManager;
 
 /**
  * Base table class for database operations
@@ -13,11 +17,8 @@ use Gemvc\Database\PdoQuery;
  */
 abstract class Table
 {
-    /** @var PdoQuery|null Lazy-loaded database query instance */
-    private ?PdoQuery $_pdoQuery = null;
-    
-    /** @var string|null Stored error message before PdoQuery is instantiated */
-    private ?string $_storedError = null;
+    /** @var ConnectionManager Lazy-loaded connection manager */
+    private ?ConnectionManager $_connectionManager = null;
 
     /** @var string|null SQL query being built */
     private ?string $_query = null;
@@ -34,20 +35,11 @@ abstract class Table
     /** @var array<string,mixed> Query parameter bindings */
     private array $_binds = [];
     
-    /** @var int Number of rows per page */
-    private int $_limit;
-    
-    /** @var int Pagination offset */
-    private int $_offset = 0;
-    
     /** @var string ORDER BY clause */
     private string $_orderBy = '';
     
-    /** @var int Total count of rows from last query */
-    private int $_total_count = 0;
-    
-    /** @var int Number of pages from last query */
-    private int $_count_pages = 0;
+    /** @var PaginationManager Lazy-loaded pagination manager */
+    private ?PaginationManager $_paginationManager = null;
     
     /** @var array<string> WHERE clauses */
     private array $_arr_where = [];
@@ -57,6 +49,12 @@ abstract class Table
  
     /** @var array<string, string> Type mapping for property casting */
     protected array $_type_map = [];
+    
+    /** @var PropertyCaster|null Lazy-loaded property caster */
+    private ?PropertyCaster $_propertyCaster = null;
+    
+    /** @var TableValidator|null Lazy-loaded table validator */
+    private ?TableValidator $_tableValidator = null;
 
     /** @var array<string, mixed>|null Primary key configuration (set via setPrimaryKey()) */
     private ?array $_primaryKeyConfig = null;
@@ -85,79 +83,125 @@ abstract class Table
      */
     public function __construct()
     {
-        $this->_limit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT']))  ? (int)$_ENV['QUERY_LIMIT'] : 10;
+        $defaultLimit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT']))  ? (int)$_ENV['QUERY_LIMIT'] : 10;
+        $this->_paginationManager = new PaginationManager($defaultLimit);
         $this->_detectPrimaryKey();
+    }
+
+    /**
+     * Get or create PropertyCaster instance
+     * 
+     * @return PropertyCaster The property caster instance
+     */
+    private function getPropertyCaster(): PropertyCaster
+    {
+        if ($this->_propertyCaster === null) {
+            $this->_propertyCaster = new PropertyCaster($this->_type_map);
+        }
+        return $this->_propertyCaster;
+    }
+
+    /**
+     * Get or create TableValidator instance
+     * 
+     * @return TableValidator The table validator instance
+     */
+    private function getTableValidator(): TableValidator
+    {
+        if ($this->_tableValidator === null) {
+            $this->_tableValidator = new TableValidator($this);
+        }
+        return $this->_tableValidator;
+    }
+
+    /**
+     * Get PaginationManager instance
+     * 
+     * @return PaginationManager The pagination manager instance
+     */
+    private function getPaginationManager(): PaginationManager
+    {
+        // PaginationManager is created in constructor, so it should never be null
+        // But we check for safety
+        if ($this->_paginationManager === null) {
+            $defaultLimit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT']))  ? (int)$_ENV['QUERY_LIMIT'] : 10;
+            $this->_paginationManager = new PaginationManager($defaultLimit);
+        }
+        return $this->_paginationManager;
+    }
+
+    /**
+     * Get or create ConnectionManager instance
+     * 
+     * @return ConnectionManager The connection manager instance
+     */
+    private function getConnectionManager(): ConnectionManager
+    {
+        if ($this->_connectionManager === null) {
+            $this->_connectionManager = new ConnectionManager();
+        }
+        return $this->_connectionManager;
     }
 
     /**
      * Lazy initialization of PdoQuery
      * Database connection is created only when this method is called
+     * 
+     * Delegates to ConnectionManager for PdoQuery lifecycle management.
      */
     private function getPdoQuery(): PdoQuery
     {
-        if ($this->_pdoQuery === null) {
-            $this->_pdoQuery = new PdoQuery();
-            // Transfer any stored error to the new PdoQuery instance
-            if ($this->_storedError !== null) {
-                $this->_pdoQuery->setError($this->_storedError);
-                $this->_storedError = null;
-            }
-        }
-        return $this->_pdoQuery;
+        return $this->getConnectionManager()->getPdoQuery();
     }
 
     /**
      * Set error message - optimized to avoid unnecessary connection creation
+     * 
+     * Delegates to ConnectionManager for error handling.
      */
     public function setError(?string $error): void
     {
-        if ($this->_pdoQuery !== null) {
-            $this->_pdoQuery->setError($error);
-        } else {
-            // Store the error until PdoQuery is instantiated
-            $this->_storedError = $error;
-        }
+        $this->getConnectionManager()->setError($error);
     }
 
     /**
      * Get error message
+     * 
+     * Delegates to ConnectionManager for error retrieval.
      */
     public function getError(): ?string
     {
-        if ($this->_pdoQuery !== null) {
-            return $this->_pdoQuery->getError();
-        }
-        return $this->_storedError;
+        return $this->getConnectionManager()->getError();
     }
 
     /**
      * Check if we have an active connection
+     * 
+     * Delegates to ConnectionManager for connection status.
      */
     public function isConnected(): bool
     {
-        return $this->_pdoQuery !== null && $this->_pdoQuery->isConnected();
+        return $this->getConnectionManager()->isConnected();
     }
 
     /**
      * Validate essential properties and show error if not valid
      * 
+     * Delegates to TableValidator for property validation.
+     * 
      * @param array<string> $properties Properties to validate
      * @return bool True if all properties exist
      */
-    protected function validateProperties(array $properties): bool 
+    protected function validateProperties(array $properties): bool
     {
-        foreach ($properties as $property) {
-            if (!property_exists($this, $property)) {
-                $this->setError("Property '{$property}' is not set in table");
-                return false;
-            }
-        }
-        
-        return true;
+        return $this->getTableValidator()->validateProperties($properties);
     }
 
     /**
      * Validate ID parameter
+     * 
+     * @deprecated This method is kept for backward compatibility.
+     *             Use validatePrimaryKey() instead for flexible primary key support.
      * 
      * @param int $id ID to validate
      * @param string $operation Operation name for error message
@@ -165,11 +209,7 @@ abstract class Table
      */
     protected function validateId(int $id, string $operation = 'operation'): bool
     {
-        if ($id < 1) {
-            $this->setError("ID must be a positive integer for {$operation} in {$this->getTable()}");
-            return false;
-        }
-        return true;
+        return $this->getTableValidator()->validateId($id, $operation);
     }
 
     /*
@@ -523,7 +563,7 @@ abstract class Table
      */
     public function limit(int $limit): self
     {
-        $this->_limit = $limit;
+        $this->getPaginationManager()->setLimit($limit);
         return $this;
     }
 
@@ -1040,53 +1080,63 @@ abstract class Table
     /**
      * Sets the current page for pagination
      * 
+     * Delegates to PaginationManager for page calculation.
+     * 
      * @param int $page Page number (1-based)
      * @return void
      */
     public function setPage(int $page): void
     {
-        $page = $page < 1 ? 0 : $page - 1;
-        $this->_offset = $page * $this->_limit;
+        $this->getPaginationManager()->setPage($page);
     }
 
     /**
      * Gets the current page number
      * 
+     * Delegates to PaginationManager for page calculation.
+     * 
      * @return int Current page (1-based)
      */
     public function getCurrentPage(): int
     {
-        return $this->_offset + 1;
+        return $this->getPaginationManager()->getCurrentPage();
     }
 
     /**
      * Gets the number of pages from the last query
      * 
+     * Delegates to PaginationManager for page count.
+     * 
      * @return int Page count
      */
     public function getCount(): int
     {
-        return $this->_count_pages;
+        return $this->getPaginationManager()->getCount();
     }
 
     /**
      * Gets the total number of records from the last query
      * 
+     * Delegates to PaginationManager for total count.
+     * Used by Controller::createList() for API responses.
+     * 
      * @return int Total count
      */
     public function getTotalCounts(): int
     {
-        return $this->_total_count;
+        return $this->getPaginationManager()->getTotalCounts();
     }
 
     /**
      * Gets the current limit per page
      * 
+     * Delegates to PaginationManager for limit.
+     * 
      * @return int Current limit
      */
     public function getLimit(): int
     {
-        return $this->_limit;
+        return $this->getPaginationManager()->getLimit();
     }
     
     /*
@@ -1131,17 +1181,23 @@ abstract class Table
      * @param array<mixed> $row Database row
      * @return void
      */
+    /**
+     * Hydrate model properties from database row
+     * 
+     * Delegates to PropertyCaster for type casting and property assignment.
+     * 
+     * @param array<string, mixed> $row Database row as associative array
+     * @return void
+     */
     protected function fetchRow(array $row): void
     {
-        foreach ($row as $key => $value) {
-            if (property_exists($this, $key)) {
-                $this->$key = $this->castValue($key, $value);
-            }
-        }
+        $this->getPropertyCaster()->fetchRow($this, $row);
     }
     
     /**
      * Cast database value to appropriate PHP type
+     * 
+     * Delegates to PropertyCaster for type casting.
      * 
      * @param string $property Property name
      * @param mixed $value Database value
@@ -1149,131 +1205,18 @@ abstract class Table
      */
     protected function castValue(string $property, mixed $value): mixed
     {
-        // Handle NULL values first - return as-is if no type mapping
-        if ($value === null) {
-            if (!isset($this->_type_map[$property])) {
-                return null;
-            }
-            // Check if type supports nullable (starts with '?' or contains 'null')
-            $type = $this->_type_map[$property];
-            if (str_starts_with($type, '?') || str_contains($type, 'null')) {
-                return null;
-            }
-            // For non-nullable types, return appropriate default
-            // This prevents type errors when assigning to typed properties
-            return match($type) {
-                'int' => 0,
-                'float' => 0.0,
-                'bool' => false,
-                'string' => '',
-                'array' => [],
-                'datetime', 'date' => new \DateTime('now'),
-                default => null,
-            };
-        }
-        
-        if (!isset($this->_type_map[$property])) {
-            return $value;
-        }
-        
-        $type = $this->_type_map[$property];
-        
-        // Handle nullable types (e.g., '?int', '?string')
-        $isNullable = str_starts_with($type, '?');
-        if ($isNullable) {
-            $type = substr($type, 1); // Remove '?' prefix
-        }
-        
-        switch ($type) {
-            case 'int':
-                if (!is_numeric($value)) {
-                    // Log warning in dev mode, return 0 for production
-                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-                        error_log("Warning: Invalid int value for property '{$property}': " . var_export($value, true));
-                    }
-                    return $isNullable ? null : 0;
-                }
-                return (int)$value;
-                
-            case 'float':
-                if (!is_numeric($value)) {
-                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-                        error_log("Warning: Invalid float value for property '{$property}': " . var_export($value, true));
-                    }
-                    return $isNullable ? null : 0.0;
-                }
-                return (float)$value;
-                
-            case 'bool':
-                // Handle various boolean representations
-                if (is_bool($value)) {
-                    return $value;
-                }
-                if (is_int($value)) {
-                    return $value !== 0;
-                }
-                if (is_string($value)) {
-                    $lower = strtolower(trim($value));
-                    // Handle common boolean string representations
-                    if (in_array($lower, ['1', 'true', 'yes', 'on', 'y'], true)) {
-                        return true;
-                    }
-                    if (in_array($lower, ['0', 'false', 'no', 'off', 'n', ''], true)) {
-                        return false;
-                    }
-                }
-                return (bool)$value;
-                
-            case 'datetime':
-            case 'date':
-                if (!is_string($value) || trim($value) === '') {
-                    return $isNullable ? null : new \DateTime('now');
-                }
-                try {
-                    return new \DateTime($value);
-                } catch (\Exception $e) {
-                    // Log error in dev mode
-                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-                        error_log("Warning: Invalid datetime value for property '{$property}': {$value}. Error: " . $e->getMessage());
-                    }
-                    return $isNullable ? null : new \DateTime('now');
-                }
-                
-            case 'array':
-            case 'json':
-                if (is_array($value)) {
-                    return $value;
-                }
-                if (is_string($value)) {
-                    $decoded = json_decode($value, true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        return $decoded ?? [];
-                    }
-                    // If JSON decode fails, try to parse as comma-separated or return empty array
-                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-                        error_log("Warning: Invalid JSON value for property '{$property}': {$value}");
-                    }
-                }
-                return $isNullable ? null : [];
-                
-            case 'string':
-                // Convert to string, handle null
-                /* @phpstan-ignore-next-line */
-                return $value === null ? ($isNullable ? null : '') : (string)$value;
-                
-            default:
-                return $value;
-        }
+        return $this->getPropertyCaster()->castValue($property, $value);
     }
 
     /**
      * Force connection cleanup
+     * 
+     * Delegates to ConnectionManager for connection cleanup.
      */
     public function disconnect(): void
     {
-        if ($this->_pdoQuery !== null) {
-            $this->_pdoQuery->disconnect();
-            $this->_pdoQuery = null;
+        if ($this->_connectionManager !== null) {
+            $this->_connectionManager->disconnect();
         }
     }
 
@@ -1295,11 +1238,12 @@ abstract class Table
      */
     public function commit(): bool
     {
-        if ($this->_pdoQuery === null) {
+        $connectionManager = $this->getConnectionManager();
+        if (!$connectionManager->hasConnection()) {
             $this->setError('No active transaction to commit');
             return false;
         }
-        return $this->_pdoQuery->commit();
+        return $connectionManager->getPdoQuery()->commit();
     }
 
     /**
@@ -1309,11 +1253,12 @@ abstract class Table
      */
     public function rollback(): bool
     {
-        if ($this->_pdoQuery === null) {
+        $connectionManager = $this->getConnectionManager();
+        if (!$connectionManager->hasConnection()) {
             $this->setError('No active transaction to rollback');
             return false;
         }
-        return $this->_pdoQuery->rollback();
+        return $connectionManager->getPdoQuery()->rollback();
     }
 
     /**
@@ -1321,9 +1266,8 @@ abstract class Table
      */
     public function __destruct()
     {
-        if ($this->_pdoQuery !== null) {
-            $this->_pdoQuery->disconnect();
-            $this->_pdoQuery = null;
+        if ($this->_connectionManager !== null) {
+            $this->_connectionManager->disconnect();
         }
     }
     
@@ -1407,7 +1351,9 @@ abstract class Table
         }
 
         if (!$this->_no_limit) {
-            $this->_query .= $this->_orderBy . " LIMIT {$this->_limit} OFFSET {$this->_offset} ";
+            $limit = $this->getPaginationManager()->getLimit();
+            $offset = $this->getPaginationManager()->getOffset();
+            $this->_query .= $this->_orderBy . " LIMIT {$limit} OFFSET {$offset} ";
         } else {
             $this->_query .= $this->_orderBy;
         }
@@ -1457,35 +1403,41 @@ abstract class Table
         $object_result = [];
         
         if (!$this->_skip_count && !empty($queryResult)) {
+            $pagination = $this->getPaginationManager();
+            $limit = $pagination->getLimit();
+            
             // Since we removed the subquery, calculate total count with a separate query if needed
             // @phpstan-ignore-next-line
             if (isset($queryResult[0]['_total_count'])) {
                 $totalCount = $queryResult[0]['_total_count'];
-                $this->_total_count = is_numeric($totalCount) ? (int)$totalCount : 0;
+                $pagination->setTotalCount(is_numeric($totalCount) ? (int)$totalCount : 0);
             } else {
                 // Calculate total count with separate query to avoid parameter binding issues
-                $this->_total_count = count($queryResult);
+                $totalCount = count($queryResult);
                 
                 // If we have a limit and got exactly that many results, there might be more
-                if ($this->_limit > 0 && count($queryResult) >= $this->_limit) {
+                if ($limit > 0 && count($queryResult) >= $limit) {
                     // Run a separate count query
                     $countQuery = "SELECT COUNT(*) as total FROM {$this->getTable()}" . $this->whereMaker();
                     $countResult = $this->getPdoQuery()->selectQuery($countQuery, $this->_binds);
                     if ($countResult && isset($countResult[0]['total'])) {
-                        $this->_total_count = is_numeric($countResult[0]['total']) ? (int)$countResult[0]['total'] : 0;
+                        $totalCount = is_numeric($countResult[0]['total']) ? (int)$countResult[0]['total'] : 0;
                     }
                 }
+                $pagination->setTotalCount($totalCount);
             }
-            $this->_count_pages = $this->_limit > 0 ? (int) ceil($this->_total_count / $this->_limit) : 1;
         }
         
         foreach ($queryResult as $item) {
             if (!$this->_skip_count && isset($item['_total_count'])) {
                 unset($item['_total_count']);
             }
-            $instance = new $this();
+            /** @var static $instance */
+            $instance = new (static::class)();
             if (is_array($item)) {
-                $instance->fetchRow($item);
+                // Use PropertyCaster to hydrate the instance
+                /** @var array<string, mixed> $item */
+                $this->getPropertyCaster()->fetchRow($instance, $item);
             }
             $object_result[] = $instance;
         }
@@ -1712,32 +1664,19 @@ abstract class Table
     /**
      * Validate primary key value
      * 
+     * Delegates to TableValidator for primary key validation.
+     * 
      * @param int|string|null $value Primary key value to validate
      * @param string $operation Operation name for error message
      * @return bool True if primary key is valid
      */
     protected function validatePrimaryKey(int|string|null $value, string $operation = 'operation'): bool
     {
-        $column = $this->getPrimaryKeyColumn();
-        $type = $this->getPrimaryKeyType();
-        
-        if ($value === null) {
-            $this->setError("Primary key '{$column}' must be set for {$operation} in {$this->getTable()}");
-            return false;
-        }
-        
-        if ($type === 'int') {
-            if (!is_int($value) || $value < 1) {
-                $this->setError("Primary key '{$column}' must be a positive integer for {$operation} in {$this->getTable()}");
-                return false;
-            }
-        } elseif ($type === 'uuid' || $type === 'string') {
-            if (!is_string($value) || trim($value) === '') {
-                $this->setError("Primary key '{$column}' must be a non-empty string for {$operation} in {$this->getTable()}");
-                return false;
-            }
-        }
-        
-        return true;
+        return $this->getTableValidator()->validatePrimaryKey(
+            $value,
+            $this->getPrimaryKeyColumn(),
+            $this->getPrimaryKeyType(),
+            $operation
+        );
     }
 }

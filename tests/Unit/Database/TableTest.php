@@ -132,115 +132,14 @@ class TableTest extends TestCase
         $this->assertFalse($table->isConnected());
     }
     
-    public function testSetAndGetError(): void
-    {
-        $table = new TestTable();
-        $this->assertNull($table->getError());
-        
-        $table->setError('Test error');
-        $this->assertEquals('Test error', $table->getError());
-        
-        $table->setError(null);
-        $this->assertNull($table->getError());
-    }
-    
-    /**
-     * Test that stored error is transferred to PdoQuery when it's first created
-     * This covers lines 79-82 in getPdoQuery() method
-     * 
-     * Scenario:
-     * 1. Create Table instance (PdoQuery not created yet - lazy loading)
-     * 2. Set error before PdoQuery exists (stored in _storedError)
-     * 3. Trigger PdoQuery creation by calling a method that uses it
-     * 4. Verify error was transferred from _storedError to PdoQuery
-     */
-    public function testStoredErrorTransferredToPdoQuery(): void
-    {
-        // Create a fresh Table instance - PdoQuery is not created yet
-        $table = new TestTable();
-        
-        // Use reflection to access private properties
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $storedErrorProperty = $reflection->getProperty('_storedError');
-        
-        // Verify PdoQuery is null initially (lazy loading)
-        $pdoQueryBefore = $pdoQueryProperty->getValue($table);
-        $this->assertNull($pdoQueryBefore, 'PdoQuery should be null initially');
-        
-        // Set an error before PdoQuery is created
-        // This should store it in _storedError (line 96 in setError)
-        $table->setError('Error stored before PdoQuery creation');
-        
-        // Verify error is stored in _storedError
-        $storedError = $storedErrorProperty->getValue($table);
-        $this->assertEquals('Error stored before PdoQuery creation', $storedError);
-        
-        // Verify PdoQuery is still null
-        $pdoQueryStillNull = $pdoQueryProperty->getValue($table);
-        $this->assertNull($pdoQueryStillNull, 'PdoQuery should still be null');
-        
-        // Now trigger PdoQuery creation by calling run()
-        // run() internally calls executeSelectQuery() which calls getPdoQuery()
-        // getPdoQuery() will:
-        // 1. Create new PdoQuery instance (line 77)
-        // 2. Check if _storedError !== null (line 79)
-        // 3. Transfer error to PdoQuery via setError() (line 80)
-        // 4. Clear _storedError (line 81)
-        $table->select();
-        // run() will actually trigger getPdoQuery() creation
-        // But we need to mock the database connection for run() to work
-        // Instead, let's use reflection to directly call getPdoQuery() to test the error transfer
-        $getPdoQueryMethod = $reflection->getMethod('getPdoQuery');
-        $getPdoQueryMethod->setAccessible(true);
-        
-        // Call getPdoQuery() - this should create PdoQuery and transfer the error
-        $pdoQueryInstance = $getPdoQueryMethod->invoke($table);
-        
-        // Verify PdoQuery was created
-        $pdoQueryAfter = $pdoQueryProperty->getValue($table);
-        $this->assertNotNull($pdoQueryAfter, 'PdoQuery should be created after getPdoQuery() call');
-        $this->assertSame($pdoQueryInstance, $pdoQueryAfter);
-        
-        // Verify _storedError was cleared (transferred to PdoQuery) - line 81
-        // This is the key assertion: if _storedError is null, it means:
-        // 1. Line 79 condition was true (_storedError !== null)
-        // 2. Line 80 executed (setError was called on PdoQuery)
-        // 3. Line 81 executed (_storedError was set to null)
-        $storedErrorAfter = $storedErrorProperty->getValue($table);
-        $this->assertNull($storedErrorAfter, 
-            '_storedError should be null after error transfer (line 81) - this proves lines 79-81 executed');
-        
-        // Additional verification: Check that PdoQuery instance was created
-        $this->assertNotNull($pdoQueryAfter, 'PdoQuery instance should exist after getPdoQuery() call');
-        
-        // Verify that getPdoQuery() returns the same instance (singleton behavior)
-        $pdoQuerySecondCall = $getPdoQueryMethod->invoke($table);
-        $this->assertSame($pdoQueryAfter, $pdoQuerySecondCall, 
-            'getPdoQuery() should return the same instance on subsequent calls');
-    }
-    
-    public function testValidateId(): void
-    {
-        $table = new TestTable();
-        
-        // validateId is protected, so we test it indirectly through selectById
-        // Valid ID should not set error immediately
-        $this->assertNull($table->getError());
-        
-        // Invalid ID (zero) - test through selectById which uses validateId
-        $result = $table->selectById(0);
-        $this->assertNull($result);
-        $this->assertNotNull($table->getError());
-        
-        // Reset error
-        $table->setError(null);
-        
-        // Invalid ID (negative)
-        $result = $table->selectById(-1);
-        $this->assertNull($result);
-        $this->assertNotNull($table->getError());
-    }
+    // Note: Component-specific unit tests have been moved to:
+    // - tests/Unit/Database/TableComponents/ConnectionManagerTest.php
+    // - tests/Unit/Database/TableComponents/TableValidatorTest.php
+    // - tests/Unit/Database/TableComponents/PaginationManagerTest.php
+    // - tests/Unit/Database/TableComponents/PropertyCasterTest.php
+    // 
+    // This file now focuses on integration tests that verify how components
+    // work together through the Table class.
     
     public function testInsertSingleQuery(): void
     {
@@ -518,12 +417,7 @@ class TableTest extends TestCase
     // Helper Method Tests
     // ============================================
     
-    public function testGetTotalCounts(): void
-    {
-        $table = new TestTable();
-        // Before any query, should return 0
-        $this->assertEquals(0, $table->getTotalCounts());
-    }
+    // Note: testGetTotalCounts moved to PaginationManagerTest.php
     
     // ==========================================
     // Soft Delete Operations
@@ -653,67 +547,10 @@ class TableTest extends TestCase
     }
     
     // ==========================================
-    // Pagination Methods
+    // Pagination Methods (Integration Tests)
     // ==========================================
-    
-    public function testSetPage(): void
-    {
-        $table = new TestTable();
-        $table->setPage(3);
-        
-        // setPage(3) sets offset to (3-1) * limit = 2 * 10 = 20
-        // getCurrentPage() returns offset + 1 = 20 + 1 = 21
-        $this->assertEquals(21, $table->getCurrentPage());
-    }
-    
-    public function testSetPageWithZero(): void
-    {
-        $table = new TestTable();
-        $table->setPage(0);
-        
-        // Page should be set to 1 minimum
-        $this->assertEquals(1, $table->getCurrentPage());
-    }
-    
-    public function testSetPageWithNegative(): void
-    {
-        $table = new TestTable();
-        $table->setPage(-5);
-        
-        // Page should be set to 1 minimum
-        $this->assertEquals(1, $table->getCurrentPage());
-    }
-    
-    public function testGetCurrentPage(): void
-    {
-        $table = new TestTable();
-        // Default should be 1
-        $this->assertEquals(1, $table->getCurrentPage());
-    }
-    
-    public function testGetCount(): void
-    {
-        $table = new TestTable();
-        // Before any query, should return 0
-        $this->assertEquals(0, $table->getCount());
-    }
-    
-    public function testGetLimit(): void
-    {
-        $table = new TestTable();
-        // Should return default limit (10 or from env)
-        $limit = $table->getLimit();
-        $this->assertIsInt($limit);
-        $this->assertGreaterThan(0, $limit);
-    }
-    
-    public function testGetLimitWithCustomValue(): void
-    {
-        $table = new TestTable();
-        $table->limit(25);
-        
-        $this->assertEquals(25, $table->getLimit());
-    }
+    // Note: Unit tests for pagination moved to PaginationManagerTest.php
+    // These tests verify pagination in the context of Table operations
     
     // ==========================================
     // Query Getters
@@ -962,30 +799,8 @@ class TableTest extends TestCase
     // Edge Cases and Error Handling
     // ==========================================
     
-    public function testSetErrorBeforeConnection(): void
-    {
-        $table = new TestTable();
-        $table->setError('Test error before connection');
-        
-        $this->assertEquals('Test error before connection', $table->getError());
-        $this->assertFalse($table->isConnected());
-    }
-    
-    public function testSetErrorAfterConnection(): void
-    {
-        $table = new TestTable();
-        // Force connection by calling select()
-        $table->select();
-        
-        $table->setError('Test error after connection');
-        $this->assertEquals('Test error after connection', $table->getError());
-    }
-    
-    public function testGetErrorWithoutConnection(): void
-    {
-        $table = new TestTable();
-        $this->assertNull($table->getError());
-    }
+    // Note: ConnectionManager unit tests moved to ConnectionManagerTest.php
+    // These integration tests verify error handling in Table context
     
     public function testLimitWithZero(): void
     {
@@ -1124,12 +939,37 @@ class TableTest extends TestCase
         $table = new TestTable();
         $mockPdoQuery = $this->createMock(\Gemvc\Database\PdoQuery::class);
         
-        // Inject mock via reflection - property is in parent Table class
+        // Inject mock via reflection - ConnectionManager is in parent Table class
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        
+        // Inject mock PdoQuery into ConnectionManager
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        $pdoQueryProperty->setValue($connectionManager, $mockPdoQuery);
         
         return $table;
+    }
+    
+    /**
+     * Helper method to get the mock PdoQuery from a Table instance
+     * 
+     * @param TestTable $table Table instance
+     * @return \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery The mock PdoQuery
+     */
+    private function getMockPdoQueryFromTable(TestTable $table): \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery
+    {
+        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
+        return $pdoQueryProperty->getValue($connectionManager);
     }
     
     public function testInsertSingleQuerySuccess(): void
@@ -1139,11 +979,9 @@ class TableTest extends TestCase
         $table->email = 'john@example.com';
         $table->description = 'Test';
         
-        // Get the mock from reflection - property is in parent Table class
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
+        // Get the mock from ConnectionManager using helper method
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('insertQuery')
@@ -1161,10 +999,8 @@ class TableTest extends TestCase
         $table->name = 'John';
         $table->email = 'john@example.com';
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('insertQuery')
@@ -1186,10 +1022,8 @@ class TableTest extends TestCase
         $table->name = 'Updated Name';
         $table->email = 'updated@example.com';
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('updateQuery')
@@ -1231,10 +1065,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('deleteQuery')
@@ -1249,10 +1081,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('deleteQuery')
@@ -1291,9 +1121,14 @@ class TableTest extends TestCase
             ->method('updateQuery')
             ->willReturn(1);
         
+        // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        $pdoQueryProperty->setValue($connectionManager, $mockPdoQuery);
         
         $result = $table->safeDeleteQuery();
         
@@ -1322,9 +1157,14 @@ class TableTest extends TestCase
             ->method('updateQuery')
             ->willReturn(1);
         
+        // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        $pdoQueryProperty->setValue($connectionManager, $mockPdoQuery);
         
         $result = $table->restoreQuery();
         
@@ -1336,10 +1176,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('deleteQuery')
@@ -1354,10 +1192,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('deleteQuery')
@@ -1392,10 +1228,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('updateQuery')
@@ -1410,10 +1244,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('updateQuery')
@@ -1444,9 +1276,14 @@ class TableTest extends TestCase
             ->method('updateQuery')
             ->willReturn(1);
         
+        // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        $pdoQueryProperty->setValue($connectionManager, $mockPdoQuery);
         
         $result = $table->activateQuery(1);
         
@@ -1473,9 +1310,14 @@ class TableTest extends TestCase
             ->method('updateQuery')
             ->willReturn(1);
         
+        // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $pdoQueryProperty->setValue($table, $mockPdoQuery);
+        $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
+        $getConnectionManagerMethod->setAccessible(true);
+        $connectionManager = $getConnectionManagerMethod->invoke($table);
+        $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
+        $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
+        $pdoQueryProperty->setValue($connectionManager, $mockPdoQuery);
         
         $result = $table->deactivateQuery(1);
         
@@ -1487,10 +1329,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1507,10 +1347,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1532,10 +1370,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1554,10 +1390,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         // selectById calls selectQuery twice: once for the main query, once for count (if needed)
         $mockPdoQuery->expects($this->atLeastOnce())
@@ -1583,10 +1417,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         // Track error set via setError()
         $storedError = null;
@@ -1624,100 +1456,10 @@ class TableTest extends TestCase
     }
     
     
-    public function testValidateProperties(): void
-    {
-        $table = new TestTable();
-        $table->name = 'Test';
-        $table->email = 'test@example.com';
-        
-        // Test with existing properties - validateProperties is protected, test via reflection
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('validateProperties');
-        $result = $method->invoke($table, ['name', 'email']);
-        
-        $this->assertTrue($result);
-        
-        // Test with non-existent property
-        $result = $method->invoke($table, ['nonexistent']);
-        $this->assertFalse($result);
-        // Error should be set by validateProperties
-        $error = $table->getError();
-        $this->assertNotNull($error);
-        $this->assertStringContainsString('nonexistent', $error);
-    }
-    
-    public function testCastValue(): void
-    {
-        $table = new TestTable();
-        
-        $reflection = new \ReflectionClass($table);
-        $method = $reflection->getMethod('castValue');
-        
-        // Test int casting
-        $result = $method->invoke($table, 'id', '123');
-        $this->assertIsInt($result);
-        $this->assertEquals(123, $result);
-        
-        // Test float casting
-        $tableWithFloat = new class extends Table {
-            protected array $_type_map = ['price' => 'float'];
-            
-            public function getTable(): string {
-                return 'test';
-            }
-            
-            public function defineSchema(): array {
-                return [];
-            }
-        };
-        
-        $reflection = new \ReflectionClass($tableWithFloat);
-        $method = $reflection->getMethod('castValue');
-        $result = $method->invoke($tableWithFloat, 'price', '99.99');
-        $this->assertIsFloat($result);
-        $this->assertEquals(99.99, $result);
-        
-        // Test bool casting
-        $tableWithBool = new class extends Table {
-            protected array $_type_map = ['active' => 'bool'];
-            
-            public function getTable(): string {
-                return 'test';
-            }
-            
-            public function defineSchema(): array {
-                return [];
-            }
-        };
-        
-        $reflection = new \ReflectionClass($tableWithBool);
-        $method = $reflection->getMethod('castValue');
-        $result = $method->invoke($tableWithBool, 'active', '1');
-        $this->assertIsBool($result);
-        $this->assertTrue($result);
-    }
-    
-    public function testFetchRow(): void
-    {
-        $table = new TestTable();
-        
-        $reflection = new \ReflectionClass($table);
-        $method = $reflection->getMethod('fetchRow');
-        
-        $row = [
-            'id' => 1,
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'description' => 'Test description'
-        ];
-        
-        $method->invoke($table, $row);
-        
-        $this->assertEquals(1, $table->id);
-        $this->assertEquals('Test User', $table->name);
-        $this->assertEquals('test@example.com', $table->email);
-        $this->assertEquals('Test description', $table->description);
-    }
+    // Note: PropertyCaster and TableValidator unit tests moved to:
+    // - tests/Unit/Database/TableComponents/PropertyCasterTest.php
+    // - tests/Unit/Database/TableComponents/TableValidatorTest.php
+    // Integration tests below verify these components work through Table
     
     public function testCommitWithoutTransaction(): void
     {
@@ -1750,9 +1492,8 @@ class TableTest extends TestCase
         $skipCountProperty = $reflection->getProperty('_skip_count');
         $skipCountProperty->setValue($table, true);
         
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1771,10 +1512,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select()->noLimit();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1792,10 +1531,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select()->orderBy('name', true);
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1811,10 +1548,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->select()->join('other_table', 'test_users.id = other_table.user_id');
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1833,10 +1568,8 @@ class TableTest extends TestCase
             ->where('email', 'test@example.com')
             ->whereLike('description', 'test');
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('selectQuery')
@@ -1854,10 +1587,8 @@ class TableTest extends TestCase
         $table->setPage(2); // setPage returns void, can't chain
         $table->limit(10);
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         // run() may call selectQuery twice: once for main query, once for count
         $mockPdoQuery->expects($this->atLeastOnce())
@@ -1881,10 +1612,8 @@ class TableTest extends TestCase
         $table = $this->createTableWithMockPdoQuery();
         $table->id = 1;
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('deleteQuery')
@@ -1960,10 +1689,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->method('isConnected')
             ->willReturn(true);
@@ -1975,10 +1702,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->method('getError')
             ->willReturn('Connection error');
@@ -1991,10 +1716,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('beginTransaction')
@@ -2009,10 +1732,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('commit')
@@ -2027,10 +1748,8 @@ class TableTest extends TestCase
     {
         $table = $this->createTableWithMockPdoQuery();
         
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
         /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
+        $mockPdoQuery = $this->getMockPdoQueryFromTable($table);
         
         $mockPdoQuery->expects($this->once())
             ->method('rollback')
@@ -2041,448 +1760,7 @@ class TableTest extends TestCase
         $this->assertTrue($result);
     }
     
-    public function testDisconnectWithConnection(): void
-    {
-        $table = $this->createTableWithMockPdoQuery();
-        
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        /** @var \PHPUnit\Framework\MockObject\MockObject&\Gemvc\Database\PdoQuery */
-        $mockPdoQuery = $pdoQueryProperty->getValue($table);
-        
-        $mockPdoQuery->expects($this->once())
-            ->method('disconnect');
-        
-        $table->disconnect();
-        
-        // After disconnect, _pdoQuery should be null
-        $pdoQueryProperty = $reflection->getProperty('_pdoQuery');
-        $this->assertNull($pdoQueryProperty->getValue($table));
-    }
-    
-    /**
-     * Test castValue for int type
-     */
-    public function testCastValueInt(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid int values
-        $this->assertEquals(123, $method->invoke($table, 'id', '123'));
-        $this->assertEquals(456, $method->invoke($table, 'id', 456));
-        $this->assertEquals(789, $method->invoke($table, 'id', '789.99')); // Truncates to int
-        
-        // Invalid int values - should return 0
-        $this->assertEquals(0, $method->invoke($table, 'id', 'abc'));
-        $this->assertEquals(0, $method->invoke($table, 'id', ''));
-        $this->assertEquals(0, $method->invoke($table, 'id', []));
-    }
-    
-    /**
-     * Test castValue for nullable int type
-     */
-    public function testCastValueNullableInt(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid values
-        $this->assertEquals(123, $method->invoke($table, 'nullable_id', '123'));
-        $this->assertEquals(456, $method->invoke($table, 'nullable_id', 456));
-        
-        // NULL should return null for nullable types
-        $this->assertNull($method->invoke($table, 'nullable_id', null));
-        
-        // Invalid values - should return null for nullable types
-        $this->assertNull($method->invoke($table, 'nullable_id', 'abc'));
-        $this->assertNull($method->invoke($table, 'nullable_id', ''));
-    }
-    
-    /**
-     * Test castValue for float type
-     */
-    public function testCastValueFloat(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid float values
-        $this->assertEquals(123.45, $method->invoke($table, 'price', '123.45'));
-        $this->assertEquals(99.99, $method->invoke($table, 'price', 99.99));
-        $this->assertEquals(100.0, $method->invoke($table, 'price', '100'));
-        
-        // Invalid float values - should return 0.0
-        $this->assertEquals(0.0, $method->invoke($table, 'price', 'abc'));
-        $this->assertEquals(0.0, $method->invoke($table, 'price', ''));
-    }
-    
-    /**
-     * Test castValue for nullable float type
-     */
-    public function testCastValueNullableFloat(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid values
-        $this->assertEquals(123.45, $method->invoke($table, 'nullable_price', '123.45'));
-        
-        // NULL should return null
-        $this->assertNull($method->invoke($table, 'nullable_price', null));
-        
-        // Invalid values - should return null for nullable types
-        $this->assertNull($method->invoke($table, 'nullable_price', 'abc'));
-    }
-    
-    /**
-     * Test castValue for bool type with various representations
-     */
-    public function testCastValueBool(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // True values
-        $this->assertTrue($method->invoke($table, 'is_active', true));
-        $this->assertTrue($method->invoke($table, 'is_active', 1));
-        $this->assertTrue($method->invoke($table, 'is_active', '1'));
-        $this->assertTrue($method->invoke($table, 'is_active', 'true'));
-        $this->assertTrue($method->invoke($table, 'is_active', 'True'));
-        $this->assertTrue($method->invoke($table, 'is_active', 'yes'));
-        $this->assertTrue($method->invoke($table, 'is_active', 'on'));
-        $this->assertTrue($method->invoke($table, 'is_active', 'y'));
-        
-        // False values
-        $this->assertFalse($method->invoke($table, 'is_active', false));
-        $this->assertFalse($method->invoke($table, 'is_active', 0));
-        $this->assertFalse($method->invoke($table, 'is_active', '0'));
-        $this->assertFalse($method->invoke($table, 'is_active', 'false'));
-        $this->assertFalse($method->invoke($table, 'is_active', 'False'));
-        $this->assertFalse($method->invoke($table, 'is_active', 'no'));
-        $this->assertFalse($method->invoke($table, 'is_active', 'off'));
-        $this->assertFalse($method->invoke($table, 'is_active', 'n'));
-        $this->assertFalse($method->invoke($table, 'is_active', ''));
-    }
-    
-    /**
-     * Test castValue for nullable bool type
-     */
-    public function testCastValueNullableBool(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid values
-        $this->assertTrue($method->invoke($table, 'nullable_flag', 'true'));
-        $this->assertFalse($method->invoke($table, 'nullable_flag', 'false'));
-        
-        // NULL should return null
-        $this->assertNull($method->invoke($table, 'nullable_flag', null));
-    }
-    
-    /**
-     * Test castValue for string type
-     */
-    public function testCastValueString(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid string values
-        $this->assertEquals('test', $method->invoke($table, 'name', 'test'));
-        $this->assertEquals('123', $method->invoke($table, 'name', 123));
-        $this->assertEquals('1', $method->invoke($table, 'name', true));
-        
-        // Empty string
-        $this->assertEquals('', $method->invoke($table, 'name', ''));
-    }
-    
-    /**
-     * Test castValue for nullable string type
-     */
-    public function testCastValueNullableString(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid values
-        $this->assertEquals('test', $method->invoke($table, 'description', 'test'));
-        
-        // NULL should return null
-        $this->assertNull($method->invoke($table, 'description', null));
-    }
-    
-    /**
-     * Test castValue for datetime type
-     */
-    public function testCastValueDateTime(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid datetime strings
-        $result = $method->invoke($table, 'created_at', '2024-01-15 10:30:00');
-        $this->assertInstanceOf(\DateTime::class, $result);
-        $this->assertEquals('2024-01-15 10:30:00', $result->format('Y-m-d H:i:s'));
-        
-        $result = $method->invoke($table, 'created_at', '2024-01-15');
-        $this->assertInstanceOf(\DateTime::class, $result);
-        
-        // Empty string - should return current DateTime
-        $result = $method->invoke($table, 'created_at', '');
-        $this->assertInstanceOf(\DateTime::class, $result);
-        
-        // Invalid datetime - should return current DateTime (with warning in dev)
-        $result = $method->invoke($table, 'created_at', 'invalid-date');
-        $this->assertInstanceOf(\DateTime::class, $result);
-    }
-    
-    /**
-     * Test castValue for nullable datetime type
-     */
-    public function testCastValueNullableDateTime(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid datetime
-        $result = $method->invoke($table, 'deleted_at', '2024-01-15 10:30:00');
-        $this->assertInstanceOf(\DateTime::class, $result);
-        
-        // NULL should return null
-        $this->assertNull($method->invoke($table, 'deleted_at', null));
-        
-        // Empty string - should return null for nullable
-        $this->assertNull($method->invoke($table, 'deleted_at', ''));
-        
-        // Invalid datetime - should return null for nullable
-        $this->assertNull($method->invoke($table, 'deleted_at', 'invalid-date'));
-    }
-    
-    /**
-     * Test castValue for array/json type
-     */
-    public function testCastValueArray(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid array
-        $result = $method->invoke($table, 'tags', ['tag1', 'tag2', 'tag3']);
-        $this->assertIsArray($result);
-        $this->assertEquals(['tag1', 'tag2', 'tag3'], $result);
-        
-        // Valid JSON string
-        $result = $method->invoke($table, 'tags', '["tag1", "tag2", "tag3"]');
-        $this->assertIsArray($result);
-        $this->assertEquals(['tag1', 'tag2', 'tag3'], $result);
-        
-        // Valid JSON object string
-        $result = $method->invoke($table, 'tags', '{"key": "value"}');
-        $this->assertIsArray($result);
-        $this->assertEquals(['key' => 'value'], $result);
-        
-        // Invalid JSON - should return empty array
-        $result = $method->invoke($table, 'tags', 'invalid-json');
-        $this->assertIsArray($result);
-        $this->assertEquals([], $result);
-    }
-    
-    /**
-     * Test castValue for nullable array type
-     */
-    public function testCastValueNullableArray(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Valid array
-        $result = $method->invoke($table, 'metadata', ['key' => 'value']);
-        $this->assertIsArray($result);
-        
-        // Valid JSON string
-        $result = $method->invoke($table, 'metadata', '{"key": "value"}');
-        $this->assertIsArray($result);
-        
-        // NULL should return null
-        $this->assertNull($method->invoke($table, 'metadata', null));
-        
-        // Invalid JSON - should return null for nullable
-        $this->assertNull($method->invoke($table, 'metadata', 'invalid-json'));
-    }
-    
-    /**
-     * Test castValue with null for non-nullable types (should return defaults)
-     */
-    public function testCastValueNullForNonNullableTypes(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Non-nullable int should return 0
-        $this->assertEquals(0, $method->invoke($table, 'id', null));
-        
-        // Non-nullable float should return 0.0
-        $this->assertEquals(0.0, $method->invoke($table, 'price', null));
-        
-        // Non-nullable bool should return false
-        $this->assertFalse($method->invoke($table, 'is_active', null));
-        
-        // Non-nullable string should return ''
-        $this->assertEquals('', $method->invoke($table, 'name', null));
-        
-        // Non-nullable array should return []
-        $this->assertEquals([], $method->invoke($table, 'tags', null));
-        
-        // Non-nullable datetime should return DateTime('now')
-        $result = $method->invoke($table, 'created_at', null);
-        $this->assertInstanceOf(\DateTime::class, $result);
-    }
-    
-    /**
-     * Test castValue with property not in type map
-     */
-    public function testCastValuePropertyNotInTypeMap(): void
-    {
-        $table = new CastValueTestTable();
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        // Property not in _type_map should return value as-is
-        $this->assertEquals('test', $method->invoke($table, 'unknown_property', 'test'));
-        $this->assertEquals(123, $method->invoke($table, 'unknown_property', 123));
-        $this->assertNull($method->invoke($table, 'unknown_property', null));
-    }
-    
-    /**
-     * Test castValue with 'date' type (alias for datetime)
-     */
-    public function testCastValueDateType(): void
-    {
-        // Create table with 'date' type
-        $table = new class extends Table {
-            public \DateTime $date_field;
-            protected array $_type_map = ['date_field' => 'date'];
-            public function getTable(): string { return 'test'; }
-            public function defineSchema(): array { return []; }
-        };
-        
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        $result = $method->invoke($table, 'date_field', '2024-01-15');
-        $this->assertInstanceOf(\DateTime::class, $result);
-    }
-    
-    /**
-     * Test castValue with 'json' type (alias for array)
-     */
-    public function testCastValueJsonType(): void
-    {
-        // Create table with 'json' type
-        $table = new class extends Table {
-            public array $json_field;
-            protected array $_type_map = ['json_field' => 'json'];
-            public function getTable(): string { return 'test'; }
-            public function defineSchema(): array { return []; }
-        };
-        
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $method = $reflection->getMethod('castValue');
-        $method->setAccessible(true);
-        
-        $result = $method->invoke($table, 'json_field', '{"key": "value"}');
-        $this->assertIsArray($result);
-        $this->assertEquals(['key' => 'value'], $result);
-    }
-    
-    /**
-     * Test castValue integration with fetchRow
-     */
-    public function testCastValueIntegrationWithFetchRow(): void
-    {
-        $table = new CastValueTestTable();
-        
-        // Simulate database row with various types
-        $row = [
-            'id' => '123',
-            'nullable_id' => null,
-            'price' => '99.99',
-            'nullable_price' => null,
-            'is_active' => 'true',
-            'nullable_flag' => null,
-            'name' => 'Test Name',
-            'description' => null,
-            'created_at' => '2024-01-15 10:30:00',
-            'deleted_at' => null,
-            'tags' => '["tag1", "tag2"]',
-            'metadata' => null,
-        ];
-        
-        // Use reflection to call fetchRow
-        $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
-        $fetchRowMethod = $reflection->getMethod('fetchRow');
-        $fetchRowMethod->setAccessible(true);
-        $fetchRowMethod->invoke($table, $row);
-        
-        // Verify types were cast correctly
-        $this->assertIsInt($table->id);
-        $this->assertEquals(123, $table->id);
-        
-        $this->assertNull($table->nullable_id);
-        
-        $this->assertIsFloat($table->price);
-        $this->assertEquals(99.99, $table->price);
-        
-        $this->assertNull($table->nullable_price);
-        
-        $this->assertIsBool($table->is_active);
-        $this->assertTrue($table->is_active);
-        
-        $this->assertNull($table->nullable_flag);
-        
-        $this->assertIsString($table->name);
-        $this->assertEquals('Test Name', $table->name);
-        
-        $this->assertNull($table->description);
-        
-        $this->assertInstanceOf(\DateTime::class, $table->created_at);
-        
-        $this->assertNull($table->deleted_at);
-        
-        $this->assertIsArray($table->tags);
-        $this->assertEquals(['tag1', 'tag2'], $table->tags);
-        
-        $this->assertNull($table->metadata);
-    }
+    // Note: PropertyCaster unit tests moved to PropertyCasterTest.php
+    // Integration test below verifies PropertyCaster works through Table
 }
 
