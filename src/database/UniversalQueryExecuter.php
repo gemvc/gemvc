@@ -34,7 +34,7 @@ class UniversalQueryExecuter
     private bool $inTransaction = false;
 
     /** @var \PDO|null The database connection */
-    private ?\PDO $db = null;
+    private ?PDO $db = null;
 
     /** @var ConnectionInterface|null The active connection interface */
     private ?ConnectionInterface $activeConnection = null;
@@ -57,7 +57,7 @@ class UniversalQueryExecuter
      * @param string $poolName The connection pool name (default: 'default')
      * @return \PDO|null A PDO connection, or null on error
      */
-    private function getConnection(string $poolName = 'default'): ?\PDO
+    private function getConnection(string $poolName = 'default'): ?PDO
     {
         $this->activeConnection = $this->dbManager->getConnection($poolName);
         if ($this->activeConnection === null) {
