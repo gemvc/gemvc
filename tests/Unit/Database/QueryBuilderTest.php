@@ -110,7 +110,7 @@ class QueryBuilderTest extends TestCase
     public function testInsertWithEmptyTableName(): void
     {
         $query = $this->queryBuilder->insert('');
-        $this->assertInstanceOf(Insert::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
         $this->assertStringContainsString('cannot be empty', $this->queryBuilder->getError());
     }
@@ -118,7 +118,7 @@ class QueryBuilderTest extends TestCase
     public function testInsertWithWhitespaceOnlyTableName(): void
     {
         $query = $this->queryBuilder->insert('   ');
-        $this->assertInstanceOf(Insert::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
     }
     
@@ -143,7 +143,7 @@ class QueryBuilderTest extends TestCase
     public function testUpdateWithEmptyTableName(): void
     {
         $query = $this->queryBuilder->update('');
-        $this->assertInstanceOf(Update::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
         $this->assertStringContainsString('cannot be empty', $this->queryBuilder->getError());
     }
@@ -151,7 +151,7 @@ class QueryBuilderTest extends TestCase
     public function testUpdateWithWhitespaceOnlyTableName(): void
     {
         $query = $this->queryBuilder->update('   ');
-        $this->assertInstanceOf(Update::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
     }
     
@@ -176,7 +176,7 @@ class QueryBuilderTest extends TestCase
     public function testDeleteWithEmptyTableName(): void
     {
         $query = $this->queryBuilder->delete('');
-        $this->assertInstanceOf(Delete::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
         $this->assertStringContainsString('cannot be empty', $this->queryBuilder->getError());
     }
@@ -184,7 +184,7 @@ class QueryBuilderTest extends TestCase
     public function testDeleteWithWhitespaceOnlyTableName(): void
     {
         $query = $this->queryBuilder->delete('   ');
-        $this->assertInstanceOf(Delete::class, $query);
+        $this->assertNull($query);
         $this->assertNotNull($this->queryBuilder->getError());
     }
     

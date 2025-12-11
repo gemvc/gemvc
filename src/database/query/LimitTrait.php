@@ -21,6 +21,30 @@ namespace Gemvc\Database\Query;
 trait LimitTrait
 {
     /**
+     * Maximum value for LIMIT clause when OFFSET is used without LIMIT
+     * 
+     * This is MySQL's maximum unsigned BIGINT value (2^64 - 1), used to support
+     * OFFSET without LIMIT on databases that require a LIMIT clause.
+     * 
+     * @var int
+     */
+    private const MAX_LIMIT_FOR_OFFSET = 18446744073709551615;
+
+    /**
+     * Maximum number of rows to return
+     * 
+     * @var int|null
+     */
+    protected ?int $limit = null;
+
+    /**
+     * Number of rows to skip
+     * 
+     * @var int|null
+     */
+    protected ?int $offset = null;
+
+    /**
      * Set the maximum number of rows to return
      * 
      * @param int $limit Maximum number of rows (must be positive)
@@ -181,7 +205,7 @@ trait LimitTrait
         elseif (isset($this->offset) && $this->offset > 0) {
             // For databases that support OFFSET without LIMIT, use a large number
             // This is more compatible across different database systems
-            $limitQuery = ' LIMIT 18446744073709551615 OFFSET ' . $this->offset;
+            $limitQuery = ' LIMIT ' . self::MAX_LIMIT_FOR_OFFSET . ' OFFSET ' . $this->offset;
         }
         
         return $limitQuery;
@@ -228,5 +252,47 @@ trait LimitTrait
         $this->offset = null;
         
         return $this;
+    }
+
+    /**
+     * Disable pagination limits (return all results)
+     * 
+     * This method clears both limit and offset, allowing the query to return
+     * all matching records without pagination restrictions.
+     * 
+     * **Example:**
+     * ```php
+     * $query->from('users')
+     *       ->noLimit()
+     *       ->run();  // Returns all users
+     * ```
+     * 
+     * @return self For method chaining
+     */
+    public function noLimit(): self
+    {
+        $this->limit = null;
+        $this->offset = null;
+        return $this;
+    }
+
+    /**
+     * Alias for noLimit() - returns all results
+     * 
+     * This is a convenience method that provides a more descriptive name
+     * for disabling pagination. It's equivalent to calling `noLimit()`.
+     * 
+     * **Example:**
+     * ```php
+     * $query->from('users')
+     *       ->all()
+     *       ->run();  // Returns all users
+     * ```
+     * 
+     * @return self For method chaining
+     */
+    public function all(): self
+    {
+        return $this->noLimit();
     }
 }

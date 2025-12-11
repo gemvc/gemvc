@@ -92,6 +92,29 @@ trait WhereTrait
     }
 
     /**
+     * Add WHERE column LIKE %value condition (prefix wildcard)
+     * 
+     * This method is useful for searching values that end with a specific string.
+     * For example: searching for files ending in '.pdf' or emails ending in '@example.com'
+     * 
+     * @param string $columnName Column name
+     * @param string $value Value to search for (will be prepended with %)
+     * @return self For method chaining
+     */
+    public function whereLikeLast(string $columnName, string $value): self
+    {
+        if (empty(trim($columnName))) {
+            return $this;
+        }
+        
+        $paramName = ':' . str_replace('.', '_', $columnName);
+        $this->whereConditions[] = $columnName . ' LIKE ' . $paramName;
+        $this->arrayBindValues[$paramName] = '%' . $value; // Prefix wildcard only
+
+        return $this;
+    }
+
+    /**
      * Add WHERE column < value condition
      * 
      * @param string $columnName Column name
@@ -242,6 +265,41 @@ trait WhereTrait
         
         $this->whereConditions[] = $columnName . ' NOT IN (' . implode(', ', $placeholders) . ')';
 
+        return $this;
+    }
+
+    /**
+     * Add WHERE condition using OR operator
+     * 
+     * Note: If this is the first condition, it behaves like a regular WHERE
+     * since there's no previous condition to join with OR.
+     * 
+     * **Example:**
+     * ```php
+     * $query->whereEqual('status', 'active')
+     *       ->whereOr('status', 'pending');  // OR status = :status_or_1
+     * ```
+     * 
+     * @param string $columnName Column name
+     * @param int|float|string $value Value to match
+     * @return self For method chaining
+     */
+    public function whereOr(string $columnName, int|float|string $value): self
+    {
+        if (empty(trim($columnName))) {
+            return $this;
+        }
+        
+        // If no conditions exist, use WHERE instead of OR
+        if (empty($this->whereConditions)) {
+            return $this->whereEqual($columnName, $value);
+        }
+        
+        // Generate unique parameter name to avoid conflicts
+        $paramName = ':' . str_replace('.', '_', $columnName) . '_or_' . count($this->whereConditions);
+        $this->whereConditions[] = " OR {$columnName} = {$paramName}";
+        $this->arrayBindValues[$paramName] = $value;
+        
         return $this;
     }
 }

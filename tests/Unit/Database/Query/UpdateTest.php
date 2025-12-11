@@ -66,9 +66,10 @@ class UpdateTest extends TestCase
     {
         $result = $this->update->set('', 'value');
         $this->assertSame($this->update, $result);
-        // Empty column should be skipped
-        $query = (string)$this->update;
-        $this->assertStringNotContainsString('= :_ToUpdate', $query);
+        // Empty column should be skipped, and __toString() should throw exception if no columns
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('UPDATE query must have at least one SET clause');
+        (string)$this->update;
     }
     
     public function testSetWithWhitespaceColumn(): void
@@ -165,6 +166,26 @@ class UpdateTest extends TestCase
         $query = (string)$this->update;
         
         $this->assertStringNotContainsString('WHERE', $query);
+    }
+    
+    public function testToStringThrowsExceptionWithoutSet(): void
+    {
+        // Don't call set() - should throw exception
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('UPDATE query must have at least one SET clause');
+        
+        (string)$this->update;
+    }
+    
+    public function testRunWithSetBuildsValidQuery(): void
+    {
+        $this->update->set('name', 'John');
+        
+        // Verify the query string is valid
+        $query = (string)$this->update;
+        $this->assertStringContainsString('UPDATE', $query);
+        $this->assertStringContainsString('SET', $query);
+        $this->assertStringContainsString('name', $query);
     }
     
     // ============================================

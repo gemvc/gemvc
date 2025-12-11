@@ -15,6 +15,7 @@ namespace Gemvc\Database\Query;
 use Gemvc\Database\PdoQuery;
 use Gemvc\Database\QueryBuilderInterface;
 use Gemvc\Database\QueryBuilder;
+use Gemvc\Database\SqlEnumCondition;
 
 class Select implements QueryBuilderInterface
 {
@@ -77,58 +78,6 @@ class Select implements QueryBuilderInterface
      */
     private array $leftJoin = [];
 
-    /** @var int|null */
-    private $limit = null;
-    /** @var int|null */
-    private $offset = null;
-
-    /**
-     * Generate the LIMIT clause with modern SQL syntax
-     * This method is used by the LimitTrait
-     * 
-     * @return string The LIMIT clause string
-     */
-    private function limitMaker(): string
-    {
-        $limitQuery = '';
-        
-        // Handle LIMIT clause
-        if (isset($this->limit) && $this->limit >= 0) {
-            $limitQuery = ' LIMIT ' . $this->limit;
-            
-            // Add OFFSET if specified and valid
-            if (isset($this->offset) && $this->offset > 0) {
-                $limitQuery .= ' OFFSET ' . $this->offset;
-            }
-        }
-        // Handle OFFSET without LIMIT (supported by some databases)
-        elseif (isset($this->offset) && $this->offset > 0) {
-            // For databases that support OFFSET without LIMIT, use a large number
-            // This is more compatible across different database systems
-            $limitQuery = ' LIMIT 18446744073709551615 OFFSET ' . $this->offset;
-        }
-        
-        return $limitQuery;
-    }
-
-    /**
-     * Set limit value (used by LimitTrait)
-     * @param int|null $limit
-     */
-    public function setLimit(?int $limit): void
-    {
-        $this->limit = $limit;
-    }
-
-    /**
-     * Set offset value (used by LimitTrait)
-     * @param int|null $offset
-     */
-    public function setOffset(?int $offset): void
-    {
-        $this->offset = $offset;
-    }
-
     /**
      * @param array<mixed> $select
      */
@@ -148,6 +97,11 @@ class Select implements QueryBuilderInterface
 
     public function __toString(): string
     {
+        // Validate FROM clause exists
+        if (empty($this->from)) {
+            throw new \RuntimeException('SELECT query must have a FROM clause. Call from() method first.');
+        }
+        
         $this->query = $this->selectMaker() . implode(', ', $this->from)
             . ([] === $this->leftJoin ? '' : ' LEFT JOIN ' . implode(' LEFT JOIN ', $this->leftJoin))
             . ([] === $this->innerJoin ? '' : ' INNER JOIN ' . implode(' INNER JOIN ', $this->innerJoin))
@@ -169,22 +123,41 @@ class Select implements QueryBuilderInterface
 
     public function from(string $table, ?string $alias = null): self
     {
-        $this->from[] = null === $alias ? $table : "{$table} AS {$alias}";
+        // Replace instead of append - only allow one FROM clause
+        $this->from = [null === $alias ? $table : "{$table} AS {$alias}"];
 
         return $this;
     }
 
     public function orderBy(string $columnName, ?bool $descending = null): self
     {
-        if ($descending) {
-            $this->order[] = $columnName . ' ' . \SqlEnumCondition::Descending->value . ' ';
+        if ($descending === true) {
+            $this->order[] = $columnName . ' ' . SqlEnumCondition::Descending->value . ' ';
+        } elseif ($descending === false) {
+            $this->order[] = $columnName . ' ' . SqlEnumCondition::Ascending->value . ' ';
         } else {
+            // null means default (ASC, but we'll leave as-is for backward compatibility)
             $this->order[] = $columnName;
         }
 
         return $this;
     }
 
+    /**
+     * Add INNER JOIN clause(s) to the query
+     * 
+     * **Design Note:** This method clears any existing LEFT JOIN clauses.
+     * Only one JOIN type (INNER or LEFT) can be used per query. This is an
+     * intentional design choice to keep queries simple and consistent.
+     * Most queries use a single JOIN type, and mixing types can lead to
+     * complex and hard-to-maintain SQL.
+     * 
+     * If you need both INNER and LEFT JOINs in the same query, consider
+     * using raw SQL or restructuring your query logic.
+     * 
+     * @param string ...$join JOIN clauses (e.g., "table ON condition")
+     * @return self For method chaining
+     */
     public function innerJoin(string ...$join): self
     {
         $this->leftJoin = [];
@@ -195,6 +168,21 @@ class Select implements QueryBuilderInterface
         return $this;
     }
 
+    /**
+     * Add LEFT JOIN clause(s) to the query
+     * 
+     * **Design Note:** This method clears any existing INNER JOIN clauses.
+     * Only one JOIN type (INNER or LEFT) can be used per query. This is an
+     * intentional design choice to keep queries simple and consistent.
+     * Most queries use a single JOIN type, and mixing types can lead to
+     * complex and hard-to-maintain SQL.
+     * 
+     * If you need both INNER and LEFT JOINs in the same query, consider
+     * using raw SQL or restructuring your query logic.
+     * 
+     * @param string ...$join JOIN clauses (e.g., "table ON condition")
+     * @return self For method chaining
+     */
     public function leftJoin(string ...$join): self
     {
         $this->innerJoin = [];
@@ -213,6 +201,16 @@ class Select implements QueryBuilderInterface
      */
     public function run(): array|null
     {
+        // Validate FROM clause before building query
+        if (empty($this->from)) {
+            $this->_lastError = 'SELECT query must have a FROM clause. Call from() method first.';
+            // Register this query with the builder for error tracking
+            if ($this->queryBuilder !== null) {
+                $this->queryBuilder->setLastQuery($this);
+            }
+            return null;
+        }
+        
         // Use the shared PdoQuery instance from QueryBuilder if available
         $pdoQuery = $this->queryBuilder ? $this->queryBuilder->getPdoQuery() : new PdoQuery();
         
@@ -269,6 +267,38 @@ class Select implements QueryBuilderInterface
     /**
      * @param  PdoQuery $classTable
      * @return array<mixed>
+     */
+    /**
+     * Execute query and return results as an array of stdClass objects
+     * 
+     * This method executes the SELECT query using the provided PdoQuery instance
+     * and converts each row into a stdClass object, providing object-oriented
+     * access to query results.
+     * 
+     * **Example:**
+     * ```php
+     * $pdoQuery = new PdoQuery();
+     * $query = $queryBuilder->select('id', 'name', 'email')
+     *     ->from('users')
+     *     ->whereEqual('active', 1)
+     *     ->object($pdoQuery);
+     * 
+     * foreach ($query as $user) {
+     *     echo $user->name;  // Access as object property
+     *     echo $user->email;
+     * }
+     * ```
+     * 
+     * **Note:** This method stores results in the `$object` property for later access.
+     * If the query fails, an empty array is returned and the error can be retrieved
+     * via `getError()`.
+     * 
+     * **Comparison with `run()`:**
+     * - `run()`: Returns raw array of associative arrays
+     * - `object()`: Returns array of stdClass objects (more OOP-friendly)
+     * 
+     * @param PdoQuery $classTable The PdoQuery instance to execute the query
+     * @return array<object> Array of stdClass objects representing query results, or empty array on error
      */
     public function object(PdoQuery $classTable): array
     {

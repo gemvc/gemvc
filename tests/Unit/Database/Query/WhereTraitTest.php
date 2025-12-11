@@ -175,6 +175,53 @@ class WhereTraitTest extends TestCase
     }
     
     // ==========================================
+    // whereLikeLast() Method Tests
+    // ==========================================
+    
+    public function testWhereLikeLastWithValidValue(): void
+    {
+        $result = $this->testObject->whereLikeLast('email', '@example.com');
+        
+        $this->assertInstanceOf(TestClassWithWhereTrait::class, $result);
+        $this->assertCount(1, $this->testObject->whereConditions);
+        $this->assertEquals('email LIKE :email', $this->testObject->whereConditions[0]);
+        $this->assertArrayHasKey(':email', $this->testObject->arrayBindValues);
+        $this->assertEquals('%@example.com', $this->testObject->arrayBindValues[':email']); // Prefix wildcard only
+    }
+    
+    public function testWhereLikeLastWithTableDotColumn(): void
+    {
+        $result = $this->testObject->whereLikeLast('users.email', '@example.com');
+        
+        $this->assertEquals('users.email LIKE :users_email', $this->testObject->whereConditions[0]);
+        $this->assertArrayHasKey(':users_email', $this->testObject->arrayBindValues);
+        $this->assertEquals('%@example.com', $this->testObject->arrayBindValues[':users_email']);
+    }
+    
+    public function testWhereLikeLastWithEmptyColumn(): void
+    {
+        $result = $this->testObject->whereLikeLast('', 'value');
+        
+        $this->assertCount(0, $this->testObject->whereConditions);
+    }
+    
+    public function testWhereLikeLastWithSpecialCharacters(): void
+    {
+        $result = $this->testObject->whereLikeLast('filename', '.pdf');
+        
+        // Should preserve special characters in value
+        $this->assertEquals('%.pdf', $this->testObject->arrayBindValues[':filename']);
+    }
+    
+    public function testWhereLikeLastWithEmptyString(): void
+    {
+        $result = $this->testObject->whereLikeLast('name', '');
+        
+        // Should prepend % to empty string
+        $this->assertEquals('%', $this->testObject->arrayBindValues[':name']);
+    }
+    
+    // ==========================================
     // whereLess() Method Tests
     // ==========================================
     
@@ -481,6 +528,78 @@ class WhereTraitTest extends TestCase
         $result = $this->testObject->whereNotIn('', [1, 2, 3]);
         
         $this->assertCount(0, $this->testObject->whereConditions);
+    }
+    
+    // ==========================================
+    // whereOr() Method Tests
+    // ==========================================
+    
+    public function testWhereOrAsFirstCondition(): void
+    {
+        // If this is the first condition, it should behave like a regular WHERE
+        $result = $this->testObject->whereOr('status', 'active');
+        
+        $this->assertInstanceOf(TestClassWithWhereTrait::class, $result);
+        $this->assertCount(1, $this->testObject->whereConditions);
+        // Should use regular WHERE condition (no OR prefix)
+        $this->assertStringNotContainsString('OR', $this->testObject->whereConditions[0]);
+        $this->assertEquals('status = :status', $this->testObject->whereConditions[0]);
+        $this->assertEquals('active', $this->testObject->arrayBindValues[':status']);
+    }
+    
+    public function testWhereOrAsSubsequentCondition(): void
+    {
+        // Add first condition
+        $this->testObject->whereEqual('status', 'active');
+        
+        // Add OR condition
+        $result = $this->testObject->whereOr('status', 'pending');
+        
+        $this->assertCount(2, $this->testObject->whereConditions);
+        // Second condition should use OR
+        $this->assertStringContainsString('OR', $this->testObject->whereConditions[1]);
+        $this->assertStringContainsString('status = :status_or_1', $this->testObject->whereConditions[1]);
+        $this->assertEquals('pending', $this->testObject->arrayBindValues[':status_or_1']);
+    }
+    
+    public function testWhereOrMultipleConditions(): void
+    {
+        $this->testObject->whereEqual('id', 1)
+            ->whereOr('status', 'active')
+            ->whereOr('status', 'pending')
+            ->whereOr('status', 'approved');
+        
+        $this->assertCount(4, $this->testObject->whereConditions);
+        // First condition should not have OR
+        $this->assertStringNotContainsString('OR', $this->testObject->whereConditions[0]);
+        // Subsequent conditions should have OR
+        $this->assertStringContainsString('OR', $this->testObject->whereConditions[1]);
+        $this->assertStringContainsString('OR', $this->testObject->whereConditions[2]);
+        $this->assertStringContainsString('OR', $this->testObject->whereConditions[3]);
+        
+        // Verify unique parameter names
+        $this->assertArrayHasKey(':status_or_1', $this->testObject->arrayBindValues);
+        $this->assertArrayHasKey(':status_or_2', $this->testObject->arrayBindValues);
+        $this->assertArrayHasKey(':status_or_3', $this->testObject->arrayBindValues);
+    }
+    
+    public function testWhereOrWithTableDotColumn(): void
+    {
+        $this->testObject->whereEqual('users.id', 1);
+        $result = $this->testObject->whereOr('users.status', 'active');
+        
+        $this->assertStringContainsString('OR', $this->testObject->whereConditions[1]);
+        $this->assertStringContainsString('users.status = :users_status_or_1', $this->testObject->whereConditions[1]);
+        $this->assertEquals('active', $this->testObject->arrayBindValues[':users_status_or_1']);
+    }
+    
+    public function testWhereOrWithEmptyColumn(): void
+    {
+        $this->testObject->whereEqual('id', 1);
+        $result = $this->testObject->whereOr('', 'value');
+        
+        // Empty column should be skipped
+        $this->assertCount(1, $this->testObject->whereConditions);
     }
     
     // ==========================================

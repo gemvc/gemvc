@@ -1,4 +1,7 @@
 <?php
+
+namespace Gemvc\Database;
+
 enum SqlEnumCondition: string
 {
     case Equal = ' = ';
@@ -9,7 +12,7 @@ enum SqlEnumCondition: string
 
     case BiggerEqual = ' >= ';
 
-    case LessEqual = ' =< ';
+    case LessEqual = ' <= ';
 
     case IsNull = ' IS NULL ';
 

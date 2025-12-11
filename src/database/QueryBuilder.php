@@ -33,8 +33,23 @@ class QueryBuilder
     /**
      * Create a SELECT query with enhanced error handling
      * 
+     * **Important:** If validation fails (empty columns or empty column names),
+     * an error is set via `setError()` but a safe default query (SELECT *) is still
+     * returned to prevent fatal errors. Always check `getError()` after calling
+     * this method to ensure validation passed.
+     * 
+     * **Example:**
+     * ```php
+     * $query = $builder->select('id', 'name');
+     * if ($builder->getError() !== null) {
+     *     // Handle validation error
+     *     return;
+     * }
+     * // Proceed with query
+     * ```
+     * 
      * @param string ...$select Column names to select
-     * @return Select Query object for method chaining
+     * @return Select Query object for method chaining (may be default SELECT * if validation failed)
      */
     public function select(string ...$select): Select
     {
@@ -62,19 +77,16 @@ class QueryBuilder
      * Create an INSERT query with validation
      * 
      * @param string $intoTableName Table name for insertion
-     * @return Insert Query object for method chaining
+     * @return Insert|null Query object for method chaining, or null if validation fails
      */
-    public function insert(string $intoTableName): Insert
+    public function insert(string $intoTableName): ?Insert
     {
         $this->clearError();
         
         // Validate table name
         if (empty(trim($intoTableName))) {
             $this->setError("Table name cannot be empty for INSERT");
-            // Return a dummy insert to prevent fatal errors
-            $query = new Insert('dummy_table');
-            $query->setQueryBuilder($this);
-            return $query;
+            return null;
         }
 
         $query = new Insert($intoTableName);
@@ -86,19 +98,16 @@ class QueryBuilder
      * Create an UPDATE query with validation
      * 
      * @param string $tableName Table name for update
-     * @return Update Query object for method chaining
+     * @return Update|null Query object for method chaining, or null if validation fails
      */
-    public function update(string $tableName): Update
+    public function update(string $tableName): ?Update
     {
         $this->clearError();
         
         // Validate table name
         if (empty(trim($tableName))) {
             $this->setError("Table name cannot be empty for UPDATE");
-            // Return a dummy update to prevent fatal errors
-            $query = new Update('dummy_table');
-            $query->setQueryBuilder($this);
-            return $query;
+            return null;
         }
 
         $query = new Update($tableName);
@@ -110,19 +119,16 @@ class QueryBuilder
      * Create a DELETE query with validation
      * 
      * @param string $tableName Table name for deletion
-     * @return Delete Query object for method chaining
+     * @return Delete|null Query object for method chaining, or null if validation fails
      */
-    public function delete(string $tableName): Delete
+    public function delete(string $tableName): ?Delete
     {
         $this->clearError();
         
         // Validate table name
         if (empty(trim($tableName))) {
             $this->setError("Table name cannot be empty for DELETE");
-            // Return a dummy delete to prevent fatal errors
-            $query = new Delete('dummy_table');
-            $query->setQueryBuilder($this);
-            return $query;
+            return null;
         }
 
         $query = new Delete($tableName);

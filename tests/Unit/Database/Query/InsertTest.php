@@ -119,9 +119,52 @@ class InsertTest extends TestCase
     
     public function testToStringWithEmptyColumns(): void
     {
+        // Don't call columns() or values() - should throw exception
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('INSERT query must have columns and values');
+        
+        (string)$this->insert;
+    }
+    
+    public function testToStringThrowsExceptionWithoutColumns(): void
+    {
+        // Don't call columns() - should throw exception
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('INSERT query must have columns and values');
+        
+        (string)$this->insert;
+    }
+    
+    public function testToStringThrowsExceptionWithoutValues(): void
+    {
+        // Call columns() but not values() - columns() sets both columns and binds,
+        // so __toString() will work, but run() will fail. This is expected behavior.
+        $this->insert->columns('name', 'email');
+        
+        // __toString() should work since columns and binds are set
         $query = (string)$this->insert;
         $this->assertStringContainsString('INSERT INTO', $query);
-        $this->assertStringContainsString('users', $query);
+        $this->assertStringContainsString('name', $query);
+        $this->assertStringContainsString('email', $query);
+        
+        // But run() should fail because keyValue is empty
+        $result = $this->insert->run();
+        $this->assertNull($result);
+        $this->assertNotNull($this->insert->getError());
+        $this->assertStringContainsString('No values specified', $this->insert->getError());
+    }
+    
+    public function testToStringWithColumnsAndValuesBuildsValidQuery(): void
+    {
+        $this->insert->columns('name', 'email');
+        $this->insert->values('John', 'john@example.com');
+        
+        // Verify the query string is valid
+        $query = (string)$this->insert;
+        $this->assertStringContainsString('INSERT INTO', $query);
+        $this->assertStringContainsString('VALUES', $query);
+        $this->assertStringContainsString('name', $query);
+        $this->assertStringContainsString('email', $query);
     }
     
     // ============================================

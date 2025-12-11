@@ -95,6 +95,21 @@ class SelectTest extends TestCase
         $this->assertSame($this->select, $result);
     }
     
+    public function testFromReplacesPreviousFrom(): void
+    {
+        // Call from() twice - second call should replace first
+        $this->select->from('users');
+        $this->select->from('products');
+        
+        $query = (string)$this->select;
+        
+        // Should only contain 'products', not 'users'
+        $this->assertStringContainsString('FROM products', $query);
+        $this->assertStringNotContainsString('FROM users', $query);
+        // Should not have multiple FROM clauses
+        $this->assertEquals(1, substr_count($query, 'FROM'));
+    }
+    
     // ============================================
     // OrderBy Method Tests
     // ============================================
@@ -115,12 +130,37 @@ class SelectTest extends TestCase
     {
         $result = $this->select->orderBy('name', false);
         $this->assertSame($this->select, $result);
+        
+        // Verify ASC is included in the query
+        $this->select->from('users');
+        $query = (string)$this->select;
+        $this->assertStringContainsString('ORDER BY', $query);
+        $this->assertStringContainsString('ASC', $query);
+        $this->assertStringNotContainsString('DESC', $query);
     }
     
     public function testOrderByWithNullDescending(): void
     {
         $result = $this->select->orderBy('name', null);
         $this->assertSame($this->select, $result);
+        
+        // Verify no ASC/DESC is included (backward compatibility)
+        $this->select->from('users');
+        $query = (string)$this->select;
+        $this->assertStringContainsString('ORDER BY', $query);
+        $this->assertStringContainsString('name', $query);
+        // null means default - no explicit ASC/DESC for backward compatibility
+    }
+    
+    public function testOrderByWithDescendingTrueIncludesDesc(): void
+    {
+        $this->select->from('users');
+        $this->select->orderBy('name', true);
+        $query = (string)$this->select;
+        
+        $this->assertStringContainsString('ORDER BY', $query);
+        $this->assertStringContainsString('DESC', $query);
+        $this->assertStringNotContainsString('ASC', $query);
     }
     
     // ============================================
@@ -159,18 +199,26 @@ class SelectTest extends TestCase
     
     public function testInnerJoinClearsLeftJoin(): void
     {
+        $this->select->from('users');
         $this->select->leftJoin('orders ON users.id = orders.user_id');
         $this->select->innerJoin('products ON users.id = products.user_id');
-        // Inner join should clear left join
-        $this->assertTrue(true); // Just verify no exception
+        
+        // Inner join should clear left join - verify only INNER JOIN is in query
+        $query = (string)$this->select;
+        $this->assertStringContainsString('INNER JOIN', $query);
+        $this->assertStringNotContainsString('LEFT JOIN', $query);
     }
     
     public function testLeftJoinClearsInnerJoin(): void
     {
+        $this->select->from('users');
         $this->select->innerJoin('orders ON users.id = orders.user_id');
         $this->select->leftJoin('products ON users.id = products.user_id');
-        // Left join should clear inner join
-        $this->assertTrue(true); // Just verify no exception
+        
+        // Left join should clear inner join - verify only LEFT JOIN is in query
+        $query = (string)$this->select;
+        $this->assertStringContainsString('LEFT JOIN', $query);
+        $this->assertStringNotContainsString('INNER JOIN', $query);
     }
     
     // ============================================
@@ -603,6 +651,52 @@ class SelectTest extends TestCase
         $this->assertStringContainsString('ORDER BY', $query);
         $this->assertStringContainsString('LIMIT', $query);
         $this->assertStringContainsString('OFFSET', $query);
+    }
+    
+    // ============================================
+    // FROM Validation Tests
+    // ============================================
+    
+    public function testToStringThrowsExceptionWithoutFrom(): void
+    {
+        $select = new Select(['id', 'name']);
+        // Don't call from() - should throw exception
+        
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('SELECT query must have a FROM clause');
+        
+        (string) $select;
+    }
+    
+    public function testRunReturnsNullWithoutFrom(): void
+    {
+        $select = new Select(['id', 'name']);
+        // Don't call from() - should return null and set error
+        
+        $result = $select->run();
+        
+        $this->assertNull($result);
+        $this->assertNotNull($select->getError());
+        $this->assertStringContainsString('FROM clause', $select->getError());
+    }
+    
+    public function testRunWithFromBuildsValidQuery(): void
+    {
+        $select = new Select(['id', 'name']);
+        $select->from('users');
+        
+        // Mock PdoQuery to avoid actual database call
+        $mockPdoQuery = $this->createMock(PdoQuery::class);
+        $mockPdoQuery->method('selectQuery')
+            ->willReturn([['id' => 1, 'name' => 'Test']]);
+        $mockPdoQuery->method('getError')
+            ->willReturn(null);
+        
+        // Use reflection to inject mock (since we can't easily mock the QueryBuilder)
+        // For now, just verify the query string is valid
+        $query = (string) $select;
+        $this->assertStringContainsString('SELECT', $query);
+        $this->assertStringContainsString('FROM users', $query);
     }
 }
 

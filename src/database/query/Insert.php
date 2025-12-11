@@ -19,33 +19,43 @@ use Gemvc\Database\QueryBuilder;
 class Insert implements QueryBuilderInterface
 {
     /**
-     * @var null|int
+     * Result of the insert operation (number of affected rows)
+     * 
+     * @var int|null
      */
-    public $result;
+    public ?int $result = null;
 
     private string $_table;
 
     private string $_query;
 
     /**
+     * Column names for the INSERT statement
+     * 
      * @var array<string>
      */
-    private $columns = [];
+    private array $columns = [];
 
     /**
+     * Parameter placeholders for the INSERT statement
+     * 
      * @var array<string>
      */
-    private $binds = [];
+    private array $binds = [];
 
     /**
+     * Values to be inserted
+     * 
      * @var array<mixed>
      */
-    private $values = [];
+    private array $values = [];
 
     /**
+     * Key-value pairs for insert operations
+     * 
      * @var array<mixed>
      */
-    private $keyValue = [];
+    private array $keyValue = [];
 
     private ?string $_lastError = null;
     
@@ -71,6 +81,11 @@ class Insert implements QueryBuilderInterface
 
     public function __toString(): string
     {
+        // Validate that we have columns (binds are set automatically when columns() is called)
+        if (empty($this->columns) || empty($this->binds)) {
+            throw new \RuntimeException('INSERT query must have columns and values. Call columns() and values() methods first.');
+        }
+        
         $this->_query = 'INSERT INTO ' . $this->_table
             . ' (' . implode(', ', $this->columns) . ') VALUES (' . implode(', ', $this->binds) . ')';
 

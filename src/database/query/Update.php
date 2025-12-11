@@ -63,6 +63,11 @@ class Update  implements QueryBuilderInterface
 
     public function __toString(): string
     {
+        // Validate that we have columns to update
+        if (empty($this->columns)) {
+            throw new \RuntimeException('UPDATE query must have at least one SET clause. Call set() method first.');
+        }
+        
         $this->_query = 'UPDATE ' . $this->_table . ' SET ' . implode(', ', $this->columns)
             . ([] === $this->whereConditions ? '' : ' WHERE ' . implode(' AND ', $this->whereConditions));
 

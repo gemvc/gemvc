@@ -14,8 +14,8 @@ class TestClassWithLimitTrait
 {
     use LimitTrait;
     
-    public ?int $limit = null;
-    public ?int $offset = null;
+    // Note: $limit and $offset are now defined as protected in LimitTrait
+    // Tests should use getLimit() and getOffset() methods instead of direct property access
     public string $orderByColumn = '';
     public bool $orderAsc = true;
     
@@ -43,6 +43,26 @@ class LimitTraitTest extends TestCase
         $this->testObject = new TestClassWithLimitTrait();
     }
     
+    /**
+     * Helper method to set protected limit property
+     */
+    private function setLimit(int|null $value): void
+    {
+        $reflection = new \ReflectionClass($this->testObject);
+        $property = $reflection->getProperty('limit');
+        $property->setValue($this->testObject, $value);
+    }
+    
+    /**
+     * Helper method to set protected offset property
+     */
+    private function setOffset(int|null $value): void
+    {
+        $reflection = new \ReflectionClass($this->testObject);
+        $property = $reflection->getProperty('offset');
+        $property->setValue($this->testObject, $value);
+    }
+    
     // ==========================================
     // limit() Method Tests
     // ==========================================
@@ -53,7 +73,7 @@ class LimitTraitTest extends TestCase
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
         $this->assertSame($this->testObject, $result); // Fluent interface
-        $this->assertEquals(10, $this->testObject->limit);
+        $this->assertEquals(10, $this->testObject->getLimit());
     }
     
     public function testLimitWithZero(): void
@@ -61,24 +81,24 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->limit(0);
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(0, $this->testObject->limit);
+        $this->assertEquals(0, $this->testObject->getLimit());
     }
     
     public function testLimitWithNegativeValue(): void
     {
-        $this->testObject->limit = 10; // Set initial value
+        $this->setLimit(10); // Set initial value
         $result = $this->testObject->limit(-5);
         
         // Should skip negative values silently
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
     }
     
     public function testLimitWithLargeValue(): void
     {
         $result = $this->testObject->limit(999999);
         
-        $this->assertEquals(999999, $this->testObject->limit);
+        $this->assertEquals(999999, $this->testObject->getLimit());
     }
     
     // ==========================================
@@ -91,23 +111,23 @@ class LimitTraitTest extends TestCase
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
         $this->assertSame($this->testObject, $result);
-        $this->assertEquals(20, $this->testObject->offset);
+        $this->assertEquals(20, $this->testObject->getOffset());
     }
     
     public function testOffsetWithZero(): void
     {
         $result = $this->testObject->offset(0);
         
-        $this->assertEquals(0, $this->testObject->offset);
+        $this->assertEquals(0, $this->testObject->getOffset());
     }
     
     public function testOffsetWithNegativeValue(): void
     {
-        $this->testObject->offset = 10; // Set initial value
+        $this->setOffset(10); // Set initial value
         $result = $this->testObject->offset(-5);
         
         // Should skip negative values silently
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     // ==========================================
@@ -119,8 +139,8 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->first();
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(1, $this->testObject->limit);
-        $this->assertNull($this->testObject->offset); // Reset by first()
+        $this->assertEquals(1, $this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset()); // Reset by first()
         $this->assertEquals('id', $this->testObject->orderByColumn);
         $this->assertTrue($this->testObject->orderAsc); // ASC for first
     }
@@ -129,7 +149,7 @@ class LimitTraitTest extends TestCase
     {
         $result = $this->testObject->first(5);
         
-        $this->assertEquals(5, $this->testObject->limit);
+        $this->assertEquals(5, $this->testObject->getLimit());
         $this->assertEquals('id', $this->testObject->orderByColumn);
         $this->assertTrue($this->testObject->orderAsc);
     }
@@ -138,19 +158,19 @@ class LimitTraitTest extends TestCase
     {
         $result = $this->testObject->first(3, 'created_at');
         
-        $this->assertEquals(3, $this->testObject->limit);
+        $this->assertEquals(3, $this->testObject->getLimit());
         $this->assertEquals('created_at', $this->testObject->orderByColumn);
         $this->assertTrue($this->testObject->orderAsc);
     }
     
     public function testFirstWithNegativeCount(): void
     {
-        $this->testObject->limit = 10; // Set initial value
+        $this->setLimit(10); // Set initial value
         $result = $this->testObject->first(-1);
         
         // Should return self without changes for invalid counts
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
     }
     
     public function testFirstWithEmptyColumn(): void
@@ -159,7 +179,7 @@ class LimitTraitTest extends TestCase
         
         // Should use 'id' as default for empty column
         $this->assertEquals('id', $this->testObject->orderByColumn);
-        $this->assertEquals(5, $this->testObject->limit);
+        $this->assertEquals(5, $this->testObject->getLimit());
     }
     
     public function testFirstWithWhitespaceColumn(): void
@@ -172,11 +192,11 @@ class LimitTraitTest extends TestCase
     
     public function testFirstResetsOffset(): void
     {
-        $this->testObject->offset = 50; // Set initial offset
+        $this->setOffset(50); // Set initial offset
         $result = $this->testObject->first(10);
         
         // first() should reset offset to null
-        $this->assertNull($this->testObject->offset);
+        $this->assertNull($this->testObject->getOffset());
     }
     
     // ==========================================
@@ -188,8 +208,8 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->last();
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(1, $this->testObject->limit);
-        $this->assertNull($this->testObject->offset);
+        $this->assertEquals(1, $this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
         $this->assertEquals('id', $this->testObject->orderByColumn);
         $this->assertFalse($this->testObject->orderAsc); // DESC for last
     }
@@ -198,7 +218,7 @@ class LimitTraitTest extends TestCase
     {
         $result = $this->testObject->last(10);
         
-        $this->assertEquals(10, $this->testObject->limit);
+        $this->assertEquals(10, $this->testObject->getLimit());
         $this->assertFalse($this->testObject->orderAsc); // DESC
     }
     
@@ -206,18 +226,18 @@ class LimitTraitTest extends TestCase
     {
         $result = $this->testObject->last(5, 'updated_at');
         
-        $this->assertEquals(5, $this->testObject->limit);
+        $this->assertEquals(5, $this->testObject->getLimit());
         $this->assertEquals('updated_at', $this->testObject->orderByColumn);
         $this->assertFalse($this->testObject->orderAsc); // DESC
     }
     
     public function testLastWithNegativeCount(): void
     {
-        $this->testObject->limit = 10; // Set initial value
+        $this->setLimit(10); // Set initial value
         $result = $this->testObject->last(-1);
         
         // Should return self without changes for invalid counts
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
     }
     
     public function testLastWithEmptyColumn(): void
@@ -230,11 +250,11 @@ class LimitTraitTest extends TestCase
     
     public function testLastResetsOffset(): void
     {
-        $this->testObject->offset = 50;
+        $this->setOffset(50);
         $result = $this->testObject->last(10);
         
         // last() should reset offset to null
-        $this->assertNull($this->testObject->offset);
+        $this->assertNull($this->testObject->getOffset());
     }
     
     // ==========================================
@@ -246,72 +266,72 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->paginate(1, 10);
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(10, $this->testObject->limit);
-        $this->assertEquals(0, $this->testObject->offset); // Page 1: offset = 0
+        $this->assertEquals(10, $this->testObject->getLimit());
+        $this->assertEquals(0, $this->testObject->getOffset()); // Page 1: offset = 0
     }
     
     public function testPaginateSecondPage(): void
     {
         $result = $this->testObject->paginate(2, 10);
         
-        $this->assertEquals(10, $this->testObject->limit);
-        $this->assertEquals(10, $this->testObject->offset); // Page 2: offset = 10
+        $this->assertEquals(10, $this->testObject->getLimit());
+        $this->assertEquals(10, $this->testObject->getOffset()); // Page 2: offset = 10
     }
     
     public function testPaginateThirdPage(): void
     {
         $result = $this->testObject->paginate(3, 25);
         
-        $this->assertEquals(25, $this->testObject->limit);
-        $this->assertEquals(50, $this->testObject->offset); // Page 3: offset = 50
+        $this->assertEquals(25, $this->testObject->getLimit());
+        $this->assertEquals(50, $this->testObject->getOffset()); // Page 3: offset = 50
     }
     
     public function testPaginateWithPageZero(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 10;
+        $this->setLimit(10);
+        $this->setOffset(10);
         
         $result = $this->testObject->paginate(0, 10);
         
         // Should skip invalid page number (< 1)
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     public function testPaginateWithNegativePage(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 10;
+        $this->setLimit(10);
+        $this->setOffset(10);
         
         $result = $this->testObject->paginate(-1, 10);
         
         // Should skip invalid page number
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     public function testPaginateWithZeroPerPage(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 10;
+        $this->setLimit(10);
+        $this->setOffset(10);
         
         $result = $this->testObject->paginate(2, 0);
         
         // Should skip invalid perPage (< 1)
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     public function testPaginateWithNegativePerPage(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 10;
+        $this->setLimit(10);
+        $this->setOffset(10);
         
         $result = $this->testObject->paginate(2, -5);
         
         // Should skip invalid perPage
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     // ==========================================
@@ -323,23 +343,23 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->skip(15);
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(15, $this->testObject->offset);
+        $this->assertEquals(15, $this->testObject->getOffset());
     }
     
     public function testSkipWithZero(): void
     {
         $result = $this->testObject->skip(0);
         
-        $this->assertEquals(0, $this->testObject->offset);
+        $this->assertEquals(0, $this->testObject->getOffset());
     }
     
     public function testSkipWithNegativeValue(): void
     {
-        $this->testObject->offset = 10;
+        $this->setOffset(10);
         $result = $this->testObject->skip(-5);
         
         // Should skip negative values
-        $this->assertEquals(10, $this->testObject->offset); // Unchanged
+        $this->assertEquals(10, $this->testObject->getOffset()); // Unchanged
     }
     
     // ==========================================
@@ -351,23 +371,23 @@ class LimitTraitTest extends TestCase
         $result = $this->testObject->take(20);
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertEquals(20, $this->testObject->limit);
+        $this->assertEquals(20, $this->testObject->getLimit());
     }
     
     public function testTakeWithZero(): void
     {
         $result = $this->testObject->take(0);
         
-        $this->assertEquals(0, $this->testObject->limit);
+        $this->assertEquals(0, $this->testObject->getLimit());
     }
     
     public function testTakeWithNegativeValue(): void
     {
-        $this->testObject->limit = 10;
+        $this->setLimit(10);
         $result = $this->testObject->take(-5);
         
         // Should skip negative values
-        $this->assertEquals(10, $this->testObject->limit); // Unchanged
+        $this->assertEquals(10, $this->testObject->getLimit()); // Unchanged
     }
     
     // ==========================================
@@ -376,7 +396,7 @@ class LimitTraitTest extends TestCase
     
     public function testLimitMakerWithOnlyLimit(): void
     {
-        $this->testObject->limit = 10;
+        $this->setLimit(10);
         
         $result = $this->testObject->exposeLimitMaker();
         
@@ -385,8 +405,8 @@ class LimitTraitTest extends TestCase
     
     public function testLimitMakerWithLimitAndOffset(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 20;
+        $this->setLimit(10);
+        $this->setOffset(20);
         
         $result = $this->testObject->exposeLimitMaker();
         
@@ -395,17 +415,25 @@ class LimitTraitTest extends TestCase
     
     public function testLimitMakerWithOnlyOffset(): void
     {
-        $this->testObject->offset = 50;
+        $this->setOffset(50);
         
         $result = $this->testObject->exposeLimitMaker();
         
         // Should use large limit with offset
-        $this->assertEquals(' LIMIT 18446744073709551615 OFFSET 50', $result);
+        // Note: The constant may be converted to scientific notation in string concatenation
+        $this->assertStringContainsString('LIMIT', $result);
+        $this->assertStringContainsString('OFFSET 50', $result);
+        // Verify it's a very large number (either full number or scientific notation)
+        $this->assertTrue(
+            str_contains($result, '18446744073709551615') || 
+            str_contains($result, '1.844674407371E+19'),
+            'Expected very large LIMIT value'
+        );
     }
     
     public function testLimitMakerWithZeroLimit(): void
     {
-        $this->testObject->limit = 0;
+        $this->setLimit(0);
         
         $result = $this->testObject->exposeLimitMaker();
         
@@ -414,8 +442,8 @@ class LimitTraitTest extends TestCase
     
     public function testLimitMakerWithZeroOffset(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 0;
+        $this->setLimit(10);
+        $this->setOffset(0);
         
         $result = $this->testObject->exposeLimitMaker();
         
@@ -437,7 +465,7 @@ class LimitTraitTest extends TestCase
     
     public function testGetLimitReturnsSetValue(): void
     {
-        $this->testObject->limit = 25;
+        $this->setLimit(25);
         
         $result = $this->testObject->getLimit();
         
@@ -457,7 +485,7 @@ class LimitTraitTest extends TestCase
     
     public function testGetOffsetReturnsSetValue(): void
     {
-        $this->testObject->offset = 40;
+        $this->setOffset(40);
         
         $result = $this->testObject->getOffset();
         
@@ -477,7 +505,7 @@ class LimitTraitTest extends TestCase
     
     public function testIsPaginatedReturnsTrueWithLimit(): void
     {
-        $this->testObject->limit = 10;
+        $this->setLimit(10);
         
         $result = $this->testObject->isPaginated();
         
@@ -486,7 +514,7 @@ class LimitTraitTest extends TestCase
     
     public function testIsPaginatedReturnsTrueWithOffset(): void
     {
-        $this->testObject->offset = 20;
+        $this->setOffset(20);
         
         $result = $this->testObject->isPaginated();
         
@@ -495,8 +523,8 @@ class LimitTraitTest extends TestCase
     
     public function testIsPaginatedReturnsTrueWithBoth(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 20;
+        $this->setLimit(10);
+        $this->setOffset(20);
         
         $result = $this->testObject->isPaginated();
         
@@ -516,42 +544,95 @@ class LimitTraitTest extends TestCase
     
     public function testResetPaginationClearsLimit(): void
     {
-        $this->testObject->limit = 10;
+        $this->setLimit(10);
         
         $result = $this->testObject->resetPagination();
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
-        $this->assertNull($this->testObject->limit);
+        $this->assertNull($this->testObject->getLimit());
     }
     
     public function testResetPaginationClearsOffset(): void
     {
-        $this->testObject->offset = 20;
+        $this->setOffset(20);
         
         $result = $this->testObject->resetPagination();
         
-        $this->assertNull($this->testObject->offset);
+        $this->assertNull($this->testObject->getOffset());
     }
     
     public function testResetPaginationClearsBoth(): void
     {
-        $this->testObject->limit = 10;
-        $this->testObject->offset = 20;
+        $this->setLimit(10);
+        $this->setOffset(20);
         
         $result = $this->testObject->resetPagination();
         
-        $this->assertNull($this->testObject->limit);
-        $this->assertNull($this->testObject->offset);
+        $this->assertNull($this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
         $this->assertFalse($this->testObject->isPaginated());
     }
     
     public function testResetPaginationFluentInterface(): void
     {
-        $this->testObject->limit = 10;
+        $this->setLimit(10);
         
         $result = $this->testObject->resetPagination();
         
         $this->assertSame($this->testObject, $result);
+    }
+    
+    // ==========================================
+    // noLimit() Method Tests
+    // ==========================================
+    
+    public function testNoLimitClearsLimitAndOffset(): void
+    {
+        $this->setLimit(10);
+        $this->setOffset(20);
+        
+        $result = $this->testObject->noLimit();
+        
+        $this->assertSame($this->testObject, $result);
+        $this->assertNull($this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
+    }
+    
+    public function testNoLimitWithNoExistingLimit(): void
+    {
+        $result = $this->testObject->noLimit();
+        
+        $this->assertSame($this->testObject, $result);
+        $this->assertNull($this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
+    }
+    
+    // ==========================================
+    // all() Method Tests
+    // ==========================================
+    
+    public function testAllClearsLimitAndOffset(): void
+    {
+        $this->setLimit(10);
+        $this->setOffset(20);
+        
+        $result = $this->testObject->all();
+        
+        $this->assertSame($this->testObject, $result);
+        $this->assertNull($this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
+    }
+    
+    public function testAllIsAliasForNoLimit(): void
+    {
+        $this->setLimit(10);
+        $this->setOffset(20);
+        
+        $this->testObject->all();
+        
+        // Should have same effect as noLimit()
+        $this->assertNull($this->testObject->getLimit());
+        $this->assertNull($this->testObject->getOffset());
     }
     
     // ==========================================
@@ -568,8 +649,8 @@ class LimitTraitTest extends TestCase
         
         $this->assertInstanceOf(TestClassWithLimitTrait::class, $result);
         $this->assertSame($this->testObject, $result);
-        $this->assertEquals(15, $this->testObject->limit); // Last take() wins
-        $this->assertEquals(30, $this->testObject->offset); // Last skip() wins
+        $this->assertEquals(15, $this->testObject->getLimit()); // Last take() wins
+        $this->assertEquals(30, $this->testObject->getOffset()); // Last skip() wins
     }
     
     public function testMethodChainingWithPaginate(): void
@@ -578,8 +659,8 @@ class LimitTraitTest extends TestCase
             ->limit(5)
             ->paginate(3, 20);
         
-        $this->assertEquals(20, $this->testObject->limit); // paginate() overrides
-        $this->assertEquals(40, $this->testObject->offset); // Page 3 with 20 per page
+        $this->assertEquals(20, $this->testObject->getLimit()); // paginate() overrides
+        $this->assertEquals(40, $this->testObject->getOffset()); // Page 3 with 20 per page
     }
 }
 

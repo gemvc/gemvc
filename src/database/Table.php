@@ -531,6 +531,16 @@ class Table
      * @param mixed $value Value to match
      * @return self For method chaining
      */
+    /**
+     * Adds a WHERE condition for equality comparison
+     * 
+     * @deprecated This method will be removed in the next major version.
+     *             Use whereEqual() instead for more explicit and precise method naming.
+     * 
+     * @param string $column Column name
+     * @param mixed $value Value to match
+     * @return self For method chaining
+     */
     public function where(string $column, mixed $value): self
     {
         if (empty($column)) {
