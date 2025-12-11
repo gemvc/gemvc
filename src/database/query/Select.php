@@ -1,15 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
-/*
- * This file is part of PHP CS Fixer.
- * (c) Fabien Potencier <fabien@symfony.com>
- *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
-
 namespace Gemvc\Database\Query;
 
 use Gemvc\Database\PdoQuery;
@@ -129,12 +120,27 @@ class Select implements QueryBuilderInterface
         return $this;
     }
 
+    /**
+     * Summary of orderBy
+     * @param string $columnName
+     * @param bool|null $descending
+     * @return Select
+     * default is ASC if not provided , only DESC when true is provided
+     * @example
+     * $select->orderBy('name', true); // ORDER BY name DESC
+     * $select->orderBy('name', false); // ORDER BY name ASC
+     * $select->orderBy('name'); // ORDER BY name ASC
+     * @example
+     * $select->orderBy('name', true); // ORDER BY name DESC
+     * $select->orderBy('name', false); // ORDER BY name ASC
+     * $select->orderBy('name'); // ORDER BY name ASC
+     */
     public function orderBy(string $columnName, ?bool $descending = null): self
     {
         if ($descending === true) {
-            $this->order[] = $columnName . ' ' . SqlEnumCondition::Descending->value . ' ';
+            $this->order[] = $columnName . ' DESC';
         } elseif ($descending === false) {
-            $this->order[] = $columnName . ' ' . SqlEnumCondition::Ascending->value . ' ';
+            $this->order[] = $columnName . ' ASC';
         } else {
             // null means default (ASC, but we'll leave as-is for backward compatibility)
             $this->order[] = $columnName;

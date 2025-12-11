@@ -26,7 +26,10 @@ trait LimitTrait
      * This is MySQL's maximum unsigned BIGINT value (2^64 - 1), used to support
      * OFFSET without LIMIT on databases that require a LIMIT clause.
      * 
-     * @var int
+     * Note: This value exceeds PHP_INT_MAX, so PHP stores it as a float.
+     * When used in SQL string concatenation, it will be converted to string.
+     * 
+     * @var float
      */
     private const MAX_LIMIT_FOR_OFFSET = 18446744073709551615;
 

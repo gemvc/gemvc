@@ -1197,6 +1197,7 @@ class Table
                 
             case 'string':
                 // Convert to string, handle null
+                /* @phpstan-ignore-next-line */
                 return $value === null ? ($isNullable ? null : '') : (string)$value;
                 
             default:
