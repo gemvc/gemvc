@@ -62,9 +62,7 @@ class Table
      */
     public function __construct()
     {
-        $this->_limit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT'])) 
-            ? (int)$_ENV['QUERY_LIMIT'] 
-            : 10;
+        $this->_limit = (isset($_ENV['QUERY_LIMIT']) && is_numeric($_ENV['QUERY_LIMIT']))  ? (int)$_ENV['QUERY_LIMIT'] : 10;
     }
 
     /**
@@ -1080,20 +1078,117 @@ class Table
      */
     protected function castValue(string $property, mixed $value): mixed
     {
+        // Handle NULL values first - return as-is if no type mapping
+        if ($value === null) {
+            if (!isset($this->_type_map[$property])) {
+                return null;
+            }
+            // Check if type supports nullable (starts with '?' or contains 'null')
+            $type = $this->_type_map[$property];
+            if (str_starts_with($type, '?') || str_contains($type, 'null')) {
+                return null;
+            }
+            // For non-nullable types, return appropriate default
+            // This prevents type errors when assigning to typed properties
+            return match($type) {
+                'int' => 0,
+                'float' => 0.0,
+                'bool' => false,
+                'string' => '',
+                'array' => [],
+                'datetime', 'date' => new \DateTime('now'),
+                default => null,
+            };
+        }
+        
         if (!isset($this->_type_map[$property])) {
             return $value;
         }
         
         $type = $this->_type_map[$property];
+        
+        // Handle nullable types (e.g., '?int', '?string')
+        $isNullable = str_starts_with($type, '?');
+        if ($isNullable) {
+            $type = substr($type, 1); // Remove '?' prefix
+        }
+        
         switch ($type) {
             case 'int':
-                return is_numeric($value) ? (int)$value : 0;
+                if (!is_numeric($value)) {
+                    // Log warning in dev mode, return 0 for production
+                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                        error_log("Warning: Invalid int value for property '{$property}': " . var_export($value, true));
+                    }
+                    return $isNullable ? null : 0;
+                }
+                return (int)$value;
+                
             case 'float':
-                return is_numeric($value) ? (float)$value : 0.0;
+                if (!is_numeric($value)) {
+                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                        error_log("Warning: Invalid float value for property '{$property}': " . var_export($value, true));
+                    }
+                    return $isNullable ? null : 0.0;
+                }
+                return (float)$value;
+                
             case 'bool':
+                // Handle various boolean representations
+                if (is_bool($value)) {
+                    return $value;
+                }
+                if (is_int($value)) {
+                    return $value !== 0;
+                }
+                if (is_string($value)) {
+                    $lower = strtolower(trim($value));
+                    // Handle common boolean string representations
+                    if (in_array($lower, ['1', 'true', 'yes', 'on', 'y'], true)) {
+                        return true;
+                    }
+                    if (in_array($lower, ['0', 'false', 'no', 'off', 'n', ''], true)) {
+                        return false;
+                    }
+                }
                 return (bool)$value;
+                
             case 'datetime':
-                return new \DateTime(is_string($value) ? $value : 'now');
+            case 'date':
+                if (!is_string($value) || trim($value) === '') {
+                    return $isNullable ? null : new \DateTime('now');
+                }
+                try {
+                    return new \DateTime($value);
+                } catch (\Exception $e) {
+                    // Log error in dev mode
+                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                        error_log("Warning: Invalid datetime value for property '{$property}': {$value}. Error: " . $e->getMessage());
+                    }
+                    return $isNullable ? null : new \DateTime('now');
+                }
+                
+            case 'array':
+            case 'json':
+                if (is_array($value)) {
+                    return $value;
+                }
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $decoded ?? [];
+                    }
+                    // If JSON decode fails, try to parse as comma-separated or return empty array
+                    if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                        error_log("Warning: Invalid JSON value for property '{$property}': {$value}");
+                    }
+                }
+                return $isNullable ? null : [];
+                
+            case 'string':
+                // Convert to string, handle null
+                return $value === null ? ($isNullable ? null : '') : (string)$value;
+                
             default:
                 return $value;
         }
