@@ -214,7 +214,8 @@ abstract class Table
      */
     protected function validateId(int $id, string $operation = 'operation'): bool
     {
-        return $this->getTableValidator()->validateId($id, $operation);
+        // Use validatePrimaryKey() internally to avoid calling deprecated method
+        return $this->validatePrimaryKey($id, $operation);
     }
 
     /*
