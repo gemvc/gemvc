@@ -8,7 +8,9 @@
          failOnRisky="true"
          failOnWarning="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
-         beStrictAboutOutputDuringTests="true">
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnPhpunitDeprecations="true">
     
     <testsuites>
         <testsuite name="Unit">

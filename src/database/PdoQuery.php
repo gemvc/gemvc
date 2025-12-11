@@ -428,7 +428,12 @@ class PdoQuery
         );
         
         $this->setError($errorMessage, $context);
-        error_log($errorMessage . "\nStack trace: " . $e->getTraceAsString());
+        
+        // PERFORMANCE: Log errors only in dev mode - removed from production path
+        // This eliminates expensive error_log() and stack trace generation on every error
+        if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+            error_log($errorMessage . "\nStack trace: " . $e->getTraceAsString());
+        }
     }
 
     /**
