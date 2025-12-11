@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.1/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
@@ -25,14 +25,15 @@
     </testsuites>
     
     <!-- Coverage enabled - PCOV is installed and working -->
-    <coverage>
-        <include>
-            <directory suffix=".php">src</directory>
-        </include>
+    <source>
+        <directory suffix=".php">src</directory>
         <exclude>
             <directory>src/stubs</directory>
             <directory>src/startup</directory>
         </exclude>
+    </source>
+
+    <coverage>
         <report>
             <html outputDirectory="coverage/html"/>
             <clover outputFile="coverage/clover.xml"/>
