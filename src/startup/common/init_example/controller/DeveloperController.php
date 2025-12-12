@@ -264,6 +264,111 @@ class DeveloperController extends Controller
     }
 
     /**
+     * Check database ready status
+     * 
+     * @return JsonResponse
+     */
+    public function isDbReady(): JsonResponse
+    {
+        $model = new DeveloperModel();
+        return $model->isDbReady();
+    }
+
+    /**
+     * Initialize database
+     * 
+     * @return JsonResponse
+     */
+    public function initDatabase(): JsonResponse
+    {
+        $model = new DeveloperModel();
+        return $model->initDatabase();
+    }
+
+    /**
+     * Render services page
+     * 
+     * @return JsonResponse
+     */
+    public function services(): JsonResponse
+    {
+        $model = new DeveloperModel();
+        $data = $model->getServicesData();
+        
+        // Prepare template variables
+        $variables = $this->preparePageVariables();
+        $variables = array_merge($variables, $data);
+        
+        // Render template
+        $html = $this->renderTemplate('services', $variables);
+        
+        return Response::success(['html' => $html]);
+    }
+
+    /**
+     * Create a new service
+     * 
+     * @return JsonResponse
+     */
+    public function createService(): JsonResponse
+    {
+        // Extract service name and type from POST
+        $serviceName = isset($this->request->post['serviceName']) && is_string($this->request->post['serviceName'])
+            ? trim($this->request->post['serviceName'])
+            : '';
+        $type = isset($this->request->post['type']) && is_string($this->request->post['type'])
+            ? $this->request->post['type']
+            : 'crud';
+        
+        if (empty($serviceName)) {
+            return Response::badRequest('Service name is required');
+        }
+        
+        $model = new DeveloperModel();
+        return $model->createService($serviceName, $type);
+    }
+
+    /**
+     * Render tables page
+     * 
+     * @return JsonResponse
+     */
+    public function tables(): JsonResponse
+    {
+        $model = new DeveloperModel();
+        $data = $model->getTablesData();
+        
+        // Prepare template variables
+        $variables = $this->preparePageVariables();
+        $variables = array_merge($variables, $data);
+        
+        // Render template
+        $html = $this->renderTemplate('tables', $variables);
+        
+        return Response::success(['html' => $html]);
+    }
+
+    /**
+     * Migrate or update a table
+     * 
+     * @return JsonResponse
+     */
+    public function migrateTable(): JsonResponse
+    {
+        // Extract table class name from POST
+        $tableClassName = isset($this->request->post['tableClassName']) && is_string($this->request->post['tableClassName'])
+            ? trim($this->request->post['tableClassName'])
+            : '';
+        
+        if (empty($tableClassName)) {
+            return Response::badRequest('Table class name is required');
+        }
+        
+        $model = new DeveloperModel();
+        return $model->migrateTable($tableClassName);
+    }
+
+    /**
      * Render template
      * 
      * @param string $pageName

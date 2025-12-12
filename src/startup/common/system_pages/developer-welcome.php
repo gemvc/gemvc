@@ -78,7 +78,13 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
 
     <div class="bg-gray-50 rounded-lg p-4 mb-2.5 flex items-center justify-between">
         <div>
+            <div class="flex items-center gap-3 mb-2">
             <strong class="block">1. Create Your API Service</strong>
+                <a href="#" data-route="services" onclick="if(typeof setRoute === 'function') { setRoute('services'); return false; }" class="inline-block bg-gemvc-green hover:bg-gemvc-green-dark text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+                    Create Service
+                </a>
+               
+            </div>
             <small class="text-gray-600">Generate CRUD API service (use CamelCase, e.g., Product →
                 <?php echo htmlspecialchars($apiBaseUrl); ?>/product). This command creates at once:</small>
             <ul class="mt-2 ml-5 p-0 text-gray-600 text-sm list-disc">
@@ -93,7 +99,12 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
 
     <div class="bg-gray-50 rounded-lg p-4 mb-2.5 flex items-center justify-between">
         <div>
+            <div class="flex items-center gap-3 mb-2">
             <strong class="block">2. Migrate Your Table</strong>
+            <a href="#" data-route="tables" onclick="if(typeof setRoute === 'function') { setRoute('tables'); return false; }" class="inline-block bg-gemvc-green hover:bg-gemvc-green-dark text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+                Migrate Table
+            </a>
+            </div>
             <?php if (!$databaseReady): ?>
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 my-2.5 rounded">
                     <strong class="text-yellow-800">⚠ Warning:</strong> <span class="text-yellow-800">Your database
@@ -112,11 +123,11 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
             <small class="text-white font-medium">Verify your Service parameters in the docs and export to Postman with one click!</small>
         </div>
         <?php
-        // For Swoole: use baseUrl/Index/document, for others: use apiBaseUrl/Index/document
+        // For Swoole: use baseUrl, for others: use apiBaseUrl
         // Note: $apiBaseUrl already includes '/api' at the end
-        $docsUrl = ($webserverType === 'swoole') 
-            ? $baseUrl . ':9501/index/document'
-            : $apiBaseUrl . '/index/document';
+        // Note: $baseUrl already includes the port for Swoole (e.g., http://localhost:9501)
+        $docsBase = ($webserverType === 'swoole') ? $baseUrl : $apiBaseUrl;
+        $docsUrl = $docsBase . '/index/document';
         ?>
         <a href="<?php echo htmlspecialchars($docsUrl); ?>" 
             class="text-white no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline text-base py-2.5 px-5 border-2 border-white rounded-lg inline-block flex items-center gap-2"

@@ -52,6 +52,8 @@
                             <img id="gemvcLogo" class="h-8 w-auto" src="" alt="GEMVC Framework"/>
                         </a>
                         <a href="#" data-route="welcome" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Home</a>
+                        <a href="#" data-route="services" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Services</a>
+                        <a href="#" data-route="tables" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Tables Layer</a>
                         <a href="#" data-route="database" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Database</a>
                     </div>
                     <div class="flex items-center gap-4">
@@ -106,8 +108,8 @@
                 // Apache/Nginx: WITH /api prefix - localhost/api/developer/database
                 const isSwoole = window.location.port === '9501';
                 const API_BASE = isSwoole 
-                    ? window.location.protocol + '//' + window.location.host
-                    : window.location.protocol + '//' + window.location.host + '/api';
+                    ? window.location.origin
+                    : window.location.origin + '/api';
 
                 console.log('Detected server type:', isSwoole ? 'Swoole' : 'Apache/Nginx');
                 console.log('API Base URL:', API_BASE);
@@ -167,6 +169,12 @@
                                 break;
                             case 'welcome':
                                 await renderWelcome();
+                                break;
+                            case 'services':
+                                await renderServices();
+                                break;
+                            case 'tables':
+                                await renderTables();
                                 break;
                             case 'database':
                                 await renderDatabase();
@@ -291,18 +299,124 @@
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/developer/welcome');
-                    if (! response.ok) {
-                        if (response.status === 401) {
+                    // Fetch welcome page HTML and database status in parallel
+                    const [welcomeResponse, dbStatusResponse] = await Promise.all([
+                        fetch(API_BASE + '/developer/welcome'),
+                        fetch(API_BASE + '/developer/isDbReady')
+                    ]);
+
+                    if (! welcomeResponse.ok) {
+                        if (welcomeResponse.status === 401) {
                             setRoute('login');
                             return;
                         }
                         throw new Error('Failed to load welcome page');
                     }
 
-                    const data = await response.json();
+                    const welcomeData = await welcomeResponse.json();
                     const content = document.getElementById('content');
-                    content.innerHTML = data.data.html || '<div>Welcome page content</div>';
+                    content.innerHTML = welcomeData.data.html || '<div>Welcome page content</div>';
+
+                    // Update database status based on API response
+                    let databaseReady = false;
+                    if (dbStatusResponse.ok) {
+                        const dbStatusData = await dbStatusResponse.json();
+                        databaseReady = dbStatusData.data && dbStatusData.data.databaseReady === true;
+                    }
+
+                    // Update database status display in the rendered HTML
+                    const statusBox = content.querySelector('.bg-green-50');
+                    if (statusBox) {
+                        // Find database status by searching for strong elements with Database text
+                        const allStrongs = statusBox.querySelectorAll('strong');
+                        allStrongs.forEach(strong => {
+                            const text = strong.textContent || '';
+                            if (text.includes('Database')) {
+                                // Found database status line - replace it
+                                const parent = strong.parentElement;
+                                if (parent) {
+                                    // Get the full line HTML
+                                    let lineHTML = parent.innerHTML;
+                                    // Replace the database status part
+                                    if (databaseReady) {
+                                        lineHTML = lineHTML.replace(
+                                            /<strong[^>]*class="[^"]*"[^>]*>.*?Database.*?<\/strong>[^<]*<br>/i,
+                                            '<strong class="text-gemvc-green">✓ Database:</strong> Database is connected and accessible<br>'
+                                        );
+                                    } else {
+                                        lineHTML = lineHTML.replace(
+                                            /<strong[^>]*class="[^"]*"[^>]*>.*?Database.*?<\/strong>[^<]*<br>/i,
+                                            '<strong class="text-red-500">⚠ Database Status:</strong> Database not initialized<br>'
+                                        );
+                                    }
+                                    parent.innerHTML = lineHTML;
+                                }
+                            }
+                        });
+                    }
+
+                    // Convert "Initialize Database" section to clickable button
+                    const allSections = content.querySelectorAll('.bg-gray-50');
+                    allSections.forEach(section => {
+                        const codeElement = section.querySelector('code');
+                        if (codeElement && codeElement.textContent.includes('db:init')) {
+                            if (databaseReady) {
+                                section.style.display = 'none';
+                            } else {
+                                section.style.display = 'block';
+                                // Replace code element with clickable button
+                                const button = document.createElement('button');
+                                button.className = 'bg-gemvc-green hover:bg-gemvc-green-dark text-white font-medium py-2 px-4 rounded transition-colors';
+                                button.textContent = 'Initialize Database';
+                                button.onclick = async () => {
+                                    button.disabled = true;
+                                    button.textContent = 'Initializing...';
+                                    
+                                    try {
+                                        const initResponse = await fetch(API_BASE + '/developer/initDatabase', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': 'Bearer ' + token
+                                            }
+                                        });
+                                        
+                                        const initData = await initResponse.json();
+                                        
+                                        if (initResponse.ok && initData.response_code === 200) {
+                                            // Success - reload the welcome page to show updated status
+                                            await renderWelcome();
+                                        } else {
+                                            alert('Failed to initialize database: ' + (initData.service_message || initData.message || 'Unknown error'));
+                                            button.disabled = false;
+                                            button.textContent = 'Initialize Database';
+                                        }
+                                    } catch (error) {
+                                        console.error('Error initializing database:', error);
+                                        alert('Failed to initialize database: ' + error.message);
+                                        button.disabled = false;
+                                        button.textContent = 'Initialize Database';
+                                    }
+                                };
+                                
+                                // Replace the code element with button
+                                const codeParent = codeElement.parentElement;
+                                if (codeParent) {
+                                    codeParent.replaceChild(button, codeElement);
+                                }
+                            }
+                        }
+                    });
+
+                    // Show/hide warning in migrate section
+                    const migrateWarning = content.querySelector('.bg-yellow-50');
+                    if (migrateWarning) {
+                        if (databaseReady) {
+                            migrateWarning.style.display = 'none';
+                        } else {
+                            migrateWarning.style.display = 'block';
+                        }
+                    }
 
                     // Convert "View Database" button to SPA navigation
                     const dbButton = content.querySelector('form[method="POST"] button');
@@ -323,32 +437,233 @@
                             dbCard.querySelector('div').parentNode.replaceChild(link, dbButton.parentNode);
                         }
                     }
+
+                    // Wire up "Create Service" button to navigate to services page
+                    const createServiceButton = content.querySelector('a[data-route="services"]');
+                    if (createServiceButton) {
+                        createServiceButton.onclick = (e) => {
+                            e.preventDefault();
+                            setRoute('services');
+                        };
+                    }
+
+                    // Wire up "Migrate Table" button to navigate to tables page
+                    const migrateTableButton = content.querySelector('a[data-route="tables"]');
+                    if (migrateTableButton) {
+                        migrateTableButton.onclick = (e) => {
+                            e.preventDefault();
+                            setRoute('tables');
+                        };
+                    }
                 }
 
+                // AbortController for canceling in-flight database requests
+                let databaseRequestController = null;
+                let databaseRequestTimeout = null;
+
                 async function renderDatabase(tableName = null) { // Reset content area styling for normal pages
+                    // Cancel any in-flight request
+                    if (databaseRequestController) {
+                        databaseRequestController.abort();
+                    }
+                    if (databaseRequestTimeout) {
+                        clearTimeout(databaseRequestTimeout);
+                    }
+
+                    // Debounce rapid requests (wait 150ms before making request)
+                    return new Promise((resolve) => {
+                        databaseRequestTimeout = setTimeout(async () => {
+                            const appDiv = document.getElementById('app');
+                            appDiv.className = 'flex items-center justify-center p-5';
+                            const contentWrapper = appDiv.querySelector('div');
+                            contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
+
+                            // Create new AbortController for this request
+                            databaseRequestController = new AbortController();
+
+                            try {
+                                // Build URL with table parameter if provided
+                                let url = API_BASE + '/developer/database/';
+                                if (tableName) {
+                                    url += '?table=' + encodeURIComponent(tableName);
+                                }
+
+                                const response = await fetch(url, {
+                                    signal: databaseRequestController.signal
+                                });
+                                
+                                if (! response.ok) {
+                                    if (response.status === 401) {
+                                        setRoute('login');
+                                        resolve();
+                                        return;
+                                    }
+                                    throw new Error('Failed to load database page');
+                                }
+
+                                const data = await response.json();
+                                const content = document.getElementById('content');
+                                content.innerHTML = data.data.html || '<div>Database page content</div>';
+                                
+                                // Convert "Back to Home" button to SPA navigation
+                                const backButton = content.querySelector('form[method="POST"] button');
+                                if (backButton && backButton.textContent.includes('Back')) {
+                                    backButton.type = 'button';
+                                    backButton.onclick = () => setRoute('welcome');
+                                    backButton.closest('form').remove();
+                                }
+
+                                // Convert "View Structure" buttons to SPA navigation
+                                // Convert NodeList to Array to avoid issues with DOM mutations
+                                Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
+                                    const setTableInput = form.querySelector('input[name="set_table"]');
+                                    if (setTableInput) {
+                                        const tableName = setTableInput.value;
+                                        const button = form.querySelector('button[type="submit"]');
+                                        if (button && button.textContent.includes('View Structure')) { // Extract button from form before removing form
+                                            const parent = form.parentNode;
+                                            if (parent) {
+                                                button.type = 'button';
+                                                button.onclick = async (e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // Reload database page with selected table
+                                                    await renderDatabase(tableName);
+                                                };
+                                                // Replace form with button
+                                                parent.replaceChild(button, form);
+                                            }
+                                        }
+                                    }
+                                });
+                                
+                                // Convert export buttons to AJAX
+                                // Convert NodeList to Array to avoid issues with DOM mutations
+                                Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
+                                    const exportTableInput = form.querySelector('input[name="export_table"]');
+                                    const exportFormatInput = form.querySelector('input[name="export_format"]');
+                                    if (exportTableInput && exportFormatInput) {
+                                        const button = form.querySelector('button[type="submit"]');
+                                        if (button) { // Extract button from form before removing form
+                                            const parent = form.parentNode;
+                                            button.type = 'button';
+                                            button.onclick = async () => {
+                                                const tableName = exportTableInput.value;
+                                                const format = exportFormatInput.value;
+
+                                                try {
+                                                    const exportResponse = await fetch(API_BASE + '/developer/export', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json'
+                                                        },
+                                                        body: JSON.stringify(
+                                                            {table: tableName, format: format}
+                                                        )
+                                                    });
+                                                    
+                                                    if (exportResponse.ok) {
+                                                        const blob = await exportResponse.blob();
+                                                        const url = window.URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = tableName + '_' + new Date().toISOString().slice(0, 10) + '.' + (format === 'csv' ? 'csv' : 'sql');
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        document.body.removeChild(a);
+                                                        window.URL.revokeObjectURL(url);
+                                                    } else {
+                                                        alert('Export failed');
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Export error:', error);
+                                                    alert('Export failed: ' + error.message);
+                                                }
+                                            };
+                                            // Replace form with button
+                                            parent.replaceChild(button, form);
+                                        }
+                                    }
+                                });
+
+                                // Convert import form to AJAX
+                                const importForm = content.querySelector('form[enctype="multipart/form-data"]');
+                                if (importForm) {
+                                    importForm.addEventListener('submit', async (e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(importForm);
+                                        const importTableInput = importForm.querySelector('input[name="import_table"]');
+                                        const importFormatInput = importForm.querySelector('select[name="import_format"]');
+                                        
+                                        if (!importTableInput || !importFormatInput) {
+                                            alert('Invalid import form');
+                                            return;
+                                        }
+                                        
+                                        const tableName = importTableInput.value;
+                                        const format = importFormatInput.value;
+                                        
+                                        try {
+                                            const importResponse = await fetch(API_BASE + '/developer/import', {
+                                                method: 'POST',
+                                                body: formData
+                                            });
+                                            
+                                            const importData = await importResponse.json();
+                                            
+                                            if (importResponse.ok && importData.response_code === 200) {
+                                                alert('Import successful: ' + (importData.data?.message || 'Data imported'));
+                                                // Reload database page to show updated data
+                                                await renderDatabase(tableName);
+                                            } else {
+                                                alert('Import failed: ' + (importData.data?.error || importData.service_message || 'Unknown error'));
+                                            }
+                                        } catch (error) {
+                                            console.error('Import error:', error);
+                                            alert('Import failed: ' + error.message);
+                                        }
+                                    });
+                                }
+                                
+                                // Clear controller after successful request
+                                databaseRequestController = null;
+                                resolve();
+                            } catch (error) {
+                                // Ignore abort errors (user switched tables)
+                                if (error.name === 'AbortError') {
+                                    console.log('Database request cancelled');
+                                    resolve();
+                                    return;
+                                }
+                                console.error('Error loading database page:', error);
+                                const content = document.getElementById('content');
+                                content.innerHTML = '<div class="text-center text-red-600">Error loading database page: ' + error.message + '</div>';
+                                databaseRequestController = null;
+                                resolve();
+                            }
+                        }, 150); // 150ms debounce
+                    });
+                }
+
+                async function renderServices() {
+                    // Reset content area styling for normal pages
                     const appDiv = document.getElementById('app');
                     appDiv.className = 'flex items-center justify-center p-5';
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    // Build URL with table parameter if provided
-                    let url = API_BASE + '/developer/database/';
-                    if (tableName) {
-                        url += '?table=' + encodeURIComponent(tableName);
-                    }
-
-                    const response = await fetch(url);
-                    if (! response.ok) {
+                    const response = await fetch(API_BASE + '/developer/services');
+                    if (!response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
                             return;
                         }
-                        throw new Error('Failed to load database page');
+                        throw new Error('Failed to load services page');
                     }
 
                     const data = await response.json();
                     const content = document.getElementById('content');
-                    content.innerHTML = data.data.html || '<div>Database page content</div>';
+                    content.innerHTML = data.data.html || '<div>Services page content</div>';
 
                     // Convert "Back to Home" button to SPA navigation
                     const backButton = content.querySelector('form[method="POST"] button');
@@ -358,137 +673,287 @@
                         backButton.closest('form').remove();
                     }
 
-                    // Convert "View Structure" buttons to SPA navigation
-                    // Convert NodeList to Array to avoid issues with DOM mutations
-                    Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
-                        const setTableInput = form.querySelector('input[name="set_table"]');
-                        if (setTableInput) {
-                            const tableName = setTableInput.value;
-                            const button = form.querySelector('button[type="submit"]');
-                            if (button && button.textContent.includes('View Structure')) { // Extract button from form before removing form
-                                const parent = form.parentNode;
-                                if (parent) {
-                                    button.type = 'button';
-                                    button.onclick = async (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        // Reload database page with selected table
-                                        await renderDatabase(tableName);
-                                    };
-                                    // Replace form with button
-                                    parent.replaceChild(button, form);
+                    // Handle create service form submission
+                    const createServiceForm = document.getElementById('createServiceForm');
+                    if (createServiceForm) {
+                        createServiceForm.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            
+                            const formData = new FormData(createServiceForm);
+                            const serviceName = formData.get('serviceName');
+                            const type = formData.get('type');
+                            
+                            const errorDiv = document.getElementById('createServiceError');
+                            const errorText = document.getElementById('createServiceErrorText');
+                            const submitButton = document.getElementById('createServiceButton');
+                            
+                            if (!serviceName || !type) {
+                                if (errorDiv && errorText) {
+                                    errorText.textContent = 'Please fill in all fields';
+                                    errorDiv.classList.remove('hidden');
+                                }
+                                return;
+                            }
+                            
+                            // Disable button and show loading
+                            if (submitButton) {
+                                submitButton.disabled = true;
+                                submitButton.textContent = 'Creating...';
+                            }
+                            
+                            if (errorDiv) {
+                                errorDiv.classList.add('hidden');
+                            }
+                            
+                            try {
+                                const createResponse = await fetch(API_BASE + '/developer/createService', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + token
+                                    },
+                                    body: JSON.stringify({
+                                        serviceName: serviceName,
+                                        type: type
+                                    })
+                                });
+                                
+                                const createData = await createResponse.json();
+                                
+                                if (createResponse.ok && createData.response_code === 200) {
+                                    // Success - hide modal and reload services page
+                                    hideCreateServiceModal();
+                                    await renderServices();
+                                } else {
+                                    // Show error
+                                    if (errorDiv && errorText) {
+                                        errorText.textContent = createData.data?.error || createData.service_message || 'Failed to create service';
+                                        errorDiv.classList.remove('hidden');
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error creating service:', error);
+                                if (errorDiv && errorText) {
+                                    errorText.textContent = 'Failed to create service: ' + error.message;
+                                    errorDiv.classList.remove('hidden');
+                                }
+                            } finally {
+                                if (submitButton) {
+                                    submitButton.disabled = false;
+                                    submitButton.textContent = 'Create Service';
                                 }
                             }
+                        });
+                    }
+                    
+                    // Wire up modal functions
+                    window.showCreateServiceModal = function() {
+                        const modal = document.getElementById('createServiceModal');
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                    };
+                    
+                    window.hideCreateServiceModal = function() {
+                        const modal = document.getElementById('createServiceModal');
+                        if (modal) {
+                            modal.classList.add('hidden');
+                            const form = document.getElementById('createServiceForm');
+                            if (form) {
+                                form.reset();
+                            }
+                            const errorDiv = document.getElementById('createServiceError');
+                            if (errorDiv) {
+                                errorDiv.classList.add('hidden');
+                            }
+                        }
+                    };
+                    
+                    // Wire up accordion toggle function
+                    window.toggleService = function(index) {
+                        const content = document.getElementById('service-content-' + index);
+                        const icon = document.getElementById('service-icon-' + index);
+                        const button = document.getElementById('service-toggle-' + index);
+                        
+                        if (content && icon && button) {
+                            const isExpanded = !content.classList.contains('hidden');
+                            
+                            if (isExpanded) {
+                                // Collapse
+                                content.classList.add('hidden');
+                                icon.classList.remove('rotate-90');
+                                button.setAttribute('aria-expanded', 'false');
+                            } else {
+                                // Expand
+                                content.classList.remove('hidden');
+                                icon.classList.add('rotate-90');
+                                button.setAttribute('aria-expanded', 'true');
+                            }
+                        }
+                    };
+                }
+
+                async function renderTables() {
+                    // Reset content area styling for normal pages
+                    const appDiv = document.getElementById('app');
+                    appDiv.className = 'flex items-center justify-center p-5';
+                    const contentWrapper = appDiv.querySelector('div');
+                    contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
+
+                    const response = await fetch(API_BASE + '/developer/tables');
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            setRoute('login');
+                            return;
+                        }
+                        throw new Error('Failed to load tables page');
+                    }
+
+                    const data = await response.json();
+                    const content = document.getElementById('content');
+                    content.innerHTML = data.data.html || '<div>Tables page content</div>';
+
+                    // Convert "Back to Home" button to SPA navigation
+                    const backButton = content.querySelector('form[method="POST"] button');
+                    if (backButton && backButton.textContent.includes('Back')) {
+                        backButton.type = 'button';
+                        backButton.onclick = () => setRoute('welcome');
+                        backButton.closest('form').remove();
+                    }
+
+                    // Wire up migration buttons
+                    window.migrateTable = async function(tableClassName, isUpdate) {
+                        const button = document.querySelector('.migrate-btn-' + tableClassName);
+                        if (!button) return;
+                        
+                        const originalText = button.textContent;
+                        button.disabled = true;
+                        button.textContent = isUpdate ? 'Updating...' : 'Migrating...';
+                        
+                        try {
+                            const migrateResponse = await fetch(API_BASE + '/developer/migrateTable', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + token
+                                },
+                                body: JSON.stringify({
+                                    tableClassName: tableClassName
+                                })
+                            });
+                            
+                            const migrateData = await migrateResponse.json();
+                            
+                            if (migrateResponse.ok && migrateData.response_code === 200) {
+                                alert(migrateData.data?.message || 'Table migrated successfully!');
+                                // Reload tables page to show updated status
+                                await renderTables();
+                            } else {
+                                alert('Migration failed: ' + (migrateData.data?.error || migrateData.service_message || 'Unknown error'));
+                                button.disabled = false;
+                                button.textContent = originalText;
+                            }
+                        } catch (error) {
+                            console.error('Error migrating table:', error);
+                            alert('Failed to migrate table: ' + error.message);
+                            button.disabled = false;
+                            button.textContent = originalText;
+                        }
+                    };
+
+                    // Render schema diagram if relationships exist
+                    const schemaSvg = document.getElementById('schemaSvg');
+                    if (schemaSvg && data.data && data.data.relationships) {
+                        renderSchemaDiagram(schemaSvg, data.data.relationships, data.data.tableClasses);
+                    }
+                }
+
+                function renderSchemaDiagram(svg, relationships, tableClasses) {
+                    // Simple schema diagram rendering
+                    const tables = {};
+                    tableClasses.forEach(table => {
+                        if (table.isMigrated) {
+                            tables[table.tableName] = table;
                         }
                     });
 
-                    // Convert export buttons to AJAX
-                    // Convert NodeList to Array to avoid issues with DOM mutations
-                    Array.from(content.querySelectorAll('form[method="POST"]')).forEach(form => {
-                        const exportTableInput = form.querySelector('input[name="export_table"]');
-                        const exportFormatInput = form.querySelector('input[name="export_format"]');
-                        if (exportTableInput && exportFormatInput) {
-                            const button = form.querySelector('button[type="submit"]');
-                            if (button) { // Extract button from form before removing form
-                                const parent = form.parentNode;
-                                button.type = 'button';
-                                button.onclick = async () => {
-                                    const tableName = exportTableInput.value;
-                                    const format = exportFormatInput.value;
+                    // Clear existing content
+                    svg.innerHTML = '';
+                    
+                    // Add arrow marker definition
+                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                    marker.setAttribute('id', 'arrowhead');
+                    marker.setAttribute('markerWidth', '10');
+                    marker.setAttribute('markerHeight', '10');
+                    marker.setAttribute('refX', '9');
+                    marker.setAttribute('refY', '3');
+                    marker.setAttribute('orient', 'auto');
+                    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    polygon.setAttribute('points', '0 0, 10 3, 0 6');
+                    polygon.setAttribute('fill', '#3b82f6');
+                    marker.appendChild(polygon);
+                    defs.appendChild(marker);
+                    svg.appendChild(defs);
+                    
+                    let y = 30;
+                    let x = 20;
+                    const boxWidth = 200;
+                    const boxHeight = 60;
+                    const spacing = 250;
+                    let row = 0;
+                    let col = 0;
+                    const colsPerRow = 3;
 
-                                    try {
-                                        const exportResponse = await fetch(API_BASE + '/developer/export', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify(
-                                                {table: tableName, format: format}
-                                            )
-                                        });
-
-                                        if (exportResponse.ok) {
-                                            const blob = await exportResponse.blob();
-                                            const contentDisposition = exportResponse.headers.get('Content-Disposition');
-                                            let filename = `${tableName}.${format}`;
-                                            if (contentDisposition) {
-                                                const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-                                                if (filenameMatch) {
-                                                    filename = filenameMatch[1];
-                                                }
-                                            }
-                                            const url = window.URL.createObjectURL(blob);
-                                            const a = document.createElement('a');
-                                            a.href = url;
-                                            a.download = filename;
-                                            document.body.appendChild(a);
-                                            a.click();
-                                            document.body.removeChild(a);
-                                            window.URL.revokeObjectURL(url);
-                                        } else {
-                                            const errorText = await exportResponse.text();
-                                            alert('Export failed: ' + errorText);
-                                        }
-                                    } catch (error) {
-                                        console.error('Error exporting:', error);
-                                        alert('Export failed: ' + error.message);
-                                    }
-                                };
-                                // Replace form with button
-                                parent.replaceChild(button, form);
-                            }
+                    Object.keys(relationships).forEach((tableName, index) => {
+                        if (col >= colsPerRow) {
+                            col = 0;
+                            row++;
                         }
-
-                        // Convert import form to AJAX
-                        const importTableInput = form.querySelector('input[name="import_table"]');
-                        const importFileInput = form.querySelector('input[name="import_file"]');
-                        const importFormatSelect = form.querySelector('select[name="import_format"]');
-                        if (importTableInput && importFileInput && importFormatSelect) {
-                            const button = form.querySelector('button[type="submit"]');
-                            if (button) {
-                                button.type = 'button';
-                                button.onclick = async () => {
-                                    const tableName = importTableInput.value;
-                                    const format = importFormatSelect.value;
-                                    const file = importFileInput.files[0];
-
-                                    if (! file) {
-                                        alert('Please select a file to import');
-                                        return;
-                                    }
-
-                                    try {
-                                        const formData = new FormData();
-                                        formData.append('table', tableName);
-                                        formData.append('format', format);
-                                        formData.append('import_file', file);
-
-                                        const importResponse = await fetch(API_BASE + '/developer/import', {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-
-                                        if (importResponse.ok) {
-                                            const result = await importResponse.json();
-                                            alert('Import successful: ' + (
-                                                result.data ?. message || 'Data imported'
-                                            ));
-                                            // Reload database page to show updated data
-                                            await renderDatabase(tableName);
-                                        } else {
-                                            const errorData = await importResponse.json();
-                                            alert('Import failed: ' + (
-                                                errorData.message || 'Unknown error'
-                                            ));
-                                        }
-                                    } catch (error) {
-                                        console.error('Error importing:', error);
-                                        alert('Import failed: ' + error.message);
-                                    }
-                                };
-                            }
-                        }
+                        
+                        x = 20 + (col * spacing);
+                        y = 30 + (row * (boxHeight + 80));
+                        
+                        // Draw table box
+                        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        rect.setAttribute('x', x);
+                        rect.setAttribute('y', y);
+                        rect.setAttribute('width', boxWidth);
+                        rect.setAttribute('height', boxHeight);
+                        rect.setAttribute('fill', '#f3f4f6');
+                        rect.setAttribute('stroke', '#10b981');
+                        rect.setAttribute('stroke-width', '2');
+                        rect.setAttribute('rx', '5');
+                        svg.appendChild(rect);
+                        
+                        // Table name
+                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', x + 10);
+                        text.setAttribute('y', y + 25);
+                        text.setAttribute('font-family', 'monospace');
+                        text.setAttribute('font-size', '14');
+                        text.setAttribute('font-weight', 'bold');
+                        text.setAttribute('fill', '#1f2937');
+                        text.textContent = tableName;
+                        svg.appendChild(text);
+                        
+                        // Foreign keys count
+                        const fkText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        fkText.setAttribute('x', x + 10);
+                        fkText.setAttribute('y', y + 45);
+                        fkText.setAttribute('font-family', 'monospace');
+                        fkText.setAttribute('font-size', '10');
+                        fkText.setAttribute('fill', '#6b7280');
+                        const fkCount = relationships[tableName].length;
+                        fkText.textContent = fkCount + ' foreign key' + (fkCount !== 1 ? 's' : '');
+                        svg.appendChild(fkText);
+                        
+                        col++;
                     });
+                    
+                    // Update SVG size
+                    const totalHeight = 30 + ((row + 1) * (boxHeight + 80));
+                    svg.setAttribute('height', totalHeight.toString());
                 }
 
                 window.logout = function () {

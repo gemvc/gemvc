@@ -179,6 +179,130 @@ class Developer extends ApiService
     }
 
     /**
+     * Check Database Ready Status
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Check if database is connected and ready
+     * @hidden
+     */
+    public function isDbReady(): JsonResponse
+    {
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->isDbReady();
+    }
+
+    /**
+     * Initialize Database
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Initialize database (create database if not exists)
+     * @hidden
+     */
+    public function initDatabase(): JsonResponse
+    {
+        // Require admin authentication
+        if (!$this->isAuthenticated()) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->initDatabase();
+    }
+
+    /**
+     * Services Management Page Data (JSON for SPA)
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Services management page with API endpoints list
+     * @hidden
+     */
+    public function services(): JsonResponse
+    {
+        // Require admin authentication
+        if (!$this->isAuthenticated()) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->services();
+    }
+
+    /**
+     * Create New Service
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Create a new service (CRUD, service only, service+controller, service+model)
+     * @hidden
+     */
+    public function createService(): JsonResponse
+    {
+        // Require admin authentication
+        if (!$this->isAuthenticated()) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Validate POST schema
+        if (!$this->request->definePostSchema([
+            'serviceName' => 'string',
+            'type' => 'string'
+        ])) {
+            return $this->request->returnResponse();
+        }
+        
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->createService();
+    }
+
+    /**
+     * Tables Layer Management Page Data (JSON for SPA)
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Tables Layer management page with all table classes and migration status
+     * @hidden
+     */
+    public function tables(): JsonResponse
+    {
+        // Require admin authentication
+        if (!$this->isAuthenticated()) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->tables();
+    }
+
+    /**
+     * Migrate or Update Table
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Migrate or update a table class to database
+     * @hidden
+     */
+    public function migrateTable(): JsonResponse
+    {
+        // Require admin authentication
+        if (!$this->isAuthenticated()) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Validate POST schema
+        if (!$this->request->definePostSchema([
+            'tableClassName' => 'string'
+        ])) {
+            return $this->request->returnResponse();
+        }
+        
+        // Delegate to Controller
+        return (new \App\Controller\DeveloperController($this->request))->migrateTable();
+    }
+
+    /**
      * Deny access (security check failed)
      * 
      * @return void
