@@ -12,6 +12,7 @@
  * @var string $templateDir The directory path where this template is located
  * @var string $gemvcLogoUrl The base64 encoded GEMVC logo (if available)
  * @var string $webserverLogoUrl The base64 encoded webserver logo (if available)
+ * @var bool $databaseReady Database connection status (passed from Controller/Model)
  */
 
 // Security check: Defense-in-depth (already protected by index.php, but extra safety)
@@ -20,24 +21,8 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
     exit('Not Found');
 }
 
-// Check database connectivity (presentation logic)
-$databaseReady = false;
-try {
-    $dbManager = \Gemvc\Database\DatabaseManagerFactory::getManager();
-    $connection = $dbManager->getConnection();
-    if ($connection !== null) {
-        // Get the underlying PDO connection
-        $pdo = $connection->getConnection();
-        if ($pdo instanceof \PDO) {
-            // Try a simple query to verify database is accessible
-            $pdo->query('SELECT 1');
-            $databaseReady = true;
-        }
-    }
-} catch (\Exception $e) {
-    // Database not accessible
-    $databaseReady = false;
-}
+// $databaseReady is now passed from Controller/Model layer - no need to query here
+// This template is now pure presentation layer
 ?>
 
 <div class="text-center mb-10">
@@ -121,11 +106,10 @@ try {
         <code class="font-mono bg-gray-800 text-green-400 px-3 py-2 rounded text-sm">php vendor/bin/gemvc db:migrate ProductTable</code>
     </div>
 
-    <div class="bg-green-500 text-white rounded-lg p-4 mb-2.5 flex items-center justify-between">
+    <div class="bg-green-700 text-white rounded-lg p-4 mb-2.5 flex items-center justify-between">
         <div>
             <strong class="block  p-2 rounded-lg">3. Visit Interactive API documentation</strong>
-            <small class="text-gray-600">Verify your newly created Service input parameters in the documentation and enjoy one
-                click Export to postman collection to test your API!</small>
+            <small class="text-white font-medium">Verify your Service parameters in the docs and export to Postman with one click!</small>
         </div>
         <?php
         // For Swoole: use baseUrl/Index/document, for others: use apiBaseUrl/Index/document
@@ -135,7 +119,7 @@ try {
             : $apiBaseUrl . '/index/document';
         ?>
         <a href="<?php echo htmlspecialchars($docsUrl); ?>" 
-            class="text-white no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline"
+            class="text-white no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline text-base py-2.5 px-5 border-2 border-white rounded-lg inline-block flex items-center gap-2"
             target="_blank">View Docs →</a>
     </div>
 </div>

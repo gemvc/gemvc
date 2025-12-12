@@ -10,6 +10,12 @@
  * @var string $webserverType The detected webserver type ('apache', 'nginx', 'swoole')
  * @var string $webserverName The detected webserver name (Apache, Nginx, or OpenSwoole)
  * @var string $templateDir The directory path where this template is located
+ * @var bool $databaseReady Database connection status (passed from Controller/Model)
+ * @var array<int, array<string, mixed>> $tables List of database tables (passed from Model)
+ * @var string|null $selectedTable Currently selected table name (passed from Controller)
+ * @var array<int, array<string, mixed>>|null $tableStructure Table structure/columns (passed from Model)
+ * @var array<int, array<string, mixed>>|null $tableRelationships Foreign key relationships (passed from Model)
+ * @var string|null $errorMessage Error message if database connection failed (passed from Model)
  */
 
 // Security check: Defense-in-depth (already protected by index.php, but extra safety)
@@ -18,82 +24,9 @@ if (($_ENV['APP_ENV'] ?? '') !== 'dev') {
     exit('Not Found');
 }
 
-// Check database connectivity and get connection
-$databaseReady = false;
-$connection = null;
-$tables = [];
-// Get selected table from variable (passed from API) or default to null
-$selectedTable = $selectedTable ?? null;
-$tableStructure = null;
-$tableRelationships = null;
-
-try {
-    $dbManager = \Gemvc\Database\DatabaseManagerFactory::getManager();
-    $connection = $dbManager->getConnection();
-    if ($connection !== null) {
-        // Get the underlying PDO connection
-        $pdo = $connection->getConnection();
-        if ($pdo instanceof \PDO) {
-            $pdo->query('SELECT 1');
-            $databaseReady = true;
-
-            // Get database name
-            $dbName = $pdo->query("SELECT DATABASE() as db_name")->fetch(\PDO::FETCH_ASSOC)['db_name'] ?? 'unknown';
-
-            // Get all tables
-            $tablesResult = $pdo->query("
-                SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH, TABLE_COMMENT
-                FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = " . $pdo->quote($dbName) . " 
-                AND TABLE_TYPE = 'BASE TABLE'
-                ORDER BY TABLE_NAME
-            ");
-            $tables = $tablesResult->fetchAll(\PDO::FETCH_ASSOC);
-
-                // If a table is selected, get its structure and relationships
-                if ($selectedTable && $databaseReady) {
-            // Get table structure (columns)
-            $columnsResult = $pdo->query("
-                SELECT 
-                    COLUMN_NAME,
-                    COLUMN_TYPE,
-                    IS_NULLABLE,
-                    COLUMN_KEY,
-                    COLUMN_DEFAULT,
-                    EXTRA,
-                    COLUMN_COMMENT
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = " . $pdo->quote($dbName) . " 
-                AND TABLE_NAME = " . $pdo->quote($selectedTable) . "
-                ORDER BY ORDINAL_POSITION
-            ");
-            $tableStructure = $columnsResult->fetchAll(\PDO::FETCH_ASSOC);
-
-            // Get foreign key relationships
-            $fkResult = $pdo->query("
-                SELECT 
-                    kcu.CONSTRAINT_NAME,
-                    kcu.COLUMN_NAME,
-                    kcu.REFERENCED_TABLE_NAME,
-                    kcu.REFERENCED_COLUMN_NAME,
-                    rc.UPDATE_RULE,
-                    rc.DELETE_RULE
-                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
-                INNER JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
-                    ON kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
-                    AND kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
-                WHERE kcu.TABLE_SCHEMA = " . $pdo->quote($dbName) . "
-                    AND kcu.TABLE_NAME = " . $pdo->quote($selectedTable) . "
-                    AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
-            ");
-                $tableRelationships = $fkResult->fetchAll(\PDO::FETCH_ASSOC);
-            }
-        }
-    }
-} catch (\Exception $e) {
-    $databaseReady = false;
-    $errorMessage = $e->getMessage();
-}
+// All data is now passed from Controller/Model layer - no need to query here
+// This template is now pure presentation layer
+// Variables available: $databaseReady, $tables, $selectedTable, $tableStructure, $tableRelationships, $errorMessage
 ?>
 <div class="mb-10">
     <div class="flex items-center justify-between mb-4">
@@ -117,7 +50,7 @@ try {
     <div class="bg-red-50 border-l-4 border-red-500 p-5 rounded mb-5">
         <p class="text-red-800 m-0">
             <strong>Error:</strong> Database connection failed. Please check your database configuration.
-            <?php if (isset($errorMessage)): ?>
+            <?php if (isset($errorMessage) && !empty($errorMessage)): ?>
                 <br><small><?php echo htmlspecialchars($errorMessage); ?></small>
             <?php endif; ?>
         </p>

@@ -12,7 +12,7 @@ class User extends ApiService
     /**
      * Constructor
      * 
-     * @param Request \$request The HTTP request object
+     * @param Request $request The HTTP request object
      */
     public function __construct(Request $request)
     {
@@ -185,7 +185,7 @@ class User extends ApiService
     /**
      * Generates mock responses for API documentation
      * 
-     * @param string \$method The API method name
+     * @param string $method The API method name
      * @return array<mixed> Example response data for the specified method
      * @hidden
      */

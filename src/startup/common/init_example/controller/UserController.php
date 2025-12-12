@@ -68,7 +68,7 @@ class UserController extends Controller
     public function delete(): JsonResponse
     {
         $model = $this->request->mapPostToObject(new UserModel());
-        if(!$model) {
+        if(!$model instanceof UserModel) {
             return $this->request->returnResponse();
         }
         return $model->deleteModel();
@@ -89,8 +89,12 @@ class UserController extends Controller
     {
         //return Response::success($this->request->post, 1,"Token is valid");
         $model = new UserModel();
-        $email = $this->request->post['email'];
-        $password = $this->request->post['password'];
+        $email = isset($this->request->post['email']) && is_string($this->request->post['email'])
+            ? $this->request->post['email']
+            : '';
+        $password = isset($this->request->post['password']) && is_string($this->request->post['password'])
+            ? $this->request->post['password']
+            : '';
         return $model->loginByEmailPassword($email, $password);
     }
 
@@ -120,13 +124,22 @@ class UserController extends Controller
         $tokenType = $token->GetType();
         $new_token = null;
         if($tokenType === 'refresh'){
-            $new_token = $token->renew($_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS']);
+            $seconds = isset($_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS']) && is_numeric($_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS'])
+                ? (int)$_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS']
+                : 0;
+            $new_token = $token->renew($seconds);
         }
         if($tokenType === 'access') {
-            $new_token = $token->renew($_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS']);
+            $seconds = isset($_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS']) && is_numeric($_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'])
+                ? (int)$_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS']
+                : 0;
+            $new_token = $token->renew($seconds);
         }
         if($tokenType === 'login') {
-            $new_token = $token->renew($_ENV['LOGIN_TOKEN_VALIDATION_IN_SECONDS']);
+            $seconds = isset($_ENV['LOGIN_TOKEN_VALIDATION_IN_SECONDS']) && is_numeric($_ENV['LOGIN_TOKEN_VALIDATION_IN_SECONDS'])
+                ? (int)$_ENV['LOGIN_TOKEN_VALIDATION_IN_SECONDS']
+                : 0;
+            $new_token = $token->renew($seconds);
         }
         $std = new stdClass();
         $std->token = $new_token;
