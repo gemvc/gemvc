@@ -31,26 +31,29 @@ try {
     $dbManager = \Gemvc\Database\DatabaseManagerFactory::getManager();
     $connection = $dbManager->getConnection();
     if ($connection !== null) {
-        $connection->query('SELECT 1');
-        $databaseReady = true;
+        // Get the underlying PDO connection
+        $pdo = $connection->getConnection();
+        if ($pdo instanceof \PDO) {
+            $pdo->query('SELECT 1');
+            $databaseReady = true;
 
-        // Get database name
-        $dbName = $connection->query("SELECT DATABASE() as db_name")->fetch(\PDO::FETCH_ASSOC)['db_name'] ?? 'unknown';
+            // Get database name
+            $dbName = $pdo->query("SELECT DATABASE() as db_name")->fetch(\PDO::FETCH_ASSOC)['db_name'] ?? 'unknown';
 
-        // Get all tables
-        $tablesResult = $connection->query("
-            SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH, TABLE_COMMENT
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = '$dbName' 
-            AND TABLE_TYPE = 'BASE TABLE'
-            ORDER BY TABLE_NAME
-        ");
-        $tables = $tablesResult->fetchAll(\PDO::FETCH_ASSOC);
+            // Get all tables
+            $tablesResult = $pdo->query("
+                SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH, TABLE_COMMENT
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = " . $pdo->quote($dbName) . " 
+                AND TABLE_TYPE = 'BASE TABLE'
+                ORDER BY TABLE_NAME
+            ");
+            $tables = $tablesResult->fetchAll(\PDO::FETCH_ASSOC);
 
-        // If a table is selected, get its structure and relationships
-        if ($selectedTable && $databaseReady) {
+                // If a table is selected, get its structure and relationships
+                if ($selectedTable && $databaseReady) {
             // Get table structure (columns)
-            $columnsResult = $connection->query("
+            $columnsResult = $pdo->query("
                 SELECT 
                     COLUMN_NAME,
                     COLUMN_TYPE,
@@ -60,14 +63,14 @@ try {
                     EXTRA,
                     COLUMN_COMMENT
                 FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = '$dbName' 
-                AND TABLE_NAME = " . $connection->quote($selectedTable) . "
+                WHERE TABLE_SCHEMA = " . $pdo->quote($dbName) . " 
+                AND TABLE_NAME = " . $pdo->quote($selectedTable) . "
                 ORDER BY ORDINAL_POSITION
             ");
             $tableStructure = $columnsResult->fetchAll(\PDO::FETCH_ASSOC);
 
             // Get foreign key relationships
-            $fkResult = $connection->query("
+            $fkResult = $pdo->query("
                 SELECT 
                     kcu.CONSTRAINT_NAME,
                     kcu.COLUMN_NAME,
@@ -79,11 +82,12 @@ try {
                 INNER JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
                     ON kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
                     AND kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
-                WHERE kcu.TABLE_SCHEMA = '$dbName'
-                    AND kcu.TABLE_NAME = " . $connection->quote($selectedTable) . "
+                WHERE kcu.TABLE_SCHEMA = " . $pdo->quote($dbName) . "
+                    AND kcu.TABLE_NAME = " . $pdo->quote($selectedTable) . "
                     AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
             ");
-            $tableRelationships = $fkResult->fetchAll(\PDO::FETCH_ASSOC);
+                $tableRelationships = $fkResult->fetchAll(\PDO::FETCH_ASSOC);
+            }
         }
     }
 } catch (\Exception $e) {

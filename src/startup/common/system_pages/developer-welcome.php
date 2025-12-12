@@ -26,9 +26,13 @@ try {
     $dbManager = \Gemvc\Database\DatabaseManagerFactory::getManager();
     $connection = $dbManager->getConnection();
     if ($connection !== null) {
-        // Try a simple query to verify database is accessible
-        $connection->query('SELECT 1');
-        $databaseReady = true;
+        // Get the underlying PDO connection
+        $pdo = $connection->getConnection();
+        if ($pdo instanceof \PDO) {
+            // Try a simple query to verify database is accessible
+            $pdo->query('SELECT 1');
+            $databaseReady = true;
+        }
     }
 } catch (\Exception $e) {
     // Database not accessible

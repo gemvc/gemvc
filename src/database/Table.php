@@ -406,11 +406,7 @@ abstract class Table
     }
 
     /**
-     * Adds a WHERE condition for equality comparison
-     * 
-     * @deprecated This method will be removed in the next major version.
-     *             Use whereEqual() instead for more explicit and precise method naming.
-     * 
+     * @deprecated Use whereEqual() instead.
      * @param string $column Column name
      * @param mixed $value Value to match
      * @return self For method chaining

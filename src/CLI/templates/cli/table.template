@@ -65,16 +65,6 @@ class {$serviceName}Table extends Table
     }
 
     /**
-     * @return null|static
-     * null or {$serviceName}Table Object
-     */
-    public function selectById(int $id): null|static
-    {
-        $result = $this->select()->where('id', $id)->limit(1)->run();
-        return $result[0] ?? null;
-    }
-
-    /**
      * @return null|static[]
      * null or array of {$serviceName}Table Objects
      */

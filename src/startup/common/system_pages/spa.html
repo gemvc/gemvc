@@ -140,7 +140,10 @@
 
                 async function loadPage(route) {
                     try { // Check authentication for protected routes
+                        // If no token and trying to access protected route, redirect to login
                         if (route !== 'login' && ! token) {
+                            token = null; // Ensure token is null
+                            localStorage.removeItem('gemvc_admin_token'); // Clear any invalid token
                             setRoute('login');
                             return;
                         }
@@ -293,11 +296,23 @@
 
                     const response = await fetch(API_BASE + '/developer/welcome');
                     if (! response.ok) {
-                        if (response.status === 401) {
+                        if (response.status === 401 || response.status === 403) {
+                            // Clear invalid token and redirect to login
+                            token = null;
+                            localStorage.removeItem('gemvc_admin_token');
                             setRoute('login');
                             return;
                         }
-                        throw new Error('Failed to load welcome page');
+                        // For other errors, try to get error message from response
+                        let errorMessage = 'Failed to load welcome page';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.message || errorMessage;
+                        } catch (e) {
+                            // If response is not JSON, use status text
+                            errorMessage = response.statusText || errorMessage;
+                        }
+                        throw new Error(errorMessage);
                     }
 
                     const data = await response.json();
@@ -339,11 +354,23 @@
 
                     const response = await fetch(url);
                     if (! response.ok) {
-                        if (response.status === 401) {
+                        if (response.status === 401 || response.status === 403) {
+                            // Clear invalid token and redirect to login
+                            token = null;
+                            localStorage.removeItem('gemvc_admin_token');
                             setRoute('login');
                             return;
                         }
-                        throw new Error('Failed to load database page');
+                        // For other errors, try to get error message from response
+                        let errorMessage = 'Failed to load database page';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.message || errorMessage;
+                        } catch (e) {
+                            // If response is not JSON, use status text
+                            errorMessage = response.statusText || errorMessage;
+                        }
+                        throw new Error(errorMessage);
                     }
 
                     const data = await response.json();

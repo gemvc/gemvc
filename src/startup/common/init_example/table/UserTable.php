@@ -98,16 +98,6 @@ class UserTable extends Table
     }
 
     /**
-     * @return null|static
-     * null or UserTable Object
-     */
-    public function selectById(int|string $id): null|static
-    {
-        $result = $this->select()->whereEqual('id', $id)->limit(1)->run();
-        return $result[0] ?? null;
-    }
-
-    /**
      * @return null|static[]
      * null or array of UserTable Objects
      */
