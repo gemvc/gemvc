@@ -83,7 +83,7 @@ class TableGenerator {
                     $defaultClause = ' DEFAULT ' . $matches[1];
                     // Remove DEFAULT from other properties
                     $otherProperties = preg_replace('/DEFAULT\s+(?:CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', '', $properties);
-                    $otherProperties = trim($otherProperties);
+                    $otherProperties = trim($otherProperties ?? '');
                 } else {
                     $otherProperties = $properties;
                 }
@@ -529,7 +529,7 @@ class TableGenerator {
                         $defaultClause = ' DEFAULT ' . $matches[1];
                         // Remove DEFAULT from other properties
                         $otherProperties = preg_replace('/DEFAULT\s+(?:CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', '', $properties);
-                        $otherProperties = trim($otherProperties);
+                        $otherProperties = trim($otherProperties ?? '');
                     } else {
                         $otherProperties = $properties;
                     }
