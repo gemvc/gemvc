@@ -47,6 +47,10 @@ class TableGenerator {
                 return false;
             }
         }
+        
+        // Process schema constraints to apply timestamp defaults
+        $timestampColumns = $this->processSchemaConstraintsForDefaults($object);
+        
         $reflection = new \ReflectionClass($object);
         $properties = $reflection->getProperties();
         $columns = [];
@@ -66,10 +70,36 @@ class TableGenerator {
             }
             $nullSql = $isNullable ? 'NULL' : 'NOT NULL';
 
+            // Separate DEFAULT clause from other column properties
+            $defaultClause = '';
+            $otherProperties = '';
+            
             if (isset($this->columnProperties[$propertyName]) && is_string($this->columnProperties[$propertyName])) {
-                $sqlType .= ' ' . $this->columnProperties[$propertyName];
+                $properties = $this->columnProperties[$propertyName];
+                
+                // Extract DEFAULT clause if present - handle CURRENT_TIMESTAMP and other defaults
+                // Match: DEFAULT CURRENT_TIMESTAMP, DEFAULT 'value', DEFAULT 123, etc.
+                if (preg_match('/DEFAULT\s+(CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', $properties, $matches)) {
+                    $defaultClause = ' DEFAULT ' . $matches[1];
+                    // Remove DEFAULT from other properties
+                    $otherProperties = preg_replace('/DEFAULT\s+(?:CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', '', $properties);
+                    $otherProperties = trim($otherProperties);
+                } else {
+                    $otherProperties = $properties;
+                }
             }
-            $columns[] = "`$propertyName` $sqlType $nullSql";
+            
+            // Build column definition: TYPE [other properties] NOT NULL [DEFAULT]
+            $columnDef = "`$propertyName` $sqlType";
+            if (!empty($otherProperties)) {
+                $columnDef .= ' ' . $otherProperties;
+            }
+            $columnDef .= ' ' . $nullSql;
+            if (!empty($defaultClause)) {
+                $columnDef .= $defaultClause;
+            }
+            
+            $columns[] = $columnDef;
         }
         if (empty($columns)) {
             $this->error = 'No valid properties found in object to create table columns';
@@ -203,7 +233,15 @@ class TableGenerator {
         
         // Handle different types of default values
         if (is_string($defaultValue)) {
-            $defaultSql = "DEFAULT '" . $this->escapeString($defaultValue) . "'";
+            // Special handling for SQL functions like CURRENT_TIMESTAMP
+            if (strtoupper($defaultValue) === 'CURRENT_TIMESTAMP' || 
+                strtoupper($defaultValue) === 'CURRENT_TIMESTAMP()' ||
+                preg_match('/^[A-Z_]+\(\)$/', strtoupper($defaultValue))) {
+                // SQL functions should not be quoted
+                $defaultSql = "DEFAULT " . $defaultValue;
+            } else {
+                $defaultSql = "DEFAULT '" . $this->escapeString($defaultValue) . "'";
+            }
         } elseif (is_bool($defaultValue)) {
             $defaultSql = "DEFAULT " . ($defaultValue ? '1' : '0');
         } elseif (is_null($defaultValue)) {
@@ -449,6 +487,9 @@ class TableGenerator {
                 $columnMap[$column['Field']] = $column;
             }
 
+            // Process schema constraints to apply timestamp defaults
+            $timestampColumns = $this->processSchemaConstraintsForDefaults($object);
+            
             $reflection = new \ReflectionClass($object);
             $properties = $reflection->getProperties();
             $objectPropertyNames = [];
@@ -475,14 +516,39 @@ class TableGenerator {
                 }
                 $nullSql = $isNullable ? 'NULL' : 'NOT NULL';
 
+                // Separate DEFAULT clause from other column properties
+                $defaultClause = '';
+                $otherProperties = '';
+                
                 if (isset($this->columnProperties[$propertyName]) && is_string($this->columnProperties[$propertyName])) {
-                    $sqlType .= ' ' . $this->columnProperties[$propertyName];
+                    $properties = $this->columnProperties[$propertyName];
+                    
+                    // Extract DEFAULT clause if present - handle CURRENT_TIMESTAMP and other defaults
+                    // Match: DEFAULT CURRENT_TIMESTAMP, DEFAULT 'value', DEFAULT 123, etc.
+                    if (preg_match('/DEFAULT\s+(CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', $properties, $matches)) {
+                        $defaultClause = ' DEFAULT ' . $matches[1];
+                        // Remove DEFAULT from other properties
+                        $otherProperties = preg_replace('/DEFAULT\s+(?:CURRENT_TIMESTAMP|[\'"]?[^\'"\s,]+[\'"]?)/i', '', $properties);
+                        $otherProperties = trim($otherProperties);
+                    } else {
+                        $otherProperties = $properties;
+                    }
+                }
+                
+                // Build column definition: TYPE [other properties] NOT NULL [DEFAULT]
+                $columnDef = $sqlType;
+                if (!empty($otherProperties)) {
+                    $columnDef .= ' ' . $otherProperties;
+                }
+                $columnDef .= ' ' . $nullSql;
+                if (!empty($defaultClause)) {
+                    $columnDef .= $defaultClause;
                 }
 
                 if (!isset($columnMap[$propertyName])) {
                     $columnsToAdd[] = [
                         'name' => $propertyName,
-                        'definition' => $sqlType
+                        'definition' => $columnDef
                     ];
                 } else {
                     if (!isset($columnMap[$propertyName]['Type']) || !is_string($columnMap[$propertyName]['Type'])) {
@@ -498,8 +564,34 @@ class TableGenerator {
                     
                     $existingNull = isset($columnMap[$propertyName]['Null']) && is_string($columnMap[$propertyName]['Null']) ? strtolower($columnMap[$propertyName]['Null']) === 'yes' : false;
                     $newNull = $isNullable; // from Reflection
+                    
+                    // Check if DEFAULT value needs to be updated
+                    $existingDefault = isset($columnMap[$propertyName]['Default']) ? $columnMap[$propertyName]['Default'] : null;
+                    $needsDefaultUpdate = false;
+                    
+                    // Check if this column should have DEFAULT CURRENT_TIMESTAMP based on schema constraints
+                    $shouldHaveTimestampDefault = in_array($propertyName, $timestampColumns, true);
+                    
+                    if ($shouldHaveTimestampDefault) {
+                        // This column should have DEFAULT CURRENT_TIMESTAMP
+                        $hasCurrentTimestamp = $existingDefault !== null && (
+                            stripos((string)$existingDefault, 'CURRENT_TIMESTAMP') !== false ||
+                            $existingDefault === 'CURRENT_TIMESTAMP'
+                        );
+                        $needsDefaultUpdate = !$hasCurrentTimestamp;
+                    } elseif (!empty($defaultClause)) {
+                        // Check if we need DEFAULT CURRENT_TIMESTAMP from extracted clause
+                        $wantsCurrentTimestamp = stripos($defaultClause, 'CURRENT_TIMESTAMP') !== false;
+                        if ($wantsCurrentTimestamp) {
+                            $hasCurrentTimestamp = $existingDefault !== null && (
+                                stripos((string)$existingDefault, 'CURRENT_TIMESTAMP') !== false ||
+                                $existingDefault === 'CURRENT_TIMESTAMP'
+                            );
+                            $needsDefaultUpdate = !$hasCurrentTimestamp;
+                        }
+                    }
 
-                    if ($existingType !== $newType || $existingNull !== $newNull) {
+                    if ($existingType !== $newType || $existingNull !== $newNull || $needsDefaultUpdate) {
                         // If changing from NULL to NOT NULL
                         if ($existingNull && !$newNull && $enforceNotNull) {
                             // Check for NULLs in the column
@@ -521,14 +613,46 @@ class TableGenerator {
                                 }
                             }
                             // Now safe to alter column
+                            // Build column definition with proper DEFAULT ordering
+                            $columnDef = $sqlType;
+                            if (!empty($otherProperties)) {
+                                $columnDef .= ' ' . $otherProperties;
+                            }
+                            $columnDef .= ' NOT NULL';
+                            // Always include default clause if it exists or if we need to add it
+                            if (!empty($defaultClause)) {
+                                $columnDef .= $defaultClause;
+                            } elseif ($needsDefaultUpdate && $shouldHaveTimestampDefault) {
+                                $columnDef .= ' DEFAULT CURRENT_TIMESTAMP';
+                            }
                             $columnsToModify[] = [
                                 'name' => $propertyName,
-                                'definition' => "$sqlType NOT NULL"
+                                'definition' => $columnDef
                             ];
-                        } elseif ($existingType !== $newType || $existingNull !== $newNull) {
+                        } else {
+                            // Build column definition with proper DEFAULT ordering
+                            $columnDef = $sqlType;
+                            if (!empty($otherProperties)) {
+                                $columnDef .= ' ' . $otherProperties;
+                            }
+                            $columnDef .= ' ' . ($newNull ? 'NULL' : 'NOT NULL');
+                            // Always include default clause if it exists or if we need to add it
+                            if (!empty($defaultClause)) {
+                                $columnDef .= $defaultClause;
+                            } elseif ($needsDefaultUpdate) {
+                                // Add DEFAULT CURRENT_TIMESTAMP if needed (either from timestamp constraint or extracted clause)
+                                if ($shouldHaveTimestampDefault) {
+                                    $columnDef .= ' DEFAULT CURRENT_TIMESTAMP';
+                                } elseif (isset($this->columnProperties[$propertyName]) && 
+                                         is_string($this->columnProperties[$propertyName]) &&
+                                         stripos($this->columnProperties[$propertyName], 'DEFAULT CURRENT_TIMESTAMP') !== false) {
+                                    // Fallback: check columnProperties directly
+                                    $columnDef .= ' DEFAULT CURRENT_TIMESTAMP';
+                                }
+                            }
                             $columnsToModify[] = [
                                 'name' => $propertyName,
-                                'definition' => "$sqlType " . ($newNull ? 'NULL' : 'NOT NULL')
+                                'definition' => $columnDef
                             ];
                         }
                     }
@@ -744,6 +868,75 @@ class TableGenerator {
         }
 
         return $type;
+    }
+
+    /**
+     * Process schema constraints to apply DEFAULT CURRENT_TIMESTAMP for timestamp columns
+     * 
+     * @param object $object The table object with defineSchema() method
+     * @return array<string> Array of column names that should have DEFAULT CURRENT_TIMESTAMP
+     */
+    private function processSchemaConstraintsForDefaults(object $object): array {
+        $timestampColumns = [];
+        
+        // Check if object has defineSchema method
+        if (!method_exists($object, 'defineSchema')) {
+            return $timestampColumns;
+        }
+        
+        try {
+            $schemaDefinition = $object->defineSchema();
+            if (!is_array($schemaDefinition)) {
+                return $timestampColumns;
+            }
+            
+            // Process each constraint
+            foreach ($schemaDefinition as $constraint) {
+                // Check if it's an IndexConstraint with timestamp flag
+                if (is_object($constraint) && method_exists($constraint, 'toArray')) {
+                    $constraintData = $constraint->toArray();
+                    
+                    // Check if it's an index constraint with timestamp flag
+                    if (isset($constraintData['type']) && $constraintData['type'] === 'index' 
+                        && isset($constraintData['timestamp']) && !empty($constraintData['timestamp'])) {
+                        
+                        // Get the column(s) from the constraint
+                        $columns = $constraintData['columns'] ?? null;
+                        if ($columns === null) {
+                            continue;
+                        }
+                        
+                        // Handle both single column and array of columns
+                        $columnNames = is_array($columns) ? $columns : [$columns];
+                        
+                        // Apply DEFAULT CURRENT_TIMESTAMP to each timestamp-indexed column
+                        foreach ($columnNames as $columnName) {
+                            if (is_string($columnName)) {
+                                // Check if column type is datetime/timestamp compatible
+                                $this->setTimestampDefault($columnName);
+                                $timestampColumns[] = $columnName;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail - schema processing errors shouldn't break table creation
+            // The error will be caught later when applying constraints
+        }
+        
+        return $timestampColumns;
+    }
+    
+    /**
+     * Set DEFAULT CURRENT_TIMESTAMP for a column
+     * 
+     * @param string $propertyName The name of the property/column
+     * @return void
+     */
+    private function setTimestampDefault(string $propertyName): void {
+        // Use setDefault() method which properly handles CURRENT_TIMESTAMP
+        $this->setDefault($propertyName, 'CURRENT_TIMESTAMP');
     }
 
     /**
