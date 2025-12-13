@@ -11,13 +11,14 @@ use Gemvc\Database\Schema;
 
 /**
  * User table class for handling User database operations
- * 
  * @property int $id User's unique identifier column id in database table
  * @property string $name User's name column name in database table
  * @property string $description User's description column description in database table
  * @property string $password User's password column password in database table
  * @property string $created_at User's created_at column created_at in database table
  * @property string $updated_at User's updated_at column updated_at in database table
+ * @property string $role User's role column role in database table
+ * @property string $story User's story column story in database table Very Long Text
  */
 class UserTable extends Table
 {
@@ -29,6 +30,8 @@ class UserTable extends Table
     protected string $password;
     public string $created_at;
     public ?string $updated_at;
+    public ?string $role;
+    public ?string $story;
 
 
     /**
@@ -41,10 +44,12 @@ class UserTable extends Table
         'id' => 'int',
         'name' => 'string',
         'email' => 'string',
-        'description' => 'string',
+        'description' => 'text',
         'password' => 'string',
-        'created_at' => 'string',
-        'updated_at' => 'string'
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'role' => 'string',
+        'story' => 'longText'
     ];
     /*
     * Summary of defineSchema() method
@@ -57,27 +62,17 @@ class UserTable extends Table
             // Primary key with auto increment
             Schema::primary('id'),
             Schema::autoIncrement('id'),
-            
             // Unique constraints
-            Schema::unique('email'),                    // Single column unique
-            Schema::unique(['name', 'email']),          // Composite unique
-                        
+            Schema::unique('email'),
             // Indexes for performance
-            Schema::index('email'),                     // Single column index
-            Schema::index(['name', 'is_active']),       // Composite index
-            Schema::index('created_at')->name('idx_created'),  // Named index
-            Schema::index('updated_at')->name('idx_updated'),  // Named index
-            
-            // Check constraints for data validation
-            Schema::check('age >= 18')->name('valid_age'),
-            Schema::check('salary > 0'),
-            
+            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named index for timestamp column
+            Schema::index('updated_at')->name('idx_updated'),  // Named index for timestamp column
+            Schema::index('role'),
             // Full-text search
-            Schema::fulltext(['name', 'description'])
+            Schema::fullText(['name', 'description'])
             
         ];
     }
-        
 
     public function __construct()
     {
@@ -85,7 +80,6 @@ class UserTable extends Table
         $this->description = null;
         $this->updated_at = null;
     }
-
 
     /**
      * @return string
