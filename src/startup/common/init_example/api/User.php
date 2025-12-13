@@ -6,7 +6,7 @@ use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-
+use Gemvc\Helper\CryptHelper;
 class User extends ApiService
 {
     /**
@@ -31,9 +31,11 @@ class User extends ApiService
     {
         if(!$this->request->definePostSchema([
             'name' => 'string',
-            'description' => 'string',
             'email' => 'email',
-            'password' => 'string'
+            'password' => 'setPassword()', //call the setPassword() method in the UserModel class
+            '?description' => 'string',
+            '?role' => 'string',
+            '?story' => 'string'
         ])) {
             return $this->request->returnResponse();
         }
@@ -80,26 +82,32 @@ class User extends ApiService
      */
     public function update(): JsonResponse
     {
+        if(!$this->request->auth(['admin'])) {
+            return Response::unauthorized("Invalid or missing token");
+        }
         if(!$this->request->definePostSchema([
             'id' => 'int',
             '?name' => 'string',
-            '?description' => 'string'
+            '?description' => 'string',
+            '?role' => 'string',
+            '?story' => 'string',
+            '?password' =>'string'
         ])) {
             return $this->request->returnResponse();
         }
+        //Manually define posts before passing this->request to UserController
+        $this->request->post['updated_at'] = date('Y-m-d H:i:s');
+        //Manually hash the password before passing this->request to UserController if post password is not empty
+        if($this->request->post['password'] && !empty($this->request->post['password'])) {
+            $this->request->post['password'] = CryptHelper::hashPassword($this->request->post['password']);
+        }
         return (new UserController($this->request))->update();
     }
-
-    /**
-     * Delete User
-     * 
-     * @return JsonResponse
-     * @http POST
-     * @description Delete User from database
-     * @example /api/User/delete
-     */
     public function delete(): JsonResponse
     {
+        if(!$this->request->auth(['admin'])) {
+            return Response::unauthorized("Invalid or missing token");
+        }
         if(!$this->request->definePostSchema([
             'id' => 'int',
         ])) {
