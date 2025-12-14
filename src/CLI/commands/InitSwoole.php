@@ -108,7 +108,8 @@ class InitSwoole extends AbstractInit
     {
         parent::__construct($args, $options);
         $this->setPackageName('swoole');
-        $this->installSwooleDependencies();
+        // All OpenSwoole dependencies are automatically installed via gemvc/connection-openswoole
+        // which is a dependency of gemvc/library
     }
     
     protected function getStartupTemplatePath(): string
@@ -179,114 +180,4 @@ class InitSwoole extends AbstractInit
         ];
     }
     
-    /**
-     * Install OpenSwoole-specific dependencies
-     * 
-     * @return void
-     */
-    private function installSwooleDependencies(): void
-    {
-        $requiredPackages = [
-            'hyperf/db-connection',
-            'hyperf/database', 
-            'hyperf/di',
-            'hyperf/pool',
-            'hyperf/config',
-            'hyperf/utils',
-            'hyperf/engine',
-            'hyperf/context',
-            'hyperf/coroutine',
-            'hyperf/support',
-            'hyperf/serializer',
-            'hyperf/coordinator',
-            'hyperf/codec',
-            'hyperf/code-parser',
-            'hyperf/stdlib',
-            'hyperf/pipeline',
-            'hyperf/event',
-            'hyperf/model-listener',
-            'hyperf/framework',
-            'hyperf/engine-contract',
-            'nesbot/carbon',
-            'carbonphp/carbon-doctrine-types',
-            'doctrine/inflector',
-            'doctrine/instantiator',
-            'fig/http-message-util',
-            'graham-campbell/result-type',
-            'php-di/phpdoc-reader',
-            'phpoption/phpoption',
-            'psr/clock',
-            'psr/container',
-            'psr/event-dispatcher',
-            'psr/log',
-            'symfony/deprecation-contracts',
-            'symfony/finder',
-            'symfony/polyfill-ctype',
-            'symfony/polyfill-mbstring',
-            'symfony/polyfill-php80',
-            'symfony/translation',
-            'symfony/translation-contracts'
-        ];
-        
-        $missingPackages = [];
-        
-        foreach ($requiredPackages as $package) {
-            if (!$this->isPackageInstalled($package)) {
-                $missingPackages[] = $package;
-            }
-        }
-        
-        if (!empty($missingPackages)) {
-            $this->info("Installing OpenSwoole dependencies...");
-            $this->installPackages($missingPackages);
-        }
-    }
-    
-    /**
-     * Check if a package is installed
-     * 
-     * @param string $packageName
-     * @return bool
-     */
-    private function isPackageInstalled(string $packageName): bool
-    {
-        $composerLockFile = getcwd() . '/composer.lock';
-        if (!file_exists($composerLockFile)) {
-            return false;
-        }
-        
-        $lockContent = file_get_contents($composerLockFile);
-        if ($lockContent === false) {
-            return false;
-        }
-        
-        return strpos($lockContent, '"name": "' . $packageName . '"') !== false;
-    }
-    
-    /**
-     * Install multiple packages via composer
-     * 
-     * @param array<string> $packages
-     * @return void
-     */
-    private function installPackages(array $packages): void
-    {
-        $packageList = implode(' ', $packages);
-        $command = "composer require {$packageList}";
-        
-        $this->info("Running: {$command}");
-        
-        $output = [];
-        $returnCode = 0;
-        
-        exec($command . ' 2>&1', $output, $returnCode);
-        
-        if ($returnCode === 0) {
-            $this->info("✅ OpenSwoole dependencies installed successfully!");
-        } else {
-            $this->error("Failed to install OpenSwoole dependencies:");
-            $this->error(implode("\n", $output));
-            $this->info("Please install manually: {$command}");
-        }
-    }
 }
