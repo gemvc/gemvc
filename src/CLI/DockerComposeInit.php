@@ -127,21 +127,8 @@ class DockerComposeInit extends Command
      */
     private function getUserServiceSelection(): void
     {
-        echo "\n\033[1;36mSet up Docker services? (y/N):\033[0m ";
-        $handle = fopen("php://stdin", "r");
-        if ($handle === false) {
-            $this->info("Docker services setup skipped (stdin error)");
-            return;
-        }
-        $choice = fgets($handle);
-        fclose($handle);
-        $choice = $choice !== false ? trim($choice) : '';
-        
-        if (strtolower($choice) !== 'y') {
-            $this->info("Docker services setup skipped");
-            return;
-        }
-        
+        // Automatically proceed with Docker services setup
+        // User will be asked to select specific services (Redis, phpMyAdmin, MySQL)
         $this->selectServices();
         $this->askForDevelopmentMode();
     }

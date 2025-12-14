@@ -5,6 +5,7 @@ namespace Gemvc\CLI;
 use Gemvc\CLI\Command;
 use Gemvc\CLI\FileSystemManager;
 use Gemvc\CLI\DockerComposeInit;
+use Gemvc\CLI\DockerContainerBuilder;
 use Gemvc\CLI\Commands\OptionalToolsInstaller;
 use Gemvc\CLI\Commands\CliBoxShow;
 
@@ -74,6 +75,7 @@ abstract class AbstractInit extends Command
             $this->offerDockerServices(); // Interactive Docker services selection
             $this->displayNextSteps();
             $this->offerOptionalTools();
+            $this->offerContainerBuild(); // Offer to build Docker containers
             $this->displaySuccessGraphic();
             
             return true;
@@ -793,6 +795,18 @@ EOT;
     }
     
     /**
+     * Offer to build Docker containers with pre-flight checks
+     * 
+     * @return void
+     */
+    protected function offerContainerBuild(): void
+    {
+        $webserverType = strtolower($this->getWebserverType());
+        $containerBuilder = new DockerContainerBuilder($this->basePath, $this->nonInteractive, $this->getDefaultPort(), $webserverType);
+        $containerBuilder->offerContainerBuild();
+    }
+    
+    /**
      * Display success graphic
      * 
      * @return void
@@ -800,9 +814,22 @@ EOT;
     protected function displaySuccessGraphic(): void
     {
         $webserverType = strtoupper($this->getWebserverType());
+        $webserverTypeLower = strtolower($this->getWebserverType());
         $port = $this->getDefaultPort();
         
         $boxShow = new CliBoxShow();
+        
+        // Build port list - only include port 80 for Apache and Nginx
+        $portLines = [
+            "     - \033[1;36m3306\033[0m (MySQL)",
+            "     - \033[1;36m8080\033[0m (phpMyAdmin)",
+            "     - \033[1;36m{$port}\033[0m (Application server)"
+        ];
+        
+        // Only add port 80 for Apache and Nginx
+        if ($webserverTypeLower === 'apache' || $webserverTypeLower === 'nginx') {
+            array_splice($portLines, 1, 0, "     - \033[1;36m80\033[0m (Web server)");
+        }
         
         $lines = [
             "\033[1;32mGEMVC {$webserverType} Project Ready!\033[0m",
@@ -817,21 +844,20 @@ EOT;
             "   • Check Docker Desktop status in your system tray",
             "",
             "\033[1;33m2. Port Conflicts:\033[0m",
-            "   • Ensure no other containers are using these ports:",
-            "     - \033[1;36m3306\033[0m (MySQL)",
-            "     - \033[1;36m80\033[0m (Web server)",
-            "     - \033[1;36m8080\033[0m (phpMyAdmin)",
-            "     - \033[1;36m{$port}\033[0m (Application server)",
-            "",
-            "\033[1;33mSolution if ports are in use:\033[0m",
-            "   • Option 1: Stop conflicting containers",
-            "     \033[90m  docker ps\033[0m (list running containers)",
-            "     \033[90m  docker stop <container-id>\033[0m",
-            "",
-            "   • Option 2: Change ports in docker-compose.yml",
-            "     Edit \033[1;36mdocker-compose.yml\033[0m and modify port mappings",
-            "     Example: Change \033[1;36m3306:3306\033[0m to \033[1;36m3307:3306\033[0m"
+            "   • Ensure no other containers are using these ports:"
         ];
+        
+        $lines = array_merge($lines, $portLines);
+        
+        $lines[] = "";
+        $lines[] = "\033[1;33mSolution if ports are in use:\033[0m";
+        $lines[] = "   • Option 1: Stop conflicting containers";
+        $lines[] = "     \033[90m  docker ps\033[0m (list running containers)";
+        $lines[] = "     \033[90m  docker stop <container-id>\033[0m";
+        $lines[] = "";
+        $lines[] = "   • Option 2: Change ports in docker-compose.yml";
+        $lines[] = "     Edit \033[1;36mdocker-compose.yml\033[0m and modify port mappings";
+        $lines[] = "     Example: Change \033[1;36m3306:3306\033[0m to \033[1;36m3307:3306\033[0m";
         
         $boxShow->displaySuccessBox("✓ SUCCESS! ✓", $lines);
         $this->write("\n", 'white');
