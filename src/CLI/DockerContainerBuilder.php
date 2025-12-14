@@ -151,39 +151,85 @@ class DockerContainerBuilder extends Command
         
         $blockedPorts = $this->checkPorts($portsToCheck);
         
-        // Step 2: If ports are blocked, first handle container/name conflicts
+        // Step 2: Separate Docker container conflicts from system process conflicts
         if (!empty($blockedPorts)) {
-            $this->handleContainerConflictsFirst($blockedPorts);
-        }
-        
-        // Step 3: Check existing containers (if not already handled)
-        $this->checkExistingContainers();
-        
-        // Step 4: Re-check ports after handling containers/names
-        if (!empty($blockedPorts)) {
-            $portsToCheck = [
-                self::DEFAULT_PORTS['mysql'],
-                self::DEFAULT_PORTS['phpmyadmin']
-            ];
+            $containerBlockedPorts = [];
+            $systemBlockedPorts = [];
             
-            // Add port 80 only for Apache/Nginx
-            if (in_array($this->webserverType, ['apache', 'nginx'])) {
-                if (!in_array(80, $portsToCheck)) {
-                    $portsToCheck[] = 80;
+            foreach ($blockedPorts as $portInfo) {
+                if ($portInfo['container'] !== null) {
+                    // Port blocked by Docker container
+                    $containerBlockedPorts[] = $portInfo;
+                } else {
+                    // Port blocked by system process
+                    $systemBlockedPorts[] = $portInfo;
                 }
             }
             
-            // Add appPort if it's not already in the list
-            if (!in_array($this->appPort, $portsToCheck)) {
-                $portsToCheck[] = $this->appPort;
+            // Step 2a: If ports are blocked by Docker containers, handle container/name conflicts first
+            if (!empty($containerBlockedPorts)) {
+                $this->handleContainerConflictsFirst($containerBlockedPorts);
+                
+                // Step 2b: Check existing containers (if not already handled)
+                $this->checkExistingContainers();
+                
+                // Step 3: Re-check ports after handling containers/names
+                $portsToCheck = [
+                    self::DEFAULT_PORTS['mysql'],
+                    self::DEFAULT_PORTS['phpmyadmin']
+                ];
+                
+                // Add port 80 only for Apache/Nginx
+                if (in_array($this->webserverType, ['apache', 'nginx'])) {
+                    if (!in_array(80, $portsToCheck)) {
+                        $portsToCheck[] = 80;
+                    }
+                }
+                
+                // Add appPort if it's not already in the list
+                if (!in_array($this->appPort, $portsToCheck)) {
+                    $portsToCheck[] = $this->appPort;
+                }
+                
+                $blockedPorts = $this->checkPorts(array_unique($portsToCheck));
+                
+                // Step 4: If ports are still blocked after container handling, suggest new ports
+                if (!empty($blockedPorts)) {
+                    $this->suggestNewPorts($blockedPorts);
+                }
+            } else {
+                // Only system process conflicts - skip container conflict handling, go straight to port suggestions
+                // Step 2b: Check existing containers (for name conflicts, not port conflicts)
+                $this->checkExistingContainers();
+                
+                // Step 3: Re-check ports (they might be available now, or still blocked)
+                $portsToCheck = [
+                    self::DEFAULT_PORTS['mysql'],
+                    self::DEFAULT_PORTS['phpmyadmin']
+                ];
+                
+                // Add port 80 only for Apache/Nginx
+                if (in_array($this->webserverType, ['apache', 'nginx'])) {
+                    if (!in_array(80, $portsToCheck)) {
+                        $portsToCheck[] = 80;
+                    }
+                }
+                
+                // Add appPort if it's not already in the list
+                if (!in_array($this->appPort, $portsToCheck)) {
+                    $portsToCheck[] = $this->appPort;
+                }
+                
+                $blockedPorts = $this->checkPorts(array_unique($portsToCheck));
+                
+                // Step 4: If ports are still blocked by system processes, suggest new ports
+                if (!empty($blockedPorts)) {
+                    $this->suggestNewPorts($blockedPorts);
+                }
             }
-            
-            $blockedPorts = $this->checkPorts(array_unique($portsToCheck));
-            
-            // Step 5: If ports are still blocked, suggest new ports
-            if (!empty($blockedPorts)) {
-                $this->suggestNewPorts($blockedPorts);
-            }
+        } else {
+            // No port conflicts, just check existing containers
+            $this->checkExistingContainers();
         }
         
         $this->info("✓ All pre-flight checks passed");
