@@ -864,52 +864,112 @@ EOT;
     {
         $webserverType = strtoupper($this->getWebserverType());
         $webserverTypeLower = strtolower($this->getWebserverType());
-        $port = $this->getDefaultPort();
+        
+        // Check if docker-compose.yml exists (Docker services were set up)
+        $dockerComposeFile = $this->basePath . '/docker-compose.yml';
+        $dockerSetup = file_exists($dockerComposeFile);
+        
+        // Read actual configured ports from docker-compose.yml (if it exists)
+        $actualPorts = $dockerSetup ? $this->readActualPortsFromDockerCompose() : [];
+        
+        // Get server port (from .env or default)
+        $serverPort = $this->getServerPort();
         
         $boxShow = new CliBoxShow();
-        
-        // Build port list - only include port 80 for Apache and Nginx
-        $portLines = [
-            "     - \033[1;36m3306\033[0m (MySQL)",
-            "     - \033[1;36m8080\033[0m (phpMyAdmin)",
-            "     - \033[1;36m{$port}\033[0m (Application server)"
-        ];
-        
-        // Only add port 80 for Apache and Nginx
-        if ($webserverTypeLower === 'apache' || $webserverTypeLower === 'nginx') {
-            array_splice($portLines, 1, 0, "     - \033[1;36m80\033[0m (Web server)");
-        }
         
         $lines = [
             "\033[1;32mGEMVC {$webserverType} Project Ready!\033[0m",
             "",
-            "Run: \033[1;36mdocker compose up -d --build\033[0m",
-            "Server: \033[1;36mhttp://localhost:{$port}\033[0m",
-            "",
-            "\033[1;33mImportant Before Starting:\033[0m",
-            "",
-            "\033[1;33m1. Docker Desktop:\033[0m",
-            "   • Make sure Docker Desktop is installed and running",
-            "   • Check Docker Desktop status in your system tray",
-            "",
-            "\033[1;33m2. Port Conflicts:\033[0m",
-            "   • Ensure no other containers are using these ports:"
+            "Server: \033[1;36mhttp://localhost:{$serverPort}\033[0m",
+            ""
         ];
         
-        $lines = array_merge($lines, $portLines);
-        
-        $lines[] = "";
-        $lines[] = "\033[1;33mSolution if ports are in use:\033[0m";
-        $lines[] = "   • Option 1: Stop conflicting containers";
-        $lines[] = "     \033[90m  docker ps\033[0m (list running containers)";
-        $lines[] = "     \033[90m  docker stop <container-id>\033[0m";
-        $lines[] = "";
-        $lines[] = "   • Option 2: Change ports in docker-compose.yml";
-        $lines[] = "     Edit \033[1;36mdocker-compose.yml\033[0m and modify port mappings";
-        $lines[] = "     Example: Change \033[1;36m3306:3306\033[0m to \033[1;36m3307:3306\033[0m";
+        if ($dockerSetup) {
+            // Docker is set up - show Docker command and all configured ports
+            $mysqlPort = $actualPorts['mysql'] ?? 3306;
+            $phpmyadminPort = $actualPorts['phpmyadmin'] ?? 8080;
+            
+            $lines[] = "Run: \033[1;36mdocker compose up -d --build\033[0m";
+            $lines[] = "";
+            $lines[] = "\033[1;33mConfigured Server Ports:\033[0m";
+            $lines[] = "   • Application Server: \033[1;36m{$serverPort}\033[0m";
+            $lines[] = "   • MySQL Database: \033[1;36m{$mysqlPort}\033[0m";
+            $lines[] = "   • phpMyAdmin: \033[1;36m{$phpmyadminPort}\033[0m";
+        } else {
+            // Docker not set up - show only application server port
+            $lines[] = "\033[1;33mConfigured Server Port:\033[0m";
+            $lines[] = "   • Application Server: \033[1;36m{$serverPort}\033[0m";
+            $lines[] = "";
+            $lines[] = "\033[1;90mNote:\033[0m Docker services not configured.";
+            $lines[] = "   Run \033[1;36mgemvc init\033[0m again to set up Docker services.";
+        }
         
         $boxShow->displaySuccessBox("✓ SUCCESS! ✓", $lines);
         $this->write("\n", 'white');
+    }
+    
+    /**
+     * Read actual configured ports from docker-compose.yml
+     * 
+     * @return array<string, int> Array with service names as keys and ports as values
+     */
+    private function readActualPortsFromDockerCompose(): array
+    {
+        $dockerComposeFile = $this->basePath . '/docker-compose.yml';
+        $ports = [
+            'mysql' => 3306,
+            'phpmyadmin' => 8080
+        ];
+        
+        if (!file_exists($dockerComposeFile)) {
+            return $ports;
+        }
+        
+        $content = file_get_contents($dockerComposeFile);
+        if ($content === false) {
+            return $ports;
+        }
+        
+        // Parse MySQL port - look for db service with port mapping like "3306:3306" or "3307:3306"
+        // Pattern matches: ports: then - "HOST:3306" where HOST is the external port
+        if (preg_match('/\bdb:\s*\n(?:[^\n]+\n)*\s*ports:\s*\n(?:\s*-\s*"[^"]+"\s*\n?)+/s', $content, $dbSection)) {
+            if (preg_match('/-\s*"(\d+):3306"/', $dbSection[0], $matches)) {
+                $ports['mysql'] = (int)$matches[1];
+            }
+        }
+        
+        // Parse phpMyAdmin port - look for phpmyadmin service with port mapping like "8080:80" or "8081:80"
+        if (preg_match('/\bphpmyadmin:\s*\n(?:[^\n]+\n)*\s*ports:\s*\n(?:\s*-\s*"[^"]+"\s*\n?)+/s', $content, $phpmyadminSection)) {
+            // Look for port mapping ending with :80 (container port)
+            if (preg_match('/-\s*"(\d+):80"/', $phpmyadminSection[0], $matches)) {
+                $ports['phpmyadmin'] = (int)$matches[1];
+            }
+        }
+        
+        return $ports;
+    }
+    
+    /**
+     * Get server port from .env or use default
+     * 
+     * @return int
+     */
+    private function getServerPort(): int
+    {
+        $envFile = $this->basePath . '/.env';
+        
+        if (file_exists($envFile)) {
+            $content = file_get_contents($envFile);
+            if ($content !== false) {
+                // Try to read APP_ENV_SERVER_PORT
+                if (preg_match('/^APP_ENV_SERVER_PORT\s*=\s*(\d+)/m', $content, $matches)) {
+                    return (int)$matches[1];
+                }
+            }
+        }
+        
+        // Fallback to default port
+        return $this->getDefaultPort();
     }
     
     /**

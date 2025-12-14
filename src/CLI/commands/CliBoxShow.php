@@ -80,10 +80,7 @@ class CliBoxShow extends Command
         // Create the bottom border - echo directly to preserve color codes
         // Bottom border: ╰ (1) + dashes + ╯ (1) = boxWidth
         // Dashes = boxWidth - 2
-        $bottomDashCount = $boxWidth - 2;
-        if ($bottomDashCount < 0) {
-            $bottomDashCount = 0;
-        }
+        $bottomDashCount = max(0, $boxWidth - 2);
         // Always apply yellow to bottom border
         echo "{$yellowColor}╰" . str_repeat('─', $bottomDashCount) . "╯{$resetColor}\n";
     }

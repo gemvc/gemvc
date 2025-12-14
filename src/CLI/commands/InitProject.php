@@ -180,12 +180,11 @@ class InitProject extends Command
     {
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
             // Only show status badge if not available (e.g., "coming_soon")
-            $statusBadge = $option['status'] !== 'available' 
-                ? " \033[1;33m[COMING SOON]\033[0m" 
-                : '';
+            $statusBadge = '';
             
             // Get color code based on webserver
             $colorCode = '';
+            // @phpstan-ignore-next-line impossibleType - All webserver options have 'color' key
             if (isset($option['color'])) {
                 switch ($option['color']) {
                     case 'blue':

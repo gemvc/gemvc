@@ -551,7 +551,7 @@ class DockerContainerBuilder extends Command
             if ($oldPort === $this->appPort) {
                 if ($this->webserverType === 'openswoole') {
                     // Format: "9501:9501" -> "9502:9501"
-                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote($oldPort, '/') . '(")/';
+                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote((string)$oldPort, '/') . '(")/';
                     $replacement = '${1}' . $newPort . ':' . $oldPort . '${3}';
                 } else {
                     // Format: "80:80" -> "8080:80" (for Apache/Nginx)
@@ -575,7 +575,7 @@ class DockerContainerBuilder extends Command
                     // For now, let's use a more general approach
                 } else {
                     // Generic: replace first occurrence of oldPort in port mapping
-                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote($oldPort, '/') . '(")/';
+                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote((string)$oldPort, '/') . '(")/';
                     $replacement = '${1}' . $newPort . ':' . $oldPort . '${3}';
                 }
             }
@@ -585,7 +585,7 @@ class DockerContainerBuilder extends Command
             $pattern = '/(ports:\s*\n(?:\s+-\s*"[^"]+"\s*\n?)*)/';
             
             // Better: find each port line and update if it matches
-            $content = preg_replace_callback(
+            $updatedContent = preg_replace_callback(
                 '/(\s+-\s*")(\d+):(\d+)(")/',
                 function($matches) use ($oldPort, $newPort) {
                     $hostPort = (int)$matches[2];
@@ -599,6 +599,7 @@ class DockerContainerBuilder extends Command
                 },
                 $content
             );
+            $content = $updatedContent ?? $content;
         }
         
         file_put_contents($dockerComposeFile, $content);
@@ -861,7 +862,8 @@ class DockerContainerBuilder extends Command
         
         if (!empty($projectNameInput)) {
             // Validate project name (Docker Compose requirements: lowercase, alphanumeric, hyphens, underscores)
-            $projectNameInput = strtolower(preg_replace('/[^a-z0-9_-]/', '', $projectNameInput));
+            $sanitized = preg_replace('/[^a-z0-9_-]/', '', $projectNameInput);
+            $projectNameInput = strtolower($sanitized ?? '');
             if (!empty($projectNameInput)) {
                 $this->customProjectName = $projectNameInput;
                 $this->info("Using custom project name: {$this->customProjectName}");
@@ -886,7 +888,8 @@ class DockerContainerBuilder extends Command
             
             if (!empty($imageNameInput)) {
                 // Validate image name
-                $imageNameInput = strtolower(preg_replace('/[^a-z0-9._-]/', '', $imageNameInput));
+                $sanitized = preg_replace('/[^a-z0-9._-]/', '', $imageNameInput);
+                $imageNameInput = strtolower($sanitized ?? '');
                 if (!empty($imageNameInput)) {
                     // Ensure it has a tag
                     if (strpos($imageNameInput, ':') === false) {
@@ -1082,6 +1085,7 @@ class DockerContainerBuilder extends Command
      * 
      * @param array<string> $containerNames
      * @return void
+     * @phpstan-ignore-next-line method.unused
      */
     private function removeContainers(array $containerNames): void
     {
@@ -1115,6 +1119,9 @@ class DockerContainerBuilder extends Command
         
         // Change to project directory
         $originalDir = getcwd();
+        if ($originalDir === false) {
+            throw new \RuntimeException("Could not get current working directory");
+        }
         chdir($this->basePath);
         
         exec($command . ' 2>&1', $output, $returnCode);
@@ -1146,6 +1153,9 @@ class DockerContainerBuilder extends Command
         
         // Change to project directory
         $originalDir = getcwd();
+        if ($originalDir === false) {
+            throw new \RuntimeException("Could not get current working directory");
+        }
         chdir($this->basePath);
         
         exec("docker compose ps 2>&1", $output, $returnCode);
