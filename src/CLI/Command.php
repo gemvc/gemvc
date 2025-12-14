@@ -54,7 +54,7 @@ abstract class Command
     protected function error(string $message): void
     {
         if ($this->supportsAnsiColors()) {
-            echo "\033[31m❌ {$message}\033[0m\n";
+            echo "\033[31m{$message}\033[0m\n";
         } else {
             echo "Error: {$message}\n";
         }
@@ -64,7 +64,7 @@ abstract class Command
     protected function success(string $message, bool $shouldExit = true): void
     {
         if ($this->supportsAnsiColors()) {
-            echo "\033[32m✅ {$message}\033[0m\n";
+            echo "\033[32m✓ {$message}\033[0m\n";
         } else {
             echo "Success: {$message}\n";
         }
@@ -76,7 +76,7 @@ abstract class Command
     protected function info(string $message): void
     {
         if ($this->supportsAnsiColors()) {
-            echo "\033[34mℹ️  {$message}\033[0m\n";
+            echo "\033[34m{$message}\033[0m\n";
         } else {
             echo "Info: {$message}\n";
         }
@@ -85,7 +85,7 @@ abstract class Command
     protected function warning(string $message): void
     {
         if ($this->supportsAnsiColors()) {
-            echo "\033[33m⚠️  {$message}\033[0m\n";
+            echo "\033[33m{$message}\033[0m\n";
         } else {
             echo "Warning: {$message}\n";
         }

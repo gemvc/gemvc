@@ -159,9 +159,9 @@ abstract class AbstractInit extends Command
         }
         
         $webserverType = ucfirst($this->getWebserverType());
-        $this->info("🚀 Initializing GEMVC {$webserverType} project...");
+        $this->info("Initializing GEMVC {$webserverType} project...");
         
-        $this->basePath = defined('PROJECT_ROOT') ? PROJECT_ROOT : $this->determineProjectRoot();
+        $this->basePath = (defined('PROJECT_ROOT') && constant('PROJECT_ROOT') !== null) ? constant('PROJECT_ROOT') : $this->determineProjectRoot();
         $this->packagePath = $this->determinePackagePath();
         
         // Initialize FileSystemManager with verbose mode disabled
@@ -186,11 +186,11 @@ abstract class AbstractInit extends Command
      */
     protected function setupProjectStructure(): void
     {
-        $this->info("📁 Setting up project structure...");
+        $this->info("Setting up project structure...");
         $this->createDirectories();
         $this->copyTemplatesFolder();
         $this->copyReadmeToRoot();
-        $this->info("✅ Project structure created");
+        $this->info("\033[32m✓\033[0m Project structure created");
     }
     
     /**
@@ -220,13 +220,13 @@ abstract class AbstractInit extends Command
      */
     protected function copyCommonProjectFiles(): void
     {
-        $this->info("📄 Copying common project files...");
+        $this->info("Copying common project files...");
         $startupPath = $this->findStartupPath();
         
         // Copy init example files to app directory
         $this->copyUserFiles($startupPath);
         
-        $this->info("✅ Common files copied");
+        $this->info("\033[32m✓\033[0m Common files copied");
     }
     
     /**
@@ -336,7 +336,7 @@ abstract class AbstractInit extends Command
             return;
         }
         
-        $this->info("📁 Copying init example files from: {$initExampleDir}");
+        $this->info("Copying init example files from: {$initExampleDir}");
         
         // Scan init_example directory for folders that match app structure
         $folders = array_diff(scandir($initExampleDir), ['.', '..']);
@@ -364,7 +364,7 @@ abstract class AbstractInit extends Command
             // Copy all contents from source folder to target folder
             $this->fileSystem->copyDirectoryContents($sourceFolderPath, $targetFolderPath);
             
-            $this->info("✅ Copied init example folder: {$folder}");
+            $this->info("\033[32m✓\033[0m Copied init example folder: {$folder}");
         }
     }
     
@@ -397,7 +397,7 @@ abstract class AbstractInit extends Command
     protected function setupPsr4Autoload(): void
     {
         $composerJsonPath = $this->basePath . '/composer.json';
-        $this->info("⚙️ Configuring PSR-4 autoload...");
+        $this->info("Configuring PSR-4 autoload...");
         
         // Read existing composer.json
         /** @var array<string, mixed> $composerJson */
@@ -444,7 +444,7 @@ abstract class AbstractInit extends Command
             throw new \RuntimeException("Failed to update composer.json with PSR-4 autoload");
         }
         
-        $this->info("✅ PSR-4 autoload configured");
+        $this->info("\033[32m✓\033[0m PSR-4 autoload configured");
     }
     
     /**
@@ -455,7 +455,7 @@ abstract class AbstractInit extends Command
      */
     protected function createEnvFile(): void
     {
-        $this->info("🔧 Creating environment file...");
+        $this->info("Creating environment file...");
         $envPath = $this->basePath . DIRECTORY_SEPARATOR . '.env';
         
         // Try webserver-specific example.env first
@@ -473,7 +473,7 @@ abstract class AbstractInit extends Command
         
         $envContent = $this->fileSystem->getFileContent($exampleEnvPath);
         $this->fileSystem->writeFile($envPath, $envContent, '.env file');
-        $this->info("✅ Environment file created");
+        $this->info("\033[32m✓\033[0m Environment file created");
     }
     
     /**
@@ -483,12 +483,12 @@ abstract class AbstractInit extends Command
      */
     protected function createGlobalCommand(): void
     {
-        $this->info("🔗 Setting up CLI commands...");
+        $this->info("Setting up CLI commands...");
         
         $this->createLocalWrapper();
         $this->createWindowsBatch();
         $this->offerGlobalInstallation();
-        $this->info("✅ CLI commands ready");
+        $this->info("\033[32m✓\033[0m CLI commands ready");
     }
     
     /**
@@ -660,7 +660,7 @@ EOT;
      */
     protected function finalizeAutoload(): void
     {
-        $this->info("🔄 Finalizing autoload...");
+        $this->info("Finalizing autoload...");
         
         $currentDir = getcwd();
         if ($currentDir === false) {
@@ -682,7 +682,7 @@ EOT;
                 $this->write("  {$line}\n", 'red');
             }
         } else {
-            $this->info("✅ Autoload finalized");
+            $this->info("\033[32m✓\033[0m Autoload finalized");
         }
     }
     
@@ -718,7 +718,7 @@ EOT;
         $webserverType = ucfirst($this->getWebserverType());
         
         $lines = [
-            "\033[1;92m✅ {$webserverType} Project Ready!\033[0m",
+            "\033[1;92m✓ {$webserverType} Project Ready!\033[0m",
             " \033[1;36m$ \033[1;95mphp bin/gemvc\033[0m",
             "   \033[90m# PSR-4 autoload configured and ready to use\033[0m",
             "",
@@ -748,7 +748,7 @@ EOT;
         $startCommand = $this->getStartCommand();
         
         $lines = [
-            "\033[1;94m🚀 {$webserverType} Specific Instructions:\033[0m",
+            "\033[1;94m{$webserverType} Specific Instructions:\033[0m",
             "",
             "\033[1;36mStart {$webserverType} Server:\033[0m",
             " \033[1;36m$ \033[1;95m{$startCommand}\033[0m",
@@ -769,11 +769,11 @@ EOT;
         // Add common instructions
         $lines = array_merge($lines, [
             "",
-            "\033[1;94m📚 Server Configuration:\033[0m",
+            "\033[1;94mServer Configuration:\033[0m",
             " • Server runs on port \033[1;36m{$port}\033[0m by default",
             " • Configure in \033[1;36m.env\033[0m file",
             "",
-            "\033[1;94m🔧 Useful Commands:\033[0m",
+            "\033[1;94mUseful Commands:\033[0m",
             " • Check server status: \033[1;95mcurl http://localhost:{$port}\033[0m",
             " • Stop server: \033[1;95mCtrl+C\033[0m"
         ]);
@@ -802,14 +802,38 @@ EOT;
         $webserverType = strtoupper($this->getWebserverType());
         $port = $this->getDefaultPort();
         
-        $this->write("\n", 'white');
-        $this->write("    ╔══════════════════════════════════════════════════════════════╗\n", 'green');
-        $this->write("    ║                    🎯 SUCCESS! 🎯                            ║\n", 'green');
-        $this->write("    ║         GEMVC {$webserverType} Project Ready!                ║\n", 'green');
-        $this->write("    ║                                                              ║\n", 'green');
-        $this->write("    ║         Run: \033[1;36mdocker compose up -d --build\033[0m\033[32m              ║\n", 'green');
-        $this->write("    ║         Server: \033[1;36mhttp://localhost:{$port}\033[0m\033[32m                   ║\n", 'green');
-        $this->write("    ╚══════════════════════════════════════════════════════════════╝\n", 'green');
+        $boxShow = new CliBoxShow();
+        
+        $lines = [
+            "\033[1;32mGEMVC {$webserverType} Project Ready!\033[0m",
+            "",
+            "Run: \033[1;36mdocker compose up -d --build\033[0m",
+            "Server: \033[1;36mhttp://localhost:{$port}\033[0m",
+            "",
+            "\033[1;33mImportant Before Starting:\033[0m",
+            "",
+            "\033[1;33m1. Docker Desktop:\033[0m",
+            "   • Make sure Docker Desktop is installed and running",
+            "   • Check Docker Desktop status in your system tray",
+            "",
+            "\033[1;33m2. Port Conflicts:\033[0m",
+            "   • Ensure no other containers are using these ports:",
+            "     - \033[1;36m3306\033[0m (MySQL)",
+            "     - \033[1;36m80\033[0m (Web server)",
+            "     - \033[1;36m8080\033[0m (phpMyAdmin)",
+            "     - \033[1;36m{$port}\033[0m (Application server)",
+            "",
+            "\033[1;33mSolution if ports are in use:\033[0m",
+            "   • Option 1: Stop conflicting containers",
+            "     \033[90m  docker ps\033[0m (list running containers)",
+            "     \033[90m  docker stop <container-id>\033[0m",
+            "",
+            "   • Option 2: Change ports in docker-compose.yml",
+            "     Edit \033[1;36mdocker-compose.yml\033[0m and modify port mappings",
+            "     Example: Change \033[1;36m3306:3306\033[0m to \033[1;36m3307:3306\033[0m"
+        ];
+        
+        $boxShow->displaySuccessBox("✓ SUCCESS! ✓", $lines);
         $this->write("\n", 'white');
     }
     
