@@ -181,7 +181,11 @@ Schema::foreignKey('category_id', 'categories.id')->onDeleteSetNull()
 Schema::index('email')                                 // Single column
 Schema::index(['name', 'is_active'])                   // Composite index
 Schema::index('created_at')->name('idx_created')       // Named index
+Schema::index('created_at')->timestamp()               // Mark as timestamp index (for metadata)
+Schema::index('created_at')->name('idx_created')->timestamp()  // Named timestamp index
 ```
+
+**Note:** The `timestamp()` method marks an index as being for a timestamp column. This is useful for documentation and metadata purposes, helping identify indexes that are specifically for date/time columns like `created_at`, `updated_at`, etc.
 
 #### 6. **Check Constraints**
 
@@ -219,6 +223,7 @@ public function defineSchema(): array
         Schema::index('email'),                         // Single column index
         Schema::index(['name', 'is_active']),          // Composite index
         Schema::index('created_at')->name('idx_created'),  // Named index
+        Schema::index('updated_at')->name('idx_updated')->timestamp(),  // Named timestamp index
         
         // Check constraints for data validation
         Schema::check('age >= 18')->name('valid_age'),
@@ -377,6 +382,7 @@ class UserTable extends Table
             // Indexes for performance
             Schema::index('email'),
             Schema::index('description'),
+            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named timestamp index
         ];
     }
     
@@ -468,6 +474,12 @@ Schema::index(['name', 'is_active'])
 
 // Named index
 Schema::index('created_at')->name('idx_created_at')
+
+// Timestamp index (for documentation/metadata)
+Schema::index('created_at')->timestamp()
+
+// Named timestamp index
+Schema::index('created_at')->name('idx_created')->timestamp()
 ```
 
 ### Check Constraints

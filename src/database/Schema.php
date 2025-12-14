@@ -83,10 +83,11 @@ class Schema
      * @param string|array<string> $columns Column(s) for fulltext search
      * @return FulltextConstraint
      */
-    public static function fulltext(string|array $columns): FulltextConstraint
+    public static function fullText(string|array $columns): FulltextConstraint
     {
         return new FulltextConstraint($columns);
     }
+
 }
 
 /**
@@ -337,6 +338,7 @@ class ForeignKeyConstraint extends SchemaConstraint
 class IndexConstraint extends SchemaConstraint
 {
     private bool $unique = false;
+    private bool $isTimestamp = false;
 
     /**
      * @param string|array<string> $columns
@@ -362,12 +364,30 @@ class IndexConstraint extends SchemaConstraint
         return $this->unique;
     }
 
+    /**
+     * Mark this index as being for a timestamp column
+     * Useful for documentation and metadata purposes
+     * 
+     * @return static
+     */
+    public function timestamp(): static
+    {
+        $this->isTimestamp = true;
+        return $this;
+    }
+
+    public function isTimestamp(): bool
+    {
+        return $this->isTimestamp;
+    }
+
     public function toArray(): array
     {
         return [
             'type' => $this->type,
             'columns' => $this->columns,
             'unique' => $this->unique,
+            'timestamp' => $this->isTimestamp,
             'name' => $this->name
         ];
     }
@@ -501,7 +521,7 @@ class FulltextConstraint extends SchemaConstraint
             // Indexes for performance
             Schema::index('email'),                     // Single column index
             Schema::index(['name', 'is_active']),       // Composite index
-            Schema::index('created_at')->name('idx_created'),  // Named index
+            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named index for timestamp column
             
             // Check constraints for data validation
             Schema::check('age >= 18')->name('valid_age'),
