@@ -475,7 +475,48 @@ abstract class AbstractInit extends Command
         
         $envContent = $this->fileSystem->getFileContent($exampleEnvPath);
         $this->fileSystem->writeFile($envPath, $envContent, '.env file');
+        
+        // Add APP_ENV_SERVER after creating .env file
+        $this->updateEnvFileWithServer();
+        
         $this->info("\033[32m✓\033[0m Environment file created");
+    }
+    
+    /**
+     * Update .env file with APP_ENV_SERVER
+     * 
+     * @return void
+     */
+    private function updateEnvFileWithServer(): void
+    {
+        $envPath = $this->basePath . DIRECTORY_SEPARATOR . '.env';
+        $webserverType = ucfirst($this->getWebserverType());
+        $serverLine = "APP_ENV_SERVER={$webserverType}";
+        
+        if (!file_exists($envPath)) {
+            return;
+        }
+        
+        $content = file_get_contents($envPath);
+        if ($content === false) {
+            return;
+        }
+        
+        // Check if APP_ENV_SERVER already exists
+        if (preg_match('/^APP_ENV_SERVER=.*$/m', $content)) {
+            // Update existing
+            $content = preg_replace('/^APP_ENV_SERVER=.*$/m', $serverLine, $content);
+        } else {
+            // Add new line after APP_ENV if found, otherwise append to end
+            if (preg_match('/^APP_ENV\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $pos = $matches[0][1] + strlen($matches[0][0]);
+                $content = substr_replace($content, "\n{$serverLine}", $pos, 0);
+            } else {
+                $content .= "\n{$serverLine}\n";
+            }
+        }
+        
+        file_put_contents($envPath, $content);
     }
     
     /**
@@ -705,6 +746,14 @@ EOT;
             $port
         );
         $dockerInit->offerDockerServices();
+        
+        // Set initial APP_ENV_SERVER_PORT after docker-compose.yml is created
+        // Only if docker-compose.yml exists (user selected services)
+        $dockerComposeFile = $this->basePath . '/docker-compose.yml';
+        if (file_exists($dockerComposeFile)) {
+            $containerBuilder = new DockerContainerBuilder($this->basePath, $this->nonInteractive, $port, $webserverType);
+            $containerBuilder->setInitialServerPort();
+        }
     }
     
     /**

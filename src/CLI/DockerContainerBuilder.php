@@ -509,6 +509,9 @@ class DockerContainerBuilder extends Command
             // Automatically update docker-compose.yml with suggested ports
             $this->updateDockerComposePorts($portMappings);
             $this->info("✓ Updated docker-compose.yml with alternative ports");
+            
+            // Update APP_ENV_SERVER_PORT if app port was changed
+            $this->updateEnvFileWithServerPort($portMappings);
         } elseif (strtolower($choice) === '2') {
             // Continue anyway
             $this->warning("Continuing with port conflicts. Build may fail.");
@@ -938,6 +941,92 @@ class DockerContainerBuilder extends Command
         }
         
         $this->info("✓ Updated .env with COMPOSE_PROJECT_NAME={$this->customProjectName}");
+    }
+    
+    /**
+     * Update .env file with APP_ENV_SERVER_PORT
+     * 
+     * @param array<array{service: string, old: int, new: int}> $portMappings
+     * @return void
+     */
+    private function updateEnvFileWithServerPort(array $portMappings): void
+    {
+        // Find the app port mapping (the one that matches appPort)
+        $appPortMapping = null;
+        foreach ($portMappings as $mapping) {
+            if ($mapping['old'] === $this->appPort) {
+                $appPortMapping = $mapping;
+                break;
+            }
+        }
+        
+        // Only update if app port was changed
+        if ($appPortMapping === null) {
+            return;
+        }
+        
+        $envFile = $this->basePath . '/.env';
+        $portLine = "APP_ENV_SERVER_PORT={$appPortMapping['new']}";
+        
+        if (!file_exists($envFile)) {
+            return;
+        }
+        
+        $content = file_get_contents($envFile);
+        if ($content === false) {
+            return;
+        }
+        
+        // Check if APP_ENV_SERVER_PORT already exists
+        if (preg_match('/^APP_ENV_SERVER_PORT=.*$/m', $content)) {
+            // Update existing
+            $content = preg_replace('/^APP_ENV_SERVER_PORT=.*$/m', $portLine, $content);
+        } else {
+            // Add new line after APP_ENV_SERVER if found, otherwise after APP_ENV_SERVER or append to end
+            if (preg_match('/^APP_ENV_SERVER\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $pos = $matches[0][1] + strlen($matches[0][0]);
+                $content = substr_replace($content, "\n{$portLine}", $pos, 0);
+            } else {
+                $content .= "\n{$portLine}\n";
+            }
+        }
+        
+        file_put_contents($envFile, $content);
+        $this->info("✓ Updated .env with APP_ENV_SERVER_PORT={$appPortMapping['new']}");
+    }
+    
+    /**
+     * Set initial APP_ENV_SERVER_PORT with default port
+     * Called when docker-compose.yml is created with default port
+     * 
+     * @return void
+     */
+    public function setInitialServerPort(): void
+    {
+        $envFile = $this->basePath . '/.env';
+        $portLine = "APP_ENV_SERVER_PORT={$this->appPort}";
+        
+        if (!file_exists($envFile)) {
+            return;
+        }
+        
+        $content = file_get_contents($envFile);
+        if ($content === false) {
+            return;
+        }
+        
+        // Only add if it doesn't exist (don't overwrite if already set)
+        if (!preg_match('/^APP_ENV_SERVER_PORT=.*$/m', $content)) {
+            // Add new line after APP_ENV_SERVER if found, otherwise append to end
+            if (preg_match('/^APP_ENV_SERVER\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $pos = $matches[0][1] + strlen($matches[0][0]);
+                $content = substr_replace($content, "\n{$portLine}", $pos, 0);
+            } else {
+                $content .= "\n{$portLine}\n";
+            }
+            
+            file_put_contents($envFile, $content);
+        }
     }
     
     /**
