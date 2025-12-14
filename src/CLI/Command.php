@@ -20,7 +20,7 @@ abstract class Command
     }
 
     abstract public function execute(): bool;
-    private function supportsAnsiColors(): bool
+    protected function supportsAnsiColors(): bool
     {
         if (DIRECTORY_SEPARATOR === '\\') {
             // On Windows, check if running in a terminal that supports ANSI

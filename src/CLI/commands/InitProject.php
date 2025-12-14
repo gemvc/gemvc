@@ -35,7 +35,8 @@ class InitProject extends Command
             'package' => null,
             'description' => 'High-performance async server with WebSocket support',
             'status' => 'available',
-            'icon' => '🚀'
+            'icon' => '🔵',
+            'color' => 'blue'
         ],
         '2' => [
             'name' => 'Apache',
@@ -43,7 +44,8 @@ class InitProject extends Command
             'package' => null, // No separate package needed - included in gemvc/library
             'description' => 'Traditional PHP hosting with mod_php or PHP-FPM',
             'status' => 'available',
-            'icon' => '🔶'
+            'icon' => '🔴',
+            'color' => 'red'
         ],
         '3' => [
             'name' => 'Nginx',
@@ -51,7 +53,8 @@ class InitProject extends Command
             'package' => null, // No separate package needed - included in gemvc/library
             'description' => 'Modern web server with PHP-FPM',
             'status' => 'available',
-            'icon' => '🔷'
+            'icon' => '🟢',
+            'color' => 'green'
         ]
     ];
     
@@ -102,31 +105,20 @@ class InitProject extends Command
     {
         $boxShow = new CliBoxShow();
         
+        $title = "Welcome";
+        $initText = "GEMVC Framework initialization";
+        $subtitle = "PHP Framework built for Microservices";
+        
+        // Use CliBoxShow to create properly aligned box with yellow borders
+        // Title goes in the border, content lines go inside the box
         $lines = [
-            "\033[1;96m╔═══════════════════════════════════════════════════════╗\033[0m",
-            "\033[1;96m║\033[0m           \033[1;92mWelcome to GEMVC Framework\033[0m              \033[1;96m║\033[0m",
-            "\033[1;96m╚═══════════════════════════════════════════════════════╝\033[0m",
-            "",
-            "\033[1;94mGEMVC\033[0m is a high-performance PHP framework built for",
-            "modern web applications with first-class support for",
-            "OpenSwoole, Apache, and Nginx.",
-            "",
-            "\033[1;93m⚡ Features:\033[0m",
-            "  • PSR-4 Autoloading",
-            "  • Database Migrations & ORM",
-            "  • JWT Authentication",
-            "  • RESTful API Support",
-            "  • OpenAPI Documentation",
-            "  • Docker Ready",
-            "",
-            "\033[1;36mLet's set up your project!\033[0m"
+            "\033[1;32m💎 {$initText}\033[0m",  // Green gem emoji + Green, bold text
+            "\033[37m{$subtitle}\033[0m"        // White
         ];
         
-        foreach ($lines as $line) {
-            $this->write($line . "\n", 'white');
-        }
+        $boxShow->displayBox($title, $lines);
         
-        $this->write("\n");
+        $this->write("\n\033[1;36mSelect Your Webserver:\033[0m\n\n", 'white');
     }
     
     /**
@@ -186,17 +178,29 @@ class InitProject extends Command
      */
     private function displayWebserverMenu(): string
     {
-        $this->write("\n\033[1;94m┌─────────────────────────────────────────────────────────────┐\033[0m\n", 'white');
-        $this->write("\033[1;94m│\033[0m              \033[1;96mSelect Your Webserver\033[0m                      \033[1;94m│\033[0m\n", 'white');
-        $this->write("\033[1;94m└─────────────────────────────────────────────────────────────┘\033[0m\n\n", 'white');
-        
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
             // @phpstan-ignore-next-line identical.alwaysTrue - Defensive code for future webservers
             $statusBadge = $option['status'] === 'available' 
                 ? "\033[1;32m[AVAILABLE]\033[0m" 
                 : "\033[1;33m[COMING SOON]\033[0m";
             
-            $this->write("  {$option['icon']} \033[1;36m[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
+            // Get color code based on webserver
+            $colorCode = '';
+            if (isset($option['color'])) {
+                switch ($option['color']) {
+                    case 'blue':
+                        $colorCode = "\033[1;34m";
+                        break;
+                    case 'red':
+                        $colorCode = "\033[1;31m";
+                        break;
+                    case 'green':
+                        $colorCode = "\033[1;32m";
+                        break;
+                }
+            }
+            
+            $this->write("  {$option['icon']} {$colorCode}[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
             $this->write("      \033[90m{$option['description']}\033[0m\n\n", 'white');
         }
         
@@ -223,7 +227,7 @@ class InitProject extends Command
             // Validate choice
             if (isset(self::WEBSERVER_OPTIONS[$choice])) {
                 $selected = self::WEBSERVER_OPTIONS[$choice];
-                $this->info("Selected: {$selected['icon']} {$selected['name']}");
+                $this->info("Selected: {$selected['name']}");
                 return $choice;
             }
             
@@ -360,7 +364,7 @@ class InitProject extends Command
         exec($command . ' 2>&1', $output, $returnCode);
         
         if ($returnCode === 0) {
-            $this->info("✅ {$packageName} installed successfully!");
+            $this->info("✓ {$packageName} installed successfully!");
             return true;
         } else {
             $this->error("Failed to install {$packageName}:");

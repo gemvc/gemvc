@@ -109,7 +109,7 @@ class DockerComposeInit extends Command
         
         foreach (self::AVAILABLE_SERVICES as $key => $service) {
             // @phpstan-ignore-next-line
-            $default = $service['default'] ? ' \033[32m(default)\033[0m' : '';
+            $default = $service['default'] ? ' (default)' : '';
             $lines[] = "  \033[1;36m{$service['name']}\033[0m - {$service['description']}{$default}";
         }
         
@@ -117,7 +117,7 @@ class DockerComposeInit extends Command
         $lines[] = "\033[1;94mThis will create:\033[0m";
         $lines[] = "  • \033[1;36mdocker-compose.yml\033[0m - Docker services configuration";
         $lines[] = "  • \033[1;36mDockerfile\033[0m - OpenSwoole container configuration";
-        $lines[] = "  • \033[1;36mDevelopment environment\033[0m - Ready to use with docker compose up";
+        $lines[] = "  • \033[1;36mDev environment\033[0m - Ready to use with docker compose up";
         
         $boxShow->displayBox("Docker Services Setup", $lines);
     }
@@ -578,7 +578,7 @@ EOT;
             "\033[1;33mProduction Mode\033[0m (verbose logs)";
             
         $lines = [
-            "\033[1;92m✅ Docker Services Ready!\033[0m",
+            "\033[1;92m✓ Docker Services Ready!\033[0m",
             "",
             "\033[1;94mMySQL Configuration:\033[0m {$modeText}",
             "",

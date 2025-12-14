@@ -62,7 +62,7 @@ class InitSwoole extends AbstractInit
      */
     protected function copyWebserverSpecificFiles(): void
     {
-        $this->info("📄 Copying OpenSwoole-specific files...");
+        $this->info("Copying OpenSwoole-specific files...");
         
         $startupPath = $this->findStartupPath();
         
@@ -96,7 +96,7 @@ class InitSwoole extends AbstractInit
                 $this->fileSystem->copyFileWithConfirmation($sourceFile, $destFile, $sourceFileName);
             }
         }       
-        $this->info("✅ OpenSwoole files copied");
+        $this->info("✓ OpenSwoole files copied");
     }
     
     /**
@@ -173,7 +173,7 @@ class InitSwoole extends AbstractInit
             " \033[1;36m$ \033[1;95mphp index.php --hot-reload\033[0m",
             "   \033[90m# Auto-restart server on file changes\033[0m",
             "",
-            "\033[1;94m📡 WebSocket Support:\033[0m",
+            "\033[1;94mWebSocket Support:\033[0m",
             " • WebSocket support available via OpenSwooleServer class",
             " • View logs: \033[1;95mtail -f swoole.log\033[0m"
         ];

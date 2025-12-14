@@ -75,7 +75,7 @@ class InitNginx extends AbstractInit
      */
     protected function copyWebserverSpecificFiles(): void
     {
-        $this->info("📄 Copying Nginx-specific files...");
+        $this->info("Copying Nginx-specific files...");
         
         $startupPath = $this->findStartupPath();
         
@@ -115,7 +115,7 @@ class InitNginx extends AbstractInit
         // Note: .env is created by createEnvFile() method in AbstractInit
         // No need to copy it here to avoid duplicate prompts
         
-        $this->info("✅ Nginx files copied");
+        $this->info("✓ Nginx files copied");
     }
     
     /**
@@ -181,15 +181,15 @@ class InitNginx extends AbstractInit
     protected function getAdditionalInstructions(): array
     {
         return [
-            "\033[1;94m📁 Document Root:\033[0m",
+            "\033[1;94mDocument Root:\033[0m",
             " • All files are served from \033[1;36mpublic/\033[0m directory",
             " • Place your assets in \033[1;36mpublic/assets/\033[0m",
             "",
-            "\033[1;94m🔧 URL Rewriting:\033[0m",
+            "\033[1;94mURL Rewriting:\033[0m",
             " • nginx.conf configured for clean URLs",
             " • All requests routed through \033[1;36mindex.php\033[0m",
             "",
-            "\033[1;94m⚙️ Nginx Configuration:\033[0m",
+            "\033[1;94mNginx Configuration:\033[0m",
             " • Configure nginx.conf for your server",
             " • For production: \033[1;95msudo nginx -t\033[0m (test config)",
             " • For production: \033[1;95msudo nginx -s reload\033[0m (reload config)"
