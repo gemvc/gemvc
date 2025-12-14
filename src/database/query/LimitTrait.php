@@ -21,16 +21,6 @@ namespace Gemvc\Database\Query;
 trait LimitTrait
 {
     /**
-     * Maximum value for LIMIT clause when OFFSET is used without LIMIT
-     * 
-     * Uses PHP_INT_MAX to support OFFSET without LIMIT on databases that require
-     * a LIMIT clause. This value is more than sufficient for any practical use case.
-     * 
-     * @var int
-     */
-    private const MAX_LIMIT_FOR_OFFSET = PHP_INT_MAX;
-
-    /**
      * Maximum number of rows to return
      * 
      * @var int|null
@@ -205,7 +195,7 @@ trait LimitTrait
         elseif (isset($this->offset) && $this->offset > 0) {
             // For databases that support OFFSET without LIMIT, use a large number
             // This is more compatible across different database systems
-            $limitQuery = ' LIMIT ' . self::MAX_LIMIT_FOR_OFFSET . ' OFFSET ' . $this->offset;
+            $limitQuery = ' LIMIT ' . PHP_INT_MAX . ' OFFSET ' . $this->offset;
         }
         
         return $limitQuery;
