@@ -104,43 +104,18 @@ class PdoQuery
     }
 
     /**
-     * Handle insert operation errors with special handling for duplicate key constraints
+     * Handle insert operation errors
+     * 
+     * Note: Duplicate entry errors are already detected and set by UniversalQueryExecuter.
+     * This method delegates to handleQueryError which preserves existing errors.
      * 
      * @param \PDOException $e The exception that was thrown
      */
     private function handleInsertError(\PDOException $e): void
     {
-        $sqlState = $e->getCode();
-        $errorInfo = $e->errorInfo ?? [];
-        
-        // PERFORMANCE: Log errors only in dev mode - removed from production path
-        // This eliminates expensive error_log() and json_encode() calls on every error
-        if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-            error_log("PdoQuery::handleInsertError() - PDO Exception: " . json_encode([
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'errorInfo' => $errorInfo,
-                'trace' => $e->getTraceAsString()
-            ]));
-        }
-        
-        // Check for duplicate key/unique constraint violations
-        // MySQL: SQLSTATE 23000, Error code 1062
-        // PostgreSQL: SQLSTATE 23505 (unique_violation)
-        // SQLite: SQLSTATE 23000, Error code 19 or 1555
-        if (
-            $sqlState === '23000' || 
-            $sqlState === '23505' || 
-            (isset($errorInfo[1]) && ($errorInfo[1] === 1062 || $errorInfo[1] === 19 || $errorInfo[1] === 1555)) ||
-            stripos($e->getMessage(), 'duplicate') !== false ||
-            stripos($e->getMessage(), 'unique') !== false ||
-            stripos($e->getMessage(), 'already exists') !== false
-        ) {
-            $this->setError('This record cannot be created because a record with the same unique information already exists. Please use different values.');
-        } else {
-            // Use the general error handler for other types of errors
-            $this->handleQueryError('Insert', $e);
-        }
+        // UniversalQueryExecuter already detected and set duplicate entry errors at the root
+        // handleQueryError will preserve the error if already set
+        $this->handleQueryError('Insert', $e);
     }
 
     /**
@@ -173,32 +148,19 @@ class PdoQuery
     }
 
     /**
-     * Handle update operation errors with special handling for duplicate key constraints
+     * Handle update operation errors
+     * 
+     * Note: Duplicate entry errors are already detected and set by UniversalQueryExecuter.
+     * This method only handles non-duplicate errors or adds context if needed.
      * 
      * @param \PDOException $e The exception that was thrown
      */
     private function handleUpdateError(\PDOException $e): void
     {
-        $sqlState = $e->getCode();
-        $errorInfo = $e->errorInfo ?? [];
-        
-        // Check for duplicate key/unique constraint violations
-        // MySQL: SQLSTATE 23000, Error code 1062
-        // PostgreSQL: SQLSTATE 23505 (unique_violation)
-        // SQLite: SQLSTATE 23000, Error code 19 or 1555
-        if (
-            $sqlState === '23000' || 
-            $sqlState === '23505' || 
-            (isset($errorInfo[1]) && ($errorInfo[1] === 1062 || $errorInfo[1] === 19 || $errorInfo[1] === 1555)) ||
-            stripos($e->getMessage(), 'duplicate') !== false ||
-            stripos($e->getMessage(), 'unique') !== false ||
-            stripos($e->getMessage(), 'already exists') !== false
-        ) {
-            $this->setError('This record cannot be updated because another record with the same unique information already exists. Please use different values.');
-        } else {
-            // Use the general error handler for other types of errors
-            $this->handleQueryError('Update', $e);
-        }
+        // UniversalQueryExecuter already detected and set duplicate entry errors
+        // Just use the general error handler for logging/context
+        // The error message is already set by UniversalQueryExecuter
+        $this->handleQueryError('Update', $e);
     }
 
     /**
@@ -401,11 +363,25 @@ class PdoQuery
     /**
      * Handle query errors consistently with retry logic for transient errors
      * 
+     * Note: If error is already set by UniversalQueryExecuter (e.g., duplicate entry errors),
+     * this method preserves it and only adds logging/context.
+     * 
      * @param string $operation The operation that failed
      * @param \PDOException $e The exception that was thrown
      */
     private function handleQueryError(string $operation, \PDOException $e): void
     {
+        // If error is already set (e.g., by UniversalQueryExecuter for duplicate entries),
+        // preserve it and only add logging
+        $existingError = $this->getError();
+        if ($existingError !== null && $existingError !== '') {
+            // Error already set - just log it
+            if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+                error_log("PdoQuery::handleQueryError() - Error already set: " . $existingError);
+            }
+            return;
+        }
+        
         $context = [
             'operation' => $operation,
             'error_code' => $e->getCode(),

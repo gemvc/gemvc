@@ -2083,13 +2083,21 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithDuplicateKey(): void
     {
         // Test handleInsertError directly via reflection
+        // Note: Duplicate detection now happens in UniversalQueryExecuter at root level
+        // This test simulates the error already being set by UniversalQueryExecuter
         $pdoException = new PDOException('Duplicate entry for key', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
-        $errorState = null;
+        $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
+        $errorState = $duplicateError; // Simulate error already set by UniversalQueryExecuter
+        
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
         $mockExecuter->method('setError')->willReturnCallback(function ($error) use (&$errorState) {
-            $errorState = $error;
+            // handleQueryError preserves existing errors, so this shouldn't be called
+            // But if it is, update the state
+            if ($error !== null) {
+                $errorState = $error;
+            }
         });
         $mockExecuter->method('getError')->willReturnCallback(function () use (&$errorState) {
             return $errorState;
@@ -2104,6 +2112,7 @@ class PdoQueryTest extends TestCase
         
         $error = $this->pdoQuery->getError();
         $this->assertNotNull($error);
+        // handleQueryError should preserve the existing duplicate error
         $this->assertStringContainsString('cannot be created because a record with the same unique information already exists', $error);
     }
     
@@ -2137,13 +2146,21 @@ class PdoQueryTest extends TestCase
     public function testHandleUpdateErrorDirectlyWithDuplicateKey(): void
     {
         // Test handleUpdateError directly via reflection
+        // Note: Duplicate detection now happens in UniversalQueryExecuter at root level
+        // This test simulates the error already being set by UniversalQueryExecuter
         $pdoException = new PDOException('Duplicate entry for key', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry for key'];
         
-        $errorState = null;
+        $duplicateError = 'This record cannot be updated because another record with the same unique information already exists. Please use different values.';
+        $errorState = $duplicateError; // Simulate error already set by UniversalQueryExecuter
+        
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
         $mockExecuter->method('setError')->willReturnCallback(function ($error) use (&$errorState) {
-            $errorState = $error;
+            // handleQueryError preserves existing errors, so this shouldn't be called
+            // But if it is, update the state
+            if ($error !== null) {
+                $errorState = $error;
+            }
         });
         $mockExecuter->method('getError')->willReturnCallback(function () use (&$errorState) {
             return $errorState;
@@ -2158,6 +2175,7 @@ class PdoQueryTest extends TestCase
         
         $error = $this->pdoQuery->getError();
         $this->assertNotNull($error);
+        // handleQueryError should preserve the existing duplicate error
         $this->assertStringContainsString('cannot be updated because another record with the same unique information already exists', $error);
     }
     
@@ -2245,13 +2263,22 @@ class PdoQueryTest extends TestCase
     public function testHandleInsertErrorDirectlyWithMySQLErrorCode1062(): void
     {
         // Test handleInsertError with MySQL error code 1062
+        // Note: Duplicate detection now happens in UniversalQueryExecuter at root level
+        // This test simulates the error already being set by UniversalQueryExecuter
         $pdoException = new PDOException('Duplicate entry', 0);
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry'];
         
-        $errorState = null;
+        $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
+        $errorState = $duplicateError; // Simulate error already set by UniversalQueryExecuter
+        
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
         $mockExecuter->method('setError')->willReturnCallback(function ($error) use (&$errorState) {
-            $errorState = $error;
+            // handleQueryError preserves existing errors, so this shouldn't override
+            // But if it does, update the state
+            if ($error !== null && stripos($error, 'Insert operation failed') !== false) {
+                // Only set if it's a generic error (not preserving duplicate error)
+                $errorState = $error;
+            }
         });
         $mockExecuter->method('getError')->willReturnCallback(function () use (&$errorState) {
             return $errorState;
@@ -2266,19 +2293,27 @@ class PdoQueryTest extends TestCase
         
         $error = $this->pdoQuery->getError();
         $this->assertNotNull($error);
+        // handleQueryError should preserve the existing duplicate error
         $this->assertStringContainsString('cannot be created', $error);
     }
     
     public function testHandleInsertErrorDirectlyWithSQLiteErrorCode1555(): void
     {
         // Test handleInsertError with SQLite error code 1555
+        // Note: Duplicate detection now happens in UniversalQueryExecuter at root level
+        // This test simulates the error already being set by UniversalQueryExecuter
         $pdoException = new PDOException('UNIQUE constraint failed', 0);
         $pdoException->errorInfo = ['23000', 1555, 'UNIQUE constraint failed'];
         
-        $errorState = null;
+        $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
+        $errorState = $duplicateError; // Simulate error already set by UniversalQueryExecuter
+        
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
         $mockExecuter->method('setError')->willReturnCallback(function ($error) use (&$errorState) {
-            $errorState = $error;
+            // handleQueryError preserves existing errors, so this shouldn't override
+            if ($error !== null && stripos($error, 'Insert operation failed') !== false) {
+                $errorState = $error;
+            }
         });
         $mockExecuter->method('getError')->willReturnCallback(function () use (&$errorState) {
             return $errorState;
@@ -2293,19 +2328,27 @@ class PdoQueryTest extends TestCase
         
         $error = $this->pdoQuery->getError();
         $this->assertNotNull($error);
+        // handleQueryError should preserve the existing duplicate error
         $this->assertStringContainsString('cannot be created', $error);
     }
     
     public function testHandleInsertErrorDirectlyWithMessageContainsAlreadyExists(): void
     {
         // Test handleInsertError with message containing "already exists"
+        // Note: Duplicate detection now happens in UniversalQueryExecuter at root level
+        // This test simulates the error already being set by UniversalQueryExecuter
         $pdoException = new PDOException('Record already exists', 0);
         $pdoException->errorInfo = ['HY000', 0, 'Record already exists'];
         
-        $errorState = null;
+        $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
+        $errorState = $duplicateError; // Simulate error already set by UniversalQueryExecuter
+        
         $mockExecuter = $this->createMock(UniversalQueryExecuter::class);
         $mockExecuter->method('setError')->willReturnCallback(function ($error) use (&$errorState) {
-            $errorState = $error;
+            // handleQueryError preserves existing errors, so this shouldn't override
+            if ($error !== null && stripos($error, 'Insert operation failed') !== false) {
+                $errorState = $error;
+            }
         });
         $mockExecuter->method('getError')->willReturnCallback(function () use (&$errorState) {
             return $errorState;
@@ -2320,6 +2363,7 @@ class PdoQueryTest extends TestCase
         
         $error = $this->pdoQuery->getError();
         $this->assertNotNull($error);
+        // handleQueryError should preserve the existing duplicate error
         $this->assertStringContainsString('cannot be created', $error);
     }
     

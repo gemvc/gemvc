@@ -126,6 +126,57 @@ class UniversalQueryExecuter
     }
 
     /**
+     * Detect duplicate entry/unique constraint violations and set appropriate error message
+     * 
+     * This is the ROOT level detection - all duplicate entry errors are handled here.
+     * Other classes (PdoQuery, Table, Model) just check getError() and return it.
+     * 
+     * @param \PDOException $e The PDO exception
+     * @return string|null The error message if it's a duplicate entry error, null otherwise
+     */
+    private function detectAndSetDuplicateEntryError(\PDOException $e): ?string
+    {
+        $sqlState = $e->getCode();
+        $errorInfo = $e->errorInfo ?? [];
+        $errorMessage = $e->getMessage();
+        
+        // Check for duplicate key/unique constraint violations
+        // MySQL: SQLSTATE 23000, Error code 1062
+        // PostgreSQL: SQLSTATE 23505 (unique_violation)
+        // SQLite: SQLSTATE 23000, Error code 19 or 1555
+        $isDuplicate = (
+            $sqlState === '23000' || 
+            $sqlState === '23505' || 
+            (isset($errorInfo[1]) && ($errorInfo[1] === 1062 || $errorInfo[1] === 19 || $errorInfo[1] === 1555)) ||
+            stripos($errorMessage, 'duplicate') !== false ||
+            stripos($errorMessage, 'unique') !== false ||
+            stripos($errorMessage, 'already exists') !== false
+        );
+        
+        if (!$isDuplicate) {
+            return null;
+        }
+        
+        // Determine operation type from query
+        $queryUpper = strtoupper(ltrim($this->query));
+        $isInsert = ($queryUpper[0] ?? '') === 'I' && str_starts_with($queryUpper, 'INSERT');
+        $isUpdate = ($queryUpper[0] ?? '') === 'U' && str_starts_with($queryUpper, 'UPDATE');
+        
+        // Set appropriate error message based on operation type
+        if ($isInsert) {
+            $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
+        } elseif ($isUpdate) {
+            $duplicateError = 'This record cannot be updated because another record with the same unique information already exists. Please use different values.';
+        } else {
+            // Generic duplicate entry error for other operations
+            $duplicateError = 'This operation cannot be completed because a record with the same unique information already exists. Please use different values.';
+        }
+        
+        $this->setError($duplicateError);
+        return $duplicateError;
+    }
+
+    /**
      * Prepares a new SQL query for execution
      *
      * @param string $query The SQL query string
@@ -193,6 +244,8 @@ class UniversalQueryExecuter
             $this->bindings[$param] = $value;
         } catch (\PDOException $e) {
             $this->setError('Error binding parameter: ' . $e->getMessage());
+            // Release connection on bind error since execution won't proceed
+            $this->releaseConnection(true);
         }
     }
 
@@ -210,6 +263,10 @@ class UniversalQueryExecuter
         if (!$this->statement) {
             $this->setError('No statement prepared to execute');
             $this->endExecutionTime = microtime(true);
+            // Release connection if it was acquired but statement preparation failed
+            if ($this->activeConnection !== null) {
+                $this->releaseConnection();
+            }
             return false;
         }
 
@@ -251,7 +308,14 @@ class UniversalQueryExecuter
                 error_log("UniversalQueryExecuter::execute() - PDO Exception: " . $errorDetails);
             }
             
-            $this->setError($e->getMessage(), $context);
+            // Detect duplicate entry/unique constraint violations at the root level
+            // This ensures all classes that use UniversalQueryExecuter get proper error messages
+            $errorMessage = $this->detectAndSetDuplicateEntryError($e);
+            if ($errorMessage === null) {
+                // Not a duplicate entry error, use the original exception message
+                $this->setError($e->getMessage(), $context);
+            }
+            
             $this->endExecutionTime = microtime(true);
             // Release potentially broken connection
             $this->releaseConnection(true);

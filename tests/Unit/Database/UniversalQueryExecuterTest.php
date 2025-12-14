@@ -1008,5 +1008,135 @@ class UniversalQueryExecuterTest extends TestCase
         unset($executer);
         $this->assertGreaterThan($callsAfterExecute, $releaseCallCount, 'Destructor should call releaseConnection');
     }
+
+    /**
+     * Test duplicate entry error detection for INSERT queries
+     */
+    public function testExecuteDetectsDuplicateEntryErrorForInsert(): void
+    {
+        $executer = $this->createExecuterWithMockManager();
+        
+        $mockStatement = $this->createMock(PDOStatement::class);
+        $this->mockPdo->expects($this->once())
+            ->method('prepare')
+            ->with('INSERT INTO users (email) VALUES (:email)')
+            ->willReturn($mockStatement);
+        
+        // Create duplicate entry exception (MySQL error 1062)
+        $pdoException = new PDOException('Duplicate entry \'test@example.com\' for key \'email\'', 23000);
+        $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry \'test@example.com\' for key \'email\''];
+        
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->willThrowException($pdoException);
+        
+        $executer->query('INSERT INTO users (email) VALUES (:email)');
+        $executer->bind(':email', 'test@example.com');
+        $result = $executer->execute();
+        
+        $this->assertFalse($result);
+        $error = $executer->getError();
+        $this->assertNotNull($error);
+        // Should detect duplicate entry and set appropriate INSERT error message
+        $this->assertStringContainsString('cannot be created because a record with the same unique information already exists', $error);
+        $this->assertStringNotContainsString('Duplicate entry \'test@example.com\'', $error); // Should be replaced with user-friendly message
+    }
+
+    /**
+     * Test duplicate entry error detection for UPDATE queries
+     */
+    public function testExecuteDetectsDuplicateEntryErrorForUpdate(): void
+    {
+        $executer = $this->createExecuterWithMockManager();
+        
+        $mockStatement = $this->createMock(PDOStatement::class);
+        $this->mockPdo->expects($this->once())
+            ->method('prepare')
+            ->with('UPDATE users SET email = :email WHERE id = :id')
+            ->willReturn($mockStatement);
+        
+        // Create duplicate entry exception
+        $pdoException = new PDOException('Duplicate entry \'new@example.com\' for key \'email\'', 23000);
+        $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry \'new@example.com\' for key \'email\''];
+        
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->willThrowException($pdoException);
+        
+        $executer->query('UPDATE users SET email = :email WHERE id = :id');
+        $executer->bind(':email', 'new@example.com');
+        $executer->bind(':id', 1);
+        $result = $executer->execute();
+        
+        $this->assertFalse($result);
+        $error = $executer->getError();
+        $this->assertNotNull($error);
+        // Should detect duplicate entry and set appropriate UPDATE error message
+        $this->assertStringContainsString('cannot be updated because another record with the same unique information already exists', $error);
+    }
+
+    /**
+     * Test that non-duplicate errors are not replaced
+     */
+    public function testExecuteDoesNotReplaceNonDuplicateErrors(): void
+    {
+        $executer = $this->createExecuterWithMockManager();
+        
+        $mockStatement = $this->createMock(PDOStatement::class);
+        $this->mockPdo->expects($this->once())
+            ->method('prepare')
+            ->with('INSERT INTO users (email) VALUES (:email)')
+            ->willReturn($mockStatement);
+        
+        // Create non-duplicate exception
+        $pdoException = new PDOException('Table \'users\' doesn\'t exist', 1146);
+        $pdoException->errorInfo = ['42S02', 1146, 'Table \'users\' doesn\'t exist'];
+        
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->willThrowException($pdoException);
+        
+        $executer->query('INSERT INTO users (email) VALUES (:email)');
+        $executer->bind(':email', 'test@example.com');
+        $result = $executer->execute();
+        
+        $this->assertFalse($result);
+        $error = $executer->getError();
+        $this->assertNotNull($error);
+        // Should keep original error message for non-duplicate errors
+        $this->assertStringContainsString('Table \'users\' doesn\'t exist', $error);
+        $this->assertStringNotContainsString('cannot be created because', $error);
+    }
+
+    /**
+     * Test duplicate entry detection with PostgreSQL error code
+     */
+    public function testExecuteDetectsDuplicateEntryErrorPostgreSQL(): void
+    {
+        $executer = $this->createExecuterWithMockManager();
+        
+        $mockStatement = $this->createMock(PDOStatement::class);
+        $this->mockPdo->expects($this->once())
+            ->method('prepare')
+            ->with('INSERT INTO users (email) VALUES (:email)')
+            ->willReturn($mockStatement);
+        
+        // PostgreSQL unique violation
+        $pdoException = new PDOException('unique_violation', 23505);
+        $pdoException->errorInfo = ['23505', 0, 'unique_violation'];
+        
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->willThrowException($pdoException);
+        
+        $executer->query('INSERT INTO users (email) VALUES (:email)');
+        $executer->bind(':email', 'test@example.com');
+        $result = $executer->execute();
+        
+        $this->assertFalse($result);
+        $error = $executer->getError();
+        $this->assertNotNull($error);
+        $this->assertStringContainsString('cannot be created because a record with the same unique information already exists', $error);
+    }
 }
 
