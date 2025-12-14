@@ -338,10 +338,17 @@ class DockerContainerBuilder extends Command
         $lines[] = "First, let's resolve container conflicts. Choose an option:";
         $lines[] = "";
         
-        // Solution 1: Stop conflicting containers
+        // Option 1: Use different project/container name (swapped to be option 1)
+        $defaultProjectName = strtolower(str_replace([' ', '_'], ['', '-'], basename($this->basePath)));
+        $lines[] = "\033[1;94mOption 1: Choose Different Name and Port\033[0m";
+        $lines[] = "  This will create containers with a different name prefix";
+        $lines[] = "  Example: Instead of '{$defaultProjectName}-*', use 'myproject-*'";
+        $lines[] = "";
+        
+        // Option 2: Stop conflicting containers (swapped to be option 2)
         if (!empty($containersToStop)) {
             $uniqueContainers = array_unique($containersToStop);
-            $lines[] = "\033[1;94mOption 1: Stop conflicting containers\033[0m";
+            $lines[] = "\033[1;94mOption 2: Stop running container\033[0m";
             $lines[] = "  This will stop the following containers:";
             foreach ($uniqueContainers as $container) {
                 $lines[] = "    • \033[1;36m{$container}\033[0m";
@@ -349,19 +356,12 @@ class DockerContainerBuilder extends Command
             $lines[] = "";
         }
         
-        // Solution 2: Use different project/container name
-        $defaultProjectName = strtolower(str_replace([' ', '_'], ['', '-'], basename($this->basePath)));
-        $lines[] = "\033[1;94mOption 2: Use different container/project name\033[0m";
-        $lines[] = "  This will create containers with a different name prefix";
-        $lines[] = "  Example: Instead of '{$defaultProjectName}-*', use 'myproject-*'";
-        $lines[] = "";
-        
         $lines[] = "\033[1;90mNote:\033[0m After resolving container conflicts, we'll check ports again";
         $lines[] = "      and suggest new ports if they're still in use.";
         
         $boxShow->displayWarningBox("Port Conflicts - Step 1", $lines);
         
-        echo "\n\033[1;36mChoose option (1=Stop containers, 2=Different name, N=Cancel):\033[0m ";
+        echo "\n\033[1;36mChoose option (1=Different Name and Port, 2=Stop container) [1]:\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -370,16 +370,23 @@ class DockerContainerBuilder extends Command
         fclose($handle);
         $choice = $choice !== false ? trim($choice) : '';
         
-        if (strtolower($choice) === '1' && !empty($containersToStop)) {
-            // Stop containers
-            $uniqueContainers = array_unique($containersToStop);
-            $this->stopContainers($uniqueContainers);
-        } elseif (strtolower($choice) === '2') {
+        // Default to option 1 if empty
+        if ($choice === '') {
+            $choice = '1';
+        }
+        
+        if (strtolower($choice) === '1') {
             // Use different project name - force name selection
             $this->forceNameSelection = true;
             $this->info("Proceeding to container name selection...");
+        } elseif (strtolower($choice) === '2' && !empty($containersToStop)) {
+            // Stop containers
+            $uniqueContainers = array_unique($containersToStop);
+            $this->stopContainers($uniqueContainers);
         } else {
-            throw new \RuntimeException("Container build cancelled. Please resolve port conflicts and try again.");
+            // Invalid choice or option 2 selected but no containers to stop - default to option 1
+            $this->forceNameSelection = true;
+            $this->info("Proceeding to container name selection...");
         }
     }
     

@@ -70,7 +70,16 @@ class FileSystemManager extends Command
      */
     public function copyFileWithConfirmation(string $sourcePath, string $targetPath, string $fileName): void
     {
-        if (file_exists($targetPath) && !$this->nonInteractive) {
+        // Special handling for composer.json - always backup and overwrite
+        if ($fileName === 'composer.json' && file_exists($targetPath)) {
+            $backupPath = $targetPath . '.old.backup';
+            if (copy($targetPath, $backupPath)) {
+                $this->info("Existing composer.json backed up to composer.json.old.backup");
+            } else {
+                $this->warning("Failed to backup existing composer.json, but will continue with overwrite");
+            }
+            // Automatically overwrite without asking
+        } elseif (file_exists($targetPath) && !$this->nonInteractive) {
             if (!$this->confirmFileOverwrite($targetPath)) {
                 $this->info("Skipped: {$fileName}");
                 return;

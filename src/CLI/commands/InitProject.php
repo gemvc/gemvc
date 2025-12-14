@@ -179,10 +179,10 @@ class InitProject extends Command
     private function displayWebserverMenu(): string
     {
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
-            // @phpstan-ignore-next-line identical.alwaysTrue - Defensive code for future webservers
-            $statusBadge = $option['status'] === 'available' 
-                ? "\033[1;32m[AVAILABLE]\033[0m" 
-                : "\033[1;33m[COMING SOON]\033[0m";
+            // Only show status badge if not available (e.g., "coming_soon")
+            $statusBadge = $option['status'] !== 'available' 
+                ? " \033[1;33m[COMING SOON]\033[0m" 
+                : '';
             
             // Get color code based on webserver
             $colorCode = '';
@@ -200,7 +200,7 @@ class InitProject extends Command
                 }
             }
             
-            $this->write("  {$option['icon']} {$colorCode}[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
+            $this->write("  {$option['icon']} {$colorCode}[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m{$statusBadge}\n", 'white');
             $this->write("      \033[90m{$option['description']}\033[0m\n\n", 'white');
         }
         
