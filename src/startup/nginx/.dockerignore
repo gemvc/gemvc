@@ -6,4 +6,5 @@ docker-compose.yml
 LICENSE
 README.md
 .gitignore
+nginx.conf
 # Note: composer.json and composer.lock are NOT excluded here because Nginx Dockerfile needs them for composer install
