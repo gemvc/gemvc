@@ -113,7 +113,7 @@ class JWTToken
      * @return false|JWTToken
      * @description pure token without Bearer you can use WebHelper::BearerTokenPurify() got get pure token
      */
-    public function verify(string $token=null): false|JWTToken
+    public function verify(?string $token=null): false|JWTToken
     {
         if($token)
         {
@@ -167,7 +167,7 @@ class JWTToken
      * @param string|null $token
      * @return false|string
      */
-    public function renew(int $extensionTime_sec , string $token= null): false|string
+    public function renew(int $extensionTime_sec , ?string $token= null): false|string
     {
         if($token) {
             $this->_token = $token;
@@ -182,7 +182,7 @@ class JWTToken
      * @return  string|null
      * @description Returns type without validation token
      */
-    public function GetType(string $token = null):string|null
+    public function GetType(?string $token = null):string|null
     {
         if($token) {
             $this->_token = $token;

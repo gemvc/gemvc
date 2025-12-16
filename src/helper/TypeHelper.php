@@ -76,7 +76,7 @@ class TypeHelper
  * @param string|null $exclude Optional method name to exclude
  * @return array<string> List of public method names
  */
-public static function getClassPublicFunctions(string $className, string $exclude = null): array
+public static function getClassPublicFunctions(string $className, ?string $exclude = null): array
 {
     $reflection = new \ReflectionClass($className);
     $methods = [];

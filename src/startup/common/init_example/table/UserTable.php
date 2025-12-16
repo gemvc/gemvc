@@ -25,10 +25,10 @@ class UserTable extends Table
     public int $id;
     public string $name;
     public string $email;
-    public ?string $description;
     //password is not shown in the result of the select query , but this property can be set trough setPassword() method in the UserModel class
     protected string $password;
     public string $created_at;
+    public ?string $description;
     public ?string $updated_at;
     public ?string $role;
     public ?string $story;
@@ -46,8 +46,8 @@ class UserTable extends Table
         'email' => 'string',
         'description' => 'text',
         'password' => 'string',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'created_at' => 'string',
+        'updated_at' => 'string',
         'role' => 'string',
         'story' => 'longText'
     ];
@@ -62,8 +62,9 @@ class UserTable extends Table
             // Primary key with auto increment
             Schema::primary('id'),
             Schema::autoIncrement('id'),
+            Schema::index('email')->name('idx_email'),
             // Unique constraints
-            Schema::unique('email'),
+            Schema::unique('email')->name('uniq_email'),
             // Indexes for performance
             Schema::index('created_at')->name('idx_created')->timestamp(),  // Named index for timestamp column
             Schema::index('updated_at')->name('idx_updated'),  // Named index for timestamp column

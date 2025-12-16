@@ -3,7 +3,6 @@
 namespace Gemvc\Core;
 
 use Redis;
-use Gemvc\Core\RedisConnectionException;
 use Gemvc\Http\JsonResponse;
 
 class RedisManager
@@ -400,15 +399,15 @@ class RedisManager
      * $pipe->set('key2', 'value2');
      * $pipe->execute();
      */
-    public function pipeline(): ?\Redis
+    public function pipeline(): ?Redis
     {
         $result = $this->getRedis()?->multi(Redis::PIPELINE);
-        return $result instanceof \Redis ? $result : null;
+        return $result instanceof Redis ? $result : null;
     }
 
-    public function transaction(): ?\Redis
+    public function transaction(): ?Redis
     {
         $result = $this->getRedis()?->multi(Redis::MULTI);
-        return $result instanceof \Redis ? $result : null;
+        return $result instanceof Redis ? $result : null;
     }
 } 

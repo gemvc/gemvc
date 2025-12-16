@@ -5,7 +5,14 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-use Gemvc\Core\WebService;
+use Gemvc\Core\GemvcError;
+use Gemvc\Core\GEMVCErrorHandler;
+
+if($_ENV['APP_ENV'] === 'dev') {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
 
 class Bootstrap
 {
@@ -13,6 +20,10 @@ class Bootstrap
     private string $requested_service;
     private string $requested_method;
     private bool $is_web = false;
+    /**
+     * @var array<GemvcError>
+     */
+    private array $errors = [];
 
     public function __construct(Request $request)
     {
@@ -26,48 +37,82 @@ class Bootstrap
         if ($this->is_web) {
             $this->handleWebRequest();
         } else {
-            $this->handleApiRequest();
+            if(count($this->errors) === 0) {
+                $this->handleApiRequest();
+            }
+            
+            // Handle any errors that occurred during API request processing
+            if(count($this->errors) > 0) {
+                GEMVCErrorHandler::handleErrors($this->errors);
+            }
+            die;
         }
     }
 
     private function handleApiRequest(): void
     {
         if (!file_exists('./app/api/'.$this->requested_service.'.php')) {
-            $this->showNotFound("The API service '$this->requested_service' does not exist");
-            die;
+            $this->errors[] = new GemvcError("The API service '$this->requested_service' does not exist", 404, __FILE__, __LINE__);
+            return;
         }
-        
-        $serviceInstance = false;
         try {
             $service = 'App\\Api\\' . $this->requested_service;
+            
+            // Validate service class exists and extends ApiService
+            if (!class_exists($service)) {
+                $this->errors[] = new GemvcError("The API service class '$service' does not exist", 404, __FILE__, __LINE__);
+                return;
+            }
+            
             $serviceInstance = new $service($this->request);
+            
+            // Validate service extends ApiService
+            if (!($serviceInstance instanceof \Gemvc\Core\ApiService)) {
+                $this->errors[] = new GemvcError("The API service '$this->requested_service' must extend ApiService", 500, __FILE__, __LINE__);
+                return;
+            }
+            
+            // Use default index method if method is empty (ApiService provides index())
+            $method = $this->requested_method ?: 'index';
+            
+            // Validate method exists
+            if (!method_exists($serviceInstance, $method)) {
+                $this->errors[] = new GemvcError("API method '$method' does not exist in service '$this->requested_service'", 404, __FILE__, __LINE__);
+                return;
+            }
+            
+            // Call method and get response
+            $response = $serviceInstance->$method();
+            
+            // Check if service has any errors (from service-level error handling)
+            if ($serviceInstance->hasErrors()) {
+                $serviceErrors = $serviceInstance->getErrors();
+                $this->errors = array_merge($this->errors, $serviceErrors);
+                return;
+            }
+            
+            // Validate response is JsonResponse (all ApiService methods return JsonResponse)
+            if (!($response instanceof JsonResponse)) {
+                $this->errors[] = new GemvcError("API method '$method' must return a JsonResponse instance", 500, __FILE__, __LINE__);
+                return;
+            }
+            
+            $response->show();
+            return;
+        } catch (\Gemvc\Core\ValidationException $e) {
+            // Handle validation exceptions (400 Bad Request) from ApiService or Controller
+            $this->errors[] = new GemvcError($e->getMessage(), 400, $e->getFile(), $e->getLine());
+        } catch (\RuntimeException $e) {
+            // Handle runtime exceptions (500 Internal Server Error) - typically from Controller database operations
+            $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
+        } catch (\Error $e) {
+            // Handle PHP 7+ Error exceptions (method not found, etc.)
+            $httpCode = self::determineHttpCodeFromError($e);
+            $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
         } catch (\Throwable $e) {
-            $this->showNotFound($e->getMessage());
-            die;
+            // Handle other exceptions (runtime errors, etc.)
+            $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
         }
-        
-        if (!method_exists($serviceInstance, $this->requested_method)) {
-            $this->showNotFound("API method '$this->requested_method' does not exist in service '$this->requested_service'");
-            die;
-        }
-        
-        $method = $this->requested_method;
-        $response = $serviceInstance->$method();
-        
-        // Handle different response types (JsonResponse, HtmlResponse, etc.)
-        if ($response instanceof JsonResponse) {
-            $response->show();
-        } elseif ($response instanceof \Gemvc\Http\HtmlResponse) {
-            // For Apache/Nginx, use the show() method
-            $response->show();
-        } elseif (is_object($response) && method_exists($response, 'show')) {
-            // For any response with a show() method
-            $response->show();
-        } else {
-            Response::internalError("API method '$method' does not provide a valid Response as return value")->show();
-        }
-        
-        die;
     }
 
     private function handleWebRequest(): void
@@ -190,11 +235,14 @@ class Bootstrap
         $this->requested_method = $method;
     }
 
+    /**
+     * @deprecated Use GemvcError and GEMVCErrorHandler::handleErrors() instead
+     * This method is kept for backward compatibility but should not be used in new code
+     */
     private function showNotFound(string $message): void
     {
-        $jsonResponse = new JsonResponse();
-        $jsonResponse->notFound($message);
-        $jsonResponse->show();
+        $error = new GemvcError($message, 404, __FILE__, __LINE__);
+        GEMVCErrorHandler::handleErrors([$error]);
     }
 
     private function showWebNotFound(): void
@@ -247,7 +295,6 @@ class Bootstrap
         
         // Get template directory path (template handles all presentation logic)
         $templatePath = $this->getTemplatePath('index.php');
-        $templateDir = dirname($templatePath);
         
         // Load central index controller
         if (file_exists($templatePath)) {
@@ -328,5 +375,25 @@ class Bootstrap
         }
         
         return $templatePath;
+    }
+
+    /**
+     * Determine HTTP status code from Error exception
+     * 
+     * @param \Error $e The error exception
+     * @return int HTTP status code (404 for not found errors, 500 for others)
+     */
+    private static function determineHttpCodeFromError(\Error $e): int {
+        $message = $e->getMessage();
+        
+        // Check for method/class not found errors
+        if (str_contains($message, 'Call to undefined method') ||
+            str_contains($message, 'Method') && str_contains($message, 'does not exist') ||
+            str_contains($message, 'not found') ||
+            str_contains($message, 'does not exist')) {
+            return 404;
+        }
+        
+        return 500;
     }
 }

@@ -19,7 +19,7 @@ class JsonResponse implements ResponseInterface
         $this->data = null;
     }
 
-    public function create(int $responseCode,mixed $data ,int $count = null , string $service_message = null):JsonResponse
+    public function create(int $responseCode,mixed $data ,?	int $count = null ,?string $service_message = null):JsonResponse
     {
         $this->response_code = $responseCode;
         
@@ -39,74 +39,74 @@ class JsonResponse implements ResponseInterface
         return $this;
     }
 
-    public function success(mixed $data ,int $count = null , string $service_message = null):JsonResponse
+    public function success(mixed $data ,?int $count = null ,?string $service_message = null):JsonResponse
     {
         return $this->create(200, $data, $count, $service_message);
     }
 
-    public function updated(mixed $data ,int $count = null,string $service_message = null):JsonResponse
+    public function updated(mixed $data ,?int $count = null,?string $service_message = null):JsonResponse
     {
         return $this->create(209, $data, $count, $service_message);
     }
 
-    public function created(mixed $data ,int $count = null,string $service_message = null):JsonResponse
+    public function created(mixed $data ,?int $count = null,?string $service_message = null):JsonResponse
     {
         return $this->create(201, $data, $count, $service_message);
     }
 
-    public function successButNoContentToShow(mixed $data ,int $count = null,string $service_message= null):JsonResponse
+    public function successButNoContentToShow(mixed $data ,?int $count = null,?string $service_message= null):JsonResponse
     {
         return $this->create(204, $data, $count, $service_message);
     }
     
-    public function deleted(mixed $data ,int $count = null,string $service_message = null):JsonResponse
+    public function deleted(mixed $data ,?int $count = null,?string $service_message = null):JsonResponse
     {
         return $this->create(210, $data, $count, $service_message);
     }
-    public function unauthorized(string $service_message = null):JsonResponse
+    public function unauthorized(?string $service_message = null):JsonResponse
     {
         return $this->create(401, null, null, $service_message);
     }
-    public function forbidden(string $service_message = null):JsonResponse
+    public function forbidden(?string $service_message = null):JsonResponse
     {
         return $this->create(403, null, null, $service_message);
     }
-    public function notFound(string $service_message = null):JsonResponse
+    public function notFound(?string $service_message = null):JsonResponse
     {
         return $this->create(404, null, null, $service_message);
     }
 
-    public function internalError(string $service_message = null ):JsonResponse
+    public function internalError(?string $service_message = null ):JsonResponse
     {
         return $this->create(500, null, null, $service_message);
     }
 
-    public function unknownError(string $service_message = null, mixed $data):JsonResponse
+    public function unknownError(?string $service_message = null, mixed $data):JsonResponse
     {
         return $this->create(0, $data, null, $service_message);
     }
 
-    public function notAcceptable(string $service_message = null):JsonResponse
+    public function notAcceptable(?string $service_message = null):JsonResponse
     {
         return $this->create(406, null, null, $service_message);
     }
 
-    public function conflict(string $service_message = null):JsonResponse
+    public function conflict(?string $service_message = null):JsonResponse
     {
         return $this->create(409, null, null, $service_message);
     }
 
-    public function unsupportedMediaType(string $service_message = null):JsonResponse
+    public function unsupportedMediaType(?string $service_message = null):JsonResponse
     {
         return $this->create(415, null, null, $service_message);
     }
 
-    public function unprocessableEntity(string $service_message = null):JsonResponse
+    public function unprocessableEntity(?string $service_message = null):JsonResponse
     {
         return $this->create(422, null, null, $service_message);
     }
     
-    public function badRequest(string $service_message = null):JsonResponse
+    public function badRequest(?string $service_message = null):JsonResponse
     {
         return $this->create(400, null, null, $service_message);
     }

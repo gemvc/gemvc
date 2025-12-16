@@ -6,7 +6,6 @@ use App\Model\UserModel;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Http\JWTToken;
 use Gemvc\Http\Response;
 use stdClass;
 
@@ -24,8 +23,14 @@ class UserController extends Controller
      */
     public function create(): JsonResponse
     {   
-        //'password'=>'setPassword()' call the setPassword() method in the UserModel class
-        $model = $this->request->mapPostToObject(new UserModel(),['email'=>'email','name'=>'name','description'=>'description','password'=>'setPassword()']);
+        $model = $this->request->mapPostToObject(new UserModel(), [
+            'name' => 'name',
+            'email' => 'email',
+            'password' => 'setPassword()',
+            'description' => 'description',
+            'role' => 'role',
+            'story' => 'story'
+        ]);
         if(!$model instanceof UserModel) {
             return $this->request->returnResponse();
         }

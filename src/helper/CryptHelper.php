@@ -25,7 +25,7 @@ class CryptHelper
      * this function work based on 'sha256'
      * @algorythem default 'AES-256-CBC'
      */
-    public static function crypt(string $string, string $secret, string $iv, string $action = 'e', string $encrypt_algorythem = null): false|string
+    public static function crypt(string $string, string $secret, string $iv, string $action = 'e', ?string $encrypt_algorythem = null): false|string
     {
         if(!$encrypt_algorythem) {
             $encrypt_algorythem = 'AES-256-CBC';

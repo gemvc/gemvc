@@ -7,19 +7,67 @@ use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 
 /**
+ * Base class for all controllers
+ * 
  * @protected  GemLibrary\Http\Request $request
- * @protected  null|string  $error
+ * @protected  array<GemvcError> $errors
  * @function   validatePosts(array $post_schema):bool
  */
 class Controller
 {
     protected Request $request;
-    protected ?string $error;
+    
+    /**
+     * @var array<GemvcError>
+     */
+    protected array $errors = [];
 
     public function __construct(Request $request)
     {
-        $this->error = null;
+        $this->errors = [];
         $this->request = $request;
+    }
+    
+    /**
+     * Add an error to the errors array
+     * 
+     * @param string $message Error message
+     * @param int $httpCode HTTP status code (default: 400)
+     * @return void
+     */
+    protected function addError(string $message, int $httpCode = 400): void
+    {
+        $this->errors[] = new GemvcError($message, $httpCode, __FILE__, __LINE__);
+    }
+    
+    /**
+     * Get all errors as GemvcError array
+     * 
+     * @return array<GemvcError>
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+    
+    /**
+     * Check if there are any errors
+     * 
+     * @return bool True if errors exist, false otherwise
+     */
+    public function hasErrors(): bool
+    {
+        return !empty($this->errors);
+    }
+    
+    /**
+     * Clear all errors
+     * 
+     * @return void
+     */
+    public function clearErrors(): void
+    {
+        $this->errors = [];
     }
 
     /**
@@ -52,7 +100,7 @@ class Controller
      */
     protected function validateRequiredProperties(): void
     {
-        if (!method_exists($this, 'getTable') || empty($this->getTable())) {
+        if (!method_exists($this, 'getTable')) {
             throw new \RuntimeException('Table name must be defined in the model');
         }
     }
@@ -60,19 +108,22 @@ class Controller
     /**
      * Handles pagination parameters
      */
+    /**
+     * Handles pagination parameters
+     * 
+     * @throws ValidationException If pagination parameters are invalid
+     */
     private function _handlePagination(object $model): object
     {
         if (isset($this->request->get["page_number"])) {
             /**@phpstan-ignore-next-line */
             if (!is_numeric(trim($this->request->get["page_number"]))) {
-                Response::badRequest("page_number shall be type if integer or number")->show();
-                die();
+                throw new ValidationException("page_number shall be type if integer or number", 400);
             }
             /**@phpstan-ignore-next-line */
             $page_number = (int) $this->request->get["page_number"];
             if ($page_number < 1) {
-                Response::badRequest("page_number shall be positive int")->show();
-                die();
+                throw new ValidationException("page_number shall be positive int", 400);
             }
             /**@phpstan-ignore-next-line */
             $model->setPage($page_number);
@@ -103,6 +154,11 @@ class Controller
     }
 
 
+    /**
+     * Handles findable/filterable parameters
+     * 
+     * @throws ValidationException If filterable key is not found in model properties
+     */
     private function _handleFindable(object $model): object
     {
         $array_orderby = $this->request->getFindable();
@@ -115,8 +171,7 @@ class Controller
         $array_exited_object_properties = get_class_vars(get_class($model));
         foreach ($array_orderby as $key => $value) {
             if (!array_key_exists($key, $array_exited_object_properties)) {
-                Response::badRequest("filterable key $key not found in object properties")->show();
-                die();
+                throw new ValidationException("filterable key $key not found in object properties", 400);
             }
         }
         foreach ($array_orderby as $key => $value) {
@@ -129,6 +184,8 @@ class Controller
 
     /**
      * Handles all filter types (create where)
+     * 
+     * @throws ValidationException If searchable key is not found or model property assignment fails
      */
     private function _handleSearchable(object $model): object
     {
@@ -143,8 +200,7 @@ class Controller
         $array_exited_object_properties = get_class_vars(get_class($model));
         foreach ($array_searchable as $key => $value) {
             if (!array_key_exists($key, $array_exited_object_properties)) {
-                Response::badRequest("searchable key $key not found in object properties")->show();
-                die();
+                throw new ValidationException("searchable key $key not found in object properties", 400);
             }
         }
 
@@ -157,8 +213,7 @@ class Controller
         }
 
         if ($arr_errors) {
-            Response::badRequest($arr_errors)->show();
-            die();
+            throw new ValidationException(rtrim($arr_errors, ','), 400);
         }
         foreach ($array_searchable as $key => $value) {
             /**@phpstan-ignore-next-line */
@@ -190,16 +245,18 @@ class Controller
      * array of objects from given model with pagination, sorting and filtering
      * columns "id,name,email" only return id name and email
      */
+    /**
+     * List objects with pagination, sorting, and filtering
+     * 
+     * @template T of object
+     * @param T $model
+     * @param string|null $columns
+     * @return array<object>
+     * @throws ValidationException If validation fails during filtering/pagination
+     * @throws \RuntimeException If model query execution fails
+     */
     private function _listObjects(object $model, ?string $columns = null): array
     {
-        if (!method_exists($model, 'select')) {
-            Response::internalError('Model must have select method i.e extended from Table or Model Class')->show();
-            die();
-        }
-        if (!method_exists($model, 'run')) {
-            Response::internalError('Model must have run() method i.e extended from Table or Model Class')->show();
-            die();
-        }
         $model = $this->_handleSearchable($model);
         $model = $this->_handleFindable($model);
         $model = $this->_handleSortable($model);
@@ -208,8 +265,8 @@ class Controller
         $result = $model->select($columns)->run();
         if($result === false) {
             // @phpstan-ignore-next-line
-            Response::internalError($model->getError())->show();
-            die();
+            $errorMessage = $model->getError() ?? 'Database query execution failed';
+            throw new \RuntimeException($errorMessage);
         }
         /** @var array<T> $result */
         return $result;

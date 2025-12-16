@@ -32,7 +32,7 @@ class User extends ApiService
         if(!$this->request->definePostSchema([
             'name' => 'string',
             'email' => 'email',
-            'password' => 'setPassword()', //call the setPassword() method in the UserModel class
+            'password' => 'string', //call the setPassword() method in the UserModel class
             '?description' => 'string',
             '?role' => 'string',
             '?story' => 'string'

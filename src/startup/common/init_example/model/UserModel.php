@@ -1,16 +1,22 @@
 <?php
+namespace App\Model;
+
 /**
  * this is model layer. what so called Data logic layer
  * classes in this layer shall be extended from relevant classes in Table layer
  * classes in this layer  will be called from controller layer
  */
-namespace App\Model;
+
+//report errors
+
 
 use App\Table\UserTable;
+use Gemvc\Database\QueryBuilder;
 use Gemvc\Helper\CryptHelper;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\JWTToken;
 use Gemvc\Http\Response;
+use stdClass;
 
 class UserModel extends UserTable
 {
@@ -34,20 +40,10 @@ class UserModel extends UserTable
      */
     public function createModel(): JsonResponse
     {
-        $this->email = strtolower($this->email);
-        $found = $this->selectByEmail($this->email);
-        if ($found) {
-            return Response::unprocessableEntity("User already exists");
-        
-        }
-        $this->created_at = date('Y-m-d H:i:s');
-
-        $success = $this->insertSingleQuery();
-        if (!$success ||$this->getError() ) {
-            return Response::internalError(  $this->getError());
-        }
-        $this->_message = "User created successfully";
-        return Response::created($this, 1, $this->getMessage());
+            if (!$this->insertSingleQuery()) {
+                return Response::internalError("Failed to create User: " . $this->getError());
+            }
+            return Response::created($this, 1, "User created successfully");
     }
 
     /**
@@ -57,12 +53,17 @@ class UserModel extends UserTable
      */
     public function readModel(): JsonResponse
     {
-        $item = $this->selectById($this->id);
-        if (!$item) {
+        $qb = new QueryBuilder();
+        $results = $qb->select('*')->from('users')->whereEqual('id', $this->id)->limit(1)->run();
+        if($qb->getError()) {
+            return Response::internalError("Failed to retrieve User: " . $qb->getError());
+        }
+        if (count($results) === 0) {
             return Response::notFound("User not found");
         }
-        $item->password = "-";
-        return Response::success($item, 1, "User retrieved successfully");
+        $result = $results[0];
+        $result['password'] = "-";
+        return Response::success($result, 1, "User retrieved successfully");
     }
 
     /**
@@ -106,11 +107,6 @@ class UserModel extends UserTable
     public function setPassword(string $plainPassword): void
     {
         $this->password = CryptHelper::hashPassword($plainPassword);
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
     }
 
     public function loginByEmailPassword(string $email, string $password): JsonResponse

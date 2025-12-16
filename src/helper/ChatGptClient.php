@@ -11,7 +11,7 @@ class ChatGptClient
     private string $apiKey = '';
     private ApiCall $apiCall;
 
-    public function __construct(string $apiKey = null)
+    public function __construct(?string $apiKey = null)
     {
         $this->apiKey = $apiKey ?: $this->apiKey;
         $this->apiCall = new ApiCall();
