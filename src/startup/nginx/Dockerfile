@@ -8,3 +8,8 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 RUN chown -R www-data:www-data /var/www/html
+
+# Set Permissions for Development (755/644 - normal web service permissions)
+# FOR PRODUCTION: Comment out or delete the following two lines to use base image's secure 750/640 permissions
+RUN find /var/www/html -type d -exec chmod 755 {} \;
+RUN find /var/www/html -type f -exec chmod 644 {} \;

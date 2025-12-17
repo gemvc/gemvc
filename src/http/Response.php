@@ -55,10 +55,10 @@ class Response {
         return (new JsonResponse())->internalError($service_message);
     }
 
-    public static function unknownError(?string $service_message = null, mixed $data):JsonResponse
+    public static function unknownError(mixed $data, ?string $service_message = null):JsonResponse
     {
         $service_message = $service_message ? 'unknown error: '.$service_message : 'unknown error';
-        return (new JsonResponse())->unknownError($service_message, $data);
+        return (new JsonResponse())->unknownError($data, $service_message);
     }
 
     public static function notAcceptable(?string $service_message = null):JsonResponse

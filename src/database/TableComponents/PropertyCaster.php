@@ -51,7 +51,7 @@ class PropertyCaster
                 'bool' => false,
                 'string' => '',
                 'array' => [],
-                'datetime', 'date' => new \DateTime('now'),
+                'datetime', 'date' => date('Y-m-d H:i:s'),
                 default => null,
             };
         }
@@ -110,17 +110,21 @@ class PropertyCaster
                 
             case 'datetime':
             case 'date':
+                // Return as string (Y-m-d H:i:s format) instead of DateTime object
+                // This ensures compatibility with string-typed properties and JSON serialization
                 if (!is_string($value) || trim($value) === '') {
-                    return $isNullable ? null : new \DateTime('now');
+                    return $isNullable ? null : date('Y-m-d H:i:s');
                 }
+                // Validate it's a valid datetime string, but return as string
                 try {
-                    return new \DateTime($value);
+                    $dt = new \DateTime($value);
+                    return $dt->format('Y-m-d H:i:s');
                 } catch (\Exception $e) {
                     // Log error in dev mode
                     if (($_ENV['APP_ENV'] ?? '') === 'dev') {
                         error_log("Warning: Invalid datetime value for property '{$property}': {$value}. Error: " . $e->getMessage());
                     }
-                    return $isNullable ? null : new \DateTime('now');
+                    return $isNullable ? null : date('Y-m-d H:i:s');
                 }
                 
             case 'array':

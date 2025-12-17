@@ -87,7 +87,9 @@ class UserController extends Controller
     public function list(): JsonResponse
     {
         $model = new UserModel();
-        return $this->createList($model);
+        //if your model has protected properties, you shall specify the columns you want to return,
+        //in the list and not write protected properties in the list as following example:
+        return $this->createList($model,'id,name,email,created_at,updated_at,description,role,story');
     }
 
     public function loginByEmailPassword(): JsonResponse

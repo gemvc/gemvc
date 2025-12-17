@@ -109,7 +109,7 @@ class Request
     {
         if(!$this->response)
         {
-            return Response::unknownError("No response property set in Request Object", null);
+            return Response::unknownError(null, "No response property set in Request Object");
         }
         return $this->response;
     }

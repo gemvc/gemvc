@@ -419,12 +419,12 @@ class DeveloperModel extends DeveloperTable
         if (!empty($errorMessage)) {
             $errorData['error'] = $errorMessage;
             // Use Response::unknownError to return data (returns code 0, but accepts data)
-            return Response::unknownError('Database connection failed: ' . $errorMessage, $errorData);
+            return Response::unknownError($errorData, 'Database connection failed: ' . $errorMessage);
         }
         
         // Generic error if no specific error message
         $errorData['message'] = 'Database is not accessible';
-        return Response::unknownError('Database is not accessible', $errorData);
+        return Response::unknownError($errorData, 'Database is not accessible');
     }
 
     /**
@@ -455,11 +455,11 @@ class DeveloperModel extends DeveloperTable
         
         if (!empty($errorMessage)) {
             $errorData['error'] = $errorMessage;
-            return Response::unknownError('Database initialization failed: ' . $errorMessage, $errorData);
+            return Response::unknownError($errorData, 'Database initialization failed: ' . $errorMessage);
         }
         
         // Generic error
-        return Response::unknownError('Database initialization failed', $errorData);
+        return Response::unknownError($errorData, 'Database initialization failed');
     }
 
     /**
@@ -556,24 +556,24 @@ class DeveloperModel extends DeveloperTable
                         'output' => $outputStr
                     ]);
                 } else {
-                    return Response::unknownError('Service creation command succeeded but service file not found', [
+                    return Response::unknownError([
                         'message' => 'Service creation may have failed',
                         'output' => $outputStr
-                    ]);
+                    ], 'Service creation command succeeded but service file not found');
                 }
             }
             
-            return Response::unknownError('Service creation failed', [
+            return Response::unknownError([
                 'message' => 'Failed to create service',
                 'error' => $outputStr,
                 'exitCode' => $returnVar
-            ]);
+            ], 'Service creation failed');
             
         } catch (\Exception $e) {
-            return Response::unknownError('Service creation failed: ' . $e->getMessage(), [
+            return Response::unknownError([
                 'message' => 'Failed to create service',
                 'error' => $e->getMessage()
-            ]);
+            ], 'Service creation failed: ' . $e->getMessage());
         }
     }
 
@@ -639,18 +639,18 @@ class DeveloperModel extends DeveloperTable
                 $connection = $dbManager->getConnection();
                 
                 if ($connection === null) {
-                    return Response::unknownError('Migration failed', [
+                    return Response::unknownError([
                         'message' => 'Failed to connect to database',
                         'error' => $dbManager->getError() ?? 'Database connection failed'
-                    ]);
+                    ], 'Migration failed');
                 }
                 
                 $pdo = $connection->getConnection();
                 if (!($pdo instanceof \PDO)) {
-                    return Response::unknownError('Migration failed', [
+                    return Response::unknownError([
                         'message' => 'Failed to get PDO connection',
                         'error' => 'Connection did not return a valid PDO instance'
-                    ]);
+                    ], 'Migration failed');
                 }
                 
                 // Load table class
@@ -673,10 +673,10 @@ class DeveloperModel extends DeveloperTable
                 $tableName = $table->getTable();
                 $dbName = isset($_ENV['DB_NAME']) && is_string($_ENV['DB_NAME']) ? $_ENV['DB_NAME'] : '';
                 if (empty($dbName)) {
-                    return Response::unknownError('Migration failed', [
+                    return Response::unknownError([
                         'message' => 'Database name not configured',
                         'error' => 'DB_NAME environment variable is not set'
-                    ]);
+                    ], 'Migration failed');
                 }
                 
                 $stmt = $pdo->prepare("
@@ -702,10 +702,10 @@ class DeveloperModel extends DeveloperTable
                         ]);
                     } else {
                         $error = $generator->getError();
-                        return Response::unknownError('Migration failed', [
+                        return Response::unknownError([
                             'message' => 'Failed to sync table',
                             'error' => $error ?: 'Unknown error'
-                        ]);
+                        ], 'Migration failed');
                     }
                 } else {
                     // Create new table
@@ -720,17 +720,17 @@ class DeveloperModel extends DeveloperTable
                         ]);
                     } else {
                         $error = $generator->getError();
-                        return Response::unknownError('Migration failed', [
+                        return Response::unknownError([
                             'message' => 'Failed to create table',
                             'error' => $error ?: 'Unknown error'
-                        ]);
+                        ], 'Migration failed');
                     }
                 }
             } catch (\Exception $e) {
-                return Response::unknownError('Migration failed', [
+                return Response::unknownError([
                     'message' => 'Failed to connect to database',
                     'error' => $e->getMessage()
-                ]);
+                ], 'Migration failed');
             } finally {
                 // Always release connection
                 if ($connection !== null && $dbManager !== null) {
@@ -743,10 +743,10 @@ class DeveloperModel extends DeveloperTable
             }
             
         } catch (\Exception $e) {
-            return Response::unknownError('Migration failed: ' . $e->getMessage(), [
+            return Response::unknownError([
                 'message' => 'Failed to migrate table',
                 'error' => $e->getMessage()
-            ]);
+            ], 'Migration failed: ' . $e->getMessage());
         }
     }
 

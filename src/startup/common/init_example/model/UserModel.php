@@ -40,6 +40,7 @@ class UserModel extends UserTable
      */
     public function createModel(): JsonResponse
     {
+        $this->created_at = date('Y-m-d H:i:s');
             if (!$this->insertSingleQuery()) {
                 return Response::internalError("Failed to create User: " . $this->getError());
             }

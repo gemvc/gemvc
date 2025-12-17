@@ -81,7 +81,7 @@ class JsonResponse implements ResponseInterface
         return $this->create(500, null, null, $service_message);
     }
 
-    public function unknownError(?string $service_message = null, mixed $data):JsonResponse
+    public function unknownError(mixed $data, ?string $service_message = null):JsonResponse
     {
         return $this->create(0, $data, null, $service_message);
     }

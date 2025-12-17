@@ -78,6 +78,9 @@ class Controller
      */
     public function createList(object $model, ?string $columns = null): JsonResponse
     {
+        if(!$columns) {
+            $columns = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
+        }
         /**@phpstan-ignore-next-line */
         return Response::success($this->_listObjects($model, $columns), $model->getTotalCounts(), 'list of ' . $model->getTable() . ' fetched successfully');
     }
@@ -255,13 +258,18 @@ class Controller
      * @throws ValidationException If validation fails during filtering/pagination
      * @throws \RuntimeException If model query execution fails
      */
-    private function _listObjects(object $model, ?string $columns = null): array
+   private function _listObjects(object $model, ?string $columns = null): array
     {
         $model = $this->_handleSearchable($model);
         $model = $this->_handleFindable($model);
         $model = $this->_handleSortable($model);
         $model = $this->_handlePagination($model);
+        //$publicPropertiesString = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
+        //$fastString = trim(json_encode(array_keys(get_object_vars($model))), '[]');
         // @phpstan-ignore-next-line
+        if(!$columns) {
+            $columns = '*';
+        }
         $result = $model->select($columns)->run();
         if($result === false) {
             // @phpstan-ignore-next-line
@@ -269,6 +277,19 @@ class Controller
             throw new \RuntimeException($errorMessage);
         }
         /** @var array<T> $result */
-        return $result;
+        // Convert objects to arrays to avoid PHP 8.4+ protected property access issues
+        // get_object_vars() only returns public properties when called from outside the class
+        return array_map(function($item) {
+            if (is_object($item)) {
+                $vars = get_object_vars($item);
+                $result = [];
+                foreach ($vars as $key => $val) {
+                    if ($key[0] === '_') continue;
+                    $result[$key] = $val;
+                }
+                return $result;
+            }
+            return $item;
+        }, $result);
     }
 }

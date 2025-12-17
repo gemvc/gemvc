@@ -46,8 +46,8 @@ class UserTable extends Table
         'email' => 'string',
         'description' => 'text',
         'password' => 'string',
-        'created_at' => 'string',
-        'updated_at' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'role' => 'string',
         'story' => 'longText'
     ];
@@ -66,7 +66,7 @@ class UserTable extends Table
             // Unique constraints
             Schema::unique('email')->name('uniq_email'),
             // Indexes for performance
-            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named index for timestamp column
+            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named index for timestamp column with DEFAULT CURRENT_TIMESTAMP
             Schema::index('updated_at')->name('idx_updated'),  // Named index for timestamp column
             Schema::index('role'),
             // Full-text search
@@ -80,6 +80,7 @@ class UserTable extends Table
         parent::__construct();
         $this->description = null;
         $this->updated_at = null;
+        $this->created_at = '';
     }
 
     /**
