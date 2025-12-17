@@ -2,6 +2,11 @@ FROM gemvc/nginx:1.0.0
 
 LABEL maintainer="GEMVC Developer"
 
+# Override APP_ENV for development (base image sets APP_ENV=production)
+# FOR PRODUCTION: Comment out or delete the following line to use base image's APP_ENV=production
+ENV APP_ENV=dev
+
+
 WORKDIR /var/www/html
 
 COPY . .

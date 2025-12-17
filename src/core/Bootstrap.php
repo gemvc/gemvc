@@ -4,6 +4,7 @@ namespace Gemvc\Core;
 
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
+use Gemvc\Http\Response;
 use Gemvc\Core\GemvcError;
 use Gemvc\Core\GEMVCErrorHandler;
 use Gemvc\Http\HtmlResponse;
@@ -92,11 +93,15 @@ class Bootstrap
             }
             
             // Validate response is JsonResponse (all ApiService methods return JsonResponse)
-            if (($response instanceof JsonResponse)) {
+            if ($response instanceof JsonResponse) {
+                /*
                 $this->errors[] = new GemvcError("API method '$method' must return a JsonResponse instance", 500, __FILE__, __LINE__);
-                return;
+                GemvcErrorHandler::handleErrors($this->errors);
+                */
+                $response->show();
+                die;
             }
-            if (($response instanceof HtmlResponse)) {
+            if ($response instanceof HtmlResponse) {
                 $response->show();
                 die;
             }

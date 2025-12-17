@@ -498,4 +498,3 @@ class DeveloperController extends Controller
         ];
     }
 }
-
