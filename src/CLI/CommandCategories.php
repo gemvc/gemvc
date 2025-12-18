@@ -23,6 +23,7 @@ class CommandCategories
         ],
         'Admin' => [
             'admin:setpassword' => 'Set admin password for accessing system pages in development mode',
+            'admin:setadmin' => 'Create the first admin user with email and password',
         ],
     ];
 
@@ -40,6 +41,7 @@ class CommandCategories
             'db:list' => 'DbList',
             'db:drop' => 'DbDrop',
             'admin:setpassword' => 'AdminSetpassword',
+            'admin:setadmin' => 'SetAdmin',
         ];
 
         return $commandMappings[$command] ?? '';
@@ -84,7 +86,8 @@ class CommandCategories
             'db:migrate' => 'vendor/bin/gemvc db:migrate UserTable',
             'db:list' => 'vendor/bin/gemvc db:list',
             'db:drop' => 'vendor/bin/gemvc db:drop users',
-            'admin:setpassword' => 'vendor/bin/gemvc admin:setpassword'
+            'admin:setpassword' => 'vendor/bin/gemvc admin:setpassword',
+            'admin:setadmin' => 'vendor/bin/gemvc admin:setadmin'
         ];
     }
 } 

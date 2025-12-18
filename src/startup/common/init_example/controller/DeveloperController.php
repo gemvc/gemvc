@@ -77,9 +77,22 @@ class DeveloperController extends Controller
      */
     public function app(): HtmlResponse
     {
-        $spaPath = $this->templateDir . DIRECTORY_SEPARATOR . 'spa.html';
-        if (file_exists($spaPath)) {
-            $html = file_get_contents($spaPath);
+        // Try .php first (with PHP processing), then fallback to .html
+        $spaPathPhp = $this->templateDir . DIRECTORY_SEPARATOR . 'spa.php';
+        $spaPathHtml = $this->templateDir . DIRECTORY_SEPARATOR . 'spa.html';
+        
+        if (file_exists($spaPathPhp)) {
+            // Execute PHP file and capture output
+            ob_start();
+            include $spaPathPhp;
+            $html = ob_get_clean();
+            if ($html === false || $html === '') {
+                return new HtmlResponse('<html><body><h1>Failed to read SPA file</h1></body></html>', 500);
+            }
+            return new HtmlResponse($html);
+        } elseif (file_exists($spaPathHtml)) {
+            // Fallback to .html if .php doesn't exist
+            $html = file_get_contents($spaPathHtml);
             if ($html === false) {
                 return new HtmlResponse('<html><body><h1>Failed to read SPA file</h1></body></html>', 500);
             }
@@ -407,41 +420,22 @@ class DeveloperController extends Controller
      */
     private function preparePageVariables(): array
     {
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $webserverType = WebserverDetector::get();
         
-        // Construct base URL based on webserver type
-        if ($webserverType === 'swoole') {
-            // Swoole: Use explicit port 9501 (from env or default), NO /api prefix
-            $swoolePortEnv = $_ENV["SWOOLE_SERVER_PORT"] ?? '9501';
-            $swoolePort = is_numeric($swoolePortEnv) ? (int) $swoolePortEnv : 9501;
-            $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
-                ? $_SERVER['HTTP_HOST']
-                : 'localhost';
-            // Remove port from HTTP_HOST if it exists, then add our explicit port
-            $host = preg_replace('/:\d+$/', '', $host);
-            $baseUrl = $protocol . '://' . $host . ':' . $swoolePort;
-            // Swoole: apiBaseUrl is same as baseUrl (no /api prefix)
-            $apiBaseUrl = rtrim($baseUrl, '/');
-        } else {
-            // Apache/Nginx: HTTP_HOST may already include port, WITH /api prefix
-            $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
-                ? $_SERVER['HTTP_HOST']
-                : 'localhost';
-            // If HTTP_HOST already has a port, use it as-is
-            if (strpos($host, ':') !== false) {
-                $baseUrl = $protocol . '://' . $host;
-            } else {
-                // HTTP_HOST doesn't have port, check SERVER_PORT
-                $port = isset($_SERVER['SERVER_PORT']) && is_string($_SERVER['SERVER_PORT'])
-                    ? $_SERVER['SERVER_PORT']
-                    : '';
-                $portDisplay = ($port !== '' && $port !== '80' && $port !== '443') ? ':' . $port : '';
-                $baseUrl = $protocol . '://' . $host . $portDisplay;
-            }
-            // Apache/Nginx: apiBaseUrl includes /api prefix
-            $apiBaseUrl = rtrim($baseUrl, '/') . '/api';
-        }
+        // Use unified API base URL construction from ProjectHelper
+        $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
+        
+        // Base URL (without API sub-path) for general use
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
+            ? $_SERVER['HTTP_HOST']
+            : 'localhost';
+        $host = preg_replace('/:\d+$/', '', $host);
+        
+        $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+        $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+        $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
+        $baseUrl = $protocol . '://' . $host . $portDisplay;
         $webserverName = match($webserverType) {
             'swoole' => 'OpenSwoole',
             'apache' => 'Apache',

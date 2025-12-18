@@ -47,6 +47,26 @@ class UserModel extends UserTable
             return Response::created($this, 1, "User created successfully");
     }
 
+    public function firstAdminUser(string $email, string $password): JsonResponse
+    {
+        $qb = new QueryBuilder();
+        $results = $qb->select('id')->from('users')->limit(1)->run();
+        if($qb->getError()) {
+            return Response::internalError("Failed to retrieve User: " . $qb->getError());
+        }
+        if(count($results) !== 0) {
+            return Response::forbidden("Admin user already exists");
+        }
+        $this->email = $email;
+        $this->role = 'admin';
+        $this->password = CryptHelper::hashPassword($password);
+        $this->created_at = date('Y-m-d H:i:s');
+        if (!$this->insertSingleQuery()) {
+            return Response::internalError("Failed to create User: " . $this->getError());
+        }
+        return Response::created($this, 1, "User created successfully");
+    }
+
     /**
      * Get User by ID
      * 

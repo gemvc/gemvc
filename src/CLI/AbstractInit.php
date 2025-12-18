@@ -485,12 +485,30 @@ abstract class AbstractInit extends Command
     /**
      * Update .env file with APP_ENV_SERVER
      * 
+     * Maps webserver types to lowercase values:
+     * - 'Nginx' -> 'nginx'
+     * - 'Apache' -> 'apache'
+     * - 'OpenSwoole' -> 'swoole'
+     * 
      * @return void
      */
     private function updateEnvFileWithServer(): void
     {
         $envPath = $this->basePath . DIRECTORY_SEPARATOR . '.env';
-        $webserverType = ucfirst($this->getWebserverType());
+        $webserverTypeRaw = $this->getWebserverType();
+        
+        // Map webserver types to lowercase .env values
+        $webserverTypeMap = [
+            'Nginx' => 'nginx',
+            'Apache' => 'apache',
+            'OpenSwoole' => 'swoole'
+        ];
+        
+        // Get lowercase value, fallback to lowercase of raw value if not in map
+        $webserverType = isset($webserverTypeMap[$webserverTypeRaw]) 
+            ? $webserverTypeMap[$webserverTypeRaw]
+            : strtolower($webserverTypeRaw);
+        
         $serverLine = "APP_ENV_SERVER={$webserverType}";
         
         if (!file_exists($envPath)) {

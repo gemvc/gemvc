@@ -179,6 +179,28 @@ class Developer extends ApiService
     }
 
     /**
+     * Get API Configuration
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Returns API base URL and configuration for SPA
+     * @hidden
+     */
+    public function config(): JsonResponse
+    {
+        \Gemvc\Helper\ProjectHelper::loadEnv();
+        $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
+        $webserverType = WebserverDetector::get();
+        
+        return Response::success([
+            'apiBaseUrl' => $apiBaseUrl,
+            'webserverType' => $webserverType,
+            'publicServerPort' => $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80',
+            'apiSubUrl' => $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? ''
+        ]);
+    }
+
+    /**
      * Check Database Ready Status
      * 
      * @return JsonResponse

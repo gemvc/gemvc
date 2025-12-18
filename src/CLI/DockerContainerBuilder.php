@@ -999,18 +999,32 @@ class DockerContainerBuilder extends Command
     }
     
     /**
-     * Set initial APP_ENV_SERVER_PORT with default port
-     * Called when docker-compose.yml is created with default port
+     * Set initial APP_ENV_PUBLIC_SERVER_PORT and APP_ENV_API_DEFAULT_SUB_URL
+     * Called when docker-compose.yml is created
+     * Reads the public port from docker-compose.yml and updates .env
      * 
      * @return void
      */
     public function setInitialServerPort(): void
     {
         $envFile = $this->basePath . '/.env';
-        $portLine = "APP_ENV_SERVER_PORT={$this->appPort}";
+        $dockerComposeFile = $this->basePath . '/docker-compose.yml';
         
         if (!file_exists($envFile)) {
             return;
+        }
+        
+        // Read port from docker-compose.yml (public port - first number in port mapping)
+        $publicPort = $this->appPort; // Default to appPort
+        if (file_exists($dockerComposeFile)) {
+            $composeContent = file_get_contents($dockerComposeFile);
+            if ($composeContent !== false) {
+                // Extract port mapping like "80:80" or "9501:9501" or "8080:80"
+                // Match pattern: ports: - "PORT:PORT" or ports: - PORT:PORT
+                if (preg_match('/ports:\s*\n\s*-\s*["\']?(\d+):\d+["\']?/m', $composeContent, $matches)) {
+                    $publicPort = (int) $matches[1];
+                }
+            }
         }
         
         $content = file_get_contents($envFile);
@@ -1018,8 +1032,12 @@ class DockerContainerBuilder extends Command
             return;
         }
         
-        // Only add if it doesn't exist (don't overwrite if already set)
-        if (!preg_match('/^APP_ENV_SERVER_PORT=.*$/m', $content)) {
+        // Update APP_ENV_PUBLIC_SERVER_PORT
+        $portLine = "APP_ENV_PUBLIC_SERVER_PORT={$publicPort}";
+        if (preg_match('/^APP_ENV_PUBLIC_SERVER_PORT=.*$/m', $content)) {
+            // Update existing
+            $content = preg_replace('/^APP_ENV_PUBLIC_SERVER_PORT=.*$/m', $portLine, $content);
+        } else {
             // Add new line after APP_ENV_SERVER if found, otherwise append to end
             if (preg_match('/^APP_ENV_SERVER\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
                 $pos = $matches[0][1] + strlen($matches[0][0]);
@@ -1027,9 +1045,27 @@ class DockerContainerBuilder extends Command
             } else {
                 $content .= "\n{$portLine}\n";
             }
-            
-            file_put_contents($envFile, $content);
         }
+        
+        // Update APP_ENV_API_DEFAULT_SUB_URL
+        // If server is NOT swoole (nginx/apache), set to '/api'
+        // If server IS swoole, set to empty string
+        $apiSubUrl = ($this->webserverType === 'swoole' || $this->webserverType === 'openswoole') ? '' : 'api';
+        $apiSubUrlLine = "APP_ENV_API_DEFAULT_SUB_URL='{$apiSubUrl}'";
+        if (preg_match('/^APP_ENV_API_DEFAULT_SUB_URL=.*$/m', $content)) {
+            // Update existing
+            $content = preg_replace('/^APP_ENV_API_DEFAULT_SUB_URL=.*$/m', $apiSubUrlLine, $content);
+        } else {
+            // Add new line after APP_ENV_PUBLIC_SERVER_PORT if found, otherwise append to end
+            if (preg_match('/^APP_ENV_PUBLIC_SERVER_PORT\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $pos = $matches[0][1] + strlen($matches[0][0]);
+                $content = substr_replace($content, "\n{$apiSubUrlLine}", $pos, 0);
+            } else {
+                $content .= "\n{$apiSubUrlLine}\n";
+            }
+        }
+        
+        file_put_contents($envFile, $content);
     }
     
     /**

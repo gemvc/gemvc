@@ -48,11 +48,11 @@ class WebserverDetector
      */
     public static function detect(): string
     {
-        // Fast-path: explicit env override
-        $envType = $_ENV['WEBSERVER_TYPE'] ?? null;
-        if ($envType === 'swoole') { return 'swoole'; }
-        if ($envType === 'apache') { return 'apache'; }
-        if ($envType === 'nginx') { return 'nginx'; }
+        // Fast-path: APP_ENV_SERVER (new standard) or WEBSERVER_TYPE (legacy)
+        $envServer = $_ENV['APP_ENV_SERVER'] ?? $_ENV['WEBSERVER_TYPE'] ?? null;
+        if ($envServer === 'swoole') { return 'swoole'; }
+        if ($envServer === 'apache') { return 'apache'; }
+        if ($envServer === 'nginx') { return 'nginx'; }
 
         // Fast-path: Swoole/OpenSwoole constants/extensions
         if (defined('SWOOLE_BASE') || defined('SWOOLE_PROCESS')) { return 'swoole'; }
