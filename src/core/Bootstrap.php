@@ -4,7 +4,6 @@ namespace Gemvc\Core;
 
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Http\Response;
 use Gemvc\Core\GemvcError;
 use Gemvc\Core\GEMVCErrorHandler;
 use Gemvc\Http\HtmlResponse;
@@ -167,7 +166,6 @@ class Bootstrap
         } catch (\Throwable $e) {
             // Handle errors
             http_response_code(500);
-            $this->showServerError($e);
         }
         
         die;
@@ -178,27 +176,17 @@ class Bootstrap
         $method = "index";
         $segments = explode('/', $this->request->requestedUrl);
         
-        // Check if this is a root URL (/) in development mode - route to SPA
+        // Check if this is a root URL (/) - route to Index/index API
         $isRootUrl = empty($this->request->requestedUrl) ||
             $this->request->requestedUrl === '/' ||
             (count($segments) <= 1 && empty(array_filter($segments)));
         
         if ($isRootUrl) {
-            // Load environment to check APP_ENV
-            try {
-                \Gemvc\Helper\ProjectHelper::loadEnv();
-                $isDevelopment = ($_ENV['APP_ENV'] ?? '') === 'dev';
-                
-                if ($isDevelopment) {
-                    // Route root URL to Developer/app (SPA shell) in dev mode
-                    $this->is_web = false;
-                    $this->requested_service = "Developer";
-                    $this->requested_method = "app";
-                    return;
-                }
-            } catch (\Exception $e) {
-                // If env can't be loaded, continue with normal routing
-            }
+            // Route root URL to Index/index API endpoint
+            $this->is_web = false;
+            $this->requested_service = "Index";
+            $this->requested_method = "index";
+            return;
         }
         
         // Get the first segment (service indicator)
@@ -256,15 +244,6 @@ class Bootstrap
 
     private function showWebNotFound(): void
     {
-        // In development mode, show helpful developer page for root URL
-        $isDevelopment = ($_ENV['APP_ENV'] ?? '') === 'dev';
-        $isRootUrl = empty($this->requested_service) || strtolower($this->requested_service) === 'home';
-        
-        if ($isDevelopment && $isRootUrl) {
-            $this->showDeveloperWelcomePage();
-            return;
-        }
-        
         header('HTTP/1.0 404 Not Found');
         
         // Check if a custom 404 page exists
@@ -273,53 +252,6 @@ class Bootstrap
             include './app/web/Error/404.php';
         } else {
             $this->show404Error();
-        }
-    }
-    
-    /**
-     * Show helpful developer welcome page in development mode
-     * 
-     * @return void
-     */
-    private function showDeveloperWelcomePage(): void
-    {
-        // Construct base URL from server information
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $host = is_string($host) ? $host : 'localhost';
-        $port = $_SERVER['SERVER_PORT'] ?? '';
-        $port = is_string($port) || is_int($port) ? (string)$port : '';
-        $portDisplay = ($port && $port !== '80' && $port !== '443') ? ':' . $port : '';
-        $baseUrl = $protocol . '://' . $host . $portDisplay;
-        $apiBaseUrl = rtrim($baseUrl, '/') . '/api';
-        
-        // Detect webserver type
-        $webserverType = WebserverDetector::get();
-        $webserverName = match($webserverType) {
-            'swoole' => 'OpenSwoole',
-            'apache' => 'Apache',
-            'nginx' => 'Nginx',
-            default => ucfirst($webserverType)
-        };
-        
-        // Get template directory path (template handles all presentation logic)
-        $templatePath = $this->getTemplatePath('index.php');
-        
-        // Load central index controller
-        if (file_exists($templatePath)) {
-            include $templatePath;
-        } else {
-            // Fallback if index not found, try developer-welcome
-            $fallbackPath = $this->getTemplatePath('developer-welcome.php');
-            if (file_exists($fallbackPath)) {
-                include $fallbackPath;
-            } else {
-                // Last resort fallback
-                $lastResortPath = $this->getTemplatePath('developer-welcome-fallback.php');
-                if (file_exists($lastResortPath)) {
-                    include $lastResortPath;
-                }
-            }
         }
     }
     

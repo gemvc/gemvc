@@ -30,6 +30,9 @@ class Index extends ApiService
      */
     public function index(): JsonResponse
     {
+        if($_ENV['APP_ENV'] !== 'dev'){
+            return Response::success('server running',1,'server running');
+        }
         $info = new \stdClass();
         $info->server = \Gemvc\Core\WebserverDetector::get();
         $info->version = \Gemvc\Helper\ProjectHelper::getVersion();
@@ -132,6 +135,7 @@ class Index extends ApiService
      * @return JsonResponse
      * @http GET
      * @description Returns GEMVC logo as base64 and admin password status
+     * @hidden
      */
     public function logo(): JsonResponse
     {
@@ -285,6 +289,12 @@ class Index extends ApiService
        return (new DeveloperController($this->request))->migrateTable();
    }
 
+    /**
+     * Summary of mockResponse
+     * @param string $method
+     * @return array{count: int, data: array{description: string, id: int, name: string, message: string, response_code: int, service_message: string}|array{count: null, data: null, message: string, response_code: int, service_message: null}}
+     * @hidden
+     */
     public static function mockResponse(string $method): array
     {
         return match($method) {

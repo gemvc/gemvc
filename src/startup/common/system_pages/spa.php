@@ -218,7 +218,7 @@ try {
                     content.innerHTML = `
                     <div class="text-center mb-8">
                         <img id="loginLogo" src="" alt="GEMVC Logo" class="h-16 mx-auto mb-4 hidden">
-                        <h1 class="text-3xl font-bold text-gemvc-green mb-2 tracking-tight">User Login</h1>
+                        <h1 class="text-3xl font-bold text-gemvc-green mb-2 tracking-tight">Developer Login</h1>
                         <p class="text-gray-600">Enter your email and password to access system pages</p>
                     </div>
                     <div id="loginError" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
@@ -244,14 +244,14 @@ try {
                     </form>
                     <div id="adminPasswordHint" class="mt-6 text-center">
                         <p class="">
-                            Set admin password using:<br>
+                            you shall create a new admin/developer user<br>
                             <code class="bg-gray-100 px-2 py-1 rounded text-xs">php vendor/bin/gemvc admin:setadmin</code>
                         </p>
                     </div>
                 `;
 
                     // Load logo
-                    const logoResponse = await fetch(API_BASE + '/developer/logo');
+                    const logoResponse = await fetch(API_BASE + '/index/logo');
                     if (logoResponse.ok) {
                         const logoData = await logoResponse.json();
                         if (logoData.data && logoData.data.gemvcLogo) {
@@ -1001,7 +1001,7 @@ try {
                 // Load navbar logo
                 async function loadNavbarLogo() {
                     try {
-                        const logoResponse = await fetch(API_BASE + '/developer/logo');
+                        const logoResponse = await fetch(API_BASE + '/index/logo');
                         if (logoResponse.ok) {
                             const logoData = await logoResponse.json();
                             if (logoData.data && logoData.data.gemvcLogo) {
