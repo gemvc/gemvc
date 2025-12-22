@@ -33,12 +33,7 @@ class Index extends ApiService
         if($_ENV['APP_ENV'] !== 'dev'){
             return Response::success('server running',1,'server running');
         }
-        $info = new \stdClass();
-        $info->server = \Gemvc\Core\WebserverDetector::get();
-        $info->version = \Gemvc\Helper\ProjectHelper::getVersion();
-        $info->environment = $_ENV['APP_ENV'];
-
-        return Response::success($info,1,'server running');
+        return (new DeveloperController($this->request))->devInfo();
     }
 
     /**

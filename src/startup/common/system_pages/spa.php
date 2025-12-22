@@ -258,7 +258,7 @@ try {
                     <div class="text-center mb-8">
                         <img id="loginLogo" src="" alt="GEMVC Logo" class="h-16 mx-auto mb-4 hidden">
                         <h1 class="text-3xl font-bold text-gemvc-green mb-2 tracking-tight">Developer Login</h1>
-                        <p class="text-gray-600">Enter your email and password to access system pages</p>
+                        <p class="text-gray-600"></p>
                     </div>
                     <div id="loginError" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
                         <p class="text-red-800 text-sm" id="loginErrorText"></p>
@@ -283,8 +283,8 @@ try {
                     </form>
                     <div id="adminPasswordHint" class="mt-6 text-center">
                         <p class="">
-                            you shall create a new admin/developer user<br>
-                            <code class="bg-gray-100 px-2 py-1 rounded text-lg">php vendor/bin/gemvc setAdmin</code>
+                             
+                            <a href="${API_BASE}/User/create" class="text-gemvc-green no-underline font-medium transition-colors hover:text-gemvc-green-dark hover:underline cursor-pointer">Create Admin User</a>
                         </p>
                     </div>
                 `;

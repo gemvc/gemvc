@@ -783,5 +783,40 @@ class DeveloperModel extends DeveloperTable
             return false;
         }
     }
-}
 
+    public function getDevAssistantUrl(): string
+    {
+        $port = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+        $subUrl = $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? '';
+        $url = 'http://localhost';
+        if($port === '80' ) {
+            $url = 'http://localhost';
+        }
+        else {
+            $url = 'http://localhost:'.$port;
+        }
+        if(!empty($subUrl)) {
+            $url .= '/'.$subUrl;
+        }
+        $url .= '/index/developer';
+        return $url;
+    }
+
+    public function getDocumentationUrl(): string
+    {
+        $port = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+        $subUrl = $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? '';
+        $url = 'http://localhost';
+        if($port === '80' ) {
+            $url = 'http://localhost';
+        }
+        else {
+            $url = 'http://localhost:'.$port;
+        }
+        if(!empty($subUrl)) {
+            $url .= '/'.$subUrl;
+        }
+        $url .= '/index/document';
+        return $url;
+    }
+}   

@@ -49,6 +49,20 @@ class DeveloperController extends Controller
         }
     }
 
+    public function devInfo(): JsonResponse
+    {
+        $developerModel = new DeveloperModel();
+        $info = new \stdClass();
+        $info->server = WebserverDetector::get();
+        $info->version = \Gemvc\Helper\ProjectHelper::getVersion();
+        $info->environment = $_ENV['APP_ENV'];
+        $info->databaseName = $developerModel->getDatabaseName() ?? 'unknown';
+        $info->database = $developerModel->isDatabaseReady() ? 'ready' :  $developerModel->getError();
+        $info->devAssistantUrl = $developerModel->getDevAssistantUrl();
+        $info->documentationUrl = $developerModel->getDocumentationUrl();
+        return Response::success($info,1,'server running');
+    }
+
     /**
      * Handle admin login
      * 
