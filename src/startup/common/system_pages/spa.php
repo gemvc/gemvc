@@ -4,16 +4,26 @@ try {
     \Gemvc\Helper\ProjectHelper::loadEnv();
     $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
 } catch (\Exception $e) {
-    // Fallback to default if env can't be loaded - but still try to read port from env
+    // Fallback to default if env can't be loaded - but still try to read port from HTTP_HOST or env
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
         ? $_SERVER['HTTP_HOST']
         : 'localhost';
-    $host = preg_replace('/:\d+$/', '', $host);
     
-    // Try to get port from environment even in fallback
-    $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-    $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+    // Extract port from HTTP_HOST if it exists (e.g., localhost:82)
+    $detectedPort = null;
+    if (preg_match('/:(\d+)$/', $host, $matches)) {
+        $detectedPort = (int) $matches[1];
+        $host = preg_replace('/:\d+$/', '', $host);
+    }
+    
+    // Use detected port from HTTP_HOST if available, otherwise use env variable
+    if ($detectedPort !== null) {
+        $port = $detectedPort;
+    } else {
+        $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+        $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+    }
     $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
     
     // Get API sub URL from env (matches ProjectHelper::getApiBaseUrl logic exactly)
@@ -33,6 +43,7 @@ try {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>GEMVC Framework - Development Server</title>
+        <link rel="icon" type="image/x-icon" href="<?php echo htmlspecialchars($apiBaseUrl, ENT_QUOTES, 'UTF-8'); ?>/index/favicon">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

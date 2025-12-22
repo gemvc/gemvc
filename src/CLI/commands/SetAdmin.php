@@ -210,12 +210,16 @@ class SetAdmin extends Command
             
             // Ensure CLI uses localhost for database connection (not Docker hostname)
             // This is needed because UserModel uses Table layer which connects via DatabaseManagerFactory
-            // PdoConnection reads DB_HOST directly, so we need to override it for CLI
+            // PdoConnection reads DB_HOST and DB_HOST_CLI_DEV, so we need to override both for CLI
             $currentHost = $_ENV['DB_HOST'] ?? 'localhost';
-            if ($currentHost === 'db' || $currentHost === 'mysql' || $currentHost === 'database') {
+            $dockerHostnames = ['db', 'mysql', 'database'];
+            if (in_array(strtolower($currentHost), $dockerHostnames, true)) {
                 // Docker hostname detected, use localhost for CLI
                 $_ENV['DB_HOST'] = 'localhost';
                 putenv('DB_HOST=localhost');
+                // Also set DB_HOST_CLI_DEV in case DatabaseManagerFactory uses it for CLI
+                $_ENV['DB_HOST_CLI_DEV'] = 'localhost';
+                putenv('DB_HOST_CLI_DEV=localhost');
                 // Reset DatabaseManagerFactory to pick up new configuration
                 DatabaseManagerFactory::resetInstance();
                 $this->info("Using localhost for database connection (CLI mode)");
@@ -285,6 +289,19 @@ class SetAdmin extends Command
             if ($password !== $confirmPassword) {
                 $this->error("Passwords do not match");
                 return false;
+            }
+            
+            // Reload environment to ensure DB_HOST overrides are picked up
+            ProjectHelper::loadEnv();
+            // Ensure DB_HOST is still set to localhost (in case loadEnv() overwrote it)
+            $currentHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dockerHostnames = ['db', 'mysql', 'database'];
+            if (in_array(strtolower($currentHost), $dockerHostnames, true)) {
+                $_ENV['DB_HOST'] = 'localhost';
+                putenv('DB_HOST=localhost');
+                $_ENV['DB_HOST_CLI_DEV'] = 'localhost';
+                putenv('DB_HOST_CLI_DEV=localhost');
+                DatabaseManagerFactory::resetInstance();
             }
             
             // Create UserModel instance and call firstAdminUser

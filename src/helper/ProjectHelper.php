@@ -74,17 +74,25 @@ class ProjectHelper
         // Get protocol
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         
-        // Get host
+        // Get host and port
         $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
             ? $_SERVER['HTTP_HOST']
             : 'localhost';
         
-        // Remove port from HTTP_HOST if it exists (we'll add our own)
-        $host = preg_replace('/:\d+$/', '', $host);
+        // Extract port from HTTP_HOST if it exists (e.g., localhost:82)
+        $detectedPort = null;
+        if (preg_match('/:(\d+)$/', $host, $matches)) {
+            $detectedPort = (int) $matches[1];
+            $host = preg_replace('/:\d+$/', '', $host);
+        }
         
-        // Get port from env
-        $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-        $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+        // Use detected port from HTTP_HOST if available, otherwise use env variable
+        if ($detectedPort !== null) {
+            $port = $detectedPort;
+        } else {
+            $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+            $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+        }
         
         // Add port only if not 80 (http) or 443 (https)
         $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';

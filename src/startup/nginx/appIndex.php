@@ -183,6 +183,33 @@ class Index extends ApiService
     }
 
     /**
+     * Get Favicon
+     * 
+     * @return \Gemvc\Http\HtmlResponse
+     * @http GET
+     * @description Returns favicon.ico file
+     * @hidden
+     */
+    public function favicon(): HtmlResponse
+    {
+        $faviconPath = __DIR__ . '/../../vendor/gemvc/library/src/startup/common/system_pages/favicon.ico';
+        
+        if (file_exists($faviconPath)) {
+            $faviconContent = file_get_contents($faviconPath);
+            if ($faviconContent !== false) {
+                $headers = [
+                    'Content-Type' => 'image/x-icon',
+                    'Cache-Control' => 'public, max-age=31536000'
+                ];
+                return new HtmlResponse($faviconContent, 200, $headers);
+            }
+        }
+        
+        // Return 404 if favicon not found
+        return new HtmlResponse('', 404);
+    }
+
+    /**
      * Get API Configuration
      * 
      * @return JsonResponse
@@ -386,4 +413,3 @@ class Index extends ApiService
         };
     }
 }
-
