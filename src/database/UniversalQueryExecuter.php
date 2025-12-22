@@ -92,7 +92,8 @@ class UniversalQueryExecuter
     private function debug(string $message): void
     {
         if (($_ENV['APP_ENV'] ?? '') === 'dev') {
-            echo $message . PHP_EOL;
+            // Use error_log instead of echo to avoid "headers already sent" errors
+            error_log('[UniversalQueryExecuter] ' . $message);
         }
     }
 

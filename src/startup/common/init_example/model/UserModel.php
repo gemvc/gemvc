@@ -47,7 +47,7 @@ class UserModel extends UserTable
             return Response::created($this, 1, "User created successfully");
     }
 
-    public function firstAdminUser(string $email, string $password): JsonResponse
+    public function firstAdminUser(string $email, string $password, ?string $name = null): JsonResponse
     {
         $qb = new QueryBuilder();
         $results = $qb->select('id')->from('users')->limit(1)->run();
@@ -58,6 +58,7 @@ class UserModel extends UserTable
             return Response::forbidden("Admin user already exists");
         }
         $this->email = $email;
+        $this->name = $name ?? $email; // Use email as name if name not provided
         $this->role = 'admin';
         $this->password = CryptHelper::hashPassword($password);
         $this->created_at = date('Y-m-d H:i:s');
@@ -142,6 +143,10 @@ class UserModel extends UserTable
             return Response::unauthorized("Invalid password");
         }
         $token = new JWTToken();
+        // Set role from user before creating tokens
+        if (isset($user->role) && is_string($user->role)) {
+            $token->role = $user->role;
+        }
         $loginToken = $token->createLoginToken($user->id);
         $refreshToken = $token->createRefreshToken($user->id);
         $accessToken = $token->createAccessToken($user->id);

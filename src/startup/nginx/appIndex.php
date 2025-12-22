@@ -63,6 +63,10 @@ class Index extends ApiService
      */
     public function developer(): HtmlResponse
     {
+        if(!$_ENV['APP_ENV'] === 'dev'){
+            //it is dummy page for production non dev environment
+            return new HtmlResponse('Page not found', 404);
+        }
         $devController = new DeveloperController($this->request);
         // Delegate to Controller show the login page
         return $devController->app();
@@ -77,6 +81,10 @@ class Index extends ApiService
     */
    public function welcome(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Check JWT authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');
@@ -94,6 +102,10 @@ class Index extends ApiService
      */
     public function export(): HtmlResponse
     {
+        if(!$_ENV['APP_ENV'] === 'dev'){
+            //it is dummy page for production non dev environment
+            return new HtmlResponse('Page not found', 404);
+        }
         // Require admin authentication
         if (!$this->request->auth(['developer','admin'])) {
             return (new DeveloperController($this->request))->app();
@@ -111,6 +123,29 @@ class Index extends ApiService
         return (new DeveloperController($this->request))->export();
     }
 
+    /**
+     * Import Table - Imports table data from CSV or SQL file
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Import table data from file
+     * @hidden
+     */
+    public function import(): JsonResponse
+    {
+        if(!$_ENV['APP_ENV'] === 'dev'){
+            //it is dummy page for production non dev environment
+            return Response::notFound('Page not found');
+        }
+        // Require admin authentication
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Delegate to Controller
+        return (new DeveloperController($this->request))->import();
+    }
+
 
     /**
      * Database Management Page Data (JSON for SPA)
@@ -122,6 +157,10 @@ class Index extends ApiService
      */
     public function database(): JsonResponse
     {
+        if(!$_ENV['APP_ENV'] === 'dev'){
+            //it is dummy page for production non dev environment
+            return Response::notFound('Page not found');
+        }
         // Require admin authentication
         if (!$this->request->auth(['developer','admin'])) {
             return Response::unauthorized('Authentication required');
@@ -153,6 +192,10 @@ class Index extends ApiService
      */
     public function config(): JsonResponse
     {
+        if(!$_ENV['APP_ENV'] === 'dev'){
+            //it is dummy page for production non dev environment
+            return Response::notFound('Page not found');
+        }
         \Gemvc\Helper\ProjectHelper::loadEnv();
         $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
         $webserverType = \Gemvc\Core\WebserverDetector::get();
@@ -175,6 +218,10 @@ class Index extends ApiService
     */
    public function isDbReady(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Delegate to Controller
        return (new DeveloperController($this->request))->isDbReady();
    }
@@ -189,6 +236,10 @@ class Index extends ApiService
     */
    public function initDatabase(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Require admin authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');
@@ -208,6 +259,10 @@ class Index extends ApiService
     */
    public function services(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Require admin authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');
@@ -227,6 +282,10 @@ class Index extends ApiService
     */
    public function createService(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Require admin authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');
@@ -254,6 +313,10 @@ class Index extends ApiService
     */
    public function tables(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Require admin authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');
@@ -273,6 +336,10 @@ class Index extends ApiService
     */
    public function migrateTable(): JsonResponse
    {
+    if(!$_ENV['APP_ENV'] === 'dev'){
+        //it is dummy page for production non dev environment
+        return Response::notFound('Page not found');
+    }
        // Require admin authentication
        if (!$this->request->auth(['developer','admin'])) {
            return Response::unauthorized('Authentication required');

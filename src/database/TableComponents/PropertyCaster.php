@@ -161,6 +161,8 @@ class PropertyCaster
      * Iterates through the row array and sets properties on the instance
      * using type casting via castValue().
      * 
+     * Uses ReflectionProperty to handle protected/private properties.
+     * 
      * @param object $instance The object instance to hydrate
      * @param array<string, mixed> $row Database row as associative array
      * @return void
@@ -168,10 +170,23 @@ class PropertyCaster
     public function fetchRow(object $instance, array $row): void
     {
         foreach ($row as $key => $value) {
-            if (property_exists($instance, $key)) {
-                $instance->$key = $this->castValue($key, $value);
+            if (!property_exists($instance, $key)) {
+                continue;
+            }
+            
+            try {
+                // Use reflection to handle protected/private properties
+                $reflection = new \ReflectionProperty($instance, $key);
+                
+                // PHP 8.2+: Reflection properties are accessible by default
+                // GEMVC requires PHP 8.2+, so we don't need setAccessible() (deprecated in PHP 8.1+)
+                // Just set the value directly - reflection handles protected/private properties automatically
+                $reflection->setValue($instance, $this->castValue($key, $value));
+            } catch (\ReflectionException $e) {
+                // Property exists but can't be accessed via reflection - skip it
+                // This should rarely happen, but handle gracefully
+                continue;
             }
         }
     }
 }
-

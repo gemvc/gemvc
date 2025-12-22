@@ -4,13 +4,27 @@ try {
     \Gemvc\Helper\ProjectHelper::loadEnv();
     $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
 } catch (\Exception $e) {
-    // Fallback to default if env can't be loaded
+    // Fallback to default if env can't be loaded - but still try to read port from env
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
         ? $_SERVER['HTTP_HOST']
         : 'localhost';
     $host = preg_replace('/:\d+$/', '', $host);
-    $apiBaseUrl = $protocol . '://' . $host . '/api';
+    
+    // Try to get port from environment even in fallback
+    $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
+    $port = is_numeric($portEnv) ? (int) $portEnv : 80;
+    $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
+    
+    // Get API sub URL from env (matches ProjectHelper::getApiBaseUrl logic exactly)
+    // If empty, endpoints are directly on base URL (no /api prefix) - e.g., Swoole: localhost:9501/user/create
+    // If set (e.g., 'api' or 'apiv2'), endpoints are on base URL + sub URL - e.g., localhost:9501/api/user/create
+    $apiSubUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL'])
+        ? trim(trim($_ENV['APP_ENV_API_DEFAULT_SUB_URL'], '\'"'), '/')
+        : '';
+    $apiSubUrl = $apiSubUrl !== '' ? '/' . $apiSubUrl : '';
+    
+    $apiBaseUrl = rtrim($protocol . '://' . $host . $portDisplay . $apiSubUrl, '/');
 }
 ?>
 <!DOCTYPE html>
@@ -128,10 +142,24 @@ try {
                 // JWT Token Management
                 const originalFetch = window.fetch;
                 window.fetch = function (url, options = {}) {
-                    if (token) {
-                        options.headers = options.headers || {};
-                        if (!options.headers['Authorization']) {
-                            options.headers['Authorization'] = 'Bearer ' + token;
+                    // Initialize options if not provided
+                    options = options || {};
+                    
+                    // Always get the latest token from localStorage (source of truth)
+                    const currentToken = localStorage.getItem('gemvc_admin_token');
+                    if (currentToken) {
+                        // Handle Headers object or plain object
+                        if (options.headers instanceof Headers) {
+                            // If it's a Headers object, check if Authorization is already set
+                            if (!options.headers.has('Authorization') && !options.headers.has('authorization')) {
+                                options.headers.set('Authorization', 'Bearer ' + currentToken);
+                            }
+                        } else {
+                            // If it's a plain object or undefined, create/use plain object
+                            options.headers = options.headers || {};
+                            if (!options.headers['Authorization'] && !options.headers['authorization']) {
+                                options.headers['Authorization'] = 'Bearer ' + currentToken;
+                            }
                         }
                     }
                     return originalFetch(url, options);
@@ -245,7 +273,7 @@ try {
                     <div id="adminPasswordHint" class="mt-6 text-center">
                         <p class="">
                             you shall create a new admin/developer user<br>
-                            <code class="bg-gray-100 px-2 py-1 rounded text-xs">php vendor/bin/gemvc admin:setadmin</code>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-lg">php vendor/bin/gemvc setAdmin</code>
                         </p>
                     </div>
                 `;
@@ -288,11 +316,22 @@ try {
 
                             const data = await response.json();
 
-                            if (response.ok && data.data && data.data.login_token) {
-                                // Store login token (or access_token, depending on your preference)
-                                token = data.data.login_token;
-                                localStorage.setItem('gemvc_admin_token', token);
-                                setRoute('welcome');
+                            if (response.ok && data.data) {
+                                // Store login token (prefer login_token, fallback to access_token)
+                                const loginToken = data.data.login_token || data.data.access_token;
+                                if (loginToken) {
+                                    token = loginToken;
+                                    localStorage.setItem('gemvc_admin_token', token);
+                                    // Ensure token is stored before navigation
+                                    token = localStorage.getItem('gemvc_admin_token');
+                                    if (token) {
+                                        setRoute('welcome');
+                                    } else {
+                                        throw new Error('Failed to store authentication token');
+                                    }
+                                } else {
+                                    throw new Error('No authentication token in response');
+                                }
                             } else {
                                 // Show error message
                                 const errorMessage = data.service_message || data.message || 'Login failed. Please check your email and password.';
@@ -316,10 +355,19 @@ try {
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
+                    // Get token from localStorage
+                    const currentToken = localStorage.getItem('gemvc_admin_token');
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (currentToken) {
+                        headers['Authorization'] = 'Bearer ' + currentToken;
+                    }
+
                     // Fetch welcome page HTML and database status in parallel
                     const [welcomeResponse, dbStatusResponse] = await Promise.all([
-                        fetch(API_BASE + '/developer/welcome'),
-                        fetch(API_BASE + '/developer/isDbReady')
+                        fetch(API_BASE + '/index/welcome', { headers: headers }),
+                        fetch(API_BASE + '/index/isDbReady', { headers: headers })
                     ]);
 
                     if (! welcomeResponse.ok) {
@@ -390,7 +438,7 @@ try {
                                     button.textContent = 'Initializing...';
                                     
                                     try {
-                                        const initResponse = await fetch(API_BASE + '/developer/initDatabase', {
+                                        const initResponse = await fetch(API_BASE + '/index/initDatabase', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
@@ -500,7 +548,7 @@ try {
 
                             try {
                                 // Build URL with table parameter if provided
-                                let url = API_BASE + '/developer/database/';
+                                let url = API_BASE + '/index/database/';
                                 if (tableName) {
                                     url += '?table=' + encodeURIComponent(tableName);
                                 }
@@ -569,7 +617,7 @@ try {
                                                 const format = exportFormatInput.value;
 
                                                 try {
-                                                    const exportResponse = await fetch(API_BASE + '/developer/export', {
+                                                    const exportResponse = await fetch(API_BASE + '/index/export', {
                                                         method: 'POST',
                                                         headers: {
                                                             'Content-Type': 'application/json'
@@ -621,7 +669,7 @@ try {
                                         const format = importFormatInput.value;
                                         
                                         try {
-                                            const importResponse = await fetch(API_BASE + '/developer/import', {
+                                            const importResponse = await fetch(API_BASE + '/index/import', {
                                                 method: 'POST',
                                                 body: formData
                                             });
@@ -669,7 +717,7 @@ try {
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/developer/services');
+                    const response = await fetch(API_BASE + '/index/services');
                     if (!response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
@@ -723,7 +771,7 @@ try {
                             }
                             
                             try {
-                                const createResponse = await fetch(API_BASE + '/developer/createService', {
+                                const createResponse = await fetch(API_BASE + '/index/createService', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -817,7 +865,7 @@ try {
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/developer/tables');
+                    const response = await fetch(API_BASE + '/index/tables');
                     if (!response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
@@ -848,7 +896,7 @@ try {
                         button.textContent = isUpdate ? 'Updating...' : 'Migrating...';
                         
                         try {
-                            const migrateResponse = await fetch(API_BASE + '/developer/migrateTable', {
+                            const migrateResponse = await fetch(API_BASE + '/index/migrateTable', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
