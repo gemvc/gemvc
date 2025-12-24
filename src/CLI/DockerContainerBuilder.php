@@ -552,7 +552,7 @@ class DockerContainerBuilder extends Command
             // This approach correctly handles Apache's "8080:80" mapping
             $updatedContent = preg_replace_callback(
                 '/(\s+-\s*")(\d+):(\d+)(")/',
-                function($matches) use ($oldPort, $newPort, $targetServiceName, $content) {
+                function($matches) use ($oldPort, $newPort, $targetServiceName) {
                     $hostPort = (int)$matches[2];
                     $containerPort = (int)$matches[3];
                     
