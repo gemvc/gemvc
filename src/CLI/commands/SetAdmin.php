@@ -97,7 +97,7 @@ class SetAdmin extends Command
             }
             $stmt->execute([$dbName]);
             $result = $stmt->fetch();
-            $dbExists = $result !== false && isset($result['SCHEMA_NAME']);
+            $dbExists = $result !== false && is_array($result) && isset($result['SCHEMA_NAME']);
             
             if ($dbExists) {
                 // Database exists, verify we can connect to it
@@ -157,7 +157,8 @@ class SetAdmin extends Command
             }
             $stmt->execute([$dbName]);
             $result = $stmt->fetch();
-            $tableExists = isset($result['count']) && (int)$result['count'] > 0;
+            $count = (is_array($result) && isset($result['count']) && is_numeric($result['count'])) ? (int)$result['count'] : 0;
+            $tableExists = $count > 0;
         } catch (\Exception $e) {
             // If query fails, assume table doesn't exist
             $tableExists = false;
@@ -211,7 +212,7 @@ class SetAdmin extends Command
             // Ensure CLI uses localhost for database connection (not Docker hostname)
             // This is needed because UserModel uses Table layer which connects via DatabaseManagerFactory
             // PdoConnection reads DB_HOST and DB_HOST_CLI_DEV, so we need to override both for CLI
-            $currentHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $currentHost = is_string($_ENV['DB_HOST'] ?? null) ? $_ENV['DB_HOST'] : 'localhost';
             $dockerHostnames = ['db', 'mysql', 'database'];
             if (in_array(strtolower($currentHost), $dockerHostnames, true)) {
                 // Docker hostname detected, use localhost for CLI
@@ -238,9 +239,9 @@ class SetAdmin extends Command
                     $this->error("Failed to prepare query to count users");
                     return false;
                 }
-                $stmt->execute();
-                $result = $stmt->fetch();
-                $userCount = isset($result['count']) ? (int)$result['count'] : 0;
+            $stmt->execute();
+            $result = $stmt->fetch();
+            $userCount = (is_array($result) && isset($result['count']) && is_numeric($result['count'])) ? (int)$result['count'] : 0;
                 
                 if ($userCount > 0) {
                     $this->error("Cannot perform this operation: Users already exist in the database (count: {$userCount})");
@@ -294,7 +295,7 @@ class SetAdmin extends Command
             // Reload environment to ensure DB_HOST overrides are picked up
             ProjectHelper::loadEnv();
             // Ensure DB_HOST is still set to localhost (in case loadEnv() overwrote it)
-            $currentHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $currentHost = is_string($_ENV['DB_HOST'] ?? null) ? $_ENV['DB_HOST'] : 'localhost';
             $dockerHostnames = ['db', 'mysql', 'database'];
             if (in_array(strtolower($currentHost), $dockerHostnames, true)) {
                 $_ENV['DB_HOST'] = 'localhost';
@@ -305,7 +306,9 @@ class SetAdmin extends Command
             }
             
             // Create UserModel instance and call firstAdminUser
+            /** @phpstan-ignore-next-line */
             $userModel = new UserModel();
+            /** @phpstan-ignore-next-line */
             $response = $userModel->firstAdminUser($email, $password, $name);
             
             // Check response

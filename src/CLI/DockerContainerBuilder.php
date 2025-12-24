@@ -542,57 +542,33 @@ class DockerContainerBuilder extends Command
         }
         
         // Update port mappings in docker-compose.yml
-        // Pattern: "3306:3306" or "9501:9501" or "8080:80" etc.
+        // Use robust callback approach to handle all port mappings correctly
+        // This works for: "3306:3306", "9501:9501", "8080:80", etc.
         foreach ($portMap as $oldPort => $newPort) {
-            // Match patterns like "3306:3306", "9501:9501", "8080:80", etc.
-            // We need to replace the host port (first number) but keep the container port (second number)
+            // Get the service name for this port to ensure we update the correct service
+            $targetServiceName = $this->getServiceNameForPort($content, $oldPort);
             
-            // For app port, the format depends on webserver type
-            if ($oldPort === $this->appPort) {
-                if ($this->webserverType === 'openswoole') {
-                    // Format: "9501:9501" -> "9502:9501"
-                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote((string)$oldPort, '/') . '(")/';
-                    $replacement = '${1}' . $newPort . ':' . $oldPort . '${3}';
-                } else {
-                    // Format: "80:80" -> "8080:80" (for Apache/Nginx)
-                    $pattern = '/("|\s*-\s*")(\d+):80(")/';
-                    $replacement = '${1}' . $newPort . ':80${3}';
-                }
-            } else {
-                // For other services like MySQL (3306:3306) or phpMyAdmin (8080:80)
-                // We need to find the service and update accordingly
-                if ($oldPort === 3306) {
-                    // MySQL: "3306:3306" -> "3307:3306"
-                    $pattern = '/("|\s*-\s*")(\d+):3306(")/';
-                    $replacement = '${1}' . $newPort . ':3306${3}';
-                } elseif ($oldPort === 8080) {
-                    // phpMyAdmin: "8080:80" -> "8081:80" (or whatever new port)
-                    $pattern = '/("|\s*-\s*")(\d+):80(")/';
-                    // But we need to be careful - this might match the app port too
-                    // Let's be more specific - look for db service or phpmyadmin service
-                    $pattern = '/("|\s*-\s*")(\d+):80(")/';
-                    // Actually, we need to check which service uses this port
-                    // For now, let's use a more general approach
-                } else {
-                    // Generic: replace first occurrence of oldPort in port mapping
-                    $pattern = '/("|\s*-\s*")(\d+):' . preg_quote((string)$oldPort, '/') . '(")/';
-                    $replacement = '${1}' . $newPort . ':' . $oldPort . '${3}';
-                }
-            }
-            
-            // More robust approach: find all port mappings and update the ones that match
-            // Pattern: "ports:" section with "- "HOST:CONTAINER""
-            $pattern = '/(ports:\s*\n(?:\s+-\s*"[^"]+"\s*\n?)*)/';
-            
-            // Better: find each port line and update if it matches
+            // Use callback to find and update port mappings
+            // This approach correctly handles Apache's "8080:80" mapping
             $updatedContent = preg_replace_callback(
                 '/(\s+-\s*")(\d+):(\d+)(")/',
-                function($matches) use ($oldPort, $newPort) {
+                function($matches) use ($oldPort, $newPort, $targetServiceName, $content) {
                     $hostPort = (int)$matches[2];
                     $containerPort = (int)$matches[3];
                     
                     // If this port mapping uses the old port as host port, update it
                     if ($hostPort === $oldPort) {
+                        // For Apache/Nginx, ensure container port is 80 when updating web service
+                        if (in_array($this->webserverType, ['apache', 'nginx']) && 
+                            $targetServiceName === 'web' && 
+                            $containerPort === 80) {
+                            return $matches[1] . $newPort . ':80' . $matches[4];
+                        }
+                        // For OpenSwoole, keep container port same as host port
+                        if ($this->webserverType === 'openswoole' && $hostPort === $containerPort) {
+                            return $matches[1] . $newPort . ':' . $newPort . $matches[4];
+                        }
+                        // Default: keep container port unchanged
                         return $matches[1] . $newPort . ':' . $containerPort . $matches[4];
                     }
                     return $matches[0];
@@ -784,12 +760,59 @@ class DockerContainerBuilder extends Command
      */
     private function getAppServiceName(string $content): ?string
     {
-        // Common app service names
-        $possibleNames = ['openswoole', 'web', 'nginx', 'apache', 'app'];
+        // Common app service names - prioritize based on webserver type
+        $possibleNames = [];
+        
+        if ($this->webserverType === 'apache' || $this->webserverType === 'nginx') {
+            // For Apache/Nginx, 'web' is the standard service name
+            $possibleNames = ['web', 'nginx', 'apache', 'app'];
+        } else {
+            // For OpenSwoole, 'openswoole' is the standard service name
+            $possibleNames = ['openswoole', 'web', 'app'];
+        }
         
         foreach ($possibleNames as $name) {
             if (preg_match("/^\s*{$name}:\s*$/m", $content)) {
                 return $name;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get service name that uses a specific port
+     * 
+     * @param string $content docker-compose.yml content
+     * @param int $port Port number to find
+     * @return string|null Service name or null if not found
+     */
+    private function getServiceNameForPort(string $content, int $port): ?string
+    {
+        // Extract all services and their port mappings
+        preg_match_all('/^\s*([a-zA-Z0-9_-]+):\s*$/m', $content, $serviceMatches);
+        
+        if (empty($serviceMatches[1])) {
+            return null;
+        }
+        
+        foreach ($serviceMatches[1] as $serviceName) {
+            // Find the service block
+            $servicePattern = '/^\s*' . preg_quote($serviceName, '/') . ':\s*\n(.*?)(?=^\s*[a-z]|\Z)/ms';
+            if (preg_match($servicePattern, $content, $serviceBlock)) {
+                // Check if this service has the port mapping (host port matches)
+                // Pattern: ports: - "PORT:CONTAINER" or ports: - PORT:CONTAINER
+                if (preg_match('/ports:\s*\n\s+-\s*["\']?' . preg_quote((string)$port, '/') . ':\d+["\']?/m', $serviceBlock[1])) {
+                    return $serviceName;
+                }
+            }
+        }
+        
+        // If not found by service block, try to identify by webserver type
+        // For Apache/Nginx, the 'web' service typically uses the app port
+        if (in_array($this->webserverType, ['apache', 'nginx']) && $port === $this->appPort) {
+            if (preg_match('/^\s*web:\s*$/m', $content)) {
+                return 'web';
             }
         }
         
@@ -1015,14 +1038,29 @@ class DockerContainerBuilder extends Command
         }
         
         // Read port from docker-compose.yml (public port - first number in port mapping)
+        // For Apache, we need to find the 'web' service port mapping
         $publicPort = $this->appPort; // Default to appPort
         if (file_exists($dockerComposeFile)) {
             $composeContent = file_get_contents($dockerComposeFile);
             if ($composeContent !== false) {
-                // Extract port mapping like "80:80" or "9501:9501" or "8080:80"
-                // Match pattern: ports: - "PORT:PORT" or ports: - PORT:PORT
-                if (preg_match('/ports:\s*\n\s*-\s*["\']?(\d+):\d+["\']?/m', $composeContent, $matches)) {
-                    $publicPort = (int) $matches[1];
+                // Get the app service name (web for Apache/Nginx, openswoole for OpenSwoole)
+                $appServiceName = $this->getAppServiceName($composeContent);
+                
+                if ($appServiceName !== null) {
+                    // Find the service block and extract its port mapping
+                    $servicePattern = '/^\s*' . preg_quote($appServiceName, '/') . ':\s*\n(.*?)(?=^\s*[a-z]|\Z)/ms';
+                    if (preg_match($servicePattern, $composeContent, $serviceMatches)) {
+                        // Extract port mapping from the service block
+                        // Pattern: ports: - "HOST:CONTAINER" or ports: - HOST:CONTAINER
+                        if (preg_match('/ports:\s*\n\s+-\s*["\']?(\d+):(\d+)["\']?/m', $serviceMatches[1], $portMatches)) {
+                            $publicPort = (int) $portMatches[1];
+                        }
+                    }
+                } else {
+                    // Fallback: try to match first port mapping (for backward compatibility)
+                    if (preg_match('/ports:\s*\n\s+-\s*["\']?(\d+):\d+["\']?/m', $composeContent, $matches)) {
+                        $publicPort = (int) $matches[1];
+                    }
                 }
             }
         }
@@ -1036,7 +1074,8 @@ class DockerContainerBuilder extends Command
         $portLine = "APP_ENV_PUBLIC_SERVER_PORT={$publicPort}";
         if (preg_match('/^APP_ENV_PUBLIC_SERVER_PORT=.*$/m', $content)) {
             // Update existing
-            $content = preg_replace('/^APP_ENV_PUBLIC_SERVER_PORT=.*$/m', $portLine, $content);
+            $replaced = preg_replace('/^APP_ENV_PUBLIC_SERVER_PORT=.*$/m', $portLine, $content);
+            $content = is_string($replaced) ? $replaced : $content;
         } else {
             // Add new line after APP_ENV_SERVER if found, otherwise append to end
             if (preg_match('/^APP_ENV_SERVER\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
@@ -1054,7 +1093,8 @@ class DockerContainerBuilder extends Command
         $apiSubUrlLine = "APP_ENV_API_DEFAULT_SUB_URL='{$apiSubUrl}'";
         if (preg_match('/^APP_ENV_API_DEFAULT_SUB_URL=.*$/m', $content)) {
             // Update existing
-            $content = preg_replace('/^APP_ENV_API_DEFAULT_SUB_URL=.*$/m', $apiSubUrlLine, $content);
+            $replaced = preg_replace('/^APP_ENV_API_DEFAULT_SUB_URL=.*$/m', $apiSubUrlLine, $content);
+            $content = is_string($replaced) ? $replaced : $content;
         } else {
             // Add new line after APP_ENV_PUBLIC_SERVER_PORT if found, otherwise append to end
             if (preg_match('/^APP_ENV_PUBLIC_SERVER_PORT\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {

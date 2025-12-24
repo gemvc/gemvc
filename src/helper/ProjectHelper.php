@@ -130,23 +130,31 @@ class ProjectHelper
             }
             
             $lockData = json_decode($lockContent, true);
-            if (!is_array($lockData) || !isset($lockData['packages'])) {
+            if (!is_array($lockData) || !isset($lockData['packages']) || !is_array($lockData['packages'])) {
                 return 'unknown';
             }
             
             // Search for gemvc/library package in packages array
             foreach ($lockData['packages'] as $package) {
-                if (isset($package['name']) && $package['name'] === 'gemvc/library') {
+                if (is_array($package) && isset($package['name']) && $package['name'] === 'gemvc/library') {
                     // Return version if available, otherwise try pretty_version
-                    return $package['version'] ?? $package['pretty_version'] ?? 'unknown';
+                    $version = $package['version'] ?? $package['pretty_version'] ?? null;
+                    if (is_string($version)) {
+                        return $version;
+                    }
+                    return 'unknown';
                 }
             }
             
             // Also check packages-dev in case it's a dev dependency
             if (isset($lockData['packages-dev']) && is_array($lockData['packages-dev'])) {
                 foreach ($lockData['packages-dev'] as $package) {
-                    if (isset($package['name']) && $package['name'] === 'gemvc/library') {
-                        return $package['version'] ?? $package['pretty_version'] ?? 'unknown';
+                    if (is_array($package) && isset($package['name']) && $package['name'] === 'gemvc/library') {
+                        $version = $package['version'] ?? $package['pretty_version'] ?? null;
+                        if (is_string($version)) {
+                            return $version;
+                        }
+                        return 'unknown';
                     }
                 }
             }

@@ -254,7 +254,7 @@ class Controller
      * @template T of object
      * @param T $model
      * @param string|null $columns
-     * @return array<object>
+     * @return array<array<string, mixed>>
      * @throws ValidationException If validation fails during filtering/pagination
      * @throws \RuntimeException If model query execution fails
      */
@@ -266,10 +266,10 @@ class Controller
         $model = $this->_handlePagination($model);
         //$publicPropertiesString = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
         //$fastString = trim(json_encode(array_keys(get_object_vars($model))), '[]');
-        // @phpstan-ignore-next-line
         if(!$columns) {
             $columns = '*';
         }
+        /** @phpstan-ignore-next-line */
         $result = $model->select($columns)->run();
         if($result === false) {
             // @phpstan-ignore-next-line
@@ -279,17 +279,15 @@ class Controller
         /** @var array<T> $result */
         // Convert objects to arrays to avoid PHP 8.4+ protected property access issues
         // get_object_vars() only returns public properties when called from outside the class
-        return array_map(function($item) {
-            if (is_object($item)) {
-                $vars = get_object_vars($item);
-                $result = [];
-                foreach ($vars as $key => $val) {
-                    if ($key[0] === '_') continue;
-                    $result[$key] = $val;
-                }
-                return $result;
+        return array_map(function($item): array {
+            /** @var T $item */
+            $vars = get_object_vars($item);
+            $result = [];
+            foreach ($vars as $key => $val) {
+                if ($key[0] === '_') continue;
+                $result[$key] = $val;
             }
-            return $item;
+            return $result;
         }, $result);
     }
 }

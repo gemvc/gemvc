@@ -1,29 +1,34 @@
-FROM secure73/gem_lamp
+# ============================================================================
+# GEMVC Application Dockerfile
+# Extends the base Apache image with application code
+# ============================================================================
+
+# Use the GEMVC Apache base image
+FROM gemvc/apache:latest
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Install required PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql
+# Copy composer files first (for better caching)
+COPY composer.json  ./
 
-# Enable Apache modules
-RUN a2enmod rewrite
+# Install dependencies (if composer.lock exists)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy application files
 COPY . .
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
-
-# Configure PHP
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 64M/' "$PHP_INI_DIR/php.ini" \
-    && sed -i 's/post_max_size = 8M/post_max_size = 64M/' "$PHP_INI_DIR/php.ini" \
-    && sed -i 's/memory_limit = 128M/memory_limit = 256M/' "$PHP_INI_DIR/php.ini"
+    && chmod -R 755 /var/www/html \
+    && find /var/www/html -type f -exec chmod 644 {} \; \
+    && find /var/www/html -type d -exec chmod 755 {} \;
 
 # Expose port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Health check (wget is available in base image)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# Start PHP-FPM and Apache (matches base image)
+CMD ["/bin/bash", "-c", "php-fpm -D && httpd -D FOREGROUND"]
