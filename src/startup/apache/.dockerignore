@@ -1,10 +1,4 @@
-composer.phar
-/vendor/
-composer.lock
-app/config.php
-Dockerfile
 docker-compose.yml
 LICENSE
 README.md
 .gitignore
-composer.json
