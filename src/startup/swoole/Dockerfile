@@ -1,23 +1,37 @@
-FROM openswoole/swoole:php8.2-alpine
+# Use GEMVC base image (builds faster - extensions pre-installed)
+FROM gemvc/swoole:latest AS builder
 
-# Install additional PHP extensions
-RUN apk add --no-cache \
-    pdo_mysql \
-    pdo_pgsql \
-    redis \
-    && docker-php-ext-install pdo_mysql pdo_pgsql
-
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
+COPY composer.json composer.lock ./
+
+# Install dependencies with optimizations
+RUN composer install --no-dev \
+    --ignore-platform-reqs \
+    --optimize-autoloader \
+    --classmap-authoritative \
+    --no-scripts \
+    --no-interaction
+
+# ---------------------------------------------------
+
+# Use GEMVC base image for runtime
+FROM gemvc/swoole:latest
+
+LABEL maintainer="GEMVC Team" \
+      version="5.2-alpine"
+
+WORKDIR /var/www/html
+
+COPY --from=builder /var/www/html/vendor ./vendor
+
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Expose port
 EXPOSE 9501
 
-# Start OpenSwoole server
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9501/ || exit 1
+
 CMD ["php", "index.php"]
