@@ -51,6 +51,13 @@ class Request
     public string|array $get;
     public string $userMachine;
     public ?string $requestMethod;
+    /**
+     * HTTP headers normalized to lowercase keys (PSR-7 compatible)
+     * Populated by ApacheRequest or SwooleRequest adapters
+     * 
+     * @var array<string, string>|null
+     */
+    public ?array $headers = null;
     private string $id;
     private string $time;
     private float $start_exec;
@@ -482,6 +489,42 @@ class Request
     public function getStartExecutionTime(): float
     {
         return $this->start_exec;
+    }
+
+    /**
+     * Get the HTTP request method (PSR-7 compliant)
+     * 
+     * @return string HTTP method (GET, POST, PUT, DELETE, etc.)
+     */
+    public function getMethod(): string
+    {
+        return $this->requestMethod ?? 'GET';
+    }
+
+    /**
+     * Get the request URI (PSR-7 compliant)
+     * 
+     * @return string The request URI
+     */
+    public function getUri(): string
+    {
+        return $this->requestedUrl ?? '/';
+    }
+
+    /**
+     * Get a specific HTTP header value (PSR-7 compliant)
+     * 
+     * @param string $name Header name (case-insensitive)
+     * @return string|null Header value or null if not found
+     */
+    public function getHeader(string $name): ?string
+    {
+        if ($this->headers === null) {
+            return null;
+        }
+        
+        $normalized = strtolower($name);
+        return $this->headers[$normalized] ?? null;
     }
 
     public function intValuePost(string $key): int|false

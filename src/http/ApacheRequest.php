@@ -43,6 +43,7 @@ class ApacheRequest
             $this->request->files = $_FILES['file'];
         }
         $this->getAuthHeader();
+        $this->setHeaders();
     }
 
     private function sanitizeAllServerHttpRequestHeaders():void
@@ -261,5 +262,42 @@ class ApacheRequest
                 $this->request->authorizationHeader = $res;
             }
         }
+    }
+
+    /**
+     * Set HTTP headers from $_SERVER (PSR-7 compatible)
+     * Normalizes headers to lowercase keys for case-insensitive access
+     */
+    private function setHeaders(): void
+    {
+        $headers = [];
+        
+        // Extract HTTP_* headers from $_SERVER
+        foreach ($_SERVER as $key => $value) {
+            if (strpos($key, 'HTTP_') === 0) {
+                // Convert HTTP_HEADER_NAME to header-name
+                $headerName = str_replace('_', '-', substr($key, 5));
+                $normalized = strtolower($headerName);
+                $headers[$normalized] = is_string($value) ? $this->sanitizeInput($value) : '';
+            }
+        }
+        
+        // Handle special headers that don't use HTTP_ prefix
+        if (isset($_SERVER['CONTENT_TYPE']) && is_string($_SERVER['CONTENT_TYPE'])) {
+            $headers['content-type'] = $this->sanitizeInput($_SERVER['CONTENT_TYPE']);
+        }
+        
+        if (isset($_SERVER['CONTENT_LENGTH']) && is_string($_SERVER['CONTENT_LENGTH'])) {
+            $headers['content-length'] = $this->sanitizeInput($_SERVER['CONTENT_LENGTH']);
+        }
+        
+        // Handle Authorization header (already handled in getAuthHeader, but add to headers array)
+        if (isset($_SERVER['HTTP_AUTHORIZATION']) && is_string($_SERVER['HTTP_AUTHORIZATION'])) {
+            $headers['authorization'] = $this->sanitizeInput($_SERVER['HTTP_AUTHORIZATION']);
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && is_string($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $headers['authorization'] = $this->sanitizeInput($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
+        }
+        
+        $this->request->headers = $headers;
     }
 }

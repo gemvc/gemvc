@@ -43,6 +43,7 @@ class SwooleRequest
                 $this->request->userMachine = $this->sanitizeInput((string) $swooleRequest->header['user-agent']);
             }
             $this->setCookies();
+            $this->setHeaders();
 
             $this->setData();
         } catch (\Exception $e) {
@@ -109,6 +110,24 @@ class SwooleRequest
                 $this->request->post = $this->sanitizeData($jsonData);
             }
         }
+    }
+
+    /**
+     * Set HTTP headers from Swoole request (PSR-7 compatible)
+     * Normalizes headers to lowercase keys for case-insensitive access
+     */
+    private function setHeaders(): void
+    {
+        $headers = [];
+        
+        if (isset($this->incomingRequestObject->header) && is_array($this->incomingRequestObject->header)) {
+            foreach ($this->incomingRequestObject->header as $name => $value) {
+                $normalized = strtolower((string)$name);
+                $headers[$normalized] = is_string($value) ? $this->sanitizeInput($value) : $this->sanitizeInput((string)$value);
+            }
+        }
+        
+        $this->request->headers = $headers;
     }
 
     /**
