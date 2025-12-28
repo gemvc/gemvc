@@ -1113,6 +1113,594 @@ class TraceKitModelTest extends TestCase
         $this->assertCount(11, $result); // Should have exactly 11 keys
     }
     
+    // ==========================================
+    // parseBooleanFlag() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testParseBooleanFlagFromConfigTrue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $result = $method->invoke($model, ['flag' => true], 'flag', 'ENV_FLAG', false);
+        $this->assertTrue($result);
+    }
+    
+    public function testParseBooleanFlagFromConfigFalse(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $result = $method->invoke($model, ['flag' => false], 'flag', 'ENV_FLAG', true);
+        $this->assertFalse($result);
+    }
+    
+    public function testParseBooleanFlagFromEnvStringTrue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['TEST_FLAG'] = 'true';
+        $result = $method->invoke($model, [], 'flag', 'TEST_FLAG', false);
+        $this->assertTrue($result);
+        unset($_ENV['TEST_FLAG']);
+    }
+    
+    public function testParseBooleanFlagFromEnvStringOne(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['TEST_FLAG'] = '1';
+        $result = $method->invoke($model, [], 'flag', 'TEST_FLAG', false);
+        $this->assertTrue($result);
+        unset($_ENV['TEST_FLAG']);
+    }
+    
+    public function testParseBooleanFlagFromEnvStringFalse(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['TEST_FLAG'] = 'false';
+        $result = $method->invoke($model, [], 'flag', 'TEST_FLAG', true);
+        $this->assertFalse($result);
+        unset($_ENV['TEST_FLAG']);
+    }
+    
+    public function testParseBooleanFlagFromEnvStringZero(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['TEST_FLAG'] = '0';
+        $result = $method->invoke($model, [], 'flag', 'TEST_FLAG', true);
+        $this->assertFalse($result);
+        unset($_ENV['TEST_FLAG']);
+    }
+    
+    public function testParseBooleanFlagUsesDefaultWhenNotSet(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $result = $method->invoke($model, [], 'flag', 'NONEXISTENT_FLAG', true);
+        $this->assertTrue($result);
+        
+        $result = $method->invoke($model, [], 'flag', 'NONEXISTENT_FLAG', false);
+        $this->assertFalse($result);
+    }
+    
+    public function testParseBooleanFlagPrefersConfigOverEnv(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['TEST_FLAG'] = 'false';
+        $result = $method->invoke($model, ['flag' => true], 'flag', 'TEST_FLAG', false);
+        $this->assertTrue($result); // Config should win
+        unset($_ENV['TEST_FLAG']);
+    }
+    
+    public function testParseBooleanFlagWithSecondaryEnvKey(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        // Test with secondary env key
+        $_ENV['SECONDARY_FLAG'] = 'true';
+        $result = $method->invoke($model, [], 'flag', 'PRIMARY_FLAG', false, 'SECONDARY_FLAG');
+        $this->assertTrue($result);
+        unset($_ENV['SECONDARY_FLAG']);
+    }
+    
+    public function testParseBooleanFlagPrefersPrimaryEnvOverSecondary(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'parseBooleanFlag');
+        
+        $_ENV['PRIMARY_FLAG'] = 'true';
+        $_ENV['SECONDARY_FLAG'] = 'false';
+        $result = $method->invoke($model, [], 'flag', 'PRIMARY_FLAG', false, 'SECONDARY_FLAG');
+        $this->assertTrue($result); // Primary should win
+        unset($_ENV['PRIMARY_FLAG']);
+        unset($_ENV['SECONDARY_FLAG']);
+    }
+    
+    // ==========================================
+    // validatePayloadStructure() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testValidatePayloadStructureWithValidPayload(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [
+                        'attributes' => [
+                            [
+                                'key' => 'service.name',
+                                'value' => ['stringValue' => 'test-service']
+                            ]
+                        ]
+                    ],
+                    'scopeSpans' => [
+                        [
+                            'spans' => [
+                                [
+                                    'traceId' => '1234567890abcdef1234567890abcdef',
+                                    'spanId' => 'abcdef1234567890',
+                                    'name' => 'test-span',
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNotNull($result);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('spans', $result);
+        $this->assertArrayHasKey('spanCount', $result);
+        $this->assertArrayHasKey('firstResourceSpan', $result);
+        $this->assertEquals(1, $result['spanCount']);
+        $this->assertCount(1, $result['spans']);
+    }
+    
+    public function testValidatePayloadStructureWithMultipleSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    'scopeSpans' => [
+                        [
+                            'spans' => [
+                                ['traceId' => '1', 'spanId' => '1', 'name' => 'span1'],
+                                ['traceId' => '1', 'spanId' => '2', 'name' => 'span2'],
+                                ['traceId' => '1', 'spanId' => '3', 'name' => 'span3'],
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNotNull($result);
+        $this->assertEquals(3, $result['spanCount']);
+        $this->assertCount(3, $result['spans']);
+    }
+    
+    public function testValidatePayloadStructureWithEmptyPayload(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $result = $method->invoke($model, []);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithMissingResourceSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = ['otherKey' => 'value'];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithEmptyResourceSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = ['resourceSpans' => []];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithInvalidResourceSpan(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = ['resourceSpans' => ['not-an-array']];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithMissingScopeSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    // Missing scopeSpans
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithEmptyScopeSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    'scopeSpans' => []
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithMissingSpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    'scopeSpans' => [
+                        [
+                            // Missing spans
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithEmptySpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    'scopeSpans' => [
+                        [
+                            'spans' => []
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructureWithNonArraySpans(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $payload = [
+            'resourceSpans' => [
+                [
+                    'resource' => [],
+                    'scopeSpans' => [
+                        [
+                            'spans' => 'not-an-array'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNull($result);
+    }
+    
+    public function testValidatePayloadStructurePreservesFirstResourceSpan(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'validatePayloadStructure');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => [
+                    ['key' => 'service.name', 'value' => ['stringValue' => 'test']]
+                ]
+            ],
+            'scopeSpans' => [
+                [
+                    'spans' => [
+                        ['traceId' => '1', 'spanId' => '1', 'name' => 'span1']
+                    ]
+                ]
+            ]
+        ];
+        
+        $payload = [
+            'resourceSpans' => [$firstResourceSpan]
+        ];
+        
+        $result = $method->invoke($model, $payload);
+        
+        $this->assertNotNull($result);
+        $this->assertEquals($firstResourceSpan, $result['firstResourceSpan']);
+    }
+    
+    // ==========================================
+    // buildOtlpSpan() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testBuildOtlpSpanWithValidData(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => '1234567890abcdef1234567890abcdef',
+            'span_id' => 'abcdef1234567890',
+            'name' => 'test-span',
+            'kind' => TraceKitModel::SPAN_KIND_SERVER,
+            'start_time' => 1000000000,
+            'end_time' => 2000000000,
+            'status' => TraceKitModel::STATUS_OK,
+            'attributes' => [],
+        ];
+        
+        $otlpAttributes = [
+            ['key' => 'attr1', 'value' => ['stringValue' => 'value1']]
+        ];
+        
+        $otlpEvents = [
+            ['name' => 'event1', 'timeUnixNano' => '1500000000', 'attributes' => []]
+        ];
+        
+        $result = $method->invoke($model, $span, $otlpAttributes, $otlpEvents);
+        
+        $this->assertEquals('1234567890abcdef1234567890abcdef', $result['traceId']);
+        $this->assertEquals('abcdef1234567890', $result['spanId']);
+        $this->assertEquals('test-span', $result['name']);
+        $this->assertEquals(TraceKitModel::SPAN_KIND_SERVER, $result['kind']);
+        $this->assertEquals('1000000000', $result['startTimeUnixNano']);
+        $this->assertEquals('2000000000', $result['endTimeUnixNano']);
+        $this->assertEquals($otlpAttributes, $result['attributes']);
+        $this->assertEquals($otlpEvents, $result['events']);
+        $this->assertEquals('STATUS_CODE_OK', $result['status']['code']);
+        $this->assertEquals('', $result['status']['message']);
+        $this->assertArrayNotHasKey('parentSpanId', $result);
+    }
+    
+    public function testBuildOtlpSpanWithParentSpanId(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => 'trace1',
+            'span_id' => 'span1',
+            'name' => 'child-span',
+            'kind' => TraceKitModel::SPAN_KIND_INTERNAL,
+            'start_time' => 1000,
+            'end_time' => 2000,
+            'status' => TraceKitModel::STATUS_OK,
+            'parent_span_id' => 'parent-span-id',
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $span, [], []);
+        
+        $this->assertEquals('parent-span-id', $result['parentSpanId']);
+    }
+    
+    public function testBuildOtlpSpanWithErrorStatus(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => 'trace1',
+            'span_id' => 'span1',
+            'name' => 'error-span',
+            'kind' => TraceKitModel::SPAN_KIND_SERVER,
+            'start_time' => 1000,
+            'end_time' => 2000,
+            'status' => TraceKitModel::STATUS_ERROR,
+            'attributes' => [
+                'error.message' => 'Test error message',
+            ],
+        ];
+        
+        $result = $method->invoke($model, $span, [], []);
+        
+        $this->assertEquals('STATUS_CODE_ERROR', $result['status']['code']);
+        $this->assertEquals('Test error message', $result['status']['message']);
+    }
+    
+    public function testBuildOtlpSpanWithErrorStatusNoMessage(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => 'trace1',
+            'span_id' => 'span1',
+            'name' => 'error-span',
+            'kind' => TraceKitModel::SPAN_KIND_SERVER,
+            'start_time' => 1000,
+            'end_time' => 2000,
+            'status' => TraceKitModel::STATUS_ERROR,
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $span, [], []);
+        
+        $this->assertEquals('STATUS_CODE_ERROR', $result['status']['code']);
+        $this->assertEquals('Error', $result['status']['message']);
+    }
+    
+    public function testBuildOtlpSpanWithNullParentSpanId(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => 'trace1',
+            'span_id' => 'span1',
+            'name' => 'root-span',
+            'kind' => TraceKitModel::SPAN_KIND_SERVER,
+            'start_time' => 1000,
+            'end_time' => 2000,
+            'status' => TraceKitModel::STATUS_OK,
+            'parent_span_id' => null,
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $span, [], []);
+        
+        $this->assertArrayNotHasKey('parentSpanId', $result);
+    }
+    
+    public function testBuildOtlpSpanWithMissingFields(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            // Missing most fields
+        ];
+        
+        $result = $method->invoke($model, $span, [], []);
+        
+        $this->assertEquals('', $result['traceId']);
+        $this->assertEquals('', $result['spanId']);
+        $this->assertEquals('', $result['name']);
+        $this->assertEquals(TraceKitModel::SPAN_KIND_INTERNAL, $result['kind']); // Default
+        $this->assertEquals('0', $result['startTimeUnixNano']);
+        $this->assertEquals('0', $result['endTimeUnixNano']);
+        $this->assertEquals('STATUS_CODE_OK', $result['status']['code']); // Default
+    }
+    
+    public function testBuildOtlpSpanWithAllSpanKinds(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $kinds = [
+            TraceKitModel::SPAN_KIND_UNSPECIFIED,
+            TraceKitModel::SPAN_KIND_INTERNAL,
+            TraceKitModel::SPAN_KIND_SERVER,
+            TraceKitModel::SPAN_KIND_CLIENT,
+            TraceKitModel::SPAN_KIND_PRODUCER,
+            TraceKitModel::SPAN_KIND_CONSUMER,
+        ];
+        
+        foreach ($kinds as $kind) {
+            $span = [
+                'trace_id' => 'trace1',
+                'span_id' => 'span1',
+                'name' => 'test',
+                'kind' => $kind,
+                'start_time' => 1000,
+                'end_time' => 2000,
+                'status' => TraceKitModel::STATUS_OK,
+                'attributes' => [],
+            ];
+            
+            $result = $method->invoke($model, $span, [], []);
+            $this->assertEquals($kind, $result['kind']);
+        }
+    }
+    
+    public function testBuildOtlpSpanPreservesOtlpAttributesAndEvents(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpSpan');
+        
+        $span = [
+            'trace_id' => 'trace1',
+            'span_id' => 'span1',
+            'name' => 'test',
+            'kind' => TraceKitModel::SPAN_KIND_INTERNAL,
+            'start_time' => 1000,
+            'end_time' => 2000,
+            'status' => TraceKitModel::STATUS_OK,
+            'attributes' => [],
+        ];
+        
+        $otlpAttributes = [
+            ['key' => 'attr1', 'value' => ['stringValue' => 'val1']],
+            ['key' => 'attr2', 'value' => ['stringValue' => 'val2']],
+        ];
+        
+        $otlpEvents = [
+            ['name' => 'event1', 'timeUnixNano' => '1500', 'attributes' => []],
+            ['name' => 'event2', 'timeUnixNano' => '1600', 'attributes' => []],
+        ];
+        
+        $result = $method->invoke($model, $span, $otlpAttributes, $otlpEvents);
+        
+        $this->assertEquals($otlpAttributes, $result['attributes']);
+        $this->assertEquals($otlpEvents, $result['events']);
+    }
+    
     public function testCreateSpanDataNormalizesAttributes(): void
     {
         $model = new TraceKitModel(['api_key' => 'test-key']);

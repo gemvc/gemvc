@@ -128,6 +128,31 @@ class TraceKitModel
     // ==========================================
     
     /**
+     * Parse boolean flag from config array or environment variable(s)
+     * Handles both string ('true', '1', 'false', '0') and boolean values
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @param string $configKey Config array key name
+     * @param string $envKey Primary environment variable key
+     * @param bool $default Default value if not found
+     * @param string|null $envKey2 Optional secondary environment variable key (checked after primary)
+     * @return bool Parsed boolean value
+     */
+    private function parseBooleanFlag(array $config, string $configKey, string $envKey, bool $default = false, ?string $envKey2 = null): bool
+    {
+        $value = $config[$configKey] 
+            ?? $_ENV[$envKey] 
+            ?? ($envKey2 !== null ? ($_ENV[$envKey2] ?? null) : null)
+            ?? $default;
+        
+        if (is_string($value)) {
+            return $value === 'true' || $value === '1';
+        }
+        
+        return (bool)$value;
+    }
+    
+    /**
      * Load API key from config array or environment variable
      * 
      * @param array<string, mixed> $config Configuration array
@@ -221,13 +246,7 @@ class TraceKitModel
      */
     private function parseTraceResponseFlag(array $config): bool
     {
-        $traceResponse = $config['trace_response'] ?? $_ENV['TRACEKIT_TRACE_RESPONSE'] ?? false;
-        
-        if (is_string($traceResponse)) {
-            return $traceResponse === 'true' || $traceResponse === '1';
-        }
-        
-        return (bool)$traceResponse;
+        return $this->parseBooleanFlag($config, 'trace_response', 'TRACEKIT_TRACE_RESPONSE', false);
     }
     
     /**
@@ -239,13 +258,7 @@ class TraceKitModel
      */
     private function parseTraceDbQueryFlag(array $config): bool
     {
-        $traceDbQuery = $config['trace_db_query'] ?? $_ENV['TRACEKIT_TRACE_DB_QUERY'] ?? false;
-        
-        if (is_string($traceDbQuery)) {
-            return $traceDbQuery === 'true' || $traceDbQuery === '1';
-        }
-        
-        return (bool)$traceDbQuery;
+        return $this->parseBooleanFlag($config, 'trace_db_query', 'TRACEKIT_TRACE_DB_QUERY', false);
     }
     
     /**
@@ -258,16 +271,7 @@ class TraceKitModel
      */
     private function parseTraceRequestBodyFlag(array $config): bool
     {
-        $traceRequestBody = $config['trace_request_body'] 
-            ?? $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] 
-            ?? $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] 
-            ?? false;
-        
-        if (is_string($traceRequestBody)) {
-            return $traceRequestBody === 'true' || $traceRequestBody === '1';
-        }
-        
-        return (bool)$traceRequestBody;
+        return $this->parseBooleanFlag($config, 'trace_request_body', 'TRACEKIT_TRACE_RESPONSE_BODY', false, 'TRACEKIT_TRACE_REQUEST_BODY');
     }
     
     /**
@@ -650,35 +654,14 @@ class TraceKitModel
             // Build trace payload
             $payload = $this->buildTracePayload();
             
-            // Check for empty payload (using new OTLP format with resourceSpans)
-            if (empty($payload) || empty($payload['resourceSpans'] ?? [])) {
-                error_log("TraceKit: Empty payload after build, skipping send");
+            // Validate payload structure
+            $validatedData = $this->validatePayloadStructure($payload);
+            if ($validatedData === null) {
+                error_log("TraceKit: Empty or invalid payload after build, skipping send");
                 return;
             }
             
-            // Check if there are actual spans in the payload
-            /** @var array<string, mixed> $payload */
-            $resourceSpans = is_array($payload['resourceSpans'] ?? null) ? $payload['resourceSpans'] : [];
-            if (empty($resourceSpans) || !is_array($resourceSpans[0] ?? null)) {
-                error_log("TraceKit: Invalid payload structure, skipping send");
-                return;
-            }
-            /** @var array<string, mixed> $firstResourceSpan */
-            $firstResourceSpan = $resourceSpans[0];
-            $scopeSpans = is_array($firstResourceSpan['scopeSpans'] ?? null) ? $firstResourceSpan['scopeSpans'] : [];
-            if (empty($scopeSpans) || !is_array($scopeSpans[0] ?? null)) {
-                error_log("TraceKit: Invalid payload structure, skipping send");
-                return;
-            }
-            /** @var array<string, mixed> $firstScopeSpan */
-            $firstScopeSpan = $scopeSpans[0];
-            $spans = is_array($firstScopeSpan['spans'] ?? null) ? $firstScopeSpan['spans'] : [];
-            $spanCount = count($spans);
-            if ($spanCount === 0) {
-                error_log("TraceKit: No spans in payload, skipping send");
-                return;
-            }
-            
+            $spanCount = $validatedData['spanCount'];
             error_log("TraceKit: Flush - Building payload with {$spanCount} spans");
             
             // Send traces using fire-and-forget (non-blocking)
@@ -819,6 +802,115 @@ class TraceKitModel
         $events = $this->spans[$spanIndex]['events'];
         $events[] = $event;
         $this->spans[$spanIndex]['events'] = $events;
+    }
+    
+    /**
+     * Validate payload structure and extract spans data
+     * 
+     * Validates the OTLP payload structure and extracts spans, span count, and resource span data.
+     * Returns null if validation fails.
+     * 
+     * @param array<string, mixed> $payload The trace payload to validate
+     * @return array{spans: array<int, array<string, mixed>>, spanCount: int, firstResourceSpan: array<string, mixed>}|null Validated data or null if invalid
+     */
+    /**
+     * Build OTLP format span data from internal span format
+     * 
+     * Converts internal span data structure to OpenTelemetry OTLP JSON format.
+     * 
+     * @param array<string, mixed> $span Internal span data
+     * @param array<int, array<string, mixed>> $otlpAttributes OTLP formatted attributes
+     * @param array<int, array<string, mixed>> $otlpEvents OTLP formatted events
+     * @return array<string, mixed> OTLP format span data
+     */
+    private function buildOtlpSpan(array $span, array $otlpAttributes, array $otlpEvents): array
+    {
+        $traceId = is_string($span['trace_id'] ?? null) ? $span['trace_id'] : '';
+        $spanId = is_string($span['span_id'] ?? null) ? $span['span_id'] : '';
+        $name = is_string($span['name'] ?? null) ? $span['name'] : '';
+        $kind = is_int($span['kind'] ?? null) ? $span['kind'] : self::SPAN_KIND_INTERNAL;
+        $startTime = is_int($span['start_time'] ?? null) ? $span['start_time'] : 0;
+        $endTime = is_int($span['end_time'] ?? null) ? $span['end_time'] : 0;
+        $status = is_string($span['status'] ?? null) ? $span['status'] : self::STATUS_OK;
+        $parentSpanId = $span['parent_span_id'] ?? null;
+        
+        // Extract error message if status is ERROR
+        $errorMessage = '';
+        if ($status === self::STATUS_ERROR) {
+            $spanAttributes = is_array($span['attributes'] ?? null) ? $span['attributes'] : [];
+            $errorMessage = is_string($spanAttributes['error.message'] ?? null) ? $spanAttributes['error.message'] : 'Error';
+        }
+        
+        $spanData = [
+            'traceId' => $traceId,
+            'spanId' => $spanId,
+            'name' => $name,
+            'kind' => $kind,
+            'startTimeUnixNano' => (string)$startTime,
+            'endTimeUnixNano' => (string)$endTime,
+            'attributes' => $otlpAttributes,
+            'status' => [
+                'code' => $status === self::STATUS_ERROR ? 'STATUS_CODE_ERROR' : 'STATUS_CODE_OK',
+                'message' => $errorMessage,
+            ],
+            'events' => $otlpEvents,
+        ];
+        
+        // Only include parentSpanId if it exists (root spans don't have parent)
+        if ($parentSpanId !== null && is_string($parentSpanId)) {
+            $spanData['parentSpanId'] = $parentSpanId;
+        }
+        
+        return $spanData;
+    }
+    
+    /**
+     * Validate payload structure and extract spans data
+     * 
+     * Validates the OTLP payload structure and extracts spans, span count, and resource span data.
+     * Returns null if validation fails.
+     * 
+     * @param array<string, mixed> $payload The trace payload to validate
+     * @return array{spans: array<int, array<string, mixed>>, spanCount: int, firstResourceSpan: array<string, mixed>}|null Validated data or null if invalid
+     */
+    private function validatePayloadStructure(array $payload): ?array
+    {
+        if (empty($payload) || !isset($payload['resourceSpans'])) {
+            return null;
+        }
+        
+        $resourceSpans = is_array($payload['resourceSpans']) ? $payload['resourceSpans'] : [];
+        if (empty($resourceSpans) || !is_array($resourceSpans[0] ?? null)) {
+            return null;
+        }
+        
+        /** @var array<string, mixed> $firstResourceSpan */
+        $firstResourceSpan = $resourceSpans[0];
+        $scopeSpans = is_array($firstResourceSpan['scopeSpans'] ?? null) ? $firstResourceSpan['scopeSpans'] : [];
+        if (empty($scopeSpans) || !is_array($scopeSpans[0] ?? null)) {
+            return null;
+        }
+        
+        /** @var array<string, mixed> $firstScopeSpan */
+        $firstScopeSpan = $scopeSpans[0];
+        $spansRaw = $firstScopeSpan['spans'] ?? null;
+        if (!is_array($spansRaw)) {
+            return null;
+        }
+        
+        /** @var array<int, array<string, mixed>> $spans */
+        $spans = $spansRaw;
+        $spanCount = count($spans);
+        
+        if ($spanCount === 0) {
+            return null;
+        }
+        
+        return [
+            'spans' => $spans,
+            'spanCount' => $spanCount,
+            'firstResourceSpan' => $firstResourceSpan,
+        ];
     }
     
     /**
@@ -1045,42 +1137,8 @@ class TraceKitModel
                 ];
             }
             
-            // Convert parent_span_id: null should be omitted or empty string in OTLP
-            $parentSpanId = $span['parent_span_id'] ?? null;
-            
-            $traceId = is_string($span['trace_id'] ?? null) ? $span['trace_id'] : '';
-            $spanId = is_string($span['span_id'] ?? null) ? $span['span_id'] : '';
-            $name = is_string($span['name'] ?? null) ? $span['name'] : '';
-            $kind = is_int($span['kind'] ?? null) ? $span['kind'] : self::SPAN_KIND_INTERNAL;
-            $startTime = is_int($span['start_time'] ?? null) ? $span['start_time'] : 0;
-            $endTime = is_int($span['end_time'] ?? null) ? $span['end_time'] : 0;
-            $status = is_string($span['status'] ?? null) ? $span['status'] : self::STATUS_OK;
-            
-            $errorMessage = '';
-            if ($status === self::STATUS_ERROR) {
-                $errorMessage = is_string($spanAttributes['error.message'] ?? null) ? $spanAttributes['error.message'] : 'Error';
-            }
-            
-            $spanData = [
-                'traceId' => $traceId,
-                'spanId' => $spanId,
-                'name' => $name,
-                'kind' => $kind,
-                'startTimeUnixNano' => (string)$startTime,
-                'endTimeUnixNano' => (string)$endTime,
-                'attributes' => $attributes,
-                'status' => [
-                    'code' => $status === self::STATUS_ERROR ? 'STATUS_CODE_ERROR' : 'STATUS_CODE_OK',
-                    'message' => $errorMessage,
-                ],
-                'events' => $events,
-            ];
-            
-            // Only include parentSpanId if it exists (root spans don't have parent)
-            if ($parentSpanId !== null && is_string($parentSpanId)) {
-                $spanData['parentSpanId'] = $parentSpanId;
-            }
-            
+            // Build OTLP format span data
+            $spanData = $this->buildOtlpSpan($span, $attributes, $events);
             $spans[] = $spanData;
         }
         
@@ -1122,28 +1180,16 @@ class TraceKitModel
     private function sendTraces(array $payload): void
     {
         try {
-            if (empty($payload) || empty($payload['resourceSpans'] ?? [])) {
-                error_log("TraceKit: Empty payload, skipping send");
+            // Validate payload structure
+            $validatedData = $this->validatePayloadStructure($payload);
+            if ($validatedData === null) {
+                error_log("TraceKit: Empty or invalid payload structure, skipping send");
                 return;
             }
             
-            /** @var array<string, mixed> $payload */
-            $resourceSpans = is_array($payload['resourceSpans'] ?? null) ? $payload['resourceSpans'] : [];
-            if (empty($resourceSpans) || !is_array($resourceSpans[0] ?? null)) {
-                error_log("TraceKit: Invalid payload structure, skipping send");
-                return;
-            }
-            /** @var array<string, mixed> $firstResourceSpan */
-            $firstResourceSpan = $resourceSpans[0];
-            $scopeSpans = is_array($firstResourceSpan['scopeSpans'] ?? null) ? $firstResourceSpan['scopeSpans'] : [];
-            if (empty($scopeSpans) || !is_array($scopeSpans[0] ?? null)) {
-                error_log("TraceKit: Invalid payload structure, skipping send");
-                return;
-            }
-            /** @var array<string, mixed> $firstScopeSpan */
-            $firstScopeSpan = $scopeSpans[0];
-            $spans = is_array($firstScopeSpan['spans'] ?? null) ? $firstScopeSpan['spans'] : [];
-            $spanCount = count($spans);
+            $spans = $validatedData['spans'];
+            $spanCount = $validatedData['spanCount'];
+            $firstResourceSpan = $validatedData['firstResourceSpan'];
             
             // Extract service name
             $resource = is_array($firstResourceSpan['resource'] ?? null) ? $firstResourceSpan['resource'] : [];
