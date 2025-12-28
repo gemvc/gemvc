@@ -60,6 +60,15 @@ class TraceKitModel
     public const STATUS_ERROR = 'ERROR';
     
     /**
+     * Cached value of mt_getrandmax() for performance
+     * This is a constant value that never changes during script execution
+     * Shared across all instances (which is correct since mt_getrandmax() is constant)
+     * 
+     * @var float|null
+     */
+    private static ?float $cachedRandMax = null;
+    
+    /**
      * Initialize TraceKitModel
      * 
      * Configuration from environment variables:
@@ -339,7 +348,13 @@ class TraceKitModel
             return false;
         }
         
-        return (mt_rand() / mt_getrandmax()) < $this->sampleRate;
+        // Cache mt_getrandmax() result - it's a constant that never changes
+        // Shared across all instances (correct behavior since mt_getrandmax() is constant)
+        if (self::$cachedRandMax === null) {
+            self::$cachedRandMax = (float)mt_getrandmax();
+        }
+        
+        return (mt_rand() / self::$cachedRandMax) < $this->sampleRate;
     }
     
     /**
