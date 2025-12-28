@@ -39,7 +39,7 @@ class ApiService
     
     /**
      * Root span for TraceKit tracing (if enabled)
-     * @var array
+     * @var array<string, mixed>
      */
     private array $rootSpan = [];
 
@@ -91,7 +91,7 @@ class ApiService
                     $requestBody = $this->getRequestBodyForTracing();
                     if ($requestBody !== null) {
                         // Limit body size to avoid huge traces (max 2000 chars)
-                        if (is_string($requestBody) && strlen($requestBody) > 2000) {
+                        if (strlen($requestBody) > 2000) {
                             $requestBody = substr($requestBody, 0, 1997) . '...';
                         }
                         $rootAttributes['http.request.body'] = $requestBody;
@@ -106,7 +106,8 @@ class ApiService
                     return;
                 }
                 
-                error_log("TraceKit: Root span started - Trace ID: " . substr($this->rootSpan['trace_id'] ?? 'N/A', 0, 16) . "...");
+                $traceId = is_string($this->rootSpan['trace_id'] ?? null) ? $this->rootSpan['trace_id'] : 'N/A';
+                error_log("TraceKit: Root span started - Trace ID: " . substr($traceId, 0, 16) . "...");
                 
                 // Register shutdown function to flush traces after response is sent
                 register_shutdown_function(function() {
@@ -173,31 +174,19 @@ class ApiService
                 $bodyData = $this->request->patch;
             }
             
-            if ($bodyData === null || empty($bodyData)) {
+            if ($bodyData === null) {
                 return null;
             }
             
+            // $bodyData is always an array at this point (from request->post/put/patch)
             // Always try to format as JSON first (more readable in traces)
-            // This works for both JSON and form-encoded requests
-            if (is_array($bodyData) || is_object($bodyData)) {
-                $json = json_encode($bodyData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-                if ($json !== false) {
-                    return $json;
-                }
+            $json = json_encode($bodyData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+            if ($json !== false) {
+                return $json;
             }
             
             // Fallback to URL-encoded format if JSON encoding fails
-            // (should rarely happen, but handles edge cases)
-            if (is_array($bodyData)) {
-                return http_build_query($bodyData);
-            }
-            
-            // If it's already a string, return as-is (truncated if needed)
-            if (is_string($bodyData)) {
-                return $bodyData;
-            }
-            
-            return null;
+            return http_build_query($bodyData);
         } catch (\Throwable $e) {
             // Silently fail - don't let request body tracing break the application
             error_log("TraceKit: Failed to get request body for tracing: " . $e->getMessage());
@@ -229,12 +218,14 @@ class ApiService
             error_log("TraceKit: Flushing trace - Status: " . $statusCode);
             
             // End root span
-            $this->tracekit->endSpan($this->rootSpan, [
+            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+            $tracekit = $this->tracekit;
+            $tracekit->endSpan($this->rootSpan, [
                 'http.status_code' => $statusCode,
             ], $statusCode >= 400 ? TraceKitModel::STATUS_ERROR : TraceKitModel::STATUS_OK);
             
             // Flush traces (non-blocking)
-            $this->tracekit->flush();
+            $tracekit->flush();
         } catch (\Throwable $e) {
             // Silently fail - don't let TraceKit break the application
             error_log("TraceKit: Failed to flush traces: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
@@ -272,15 +263,17 @@ class ApiService
         }
         
         try {
+            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+            $tracekit = $this->tracekit;
             // If no root span exists, create one (errors are always logged)
             if (empty($this->rootSpan)) {
-                $this->rootSpan = $this->tracekit->recordException([], $exception, 'http-request', [
+                $this->rootSpan = $tracekit->recordException([], $exception, 'http-request', [
                     'http.method' => $this->request->getMethod(),
                     'http.url' => $this->request->getUri(),
                 ]);
             } else {
                 // Record exception on existing root span
-                $this->tracekit->recordException($this->rootSpan, $exception);
+                $tracekit->recordException($this->rootSpan, $exception);
             }
         } catch (\Throwable $e) {
             // Silently fail
@@ -415,7 +408,8 @@ class ApiService
                         ?? $_SERVER['HTTP_CONTENT_TYPE'] 
                         ?? '';
             
-            if ($contentType && strpos(strtolower($contentType), 'application/json') !== false) {
+            $contentTypeStr = is_string($contentType) ? $contentType : '';
+            if ($contentTypeStr !== '' && strpos(strtolower($contentTypeStr), 'application/json') !== false) {
                 $rawInput = file_get_contents('php://input');
                 if (!empty($rawInput)) {
                     $jsonData = json_decode($rawInput, true);
@@ -451,7 +445,7 @@ class ApiService
  * @method JsonResponse update() Intercepts update() method calls
  * @method JsonResponse delete() Intercepts delete() method calls
  * @method JsonResponse list() Intercepts list() method calls
- * @method JsonResponse __call(string $methodName, array $args) Intercepts any controller method call
+ * @method JsonResponse __call(string $methodName, array<mixed> $args) Intercepts any controller method call
  */
 class ControllerTracingProxy
 {
@@ -477,8 +471,23 @@ class ControllerTracingProxy
     public function __call(string $methodName, array $args): JsonResponse
     {
         // If TraceKit is not available, just call the method directly
-        if ($this->tracekit === null || !$this->tracekit->isEnabled()) {
-            return call_user_func_array([$this->controller, $methodName], $args);
+        if ($this->tracekit === null) {
+            /** @var callable $callable */
+            $callable = [$this->controller, $methodName];
+            /** @var JsonResponse $result */
+            $result = call_user_func_array($callable, $args);
+            return $result;
+        }
+        
+        /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+        $tracekit = $this->tracekit;
+        
+        if (!$tracekit->isEnabled()) {
+            /** @var callable $callable */
+            $callable = [$this->controller, $methodName];
+            /** @var JsonResponse $result */
+            $result = call_user_func_array($callable, $args);
+            return $result;
         }
         
         // Extract controller name
@@ -487,64 +496,57 @@ class ControllerTracingProxy
         $controllerName = $parts[count($parts) - 1] ?? 'Unknown';
         
         // Start controller operation span
-        $controllerSpan = $this->tracekit->startSpan('controller-operation', [
+        $controllerSpan = $tracekit->startSpan('controller-operation', [
             'controller.name' => $controllerName,
             'controller.method' => $methodName,
         ], TraceKitModel::SPAN_KIND_INTERNAL);
         
         try {
             // Call the actual controller method
-            $result = call_user_func_array([$this->controller, $methodName], $args);
+            /** @var callable $callable */
+            $callable = [$this->controller, $methodName];
+            /** @var JsonResponse $result */
+            $result = call_user_func_array($callable, $args);
             
             // Determine status based on result
-            $status = TraceKitModel::STATUS_OK;
-            if ($result instanceof JsonResponse) {
-                $statusCode = $result->response_code ?? 200;
-                if ($statusCode >= 400) {
-                    $status = TraceKitModel::STATUS_ERROR;
+            $statusCode = $result->response_code ?? 200;
+            $status = $statusCode >= 400 ? TraceKitModel::STATUS_ERROR : TraceKitModel::STATUS_OK;
+            
+            // Build span attributes
+            $spanAttributes = [
+                'controller.result' => 'success',
+                'http.status_code' => $statusCode,
+            ];
+            
+            // Optionally include response data if enabled
+            if ($tracekit->shouldTraceResponse()) {
+                // Get the full JSON response
+                $responseData = $result->json_response ?? '';
+                if ($responseData === false || empty($responseData)) {
+                    // Fallback: encode the response object
+                    $responseData = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
                 
-                // Build span attributes
-                $spanAttributes = [
-                    'controller.result' => 'success',
-                    'http.status_code' => $statusCode,
-                ];
-                
-                // Optionally include response data if enabled
-                if ($this->tracekit->shouldTraceResponse()) {
-                    // Get the full JSON response (already formatted)
-                    $responseData = $result->json_response ?? '';
-                    if ($responseData === false || empty($responseData)) {
-                        // Fallback: encode the response object
-                        $responseData = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                    }
-                    
-                    // Limit response size to avoid huge traces (max 2000 chars)
-                    if (is_string($responseData) && strlen($responseData) > 2000) {
-                        $responseData = substr($responseData, 0, 1997) . '...';
-                    }
-                    
-                    $spanAttributes['response.message'] = $result->message ?? '';
-                    $spanAttributes['response.service_message'] = $result->service_message ?? '';
-                    $spanAttributes['response.data'] = $responseData;
-                    $spanAttributes['response.count'] = $result->count !== null ? (string)$result->count : 'null';
+                // Limit response size to avoid huge traces (max 2000 chars)
+                if (is_string($responseData) && strlen($responseData) > 2000) {
+                    $responseData = substr($responseData, 0, 1997) . '...';
                 }
                 
-                // Update span with response details
-                $this->tracekit->endSpan($controllerSpan, $spanAttributes, $status);
-            } else {
-                // If result is not JsonResponse, end span with unknown status
-                $this->tracekit->endSpan($controllerSpan, [
-                    'controller.result' => 'unknown',
-                ], TraceKitModel::STATUS_OK);
+                $spanAttributes['response.message'] = $result->message ?? '';
+                $spanAttributes['response.service_message'] = $result->service_message ?? '';
+                $spanAttributes['response.data'] = $responseData;
+                $spanAttributes['response.count'] = $result->count !== null ? (string)$result->count : 'null';
             }
+            
+            // Update span with response details
+            $tracekit->endSpan($controllerSpan, $spanAttributes, $status);
             
             return $result;
         } catch (\Throwable $e) {
             // Record exception and end span with error
             if (!empty($controllerSpan)) {
-                $this->tracekit->recordException($controllerSpan, $e);
-                $this->tracekit->endSpan($controllerSpan, [
+                $tracekit->recordException($controllerSpan, $e);
+                $tracekit->endSpan($controllerSpan, [
                     'controller.result' => 'error',
                     'error.message' => $e->getMessage(),
                 ], TraceKitModel::STATUS_ERROR);

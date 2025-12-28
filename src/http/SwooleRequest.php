@@ -122,8 +122,9 @@ class SwooleRequest
         
         if (isset($this->incomingRequestObject->header) && is_array($this->incomingRequestObject->header)) {
             foreach ($this->incomingRequestObject->header as $name => $value) {
-                $normalized = strtolower((string)$name);
-                $headers[$normalized] = is_string($value) ? $this->sanitizeInput($value) : $this->sanitizeInput((string)$value);
+                $normalized = strtolower(is_string($name) ? $name : (string)$name);
+                $headerValue = is_string($value) ? $value : (is_scalar($value) ? (string)$value : '');
+                $headers[$normalized] = $this->sanitizeInput($headerValue);
             }
         }
         

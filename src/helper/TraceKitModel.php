@@ -39,14 +39,13 @@ class TraceKitModel
     private bool $traceRequestBody;
     
     // Active span tracking (simple stack for context propagation)
+    /** @var array<int, array<string, mixed>> */
     private array $spanStack = [];
     
     // Current trace data
+    /** @var array<int, array<string, mixed>> */
     private array $spans = [];
     private ?string $traceId = null;
-    
-    // Queue for batch sending
-    private array $traceQueue = [];
     
     // Constants - Span kinds (OpenTelemetry OTLP uses integers)
     public const SPAN_KIND_UNSPECIFIED = 0;
@@ -78,14 +77,14 @@ class TraceKitModel
      * - TRACEKIT_TRACE_REQUEST_BODY: Include incoming request body in traces (default: false)
      *   Set to 'true' to include request body data (POST/PUT/PATCH) in span attributes
      * 
-     * @param array $config Optional configuration override
+     * @param array<string, mixed> $config Optional configuration override
      */
     public function __construct(array $config = [])
     {
         // Load configuration from environment or config array
-        $this->apiKey = $config['api_key'] ?? $_ENV['TRACEKIT_API_KEY'] ?? '';
-        $this->serviceName = $config['service_name'] ?? $_ENV['TRACEKIT_SERVICE_NAME'] ?? 'gemvc-app';
-        $this->endpoint = $config['endpoint'] ?? $_ENV['TRACEKIT_ENDPOINT'] ?? 'https://app.tracekit.dev/v1/traces';
+        $this->apiKey = is_string($config['api_key'] ?? null) ? $config['api_key'] : (is_string($_ENV['TRACEKIT_API_KEY'] ?? null) ? $_ENV['TRACEKIT_API_KEY'] : '');
+        $this->serviceName = is_string($config['service_name'] ?? null) ? $config['service_name'] : (is_string($_ENV['TRACEKIT_SERVICE_NAME'] ?? null) ? $_ENV['TRACEKIT_SERVICE_NAME'] : 'gemvc-app');
+        $this->endpoint = is_string($config['endpoint'] ?? null) ? $config['endpoint'] : (is_string($_ENV['TRACEKIT_ENDPOINT'] ?? null) ? $_ENV['TRACEKIT_ENDPOINT'] : 'https://app.tracekit.dev/v1/traces');
         
         // Parse enabled flag (string 'false' or boolean false)
         $enabled = $config['enabled'] ?? $_ENV['TRACEKIT_ENABLED'] ?? true;
@@ -239,9 +238,9 @@ class TraceKitModel
      * The span is automatically activated in the context (added to stack).
      * 
      * @param string $operationName Operation name (e.g., 'http-request')
-     * @param array $attributes Optional attributes (e.g., ['http.method' => 'POST', 'http.url' => '/api/users'])
+     * @param array<string, mixed> $attributes Optional attributes (e.g., ['http.method' => 'POST', 'http.url' => '/api/users'])
      * @param bool $forceSample Force sampling (e.g., for errors) - always traces regardless of sample rate
-     * @return array Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
+     * @return array<string, mixed> Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
      */
     public function startTrace(string $operationName, array $attributes = [], bool $forceSample = false): array
     {
@@ -302,9 +301,9 @@ class TraceKitModel
      * If no active span exists, this creates a root span instead.
      * 
      * @param string $operationName Operation name (e.g., 'database-query', 'http-client-call')
-     * @param array $attributes Optional attributes
+     * @param array<string, mixed> $attributes Optional attributes
      * @param int $kind Span kind: SPAN_KIND_SERVER (2), SPAN_KIND_CLIENT (3), or SPAN_KIND_INTERNAL (1) (default: SPAN_KIND_INTERNAL)
-     * @return array Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
+     * @return array<string, mixed> Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
      */
     public function startSpan(string $operationName, array $attributes = [], int $kind = self::SPAN_KIND_INTERNAL): array
     {
@@ -370,8 +369,8 @@ class TraceKitModel
     /**
      * End a span and detach it from context
      * 
-     * @param array $spanData Span data returned from startTrace() or startSpan()
-     * @param array $finalAttributes Optional attributes to add before ending
+     * @param array<string, mixed> $spanData Span data returned from startTrace() or startSpan()
+     * @param array<string, mixed> $finalAttributes Optional attributes to add before ending
      * @param string|null $status Span status: 'OK' or 'ERROR' (default: 'OK')
      * @return void
      */
@@ -402,7 +401,9 @@ class TraceKitModel
             
             // Get end time
             $endTime = $this->getMicrotime();
-            $startTime = $this->spans[$spanIndex]['start_time'] ?? $endTime;
+            /** @var array<string, mixed> $span */
+            $span = $this->spans[$spanIndex];
+            $startTime = is_int($span['start_time'] ?? null) ? $span['start_time'] : $endTime;
             $duration = $endTime - $startTime;
             
             // Update span
@@ -411,8 +412,11 @@ class TraceKitModel
             
             // Add final attributes
             if (!empty($finalAttributes)) {
+                /** @var array<string, mixed> $span */
+                $span = $this->spans[$spanIndex];
+                $existingAttributes = is_array($span['attributes'] ?? null) ? $span['attributes'] : [];
                 $this->spans[$spanIndex]['attributes'] = array_merge(
-                    $this->spans[$spanIndex]['attributes'] ?? [],
+                    $existingAttributes,
                     $this->normalizeAttributes($finalAttributes)
                 );
             }
@@ -438,11 +442,11 @@ class TraceKitModel
      * IMPORTANT: If no trace exists (spanData is empty), this will automatically
      * create a trace to ensure errors are ALWAYS logged, regardless of sample rate.
      * 
-     * @param array $spanData Span data returned from startTrace() or startSpan() (can be empty for auto-creation)
+     * @param array<string, mixed> $spanData Span data returned from startTrace() or startSpan() (can be empty for auto-creation)
      * @param \Throwable $exception Exception to record
      * @param string $operationName Operation name for auto-created trace (default: 'error-handler')
-     * @param array $attributes Optional attributes for auto-created trace
-     * @return array Updated span data (useful if trace was auto-created)
+     * @param array<string, mixed> $attributes Optional attributes for auto-created trace
+     * @return array<string, mixed> Updated span data (useful if trace was auto-created)
      */
     public function recordException(array $spanData, \Throwable $exception, string $operationName = 'error-handler', array $attributes = []): array
     {
@@ -500,10 +504,15 @@ class TraceKitModel
             ];
             
             // Add event to span
-            if (!isset($this->spans[$spanIndex]['events'])) {
+            /** @var array<string, mixed> $span */
+            $span = $this->spans[$spanIndex];
+            if (!isset($span['events']) || !is_array($span['events'])) {
                 $this->spans[$spanIndex]['events'] = [];
             }
-            $this->spans[$spanIndex]['events'][] = $event;
+            /** @var array<int, array<string, mixed>> $events */
+            $events = $this->spans[$spanIndex]['events'];
+            $events[] = $event;
+            $this->spans[$spanIndex]['events'] = $events;
             
             // Set span status to ERROR
             $this->spans[$spanIndex]['status'] = self::STATUS_ERROR;
@@ -512,16 +521,16 @@ class TraceKitModel
         } catch (\Throwable $e) {
             // Graceful degradation
             error_log("TraceKit: Failed to record exception: " . $e->getMessage());
-            return $spanData ?? [];
+            return empty($spanData) ? [] : $spanData;
         }
     }
     
     /**
      * Add an event to a span
      * 
-     * @param array $spanData Span data
+     * @param array<string, mixed> $spanData Span data
      * @param string $eventName Event name
-     * @param array $attributes Event attributes
+     * @param array<string, mixed> $attributes Event attributes
      * @return void
      */
     public function addEvent(array $spanData, string $eventName, array $attributes = []): void
@@ -557,10 +566,15 @@ class TraceKitModel
             ];
             
             // Add event to span
-            if (!isset($this->spans[$spanIndex]['events'])) {
+            /** @var array<string, mixed> $span */
+            $span = $this->spans[$spanIndex];
+            if (!isset($span['events']) || !is_array($span['events'])) {
                 $this->spans[$spanIndex]['events'] = [];
             }
-            $this->spans[$spanIndex]['events'][] = $event;
+            /** @var array<int, array<string, mixed>> $events */
+            $events = $this->spans[$spanIndex]['events'];
+            $events[] = $event;
+            $this->spans[$spanIndex]['events'] = $events;
         } catch (\Throwable $e) {
             // Graceful degradation
             error_log("TraceKit: Failed to add event: " . $e->getMessage());
@@ -596,7 +610,23 @@ class TraceKitModel
             }
             
             // Check if there are actual spans in the payload
-            $spanCount = count($payload['resourceSpans'][0]['scopeSpans'][0]['spans'] ?? []);
+            /** @var array<string, mixed> $payload */
+            $resourceSpans = is_array($payload['resourceSpans'] ?? null) ? $payload['resourceSpans'] : [];
+            if (empty($resourceSpans) || !is_array($resourceSpans[0] ?? null)) {
+                error_log("TraceKit: Invalid payload structure, skipping send");
+                return;
+            }
+            /** @var array<string, mixed> $firstResourceSpan */
+            $firstResourceSpan = $resourceSpans[0];
+            $scopeSpans = is_array($firstResourceSpan['scopeSpans'] ?? null) ? $firstResourceSpan['scopeSpans'] : [];
+            if (empty($scopeSpans) || !is_array($scopeSpans[0] ?? null)) {
+                error_log("TraceKit: Invalid payload structure, skipping send");
+                return;
+            }
+            /** @var array<string, mixed> $firstScopeSpan */
+            $firstScopeSpan = $scopeSpans[0];
+            $spans = is_array($firstScopeSpan['spans'] ?? null) ? $firstScopeSpan['spans'] : [];
+            $spanCount = count($spans);
             if ($spanCount === 0) {
                 error_log("TraceKit: No spans in payload, skipping send");
                 return;
@@ -633,7 +663,7 @@ class TraceKitModel
     /**
      * Get active span (for context propagation)
      * 
-     * @return array|null
+     * @return array<string, mixed>|null
      */
     public function getActiveSpan(): ?array
     {
@@ -647,7 +677,7 @@ class TraceKitModel
     /**
      * Push span to stack (activate in context)
      * 
-     * @param array $spanData
+     * @param array<string, mixed> $spanData
      * @return void
      */
     private function pushSpan(array $spanData): void
@@ -658,7 +688,7 @@ class TraceKitModel
     /**
      * Pop span from stack (detach from context)
      * 
-     * @return array|null
+     * @return array<string, mixed>|null
      */
     private function popSpan(): ?array
     {
@@ -706,20 +736,40 @@ class TraceKitModel
     /**
      * Normalize attributes (convert to string/int/float/bool)
      * 
-     * @param array $attributes
-     * @return array
+     * @param array<string, mixed> $attributes
+     * @return array<string, mixed>
      */
     private function normalizeAttributes(array $attributes): array
     {
+        /** @var array<string, mixed> $normalized */
         $normalized = [];
         
         foreach ($attributes as $key => $value) {
             if (is_string($value) || is_int($value) || is_float($value) || is_bool($value)) {
                 $normalized[$key] = $value;
             } elseif (is_array($value)) {
-                $normalized[$key] = array_map('strval', $value);
+                /** @var array<int|string, mixed> $value */
+                $normalized[$key] = array_map(function(mixed $v): string {
+                    return is_string($v) || is_numeric($v) ? (string) $v : '';
+                }, $value);
             } else {
-                $normalized[$key] = (string) $value;
+                // Value is not string, int, float, bool, or array - convert to string safely
+                // Since we've already checked it's not scalar types, it must be object/resource/null
+                if ($value === null) {
+                    $normalized[$key] = '';
+                } else {
+                    // For objects/resources, convert to string
+                    // PHP's string casting for objects calls __toString() if available
+                    // For resources, it converts to "Resource id #X"
+                    if (is_object($value) && method_exists($value, '__toString')) {
+                        $normalized[$key] = (string) $value;
+                    } elseif (is_resource($value)) {
+                        $normalized[$key] = (string) $value;
+                    } else {
+                        // Fallback for objects without __toString
+                        $normalized[$key] = '';
+                    }
+                }
             }
         }
         
@@ -740,6 +790,7 @@ class TraceKitModel
         $frames[] = $exception->getFile() . ':' . $exception->getLine();
         
         foreach ($exception->getTrace() as $frame) {
+            /** @var array{file?: string, line?: int, function?: string, class?: string} $frame */
             $file = $frame['file'] ?? '';
             $line = $frame['line'] ?? 0;
             $function = $frame['function'] ?? '';
@@ -765,13 +816,15 @@ class TraceKitModel
      * 
      * Format: OpenTelemetry OTLP JSON format for TraceKit service discovery
      * 
-     * @return array
+     * @return array<string, mixed>
      */
     private function buildTracePayload(): array
     {
         // Filter out incomplete spans (no end_time)
-        $completedSpans = array_filter($this->spans, function($span) {
-            return isset($span['end_time']) && $span['end_time'] !== null;
+        /** @var array<int, array<string, mixed>> $completedSpans */
+        $completedSpans = array_filter($this->spans, function($span): bool {
+            /** @var array<string, mixed> $span */
+            return isset($span['end_time']);
         });
         
         if (empty($completedSpans)) {
@@ -779,35 +832,43 @@ class TraceKitModel
         }
         
         // Convert spans to OpenTelemetry OTLP format
+        /** @var array<int, array<string, mixed>> $spans */
         $spans = [];
         foreach ($completedSpans as $span) {
+            /** @var array<string, mixed> $span */
             // Build attributes array in OTLP format
             $attributes = [];
-            foreach ($span['attributes'] ?? [] as $key => $value) {
+            $spanAttributes = is_array($span['attributes'] ?? null) ? $span['attributes'] : [];
+            foreach ($spanAttributes as $key => $value) {
                 $attributes[] = [
-                    'key' => $key,
+                    'key' => is_string($key) ? $key : (string)$key,
                     'value' => [
-                        'stringValue' => (string)$value
+                        'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
                     ]
                 ];
             }
             
             // Build events array in OTLP format
             $events = [];
-            foreach ($span['events'] ?? [] as $event) {
+            $spanEvents = is_array($span['events'] ?? null) ? $span['events'] : [];
+            foreach ($spanEvents as $event) {
+                /** @var array<string, mixed> $event */
                 $eventAttributes = [];
-                foreach ($event['attributes'] ?? [] as $key => $value) {
+                $eventAttrs = is_array($event['attributes'] ?? null) ? $event['attributes'] : [];
+                foreach ($eventAttrs as $key => $value) {
                     $eventAttributes[] = [
-                        'key' => $key,
+                        'key' => is_string($key) ? $key : (string)$key,
                         'value' => [
-                            'stringValue' => (string)$value
+                            'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
                         ]
                     ];
                 }
                 
+                $eventName = is_string($event['name'] ?? null) ? $event['name'] : 'event';
+                $eventTime = is_int($event['time'] ?? null) ? $event['time'] : 0;
                 $events[] = [
-                    'name' => $event['name'] ?? 'event',
-                    'timeUnixNano' => (string)($event['time'] ?? 0),
+                    'name' => $eventName,
+                    'timeUnixNano' => (string)$eventTime,
                     'attributes' => $eventAttributes,
                 ];
             }
@@ -815,23 +876,36 @@ class TraceKitModel
             // Convert parent_span_id: null should be omitted or empty string in OTLP
             $parentSpanId = $span['parent_span_id'] ?? null;
             
+            $traceId = is_string($span['trace_id'] ?? null) ? $span['trace_id'] : '';
+            $spanId = is_string($span['span_id'] ?? null) ? $span['span_id'] : '';
+            $name = is_string($span['name'] ?? null) ? $span['name'] : '';
+            $kind = is_int($span['kind'] ?? null) ? $span['kind'] : self::SPAN_KIND_INTERNAL;
+            $startTime = is_int($span['start_time'] ?? null) ? $span['start_time'] : 0;
+            $endTime = is_int($span['end_time'] ?? null) ? $span['end_time'] : 0;
+            $status = is_string($span['status'] ?? null) ? $span['status'] : self::STATUS_OK;
+            
+            $errorMessage = '';
+            if ($status === self::STATUS_ERROR) {
+                $errorMessage = is_string($spanAttributes['error.message'] ?? null) ? $spanAttributes['error.message'] : 'Error';
+            }
+            
             $spanData = [
-                'traceId' => $span['trace_id'],
-                'spanId' => $span['span_id'],
-                'name' => $span['name'],
-                'kind' => $span['kind'],
-                'startTimeUnixNano' => (string)$span['start_time'],
-                'endTimeUnixNano' => (string)$span['end_time'],
+                'traceId' => $traceId,
+                'spanId' => $spanId,
+                'name' => $name,
+                'kind' => $kind,
+                'startTimeUnixNano' => (string)$startTime,
+                'endTimeUnixNano' => (string)$endTime,
                 'attributes' => $attributes,
                 'status' => [
-                    'code' => $span['status'] === self::STATUS_ERROR ? 'STATUS_CODE_ERROR' : 'STATUS_CODE_OK',
-                    'message' => $span['status'] === self::STATUS_ERROR ? ($span['attributes']['error.message'] ?? 'Error') : '',
+                    'code' => $status === self::STATUS_ERROR ? 'STATUS_CODE_ERROR' : 'STATUS_CODE_OK',
+                    'message' => $errorMessage,
                 ],
                 'events' => $events,
             ];
             
             // Only include parentSpanId if it exists (root spans don't have parent)
-            if ($parentSpanId !== null) {
+            if ($parentSpanId !== null && is_string($parentSpanId)) {
                 $spanData['parentSpanId'] = $parentSpanId;
             }
             
@@ -854,7 +928,7 @@ class TraceKitModel
                     ],
                     'scopeSpans' => [
                         [
-                            'spans' => array_values($spans),
+                            'spans' => $spans,
                         ]
                     ]
                 ]
@@ -879,7 +953,7 @@ class TraceKitModel
      * - For OpenSwoole: Executes in background task
      * - This ensures traces are sent AFTER the HTTP response, without blocking
      * 
-     * @param array $payload The trace payload to send
+     * @param array<string, mixed> $payload The trace payload to send
      * @return void
      */
     private function sendTraces(array $payload): void
@@ -890,9 +964,36 @@ class TraceKitModel
                 return;
             }
             
-            $spanCount = count($payload['resourceSpans'][0]['scopeSpans'][0]['spans'] ?? []);
-            $serviceName = $payload['resourceSpans'][0]['resource']['attributes'][0]['value']['stringValue'] ?? 'unknown';
-            $traceId = substr($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['traceId'] ?? 'N/A', 0, 16);
+            /** @var array<string, mixed> $payload */
+            $resourceSpans = is_array($payload['resourceSpans'] ?? null) ? $payload['resourceSpans'] : [];
+            if (empty($resourceSpans) || !is_array($resourceSpans[0] ?? null)) {
+                error_log("TraceKit: Invalid payload structure, skipping send");
+                return;
+            }
+            /** @var array<string, mixed> $firstResourceSpan */
+            $firstResourceSpan = $resourceSpans[0];
+            $scopeSpans = is_array($firstResourceSpan['scopeSpans'] ?? null) ? $firstResourceSpan['scopeSpans'] : [];
+            if (empty($scopeSpans) || !is_array($scopeSpans[0] ?? null)) {
+                error_log("TraceKit: Invalid payload structure, skipping send");
+                return;
+            }
+            /** @var array<string, mixed> $firstScopeSpan */
+            $firstScopeSpan = $scopeSpans[0];
+            $spans = is_array($firstScopeSpan['spans'] ?? null) ? $firstScopeSpan['spans'] : [];
+            $spanCount = count($spans);
+            
+            // Extract service name
+            $resource = is_array($firstResourceSpan['resource'] ?? null) ? $firstResourceSpan['resource'] : [];
+            $resourceAttrs = is_array($resource['attributes'] ?? null) ? $resource['attributes'] : [];
+            $firstAttr = is_array($resourceAttrs[0] ?? null) ? $resourceAttrs[0] : [];
+            $attrValue = is_array($firstAttr['value'] ?? null) ? $firstAttr['value'] : [];
+            $serviceName = is_string($attrValue['stringValue'] ?? null) ? $attrValue['stringValue'] : 'unknown';
+            
+            // Extract trace ID
+            $firstSpan = is_array($spans[0] ?? null) ? $spans[0] : [];
+            $traceIdRaw = is_string($firstSpan['traceId'] ?? null) ? $firstSpan['traceId'] : 'N/A';
+            $traceId = substr($traceIdRaw, 0, 16);
+            
             error_log("TraceKit: Queueing trace for fire-and-forget send - Service: {$serviceName}, Spans: {$spanCount}, Trace ID: {$traceId}...");
             
             // Use AsyncApiCall with fireAndForget() for truly non-blocking sending
@@ -907,11 +1008,14 @@ class TraceKitModel
             ])
                 ->onResponse('tracekit', function($result, $requestId) use ($serviceName, $spanCount) {
                     // This callback runs after the HTTP response is sent
-                    if (!$result['success']) {
-                        error_log("TraceKit: Failed to send traces: " . ($result['error'] ?? 'Unknown error'));
+                    /** @var array<string, mixed> $result */
+                    if (!($result['success'] ?? false)) {
+                        $error = is_string($result['error'] ?? null) ? $result['error'] : 'Unknown error';
+                        error_log("TraceKit: Failed to send traces: " . $error);
                     } else {
-                        $responseCode = $result['http_code'] ?? 0;
-                        $responseBody = is_string($result['body']) ? substr($result['body'], 0, 200) : json_encode($result['body']);
+                        $responseCode = is_int($result['http_code'] ?? null) ? $result['http_code'] : 0;
+                        $body = $result['body'] ?? null;
+                        $responseBody = is_string($body) ? substr($body, 0, 200) : json_encode($body);
                         error_log("TraceKit: ✅ Traces sent successfully (fire-and-forget) - Service: {$serviceName}, Spans: {$spanCount}, HTTP: {$responseCode}");
                         
                         if ($responseCode >= 400) {

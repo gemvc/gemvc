@@ -298,6 +298,12 @@ class ApacheRequest
             $headers['authorization'] = $this->sanitizeInput($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
         }
         
-        $this->request->headers = $headers;
+        // Ensure all header values are strings
+        /** @var array<string, string> $normalizedHeaders */
+        $normalizedHeaders = [];
+        foreach ($headers as $key => $value) {
+            $normalizedHeaders[$key] = is_string($value) ? $value : '';
+        }
+        $this->request->headers = $normalizedHeaders;
     }
 }

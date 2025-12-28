@@ -37,9 +37,9 @@ class TraceKitToolkit
      */
     public function __construct(?string $apiKey = null, ?string $serviceName = null)
     {
-        $this->apiKey = $apiKey ?? $_ENV['TRACEKIT_API_KEY'] ?? '';
-        $this->baseUrl = $_ENV['TRACEKIT_BASE_URL'] ?? 'https://app.tracekit.dev';
-        $this->serviceName = $serviceName ?? $_ENV['TRACEKIT_SERVICE_NAME'] ?? 'gemvc-app';
+        $this->apiKey = $apiKey ?? (is_string($_ENV['TRACEKIT_API_KEY'] ?? null) ? $_ENV['TRACEKIT_API_KEY'] : '');
+        $this->baseUrl = is_string($_ENV['TRACEKIT_BASE_URL'] ?? null) ? $_ENV['TRACEKIT_BASE_URL'] : 'https://app.tracekit.dev';
+        $this->serviceName = $serviceName ?? (is_string($_ENV['TRACEKIT_SERVICE_NAME'] ?? null) ? $_ENV['TRACEKIT_SERVICE_NAME'] : 'gemvc-app');
     }
     
     /**
@@ -76,7 +76,7 @@ class TraceKitToolkit
      * @param string $email Email address for verification
      * @param string|null $organizationName Optional organization name (auto-generated if empty)
      * @param string $source Partner/framework code (default: 'gemvc')
-     * @param array $sourceMetadata Optional metadata (version, environment, etc.)
+     * @param array<string, mixed> $sourceMetadata Optional metadata (version, environment, etc.)
      * @return JsonResponse
      */
     public function registerService(
@@ -109,7 +109,7 @@ class TraceKitToolkit
                 return Response::badRequest('Registration failed: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -144,13 +144,13 @@ class TraceKitToolkit
                 return Response::badRequest('Verification failed: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
-            if (!$data) {
+            $data = is_string($response) ? json_decode($response, true) : null;
+            if (!$data || !is_array($data)) {
                 return Response::internalError('Invalid response from TraceKit');
             }
             
             // Update API key if provided
-            if (isset($data['api_key'])) {
+            if (isset($data['api_key']) && is_string($data['api_key'])) {
                 $this->apiKey = $data['api_key'];
             }
             
@@ -181,7 +181,7 @@ class TraceKitToolkit
                 return Response::badRequest('Status check failed: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -200,7 +200,7 @@ class TraceKitToolkit
      * Send heartbeat to TraceKit
      * 
      * @param string $status Service status: 'healthy', 'degraded', 'unhealthy'
-     * @param array $metadata Optional metadata (memory_usage, cpu_usage, etc.)
+     * @param array<string, mixed> $metadata Optional metadata (memory_usage, cpu_usage, etc.)
      * @return JsonResponse
      */
     public function sendHeartbeat(string $status = 'healthy', array $metadata = []): JsonResponse
@@ -230,7 +230,7 @@ class TraceKitToolkit
                 return Response::badRequest('Heartbeat failed: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -245,7 +245,7 @@ class TraceKitToolkit
      * Send heartbeat asynchronously (non-blocking)
      * 
      * @param string $status Service status
-     * @param array $metadata Optional metadata
+     * @param array<string, mixed> $metadata Optional metadata
      * @return void
      */
     public function sendHeartbeatAsync(string $status = 'healthy', array $metadata = []): void
@@ -280,7 +280,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to list health checks: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -318,7 +318,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to get metrics: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -350,7 +350,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to get alerts summary: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -384,7 +384,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to get active alerts: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -404,7 +404,7 @@ class TraceKitToolkit
      * 
      * @param string $name Webhook name
      * @param string $url Webhook URL
-     * @param array $events Event types to subscribe to
+     * @param array<string> $events Event types to subscribe to
      * @param bool $enabled Whether webhook is enabled (default: true)
      * @return JsonResponse
      */
@@ -436,7 +436,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to create webhook: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -468,7 +468,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to list webhooks: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -504,7 +504,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to get subscription: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -531,7 +531,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to list plans: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }
@@ -588,7 +588,7 @@ class TraceKitToolkit
                 return Response::badRequest('Failed to create checkout session: ' . $apiCall->error);
             }
             
-            $data = json_decode($response, true);
+            $data = is_string($response) ? json_decode($response, true) : null;
             if (!$data) {
                 return Response::internalError('Invalid response from TraceKit');
             }

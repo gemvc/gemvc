@@ -86,13 +86,20 @@ class Controller
      * This creates a child span under the root trace started by ApiService
      * 
      * @param string $operationName Operation name (e.g., 'database-query', 'business-logic')
-     * @param array $attributes Optional attributes
-     * @param string $kind Span kind: 'SERVER', 'CLIENT', or 'INTERNAL' (default: 'INTERNAL')
-     * @return array Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
+     * @param array<string, mixed> $attributes Optional attributes
+     * @param int $kind Span kind: SPAN_KIND_SERVER (2), SPAN_KIND_CLIENT (3), or SPAN_KIND_INTERNAL (1) (default: SPAN_KIND_INTERNAL)
+     * @return array<string, mixed> Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
      */
     protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = TraceKitModel::SPAN_KIND_INTERNAL): array
     {
-        if ($this->tracekit === null || !$this->tracekit->isEnabled()) {
+        if ($this->tracekit === null) {
+            return [];
+        }
+        
+        /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+        $tracekit = $this->tracekit;
+        
+        if (!$tracekit->isEnabled()) {
             return [];
         }
         
@@ -111,7 +118,7 @@ class Controller
                 $kind = TraceKitModel::SPAN_KIND_INTERNAL;
             }
             
-            return $this->tracekit->startSpan($operationName, $attributes, $kind);
+            return $tracekit->startSpan($operationName, $attributes, $kind);
         } catch (\Throwable $e) {
             error_log("TraceKit: Failed to start span in Controller: " . $e->getMessage());
             return [];
@@ -121,8 +128,8 @@ class Controller
     /**
      * End a child span
      * 
-     * @param array $spanData Span data returned from startTraceSpan()
-     * @param array $finalAttributes Optional attributes to add before ending
+     * @param array<string, mixed> $spanData Span data returned from startTraceSpan()
+     * @param array<string, mixed> $finalAttributes Optional attributes to add before ending
      * @param string|null $status Span status: 'OK' or 'ERROR' (default: 'OK')
      * @return void
      */
@@ -133,8 +140,10 @@ class Controller
         }
         
         try {
+            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+            $tracekit = $this->tracekit;
             $statusValue = ($status === 'ERROR') ? TraceKitModel::STATUS_ERROR : TraceKitModel::STATUS_OK;
-            $this->tracekit->endSpan($spanData, $finalAttributes, $statusValue);
+            $tracekit->endSpan($spanData, $finalAttributes, $statusValue);
         } catch (\Throwable $e) {
             error_log("TraceKit: Failed to end span in Controller: " . $e->getMessage());
         }
@@ -153,8 +162,10 @@ class Controller
         }
         
         try {
+            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
+            $tracekit = $this->tracekit;
             // Use existing trace if available, or create one (errors are always logged)
-            $this->tracekit->recordException([], $exception, 'controller-operation', [
+            $tracekit->recordException([], $exception, 'controller-operation', [
                 'controller' => $this->getControllerName(),
             ]);
         } catch (\Throwable $e) {
