@@ -388,19 +388,10 @@ class TraceKitModel
             $startTime = $this->getMicrotime();
             
             // Create span data
-            $spanData = [
-                'trace_id' => $this->traceId,
-                'span_id' => $spanId,
-                'parent_span_id' => null, // Root span has no parent
-                'name' => $operationName,
-                'kind' => self::SPAN_KIND_SERVER,
-                'start_time' => $startTime,
-                'end_time' => null,
-                'duration' => null,
-                'attributes' => $this->normalizeAttributes($attributes),
-                'status' => self::STATUS_OK,
-                'events' => [],
-            ];
+            // traceId is guaranteed to be non-null here (generated above if needed)
+            /** @var string $traceId */
+            $traceId = $this->traceId;
+            $spanData = $this->createSpanData($traceId, $spanId, null, $operationName, self::SPAN_KIND_SERVER, $startTime, $attributes);
             
             // Add to spans array
             $this->spans[] = $spanData;
@@ -445,7 +436,8 @@ class TraceKitModel
             
             // Get active span (parent)
             $activeSpan = $this->getActiveSpan();
-            $parentSpanId = $activeSpan['span_id'] ?? null;
+            $parentSpanIdRaw = $activeSpan['span_id'] ?? null;
+            $parentSpanId = is_string($parentSpanIdRaw) ? $parentSpanIdRaw : null;
             
             // Generate span ID
             $spanId = $this->generateSpanId();
@@ -459,19 +451,10 @@ class TraceKitModel
             }
             
             // Create span data
-            $spanData = [
-                'trace_id' => $this->traceId,
-                'span_id' => $spanId,
-                'parent_span_id' => $parentSpanId,
-                'name' => $operationName,
-                'kind' => $kind,
-                'start_time' => $startTime,
-                'end_time' => null,
-                'duration' => null,
-                'attributes' => $this->normalizeAttributes($attributes),
-                'status' => self::STATUS_OK,
-                'events' => [],
-            ];
+            // traceId is guaranteed to be non-null here (generated above if needed)
+            /** @var string $traceId */
+            $traceId = $this->traceId;
+            $spanData = $this->createSpanData($traceId, $spanId, $parentSpanId, $operationName, $kind, $startTime, $attributes);
             
             // Add to spans array
             $this->spans[] = $spanData;
@@ -849,6 +832,35 @@ class TraceKitModel
             'span_id' => $spanId,
             'trace_id' => $traceId,
             'start_time' => $startTime,
+        ];
+    }
+    
+    /**
+     * Create span data structure
+     * 
+     * @param string $traceId
+     * @param string $spanId
+     * @param string|null $parentSpanId Parent span ID (null for root spans)
+     * @param string $name Operation name
+     * @param int $kind Span kind (SPAN_KIND_SERVER, SPAN_KIND_CLIENT, etc.)
+     * @param int $startTime Start time in nanoseconds
+     * @param array<string, mixed> $attributes Span attributes
+     * @return array<string, mixed>
+     */
+    private function createSpanData(string $traceId, string $spanId, ?string $parentSpanId, string $name, int $kind, int $startTime, array $attributes = []): array
+    {
+        return [
+            'trace_id' => $traceId,
+            'span_id' => $spanId,
+            'parent_span_id' => $parentSpanId,
+            'name' => $name,
+            'kind' => $kind,
+            'start_time' => $startTime,
+            'end_time' => null,
+            'duration' => null,
+            'attributes' => $this->normalizeAttributes($attributes),
+            'status' => self::STATUS_OK,
+            'events' => [],
         ];
     }
     

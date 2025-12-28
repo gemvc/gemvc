@@ -930,6 +930,300 @@ class TraceKitModelTest extends TestCase
     }
     
     // ==========================================
+    // createSpanDataReturn() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testCreateSpanDataReturnWithValidData(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        $spanId = 'abc123';
+        $traceId = 'def456';
+        $startTime = 1234567890;
+        
+        $result = $method->invoke($model, $spanId, $traceId, $startTime);
+        
+        $this->assertIsArray($result);
+        $this->assertEquals($spanId, $result['span_id']);
+        $this->assertEquals($traceId, $result['trace_id']);
+        $this->assertEquals($startTime, $result['start_time']);
+    }
+    
+    public function testCreateSpanDataReturnReturnsCorrectStructure(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        $result = $method->invoke($model, 'span1', 'trace1', 1000);
+        
+        // Verify structure matches expected format
+        $this->assertArrayHasKey('span_id', $result);
+        $this->assertArrayHasKey('trace_id', $result);
+        $this->assertArrayHasKey('start_time', $result);
+        $this->assertCount(3, $result); // Should only have these 3 keys
+        $this->assertIsString($result['span_id']);
+        $this->assertIsString($result['trace_id']);
+        $this->assertIsInt($result['start_time']);
+    }
+    
+    public function testCreateSpanDataReturnWithLongIds(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        // Test with long hex strings (like actual trace/span IDs)
+        $spanId = 'a1b2c3d4e5f6g7h8';
+        $traceId = '1234567890abcdef1234567890abcdef';
+        $startTime = 1699123456789000000; // Nanoseconds
+        
+        $result = $method->invoke($model, $spanId, $traceId, $startTime);
+        
+        $this->assertEquals($spanId, $result['span_id']);
+        $this->assertEquals($traceId, $result['trace_id']);
+        $this->assertEquals($startTime, $result['start_time']);
+    }
+    
+    public function testCreateSpanDataReturnWithZeroStartTime(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        $result = $method->invoke($model, 'span1', 'trace1', 0);
+        
+        $this->assertEquals(0, $result['start_time']);
+        $this->assertEquals('span1', $result['span_id']);
+        $this->assertEquals('trace1', $result['trace_id']);
+    }
+    
+    public function testCreateSpanDataReturnWithLargeStartTime(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        // Test with very large timestamp (nanoseconds)
+        $largeTime = PHP_INT_MAX;
+        $result = $method->invoke($model, 'span1', 'trace1', $largeTime);
+        
+        $this->assertEquals($largeTime, $result['start_time']);
+    }
+    
+    public function testCreateSpanDataReturnPreservesExactValues(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        $spanId = 'test-span-id-123';
+        $traceId = 'test-trace-id-456';
+        $startTime = 987654321;
+        
+        $result = $method->invoke($model, $spanId, $traceId, $startTime);
+        
+        // Verify exact values are preserved (no transformation)
+        $this->assertSame($spanId, $result['span_id']);
+        $this->assertSame($traceId, $result['trace_id']);
+        $this->assertSame($startTime, $result['start_time']);
+    }
+    
+    public function testCreateSpanDataReturnWithEmptyStrings(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanDataReturn');
+        
+        $result = $method->invoke($model, '', '', 0);
+        
+        $this->assertEquals('', $result['span_id']);
+        $this->assertEquals('', $result['trace_id']);
+        $this->assertEquals(0, $result['start_time']);
+    }
+    
+    // ==========================================
+    // createSpanData() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testCreateSpanDataWithRootSpan(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $traceId = 'trace123';
+        $spanId = 'span456';
+        $name = 'test-operation';
+        $kind = TraceKitModel::SPAN_KIND_SERVER;
+        $startTime = 1234567890;
+        $attributes = ['key1' => 'value1'];
+        
+        $result = $method->invoke($model, $traceId, $spanId, null, $name, $kind, $startTime, $attributes);
+        
+        $this->assertIsArray($result);
+        $this->assertEquals($traceId, $result['trace_id']);
+        $this->assertEquals($spanId, $result['span_id']);
+        $this->assertNull($result['parent_span_id']);
+        $this->assertEquals($name, $result['name']);
+        $this->assertEquals($kind, $result['kind']);
+        $this->assertEquals($startTime, $result['start_time']);
+        $this->assertNull($result['end_time']);
+        $this->assertNull($result['duration']);
+        $this->assertEquals('value1', $result['attributes']['key1']);
+        $this->assertEquals(TraceKitModel::STATUS_OK, $result['status']);
+        $this->assertIsArray($result['events']);
+        $this->assertEmpty($result['events']);
+    }
+    
+    public function testCreateSpanDataWithChildSpan(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $traceId = 'trace123';
+        $spanId = 'span789';
+        $parentSpanId = 'span456';
+        $name = 'child-operation';
+        $kind = TraceKitModel::SPAN_KIND_INTERNAL;
+        $startTime = 1234567890;
+        
+        $result = $method->invoke($model, $traceId, $spanId, $parentSpanId, $name, $kind, $startTime);
+        
+        $this->assertEquals($traceId, $result['trace_id']);
+        $this->assertEquals($spanId, $result['span_id']);
+        $this->assertEquals($parentSpanId, $result['parent_span_id']);
+        $this->assertEquals($name, $result['name']);
+        $this->assertEquals($kind, $result['kind']);
+    }
+    
+    public function testCreateSpanDataReturnsCorrectStructure(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $result = $method->invoke($model, 'trace1', 'span1', null, 'test', TraceKitModel::SPAN_KIND_SERVER, 1000);
+        
+        // Verify all required keys exist
+        $this->assertArrayHasKey('trace_id', $result);
+        $this->assertArrayHasKey('span_id', $result);
+        $this->assertArrayHasKey('parent_span_id', $result);
+        $this->assertArrayHasKey('name', $result);
+        $this->assertArrayHasKey('kind', $result);
+        $this->assertArrayHasKey('start_time', $result);
+        $this->assertArrayHasKey('end_time', $result);
+        $this->assertArrayHasKey('duration', $result);
+        $this->assertArrayHasKey('attributes', $result);
+        $this->assertArrayHasKey('status', $result);
+        $this->assertArrayHasKey('events', $result);
+        $this->assertCount(11, $result); // Should have exactly 11 keys
+    }
+    
+    public function testCreateSpanDataNormalizesAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $attributes = [
+            'string' => 'value',
+            'number' => 42,
+            'float' => 3.14,
+            'bool' => true,
+            'array' => ['nested' => 'data'],
+        ];
+        
+        $result = $method->invoke($model, 'trace1', 'span1', null, 'test', TraceKitModel::SPAN_KIND_SERVER, 1000, $attributes);
+        
+        $this->assertIsArray($result['attributes']);
+        $this->assertEquals('value', $result['attributes']['string']);
+        $this->assertEquals(42, $result['attributes']['number']);
+        $this->assertEquals(3.14, $result['attributes']['float']);
+        $this->assertTrue($result['attributes']['bool']);
+        $this->assertIsArray($result['attributes']['array']);
+    }
+    
+    public function testCreateSpanDataWithAllSpanKinds(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $kinds = [
+            TraceKitModel::SPAN_KIND_UNSPECIFIED,
+            TraceKitModel::SPAN_KIND_INTERNAL,
+            TraceKitModel::SPAN_KIND_SERVER,
+            TraceKitModel::SPAN_KIND_CLIENT,
+            TraceKitModel::SPAN_KIND_PRODUCER,
+            TraceKitModel::SPAN_KIND_CONSUMER,
+        ];
+        
+        foreach ($kinds as $kind) {
+            $result = $method->invoke($model, 'trace1', 'span1', null, 'test', $kind, 1000);
+            $this->assertEquals($kind, $result['kind'], "Failed for span kind: {$kind}");
+        }
+    }
+    
+    public function testCreateSpanDataInitializesDefaultValues(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $result = $method->invoke($model, 'trace1', 'span1', null, 'test', TraceKitModel::SPAN_KIND_SERVER, 1000);
+        
+        // Verify default values
+        $this->assertNull($result['end_time']);
+        $this->assertNull($result['duration']);
+        $this->assertEquals(TraceKitModel::STATUS_OK, $result['status']);
+        $this->assertIsArray($result['events']);
+        $this->assertEmpty($result['events']);
+        $this->assertIsArray($result['attributes']);
+    }
+    
+    public function testCreateSpanDataWithEmptyAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $result = $method->invoke($model, 'trace1', 'span1', null, 'test', TraceKitModel::SPAN_KIND_SERVER, 1000, []);
+        
+        $this->assertIsArray($result['attributes']);
+        $this->assertEmpty($result['attributes']);
+    }
+    
+    public function testCreateSpanDataWithLongIds(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        // Test with realistic hex IDs
+        $traceId = '1234567890abcdef1234567890abcdef';
+        $spanId = 'a1b2c3d4e5f6g7h8';
+        $startTime = 1699123456789000000; // Nanoseconds
+        
+        $result = $method->invoke($model, $traceId, $spanId, null, 'test', TraceKitModel::SPAN_KIND_SERVER, $startTime);
+        
+        $this->assertEquals($traceId, $result['trace_id']);
+        $this->assertEquals($spanId, $result['span_id']);
+        $this->assertEquals($startTime, $result['start_time']);
+    }
+    
+    public function testCreateSpanDataPreservesExactValues(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createSpanData');
+        
+        $traceId = 'exact-trace-id';
+        $spanId = 'exact-span-id';
+        $parentSpanId = 'exact-parent-id';
+        $name = 'exact-operation-name';
+        $kind = TraceKitModel::SPAN_KIND_CLIENT;
+        $startTime = 987654321;
+        
+        $result = $method->invoke($model, $traceId, $spanId, $parentSpanId, $name, $kind, $startTime);
+        
+        // Verify exact values are preserved
+        $this->assertSame($traceId, $result['trace_id']);
+        $this->assertSame($spanId, $result['span_id']);
+        $this->assertSame($parentSpanId, $result['parent_span_id']);
+        $this->assertSame($name, $result['name']);
+        $this->assertSame($kind, $result['kind']);
+        $this->assertSame($startTime, $result['start_time']);
+    }
+    
+    // ==========================================
     // Flush Tests
     // ==========================================
     
