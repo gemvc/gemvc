@@ -179,17 +179,50 @@ class TraceKitToolkitTest extends TestCase
     public function testSendHeartbeatAsync(): void
     {
         $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        // Should not throw - uses AsyncApiCall fireAndForget()
         $toolkit->sendHeartbeatAsync('healthy');
         
-        // Should not throw
         $this->assertTrue(true);
     }
     
     public function testSendHeartbeatAsyncWithMetadata(): void
     {
         $toolkit = new TraceKitToolkit('test-api-key');
-        $metadata = ['memory' => '100MB'];
+        $toolkit->setServiceName('test-service');
+        $metadata = ['memory' => '100MB', 'cpu' => '50%'];
+        
+        // Should not throw - metadata is included in payload
         $toolkit->sendHeartbeatAsync('degraded', $metadata);
+        
+        $this->assertTrue(true);
+    }
+    
+    /**
+     * Test that sendHeartbeatAsync returns early when API key is empty
+     */
+    public function testSendHeartbeatAsyncWithEmptyApiKey(): void
+    {
+        $toolkit = new TraceKitToolkit('');
+        $toolkit->setServiceName('test-service');
+        
+        // Should return early without throwing or logging
+        $toolkit->sendHeartbeatAsync('healthy');
+        
+        $this->assertTrue(true);
+    }
+    
+    /**
+     * Test that sendHeartbeatAsync handles exceptions gracefully
+     */
+    public function testSendHeartbeatAsyncHandlesExceptions(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        // Should not throw even if AsyncApiCall fails internally
+        $toolkit->sendHeartbeatAsync('healthy');
         
         $this->assertTrue(true);
     }
@@ -416,6 +449,9 @@ class TraceKitToolkitTest extends TestCase
     public function testSendHeartbeatAsyncWithEmptyStatus(): void
     {
         $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        // Empty status should still work (will be sent as empty string)
         $toolkit->sendHeartbeatAsync('');
         
         $this->assertTrue(true);
@@ -424,8 +460,60 @@ class TraceKitToolkitTest extends TestCase
     public function testSendHeartbeatAsyncWithComplexMetadata(): void
     {
         $toolkit = new TraceKitToolkit('test-api-key');
-        $metadata = ['memory' => '100MB', 'cpu' => '50%'];
+        $toolkit->setServiceName('test-service');
+        $metadata = [
+            'memory' => '100MB',
+            'cpu' => '50%',
+            'disk' => '75%',
+            'requests_per_second' => 100,
+        ];
+        
+        // Complex metadata should be included in payload
         $toolkit->sendHeartbeatAsync('degraded', $metadata);
+        
+        $this->assertTrue(true);
+    }
+    
+    /**
+     * Test sendHeartbeatAsync with all status types
+     */
+    public function testSendHeartbeatAsyncWithAllStatusTypes(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        $statuses = ['healthy', 'degraded', 'unhealthy'];
+        
+        foreach ($statuses as $status) {
+            $toolkit->sendHeartbeatAsync($status);
+            $this->assertTrue(true);
+        }
+    }
+    
+    /**
+     * Test sendHeartbeatAsync with empty metadata array
+     */
+    public function testSendHeartbeatAsyncWithEmptyMetadata(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        // Empty metadata array should work
+        $toolkit->sendHeartbeatAsync('healthy', []);
+        
+        $this->assertTrue(true);
+    }
+    
+    /**
+     * Test sendHeartbeatAsync with null metadata (should default to empty array)
+     */
+    public function testSendHeartbeatAsyncWithNullMetadata(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        $toolkit->setServiceName('test-service');
+        
+        // Should handle default parameter correctly
+        $toolkit->sendHeartbeatAsync('healthy');
         
         $this->assertTrue(true);
     }

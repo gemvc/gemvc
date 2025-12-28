@@ -20,6 +20,7 @@ namespace Gemvc\Helper;
  * @package App\Model
  */
 use Gemvc\Http\ApiCall;
+use Gemvc\Http\AsyncApiCall;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
 
@@ -314,19 +315,50 @@ class TraceKitToolkit
     /**
      * Send heartbeat asynchronously (non-blocking)
      * 
+     * Uses AsyncApiCall with fire-and-forget mode for reliable non-blocking execution.
+     * This is more reliable than register_shutdown_function and provides better
+     * timeout control and error handling.
+     * 
      * @param string $status Service status
      * @param array<string, mixed> $metadata Optional metadata
      * @return void
      */
     public function sendHeartbeatAsync(string $status = 'healthy', array $metadata = []): void
     {
-        register_shutdown_function(function() use ($status, $metadata) {
-            try {
-                $this->sendHeartbeat($status, $metadata);
-            } catch (\Throwable $e) {
-                error_log("TraceKit: Heartbeat failed: " . $e->getMessage());
+        if (empty($this->apiKey)) {
+            // Silently fail if no API key - don't log errors for missing config
+            return;
+        }
+        
+        try {
+            $async = new AsyncApiCall();
+            $async->setTimeouts(1, 3); // Short timeouts for heartbeats
+            
+            $payload = [
+                'service_name' => $this->serviceName,
+                'status' => $status,
+            ];
+            
+            if (!empty($metadata)) {
+                $payload['metadata'] = $metadata;
             }
-        });
+            
+            $headers = [
+                'X-API-Key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            
+            $async->addPost('heartbeat', $this->baseUrl . '/v1/health/heartbeat', $payload, $headers)
+                  ->onResponse('heartbeat', function($result, $id) {
+                      if (!$result['success']) {
+                          error_log("TraceKit: Heartbeat failed: " . ($result['error'] ?? 'Unknown error'));
+                      }
+                  })
+                  ->fireAndForget();
+        } catch (\Throwable $e) {
+            // Silently fail - don't let heartbeat errors break the application
+            error_log("TraceKit: Heartbeat error: " . $e->getMessage());
+        }
     }
     
     /**
