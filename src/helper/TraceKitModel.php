@@ -831,15 +831,6 @@ class TraceKitModel
     }
     
     /**
-     * Validate payload structure and extract spans data
-     * 
-     * Validates the OTLP payload structure and extracts spans, span count, and resource span data.
-     * Returns null if validation fails.
-     * 
-     * @param array<string, mixed> $payload The trace payload to validate
-     * @return array{spans: array<int, array<string, mixed>>, spanCount: int, firstResourceSpan: array<string, mixed>}|null Validated data or null if invalid
-     */
-    /**
      * Build a single OTLP attribute entry
      * 
      * Converts a key-value pair to OpenTelemetry OTLP attribute format.
@@ -855,6 +846,32 @@ class TraceKitModel
             'value' => [
                 'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
             ]
+        ];
+    }
+    
+    /**
+     * Build OTLP format event from internal event format
+     * 
+     * Converts internal event data structure to OpenTelemetry OTLP JSON format.
+     * 
+     * @param array<string, mixed> $event Internal event data
+     * @return array{name: string, timeUnixNano: string, attributes: array<int, array<string, mixed>>}
+     */
+    private function buildOtlpEvent(array $event): array
+    {
+        $eventAttributes = [];
+        $eventAttrs = is_array($event['attributes'] ?? null) ? $event['attributes'] : [];
+        foreach ($eventAttrs as $key => $value) {
+            $eventAttributes[] = $this->buildOtlpAttribute((string)$key, $value);
+        }
+        
+        $eventName = is_string($event['name'] ?? null) ? $event['name'] : 'event';
+        $eventTime = is_int($event['time'] ?? null) ? $event['time'] : 0;
+        
+        return [
+            'name' => $eventName,
+            'timeUnixNano' => (string)$eventTime,
+            'attributes' => $eventAttributes,
         ];
     }
     
@@ -1174,19 +1191,7 @@ class TraceKitModel
             $spanEvents = is_array($span['events'] ?? null) ? $span['events'] : [];
             foreach ($spanEvents as $event) {
                 /** @var array<string, mixed> $event */
-                $eventAttributes = [];
-                $eventAttrs = is_array($event['attributes'] ?? null) ? $event['attributes'] : [];
-                foreach ($eventAttrs as $key => $value) {
-                    $eventAttributes[] = $this->buildOtlpAttribute((string)$key, $value);
-                }
-                
-                $eventName = is_string($event['name'] ?? null) ? $event['name'] : 'event';
-                $eventTime = is_int($event['time'] ?? null) ? $event['time'] : 0;
-                $events[] = [
-                    'name' => $eventName,
-                    'timeUnixNano' => (string)$eventTime,
-                    'attributes' => $eventAttributes,
-                ];
+                $events[] = $this->buildOtlpEvent($event);
             }
             
             // Build OTLP format span data

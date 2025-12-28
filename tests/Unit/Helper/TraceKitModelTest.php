@@ -1913,6 +1913,204 @@ class TraceKitModelTest extends TestCase
         $this->assertEquals('production-service', $result);
     }
     
+    // ==========================================
+    // buildOtlpEvent() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testBuildOtlpEventWithValidEvent(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+            'attributes' => [
+                'attr1' => 'value1',
+                'attr2' => 42,
+            ],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertEquals('1000000000', $result['timeUnixNano']);
+        $this->assertIsArray($result['attributes']);
+        $this->assertCount(2, $result['attributes']);
+        $this->assertEquals('attr1', $result['attributes'][0]['key']);
+        $this->assertEquals('value1', $result['attributes'][0]['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpEventWithEmptyAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertEquals('1000000000', $result['timeUnixNano']);
+        $this->assertIsArray($result['attributes']);
+        $this->assertEmpty($result['attributes']);
+    }
+    
+    public function testBuildOtlpEventWithMissingName(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'time' => 1000000000,
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('event', $result['name']); // Default name
+        $this->assertEquals('1000000000', $result['timeUnixNano']);
+    }
+    
+    public function testBuildOtlpEventWithNonStringName(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 12345, // Non-string
+            'time' => 1000000000,
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('event', $result['name']); // Default name
+    }
+    
+    public function testBuildOtlpEventWithMissingTime(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertEquals('0', $result['timeUnixNano']); // Default time
+    }
+    
+    public function testBuildOtlpEventWithNonIntTime(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 'not-an-int',
+            'attributes' => [],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertEquals('0', $result['timeUnixNano']); // Default time
+    }
+    
+    public function testBuildOtlpEventWithMissingAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertIsArray($result['attributes']);
+        $this->assertEmpty($result['attributes']);
+    }
+    
+    public function testBuildOtlpEventWithNonArrayAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+            'attributes' => 'not-an-array',
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertIsArray($result['attributes']);
+        $this->assertEmpty($result['attributes']);
+    }
+    
+    public function testBuildOtlpEventWithMultipleAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+            'attributes' => [
+                'attr1' => 'value1',
+                'attr2' => 42,
+                'attr3' => 3.14,
+                'attr4' => 'string-value',
+            ],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertCount(4, $result['attributes']);
+        
+        // Verify all attributes are properly formatted
+        foreach ($result['attributes'] as $attr) {
+            $this->assertArrayHasKey('key', $attr);
+            $this->assertArrayHasKey('value', $attr);
+            $this->assertArrayHasKey('stringValue', $attr['value']);
+        }
+    }
+    
+    public function testBuildOtlpEventWithNumericAttributeKeys(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpEvent');
+        
+        $event = [
+            'name' => 'test-event',
+            'time' => 1000000000,
+            'attributes' => [
+                0 => 'value1',
+                1 => 'value2',
+            ],
+        ];
+        
+        $result = $method->invoke($model, $event);
+        
+        $this->assertEquals('test-event', $result['name']);
+        $this->assertCount(2, $result['attributes']);
+        $this->assertEquals('0', $result['attributes'][0]['key']);
+        $this->assertEquals('1', $result['attributes'][1]['key']);
+    }
+    
     public function testCreateSpanDataNormalizesAttributes(): void
     {
         $model = new TraceKitModel(['api_key' => 'test-key']);
