@@ -74,7 +74,7 @@ class MockControllerTable extends Table
 
 class TestController extends Controller
 {
-    public ?string $error; // Made public for testing
+    public ?string $error = null; // Made public for testing
 }
 
 class ControllerTest extends TestCase
