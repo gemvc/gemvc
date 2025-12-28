@@ -81,34 +81,14 @@ class TraceKitModel
      */
     public function __construct(array $config = [])
     {
-        // Load configuration from environment or config array
-        $this->apiKey = is_string($config['api_key'] ?? null) ? $config['api_key'] : (is_string($_ENV['TRACEKIT_API_KEY'] ?? null) ? $_ENV['TRACEKIT_API_KEY'] : '');
-        $this->serviceName = is_string($config['service_name'] ?? null) ? $config['service_name'] : (is_string($_ENV['TRACEKIT_SERVICE_NAME'] ?? null) ? $_ENV['TRACEKIT_SERVICE_NAME'] : 'gemvc-app');
-        $this->endpoint = is_string($config['endpoint'] ?? null) ? $config['endpoint'] : (is_string($_ENV['TRACEKIT_ENDPOINT'] ?? null) ? $_ENV['TRACEKIT_ENDPOINT'] : 'https://app.tracekit.dev/v1/traces');
-        
-        // Parse enabled flag (string 'false' or boolean false)
-        $enabled = $config['enabled'] ?? $_ENV['TRACEKIT_ENABLED'] ?? true;
-        $this->enabled = is_string($enabled) ? ($enabled !== 'false' && $enabled !== '0') : (bool)$enabled;
-        
-        // Parse sample rate
-        $sampleRate = $config['sample_rate'] ?? $_ENV['TRACEKIT_SAMPLE_RATE'] ?? 1.0;
-        $this->sampleRate = is_numeric($sampleRate) ? (float)$sampleRate : 1.0;
-        
-        // Clamp sample rate between 0.0 and 1.0
-        $this->sampleRate = max(0.0, min(1.0, $this->sampleRate));
-        
-        // Parse trace response flag (string 'true' or boolean true)
-        $traceResponse = $config['trace_response'] ?? $_ENV['TRACEKIT_TRACE_RESPONSE'] ?? false;
-        $this->traceResponse = is_string($traceResponse) ? ($traceResponse === 'true' || $traceResponse === '1') : (bool)$traceResponse;
-        
-        // Parse trace DB query flag (string 'true' or boolean true)
-        $traceDbQuery = $config['trace_db_query'] ?? $_ENV['TRACEKIT_TRACE_DB_QUERY'] ?? false;
-        $this->traceDbQuery = is_string($traceDbQuery) ? ($traceDbQuery === 'true' || $traceDbQuery === '1') : (bool)$traceDbQuery;
-        
-        // Parse trace request body flag (string 'true' or boolean true)
-        // Note: User specified TRACEKIT_TRACE_RESPONSE_BODY in .env but wants to trace request body
-        $traceRequestBody = $config['trace_request_body'] ?? $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] ?? $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] ?? false;
-        $this->traceRequestBody = is_string($traceRequestBody) ? ($traceRequestBody === 'true' || $traceRequestBody === '1') : (bool)$traceRequestBody;
+        $this->apiKey = $this->loadApiKey($config);
+        $this->serviceName = $this->loadServiceName($config);
+        $this->endpoint = $this->loadEndpoint($config);
+        $this->enabled = $this->parseEnabledFlag($config);
+        $this->sampleRate = $this->parseSampleRate($config);
+        $this->traceResponse = $this->parseTraceResponseFlag($config);
+        $this->traceDbQuery = $this->parseTraceDbQueryFlag($config);
+        $this->traceRequestBody = $this->parseTraceRequestBodyFlag($config);
         
         // Disable if no API key
         if (empty($this->apiKey)) {
@@ -141,6 +121,153 @@ class TraceKitModel
     public static function clearCurrentInstance(): void
     {
         self::$currentInstance = null;
+    }
+    
+    // ==========================================
+    // Configuration Loading Methods (Private)
+    // ==========================================
+    
+    /**
+     * Load API key from config array or environment variable
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return string API key or empty string if not found
+     */
+    private function loadApiKey(array $config): string
+    {
+        if (isset($config['api_key']) && is_string($config['api_key'])) {
+            return $config['api_key'];
+        }
+        
+        $envKey = $_ENV['TRACEKIT_API_KEY'] ?? null;
+        return is_string($envKey) ? $envKey : '';
+    }
+    
+    /**
+     * Load service name from config array or environment variable
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return string Service name or default 'gemvc-app'
+     */
+    private function loadServiceName(array $config): string
+    {
+        if (isset($config['service_name']) && is_string($config['service_name'])) {
+            return $config['service_name'];
+        }
+        
+        $envName = $_ENV['TRACEKIT_SERVICE_NAME'] ?? null;
+        return is_string($envName) ? $envName : 'gemvc-app';
+    }
+    
+    /**
+     * Load endpoint URL from config array or environment variable
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return string Endpoint URL or default TraceKit endpoint
+     */
+    private function loadEndpoint(array $config): string
+    {
+        if (isset($config['endpoint']) && is_string($config['endpoint'])) {
+            return $config['endpoint'];
+        }
+        
+        $envEndpoint = $_ENV['TRACEKIT_ENDPOINT'] ?? null;
+        return is_string($envEndpoint) ? $envEndpoint : 'https://app.tracekit.dev/v1/traces';
+    }
+    
+    /**
+     * Parse enabled flag from config array or environment variable
+     * Handles both string ('false', '0') and boolean values
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return bool True if enabled, false otherwise
+     */
+    private function parseEnabledFlag(array $config): bool
+    {
+        $enabled = $config['enabled'] ?? $_ENV['TRACEKIT_ENABLED'] ?? true;
+        
+        if (is_string($enabled)) {
+            return $enabled !== 'false' && $enabled !== '0';
+        }
+        
+        return (bool)$enabled;
+    }
+    
+    /**
+     * Parse sample rate from config array or environment variable
+     * Clamps value between 0.0 and 1.0
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return float Sample rate between 0.0 and 1.0
+     */
+    private function parseSampleRate(array $config): float
+    {
+        $sampleRate = $config['sample_rate'] ?? $_ENV['TRACEKIT_SAMPLE_RATE'] ?? 1.0;
+        
+        if (!is_numeric($sampleRate)) {
+            return 1.0;
+        }
+        
+        $rate = (float)$sampleRate;
+        return max(0.0, min(1.0, $rate));
+    }
+    
+    /**
+     * Parse trace response flag from config array or environment variable
+     * Handles both string ('true', '1') and boolean values
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return bool True if response tracing is enabled
+     */
+    private function parseTraceResponseFlag(array $config): bool
+    {
+        $traceResponse = $config['trace_response'] ?? $_ENV['TRACEKIT_TRACE_RESPONSE'] ?? false;
+        
+        if (is_string($traceResponse)) {
+            return $traceResponse === 'true' || $traceResponse === '1';
+        }
+        
+        return (bool)$traceResponse;
+    }
+    
+    /**
+     * Parse trace DB query flag from config array or environment variable
+     * Handles both string ('true', '1') and boolean values
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return bool True if database query tracing is enabled
+     */
+    private function parseTraceDbQueryFlag(array $config): bool
+    {
+        $traceDbQuery = $config['trace_db_query'] ?? $_ENV['TRACEKIT_TRACE_DB_QUERY'] ?? false;
+        
+        if (is_string($traceDbQuery)) {
+            return $traceDbQuery === 'true' || $traceDbQuery === '1';
+        }
+        
+        return (bool)$traceDbQuery;
+    }
+    
+    /**
+     * Parse trace request body flag from config array or environment variable
+     * Handles both string ('true', '1') and boolean values
+     * Supports both TRACEKIT_TRACE_RESPONSE_BODY and TRACEKIT_TRACE_REQUEST_BODY env vars
+     * 
+     * @param array<string, mixed> $config Configuration array
+     * @return bool True if request body tracing is enabled
+     */
+    private function parseTraceRequestBodyFlag(array $config): bool
+    {
+        $traceRequestBody = $config['trace_request_body'] 
+            ?? $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] 
+            ?? $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] 
+            ?? false;
+        
+        if (is_string($traceRequestBody)) {
+            return $traceRequestBody === 'true' || $traceRequestBody === '1';
+        }
+        
+        return (bool)$traceRequestBody;
     }
     
     /**
@@ -282,11 +409,10 @@ class TraceKitModel
             $this->pushSpan($spanData);
             
             // Return span reference
-            return [
-                'span_id' => $spanId,
-                'trace_id' => $this->traceId,
-                'start_time' => $startTime,
-            ];
+            // traceId is guaranteed to be non-null here (generated above if needed)
+            /** @var string $traceId */
+            $traceId = $this->traceId;
+            return $this->createSpanDataReturn($spanId, $traceId, $startTime);
         } catch (\Throwable $e) {
             // Graceful degradation - log error but don't break application
             error_log("TraceKit: Failed to start trace: " . $e->getMessage());
@@ -354,11 +480,10 @@ class TraceKitModel
             $this->pushSpan($spanData);
             
             // Return span reference
-            return [
-                'span_id' => $spanId,
-                'trace_id' => $this->traceId,
-                'start_time' => $startTime,
-            ];
+            // traceId is guaranteed to be non-null here (generated above if needed)
+            /** @var string $traceId */
+            $traceId = $this->traceId;
+            return $this->createSpanDataReturn($spanId, $traceId, $startTime);
         } catch (\Throwable $e) {
             // Graceful degradation
             error_log("TraceKit: Failed to start span: " . $e->getMessage());
@@ -381,20 +506,13 @@ class TraceKitModel
         }
         
         try {
-            $spanId = $spanData['span_id'] ?? null;
+            $spanId = $this->getSpanIdFromSpanData($spanData);
             if (!$spanId) {
                 return;
             }
             
             // Find span in spans array
-            $spanIndex = null;
-            foreach ($this->spans as $index => $span) {
-                if (($span['span_id'] ?? null) === $spanId) {
-                    $spanIndex = $index;
-                    break;
-                }
-            }
-            
+            $spanIndex = $this->findSpanIndexById($spanId);
             if ($spanIndex === null) {
                 return;
             }
@@ -474,34 +592,23 @@ class TraceKitModel
                 }
             }
             
-            $spanId = $spanData['span_id'] ?? null;
+            $spanId = $this->getSpanIdFromSpanData($spanData);
             if (!$spanId) {
                 return $spanData;
             }
             
             // Find span in spans array
-            $spanIndex = null;
-            foreach ($this->spans as $index => $span) {
-                if (($span['span_id'] ?? null) === $spanId) {
-                    $spanIndex = $index;
-                    break;
-                }
-            }
-            
+            $spanIndex = $this->findSpanIndexById($spanId);
             if ($spanIndex === null) {
                 return $spanData;
             }
             
             // Format exception event
-            $event = [
-                'name' => 'exception',
-                'time' => $this->getMicrotime(),
-                'attributes' => [
-                    'exception.type' => get_class($exception),
-                    'exception.message' => $exception->getMessage(),
-                    'exception.stacktrace' => $this->formatStackTrace($exception),
-                ],
-            ];
+            $event = $this->createEvent('exception', [
+                'exception.type' => get_class($exception),
+                'exception.message' => $exception->getMessage(),
+                'exception.stacktrace' => $this->formatStackTrace($exception),
+            ]);
             
             // Add event to span
             /** @var array<string, mixed> $span */
@@ -540,30 +647,19 @@ class TraceKitModel
         }
         
         try {
-            $spanId = $spanData['span_id'] ?? null;
+            $spanId = $this->getSpanIdFromSpanData($spanData);
             if (!$spanId) {
                 return;
             }
             
             // Find span in spans array
-            $spanIndex = null;
-            foreach ($this->spans as $index => $span) {
-                if (($span['span_id'] ?? null) === $spanId) {
-                    $spanIndex = $index;
-                    break;
-                }
-            }
-            
+            $spanIndex = $this->findSpanIndexById($spanId);
             if ($spanIndex === null) {
                 return;
             }
             
             // Create event
-            $event = [
-                'name' => $eventName,
-                'time' => $this->getMicrotime(),
-                'attributes' => $this->normalizeAttributes($attributes),
-            ];
+            $event = $this->createEvent($eventName, $attributes);
             
             // Add event to span
             /** @var array<string, mixed> $span */
@@ -693,6 +789,67 @@ class TraceKitModel
     private function popSpan(): ?array
     {
         return array_pop($this->spanStack);
+    }
+    
+    /**
+     * Create an event data structure
+     * 
+     * @param string $name Event name
+     * @param array<string, mixed> $attributes Event attributes (will be normalized)
+     * @return array{name: string, time: int, attributes: array<string, mixed>}
+     */
+    private function createEvent(string $name, array $attributes = []): array
+    {
+        return [
+            'name' => $name,
+            'time' => $this->getMicrotime(),
+            'attributes' => $this->normalizeAttributes($attributes),
+        ];
+    }
+    
+    /**
+     * Extract span ID from span data
+     * 
+     * @param array<string, mixed> $spanData
+     * @return string|null
+     */
+    private function getSpanIdFromSpanData(array $spanData): ?string
+    {
+        $spanId = $spanData['span_id'] ?? null;
+        return is_string($spanId) ? $spanId : null;
+    }
+    
+    /**
+     * Find span index in spans array by span ID
+     * 
+     * @param string $spanId
+     * @return int|null Index of span or null if not found
+     */
+    private function findSpanIndexById(string $spanId): ?int
+    {
+        foreach ($this->spans as $index => $span) {
+            if (($span['span_id'] ?? null) === $spanId) {
+                return $index;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Create span data return value
+     * 
+     * @param string $spanId
+     * @param string $traceId
+     * @param int $startTime
+     * @return array{span_id: string, trace_id: string, start_time: int}
+     */
+    private function createSpanDataReturn(string $spanId, string $traceId, int $startTime): array
+    {
+        return [
+            'span_id' => $spanId,
+            'trace_id' => $traceId,
+            'start_time' => $startTime,
+        ];
     }
     
     /**

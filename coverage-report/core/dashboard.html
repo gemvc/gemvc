@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Dashboard for C:\Users\Ali\Desktop\gemvc\src\core</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="../_css/bootstrap.min.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/nv.d3.min.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/style.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/custom.css" rel="stylesheet" type="text/css">
+ </head>
+ <body>
+  <header>
+   <div class="container-fluid">
+    <div class="row">
+     <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+       <ol class="breadcrumb">
+         <li class="breadcrumb-item"><a href="../index.html">C:\Users\Ali\Desktop\gemvc\src</a></li>
+         <li class="breadcrumb-item"><a href="index.html">core</a></li>
+         <li class="breadcrumb-item active">(Dashboard)</li>
+
+       </ol>
+      </nav>
+     </div>
+    </div>
+   </div>
+  </header>
+  <div class="container-fluid">
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Classes</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="classCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="classComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ApiDocGenerator.php.html#11">Gemvc\Core\ApiDocGenerator</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#19">Gemvc\Core\ApiService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#450">Gemvc\Core\ControllerTracingProxy</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#17">Gemvc\Core\Bootstrap</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#17">Gemvc\Core\Controller</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#13">Gemvc\Core\Documentation</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#9">Gemvc\Core\Documentation\HtmlHelper</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/Index.php.html#12">App\Api\Index</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#9">Gemvc\Core\Documentation\ParameterTableGenerator</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#9">Gemvc\Core\Documentation\ParameterValidator</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcError.php.html#4">Gemvc\Core\GemvcError</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#6">Gemvc\Core\GEMVCErrorHandler</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#10">Gemvc\Core\HotReloadManager</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#16">Gemvc\Core\OpenSwooleServer</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisConnectionException.php.html#6">Gemvc\Core\RedisConnectionException</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#8">Gemvc\Core\RedisManager</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#10">Gemvc\Core\SecurityManager</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#15">Gemvc\Core\SwooleApiService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#15">Gemvc\Core\SwooleBootstrap</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#10">Gemvc\Core\SwooleServerConfig</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ValidationException.php.html#9">Gemvc\Core\ValidationException</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#11">Gemvc\Core\WebserverDetector</a></td><td class="text-right">0%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Bootstrap.php.html#17">Gemvc\Core\Bootstrap</a></td><td class="text-right">4422</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#11">Gemvc\Core\ApiDocGenerator</a></td><td class="text-right">3906</td></tr>
+       <tr><td><a href="RedisManager.php.html#8">Gemvc\Core\RedisManager</a></td><td class="text-right">3782</td></tr>
+       <tr><td><a href="Controller.php.html#17">Gemvc\Core\Controller</a></td><td class="text-right">3422</td></tr>
+       <tr><td><a href="ApiService.php.html#19">Gemvc\Core\ApiService</a></td><td class="text-right">2756</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#9">Gemvc\Core\Documentation\ParameterTableGenerator</a></td><td class="text-right">2352</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#9">Gemvc\Core\Documentation\ParameterValidator</a></td><td class="text-right">2256</td></tr>
+       <tr><td><a href="Documentation.php.html#13">Gemvc\Core\Documentation</a></td><td class="text-right">600</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#16">Gemvc\Core\OpenSwooleServer</a></td><td class="text-right">600</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#11">Gemvc\Core\WebserverDetector</a></td><td class="text-right">506</td></tr>
+       <tr><td><a href="SecurityManager.php.html#10">Gemvc\Core\SecurityManager</a></td><td class="text-right">462</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#10">Gemvc\Core\HotReloadManager</a></td><td class="text-right">420</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#15">Gemvc\Core\SwooleBootstrap</a></td><td class="text-right">420</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#10">Gemvc\Core\SwooleServerConfig</a></td><td class="text-right">420</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#9">Gemvc\Core\Documentation\HtmlHelper</a></td><td class="text-right">380</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#6">Gemvc\Core\GEMVCErrorHandler</a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="ApiService.php.html#450">Gemvc\Core\ControllerTracingProxy</a></td><td class="text-right">182</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#15">Gemvc\Core\SwooleApiService</a></td><td class="text-right">90</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Methods</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="methodCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="methodComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ApiDocGenerator.php.html#30"><abbr title="Gemvc\Core\ApiDocGenerator::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#53"><abbr title="Gemvc\Core\ApiDocGenerator::generate">generate</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#67"><abbr title="Gemvc\Core\ApiDocGenerator::scanApiDirectory">scanApiDirectory</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#87"><abbr title="Gemvc\Core\ApiDocGenerator::processApiClass">processApiClass</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#110"><abbr title="Gemvc\Core\ApiDocGenerator::isHidden">isHidden</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#119"><abbr title="Gemvc\Core\ApiDocGenerator::getClassNameFromFile">getClassNameFromFile</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#133"><abbr title="Gemvc\Core\ApiDocGenerator::getEndpointName">getEndpointName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#151"><abbr title="Gemvc\Core\ApiDocGenerator::getEndpoints">getEndpoints</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#176"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodDetails">getMethodDetails</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#240"><abbr title="Gemvc\Core\ApiDocGenerator::getHttpMethodFromDoc">getHttpMethodFromDoc</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#250"><abbr title="Gemvc\Core\ApiDocGenerator::getEndpointUrl">getEndpointUrl</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#259"><abbr title="Gemvc\Core\ApiDocGenerator::parseValidationRules">parseValidationRules</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#283"><abbr title="Gemvc\Core\ApiDocGenerator::parseQueryParameters">parseQueryParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#312"><abbr title="Gemvc\Core\ApiDocGenerator::parseValidationRulesAsOptional">parseValidationRulesAsOptional</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#334"><abbr title="Gemvc\Core\ApiDocGenerator::getClassDocComment">getClassDocComment</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#340"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodDocComment">getMethodDocComment</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#353"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodExample">getMethodExample</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#366"><abbr title="Gemvc\Core\ApiDocGenerator::formatDocComment">formatDocComment</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#378"><abbr title="Gemvc\Core\ApiDocGenerator::parseUrlParams">parseUrlParams</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#46"><abbr title="Gemvc\Core\ApiService::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#63"><abbr title="Gemvc\Core\ApiService::initializeTraceKit">initializeTraceKit</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#131"><abbr title="Gemvc\Core\ApiService::getServiceName">getServiceName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#143"><abbr title="Gemvc\Core\ApiService::getMethodName">getMethodName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#162"><abbr title="Gemvc\Core\ApiService::getRequestBodyForTracing">getRequestBodyForTracing</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#202"><abbr title="Gemvc\Core\ApiService::flushTraceKit">flushTraceKit</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#248"><abbr title="Gemvc\Core\ApiService::callWithTracing">callWithTracing</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#259"><abbr title="Gemvc\Core\ApiService::recordTraceKitException">recordTraceKitException</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#291"><abbr title="Gemvc\Core\ApiService::addError">addError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#303"><abbr title="Gemvc\Core\ApiService::getErrors">getErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#313"><abbr title="Gemvc\Core\ApiService::hasErrors">hasErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#323"><abbr title="Gemvc\Core\ApiService::clearErrors">clearErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#334"><abbr title="Gemvc\Core\ApiService::index">index</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#353"><abbr title="Gemvc\Core\ApiService::validatePosts">validatePosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#375"><abbr title="Gemvc\Core\ApiService::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#403"><abbr title="Gemvc\Core\ApiService::parseJsonPostData">parseJsonPostData</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#427"><abbr title="Gemvc\Core\ApiService::mockResponse">mockResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#455"><abbr title="Gemvc\Core\ControllerTracingProxy::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiService.php.html#471"><abbr title="Gemvc\Core\ControllerTracingProxy::__call">__call</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#28"><abbr title="Gemvc\Core\Bootstrap::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#35"><abbr title="Gemvc\Core\Bootstrap::runApp">runApp</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#52"><abbr title="Gemvc\Core\Bootstrap::handleApiRequest">handleApiRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#142"><abbr title="Gemvc\Core\Bootstrap::handleWebRequest">handleWebRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#190"><abbr title="Gemvc\Core\Bootstrap::setRequestedService">setRequestedService</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#255"><abbr title="Gemvc\Core\Bootstrap::showNotFound">showNotFound</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#261"><abbr title="Gemvc\Core\Bootstrap::showWebNotFound">showWebNotFound</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#280"><abbr title="Gemvc\Core\Bootstrap::showServerError">showServerError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#295"><abbr title="Gemvc\Core\Bootstrap::show404Error">show404Error</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#311"><abbr title="Gemvc\Core\Bootstrap::getTemplatePath">getTemplatePath</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Bootstrap.php.html#343"><abbr title="Gemvc\Core\Bootstrap::determineHttpCodeFromError">determineHttpCodeFromError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#32"><abbr title="Gemvc\Core\Controller::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#49"><abbr title="Gemvc\Core\Controller::initializeTraceKit">initializeTraceKit</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#78"><abbr title="Gemvc\Core\Controller::getTraceKit">getTraceKit</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#93"><abbr title="Gemvc\Core\Controller::startTraceSpan">startTraceSpan</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#136"><abbr title="Gemvc\Core\Controller::endTraceSpan">endTraceSpan</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#158"><abbr title="Gemvc\Core\Controller::recordTraceKitException">recordTraceKitException</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#182"><abbr title="Gemvc\Core\Controller::getControllerName">getControllerName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#196"><abbr title="Gemvc\Core\Controller::addError">addError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#206"><abbr title="Gemvc\Core\Controller::getErrors">getErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#216"><abbr title="Gemvc\Core\Controller::hasErrors">hasErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#226"><abbr title="Gemvc\Core\Controller::clearErrors">clearErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#237"><abbr title="Gemvc\Core\Controller::createList">createList</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#252"><abbr title="Gemvc\Core\Controller::listJsonResponse">listJsonResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#262"><abbr title="Gemvc\Core\Controller::validateRequiredProperties">validateRequiredProperties</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#277"><abbr title="Gemvc\Core\Controller::_handlePagination">_handlePagination</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#302"><abbr title="Gemvc\Core\Controller::_handleSortable">_handleSortable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#323"><abbr title="Gemvc\Core\Controller::_handleFindable">_handleFindable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#351"><abbr title="Gemvc\Core\Controller::_handleSearchable">_handleSearchable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#390"><abbr title="Gemvc\Core\Controller::_sanitizeInput">_sanitizeInput</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Controller.php.html#419"><abbr title="Gemvc\Core\Controller::_listObjects">_listObjects</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#19"><abbr title="Gemvc\Core\Documentation::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#28"><abbr title="Gemvc\Core\Documentation::generateHtmlView">generateHtmlView</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#34"><abbr title="Gemvc\Core\Documentation::generateHtmlStructure">generateHtmlStructure</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#85"><abbr title="Gemvc\Core\Documentation::generateTreeNavigation">generateTreeNavigation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#112"><abbr title="Gemvc\Core\Documentation::getStyles">getStyles</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#123"><abbr title="Gemvc\Core\Documentation::getJavaScript">getJavaScript</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#340"><abbr title="Gemvc\Core\Documentation::formatJson">formatJson</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#359"><abbr title="Gemvc\Core\Documentation::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#366"><abbr title="Gemvc\Core\Documentation::html">html</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation.php.html#376"><abbr title="Gemvc\Core\Documentation::htmlResponse">htmlResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#17"><abbr title="Gemvc\Core\Documentation\HtmlHelper::getMethodClass">getMethodClass</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#28"><abbr title="Gemvc\Core\Documentation\HtmlHelper::getRequiredMarkup">getRequiredMarkup</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#39"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateMethodIcon">generateMethodIcon</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#51"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateMethodBadge">generateMethodBadge</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#64"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateEndpointHeader">generateEndpointHeader</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#82"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateServiceNavigation">generateServiceNavigation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#107"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateMethodNavigation">generateMethodNavigation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#128"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateParameterRow">generateParameterRow</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#147"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateTableHeader">generateTableHeader</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#158"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateTableWrapper">generateTableWrapper</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#170"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateSectionHeader">generateSectionHeader</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#182"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateDescription">generateDescription</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#201"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateExample">generateExample</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#220"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateResponseSection">generateResponseSection</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#238"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateContentWrapper">generateContentWrapper</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/Index.php.html#19"><abbr title="App\Api\Index::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/Index.php.html#30"><abbr title="App\Api\Index::index">index</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/Index.php.html#41"><abbr title="App\Api\Index::document">document</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/Index.php.html#55"><abbr title="App\Api\Index::mockResponse">mockResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#17"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateParameterTable">generateParameterTable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#60"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateParameterSection">generateParameterSection</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#73"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateQueryParametersSection">generateQueryParametersSection</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#104"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateBasicParameterTable">generateBasicParameterTable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#130"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::validateParameters">validateParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#148"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::getSafeArray">getSafeArray</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#170"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::hasParameters">hasParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#182"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateJavaScriptFunction">generateJavaScriptFunction</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#17"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidParameter">isValidParameter</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#32"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidMethod">isValidMethod</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#45"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidService">isValidService</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#59"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getSafeString">getSafeString</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#78"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getSafeArray">getSafeArray</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#100"><abbr title="Gemvc\Core\Documentation\ParameterValidator::hasParameters">hasParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#114"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getParameters">getParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#141"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getQueryParameters">getQueryParameters</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#156"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getMethodName">getMethodName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#167"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getUrl">getUrl</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#178"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getDescription">getDescription</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#189"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getExample">getExample</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#200"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getResponse">getResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#221"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidDocumentation">isValidDocumentation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcError.php.html#10"><abbr title="Gemvc\Core\GemvcError::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#14"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleErrors">handleErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#46"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleDevErrorMessage">handleDevErrorMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#59"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleProductionErrorMessage">handleProductionErrorMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#69"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleErrorMessage">handleErrorMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#85"><abbr title="Gemvc\Core\GEMVCErrorHandler::determineHttpCodeForMultipleErrors">determineHttpCodeForMultipleErrors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#17"><abbr title="Gemvc\Core\HotReloadManager::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#28"><abbr title="Gemvc\Core\HotReloadManager::startHotReload">startHotReload</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#41"><abbr title="Gemvc\Core\HotReloadManager::checkForChanges">checkForChanges</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#62"><abbr title="Gemvc\Core\HotReloadManager::getFileHash">getFileHash</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#89"><abbr title="Gemvc\Core\HotReloadManager::setCheckInterval">setCheckInterval</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#97"><abbr title="Gemvc\Core\HotReloadManager::setMinReloadInterval">setMinReloadInterval</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#105"><abbr title="Gemvc\Core\HotReloadManager::addWatchDirectory">addWatchDirectory</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#114"><abbr title="Gemvc\Core\HotReloadManager::forceReload">forceReload</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#24"><abbr title="Gemvc\Core\OpenSwooleServer::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#37"><abbr title="Gemvc\Core\OpenSwooleServer::start">start</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#45"><abbr title="Gemvc\Core\OpenSwooleServer::validateEnvironment">validateEnvironment</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#55"><abbr title="Gemvc\Core\OpenSwooleServer::loadDependencies">loadDependencies</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#91"><abbr title="Gemvc\Core\OpenSwooleServer::initializeComponents">initializeComponents</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#101"><abbr title="Gemvc\Core\OpenSwooleServer::createServer">createServer</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#112"><abbr title="Gemvc\Core\OpenSwooleServer::configureServer">configureServer</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#120"><abbr title="Gemvc\Core\OpenSwooleServer::setupEventHandlers">setupEventHandlers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#131"><abbr title="Gemvc\Core\OpenSwooleServer::setupServerStartHandler">setupServerStartHandler</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#141"><abbr title="Gemvc\Core\OpenSwooleServer::setupWorkerStartHandler">setupWorkerStartHandler</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#154"><abbr title="Gemvc\Core\OpenSwooleServer::setupRequestHandler">setupRequestHandler</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#184"><abbr title="Gemvc\Core\OpenSwooleServer::setupWorkerErrorHandler">setupWorkerErrorHandler</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#194"><abbr title="Gemvc\Core\OpenSwooleServer::handleRequestError">handleRequestError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisConnectionException.php.html#8"><abbr title="Gemvc\Core\RedisConnectionException::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#23"><abbr title="Gemvc\Core\RedisManager::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#36"><abbr title="Gemvc\Core\RedisManager::getHost">getHost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#41"><abbr title="Gemvc\Core\RedisManager::getPort">getPort</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#46"><abbr title="Gemvc\Core\RedisManager::getTimeout">getTimeout</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#51"><abbr title="Gemvc\Core\RedisManager::getPassword">getPassword</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#56"><abbr title="Gemvc\Core\RedisManager::getDatabase">getDatabase</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#61"><abbr title="Gemvc\Core\RedisManager::getPrefix">getPrefix</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#66"><abbr title="Gemvc\Core\RedisManager::getPersistent">getPersistent</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#71"><abbr title="Gemvc\Core\RedisManager::getReadTimeout">getReadTimeout</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#77"><abbr title="Gemvc\Core\RedisManager::getEnvString">getEnvString</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#83"><abbr title="Gemvc\Core\RedisManager::getEnvInt">getEnvInt</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#89"><abbr title="Gemvc\Core\RedisManager::getEnvFloat">getEnvFloat</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#95"><abbr title="Gemvc\Core\RedisManager::getEnvBool">getEnvBool</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#107"><abbr title="Gemvc\Core\RedisManager::getInstance">getInstance</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#123"><abbr title="Gemvc\Core\RedisManager::connect">connect</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#165"><abbr title="Gemvc\Core\RedisManager::disconnect">disconnect</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#182"><abbr title="Gemvc\Core\RedisManager::getRedis">getRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#190"><abbr title="Gemvc\Core\RedisManager::isConnected">isConnected</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#195"><abbr title="Gemvc\Core\RedisManager::getError">getError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#211"><abbr title="Gemvc\Core\RedisManager::set">set</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#219"><abbr title="Gemvc\Core\RedisManager::setJsonResponse">setJsonResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#224"><abbr title="Gemvc\Core\RedisManager::getJsonResponse">getJsonResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#245"><abbr title="Gemvc\Core\RedisManager::get">get</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#250"><abbr title="Gemvc\Core\RedisManager::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#255"><abbr title="Gemvc\Core\RedisManager::exists">exists</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#260"><abbr title="Gemvc\Core\RedisManager::ttl">ttl</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#265"><abbr title="Gemvc\Core\RedisManager::flush">flush</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#281"><abbr title="Gemvc\Core\RedisManager::hSet">hSet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#286"><abbr title="Gemvc\Core\RedisManager::hGet">hGet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#300"><abbr title="Gemvc\Core\RedisManager::hGetAll">hGetAll</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#306"><abbr title="Gemvc\Core\RedisManager::lPush">lPush</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#311"><abbr title="Gemvc\Core\RedisManager::rPush">rPush</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#316"><abbr title="Gemvc\Core\RedisManager::lPop">lPop</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#321"><abbr title="Gemvc\Core\RedisManager::rPop">rPop</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#336"><abbr title="Gemvc\Core\RedisManager::sAdd">sAdd</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#350"><abbr title="Gemvc\Core\RedisManager::sMembers">sMembers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#355"><abbr title="Gemvc\Core\RedisManager::sIsMember">sIsMember</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#361"><abbr title="Gemvc\Core\RedisManager::zAdd">zAdd</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#367"><abbr title="Gemvc\Core\RedisManager::zRange">zRange</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#381"><abbr title="Gemvc\Core\RedisManager::publish">publish</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#387"><abbr title="Gemvc\Core\RedisManager::subscribe">subscribe</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#402"><abbr title="Gemvc\Core\RedisManager::pipeline">pipeline</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RedisManager.php.html#408"><abbr title="Gemvc\Core\RedisManager::transaction">transaction</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#17"><abbr title="Gemvc\Core\SecurityManager::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#25"><abbr title="Gemvc\Core\SecurityManager::isRequestAllowed">isRequestAllowed</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#55"><abbr title="Gemvc\Core\SecurityManager::sendSecurityResponse">sendSecurityResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#71"><abbr title="Gemvc\Core\SecurityManager::loadSecurityRules">loadSecurityRules</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#95"><abbr title="Gemvc\Core\SecurityManager::isBlockedPath">isBlockedPath</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#108"><abbr title="Gemvc\Core\SecurityManager::isBlockedFile">isBlockedFile</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#121"><abbr title="Gemvc\Core\SecurityManager::addBlockedPath">addBlockedPath</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#131"><abbr title="Gemvc\Core\SecurityManager::addBlockedExtension">addBlockedExtension</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#142"><abbr title="Gemvc\Core\SecurityManager::getBlockedPaths">getBlockedPaths</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SecurityManager.php.html#151"><abbr title="Gemvc\Core\SecurityManager::getBlockedExtensions">getBlockedExtensions</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#25"><abbr title="Gemvc\Core\SwooleApiService::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#36"><abbr title="Gemvc\Core\SwooleApiService::index">index</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#49"><abbr title="Gemvc\Core\SwooleApiService::validatePosts">validatePosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#63"><abbr title="Gemvc\Core\SwooleApiService::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#78"><abbr title="Gemvc\Core\SwooleApiService::safeValidatePosts">safeValidatePosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#91"><abbr title="Gemvc\Core\SwooleApiService::safeValidateStringPosts">safeValidateStringPosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#103"><abbr title="Gemvc\Core\SwooleApiService::mockResponse">mockResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#26"><abbr title="Gemvc\Core\SwooleBootstrap::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#35"><abbr title="Gemvc\Core\SwooleBootstrap::extractRouteInfo">extractRouteInfo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#81"><abbr title="Gemvc\Core\SwooleBootstrap::processRequest">processRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#15"><abbr title="Gemvc\Core\SwooleServerConfig::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#24"><abbr title="Gemvc\Core\SwooleServerConfig::getConfig">getConfig</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#32"><abbr title="Gemvc\Core\SwooleServerConfig::getHost">getHost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#41"><abbr title="Gemvc\Core\SwooleServerConfig::getPort">getPort</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#49"><abbr title="Gemvc\Core\SwooleServerConfig::isDev">isDev</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#57"><abbr title="Gemvc\Core\SwooleServerConfig::loadConfig">loadConfig</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#78"><abbr title="Gemvc\Core\SwooleServerConfig::get">get</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#86"><abbr title="Gemvc\Core\SwooleServerConfig::set">set</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#94"><abbr title="Gemvc\Core\SwooleServerConfig::has">has</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ValidationException.php.html#11"><abbr title="Gemvc\Core\ValidationException::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#24"><abbr title="Gemvc\Core\WebserverDetector::get">get</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#38"><abbr title="Gemvc\Core\WebserverDetector::forceRefresh">forceRefresh</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#49"><abbr title="Gemvc\Core\WebserverDetector::detect">detect</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#87"><abbr title="Gemvc\Core\WebserverDetector::getMetrics">getMetrics</abbr></a></td><td class="text-right">0%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Bootstrap.php.html#52"><abbr title="Gemvc\Core\Bootstrap::handleApiRequest">handleApiRequest</abbr></a></td><td class="text-right">462</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#17"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateParameterTable">generateParameterTable</abbr></a></td><td class="text-right">306</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#49"><abbr title="Gemvc\Core\WebserverDetector::detect">detect</abbr></a></td><td class="text-right">272</td></tr>
+       <tr><td><a href="Bootstrap.php.html#190"><abbr title="Gemvc\Core\Bootstrap::setRequestedService">setRequestedService</abbr></a></td><td class="text-right">240</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#176"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodDetails">getMethodDetails</abbr></a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#35"><abbr title="Gemvc\Core\SwooleBootstrap::extractRouteInfo">extractRouteInfo</abbr></a></td><td class="text-right">182</td></tr>
+       <tr><td><a href="ApiService.php.html#471"><abbr title="Gemvc\Core\ControllerTracingProxy::__call">__call</abbr></a></td><td class="text-right">156</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#221"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidDocumentation">isValidDocumentation</abbr></a></td><td class="text-right">132</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#62"><abbr title="Gemvc\Core\HotReloadManager::getFileHash">getFileHash</abbr></a></td><td class="text-right">132</td></tr>
+       <tr><td><a href="ApiService.php.html#162"><abbr title="Gemvc\Core\ApiService::getRequestBodyForTracing">getRequestBodyForTracing</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Documentation.php.html#85"><abbr title="Gemvc\Core\Documentation::generateTreeNavigation">generateTreeNavigation</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#73"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateQueryParametersSection">generateQueryParametersSection</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#57"><abbr title="Gemvc\Core\SwooleServerConfig::loadConfig">loadConfig</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="ApiService.php.html#63"><abbr title="Gemvc\Core\ApiService::initializeTraceKit">initializeTraceKit</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="Controller.php.html#351"><abbr title="Gemvc\Core\Controller::_handleSearchable">_handleSearchable</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="ApiService.php.html#403"><abbr title="Gemvc\Core\ApiService::parseJsonPostData">parseJsonPostData</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#130"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::validateParameters">validateParameters</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="Bootstrap.php.html#142"><abbr title="Gemvc\Core\Bootstrap::handleWebRequest">handleWebRequest</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#67"><abbr title="Gemvc\Core\ApiDocGenerator::scanApiDirectory">scanApiDirectory</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#151"><abbr title="Gemvc\Core\ApiDocGenerator::getEndpoints">getEndpoints</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="ApiService.php.html#202"><abbr title="Gemvc\Core\ApiService::flushTraceKit">flushTraceKit</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Bootstrap.php.html#343"><abbr title="Gemvc\Core\Bootstrap::determineHttpCodeFromError">determineHttpCodeFromError</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Controller.php.html#323"><abbr title="Gemvc\Core\Controller::_handleFindable">_handleFindable</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="RedisManager.php.html#123"><abbr title="Gemvc\Core\RedisManager::connect">connect</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SecurityManager.php.html#25"><abbr title="Gemvc\Core\SecurityManager::isRequestAllowed">isRequestAllowed</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SwooleBootstrap.php.html#81"><abbr title="Gemvc\Core\SwooleBootstrap::processRequest">processRequest</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Controller.php.html#93"><abbr title="Gemvc\Core\Controller::startTraceSpan">startTraceSpan</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Controller.php.html#136"><abbr title="Gemvc\Core\Controller::endTraceSpan">endTraceSpan</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Controller.php.html#419"><abbr title="Gemvc\Core\Controller::_listObjects">_listObjects</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#17"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidParameter">isValidParameter</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#114"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getParameters">getParameters</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#55"><abbr title="Gemvc\Core\OpenSwooleServer::loadDependencies">loadDependencies</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#154"><abbr title="Gemvc\Core\OpenSwooleServer::setupRequestHandler">setupRequestHandler</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#283"><abbr title="Gemvc\Core\ApiDocGenerator::parseQueryParameters">parseQueryParameters</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="ApiService.php.html#259"><abbr title="Gemvc\Core\ApiService::recordTraceKitException">recordTraceKitException</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Bootstrap.php.html#35"><abbr title="Gemvc\Core\Bootstrap::runApp">runApp</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Bootstrap.php.html#311"><abbr title="Gemvc\Core\Bootstrap::getTemplatePath">getTemplatePath</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Controller.php.html#49"><abbr title="Gemvc\Core\Controller::initializeTraceKit">initializeTraceKit</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Controller.php.html#277"><abbr title="Gemvc\Core\Controller::_handlePagination">_handlePagination</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#104"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::generateBasicParameterTable">generateBasicParameterTable</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#148"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::getSafeArray">getSafeArray</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#78"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getSafeArray">getSafeArray</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#14"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleErrors">handleErrors</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#85"><abbr title="Gemvc\Core\GEMVCErrorHandler::determineHttpCodeForMultipleErrors">determineHttpCodeForMultipleErrors</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="RedisManager.php.html#224"><abbr title="Gemvc\Core\RedisManager::getJsonResponse">getJsonResponse</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#87"><abbr title="Gemvc\Core\ApiDocGenerator::processApiClass">processApiClass</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#340"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodDocComment">getMethodDocComment</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#353"><abbr title="Gemvc\Core\ApiDocGenerator::getMethodExample">getMethodExample</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#378"><abbr title="Gemvc\Core\ApiDocGenerator::parseUrlParams">parseUrlParams</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Bootstrap.php.html#280"><abbr title="Gemvc\Core\Bootstrap::showServerError">showServerError</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Controller.php.html#158"><abbr title="Gemvc\Core\Controller::recordTraceKitException">recordTraceKitException</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Controller.php.html#302"><abbr title="Gemvc\Core\Controller::_handleSortable">_handleSortable</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation.php.html#123"><abbr title="Gemvc\Core\Documentation::getJavaScript">getJavaScript</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation.php.html#340"><abbr title="Gemvc\Core\Documentation::formatJson">formatJson</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterTableGenerator.php.html#170"><abbr title="Gemvc\Core\Documentation\ParameterTableGenerator::hasParameters">hasParameters</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#32"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidMethod">isValidMethod</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#45"><abbr title="Gemvc\Core\Documentation\ParameterValidator::isValidService">isValidService</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#59"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getSafeString">getSafeString</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#100"><abbr title="Gemvc\Core\Documentation\ParameterValidator::hasParameters">hasParameters</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#141"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getQueryParameters">getQueryParameters</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Documentation/ParameterValidator.php.html#200"><abbr title="Gemvc\Core\Documentation\ParameterValidator::getResponse">getResponse</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#46"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleDevErrorMessage">handleDevErrorMessage</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="HotReloadManager.php.html#41"><abbr title="Gemvc\Core\HotReloadManager::checkForChanges">checkForChanges</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#141"><abbr title="Gemvc\Core\OpenSwooleServer::setupWorkerStartHandler">setupWorkerStartHandler</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="RedisManager.php.html#165"><abbr title="Gemvc\Core\RedisManager::disconnect">disconnect</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SecurityManager.php.html#95"><abbr title="Gemvc\Core\SecurityManager::isBlockedPath">isBlockedPath</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SecurityManager.php.html#108"><abbr title="Gemvc\Core\SecurityManager::isBlockedFile">isBlockedFile</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#87"><abbr title="Gemvc\Core\WebserverDetector::getMetrics">getMetrics</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#30"><abbr title="Gemvc\Core\ApiDocGenerator::__construct">__construct</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#53"><abbr title="Gemvc\Core\ApiDocGenerator::generate">generate</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#110"><abbr title="Gemvc\Core\ApiDocGenerator::isHidden">isHidden</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#119"><abbr title="Gemvc\Core\ApiDocGenerator::getClassNameFromFile">getClassNameFromFile</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#240"><abbr title="Gemvc\Core\ApiDocGenerator::getHttpMethodFromDoc">getHttpMethodFromDoc</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#259"><abbr title="Gemvc\Core\ApiDocGenerator::parseValidationRules">parseValidationRules</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#312"><abbr title="Gemvc\Core\ApiDocGenerator::parseValidationRulesAsOptional">parseValidationRulesAsOptional</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#334"><abbr title="Gemvc\Core\ApiDocGenerator::getClassDocComment">getClassDocComment</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiDocGenerator.php.html#366"><abbr title="Gemvc\Core\ApiDocGenerator::formatDocComment">formatDocComment</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiService.php.html#143"><abbr title="Gemvc\Core\ApiService::getMethodName">getMethodName</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiService.php.html#353"><abbr title="Gemvc\Core\ApiService::validatePosts">validatePosts</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiService.php.html#375"><abbr title="Gemvc\Core\ApiService::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Bootstrap.php.html#261"><abbr title="Gemvc\Core\Bootstrap::showWebNotFound">showWebNotFound</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Bootstrap.php.html#295"><abbr title="Gemvc\Core\Bootstrap::show404Error">show404Error</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Controller.php.html#237"><abbr title="Gemvc\Core\Controller::createList">createList</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Controller.php.html#262"><abbr title="Gemvc\Core\Controller::validateRequiredProperties">validateRequiredProperties</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Controller.php.html#390"><abbr title="Gemvc\Core\Controller::_sanitizeInput">_sanitizeInput</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Documentation.php.html#112"><abbr title="Gemvc\Core\Documentation::getStyles">getStyles</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#28"><abbr title="Gemvc\Core\Documentation\HtmlHelper::getRequiredMarkup">getRequiredMarkup</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#128"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateParameterRow">generateParameterRow</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#182"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateDescription">generateDescription</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Documentation/HtmlHelper.php.html#201"><abbr title="Gemvc\Core\Documentation\HtmlHelper::generateExample">generateExample</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="GemvcErrorHandler.php.html#69"><abbr title="Gemvc\Core\GEMVCErrorHandler::handleErrorMessage">handleErrorMessage</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="OpenSwooleServer.php.html#45"><abbr title="Gemvc\Core\OpenSwooleServer::validateEnvironment">validateEnvironment</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#77"><abbr title="Gemvc\Core\RedisManager::getEnvString">getEnvString</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#83"><abbr title="Gemvc\Core\RedisManager::getEnvInt">getEnvInt</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#89"><abbr title="Gemvc\Core\RedisManager::getEnvFloat">getEnvFloat</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#107"><abbr title="Gemvc\Core\RedisManager::getInstance">getInstance</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#182"><abbr title="Gemvc\Core\RedisManager::getRedis">getRedis</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#211"><abbr title="Gemvc\Core\RedisManager::set">set</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#402"><abbr title="Gemvc\Core\RedisManager::pipeline">pipeline</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="RedisManager.php.html#408"><abbr title="Gemvc\Core\RedisManager::transaction">transaction</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SecurityManager.php.html#121"><abbr title="Gemvc\Core\SecurityManager::addBlockedPath">addBlockedPath</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SecurityManager.php.html#131"><abbr title="Gemvc\Core\SecurityManager::addBlockedExtension">addBlockedExtension</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#49"><abbr title="Gemvc\Core\SwooleApiService::validatePosts">validatePosts</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleApiService.php.html#63"><abbr title="Gemvc\Core\SwooleApiService::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#32"><abbr title="Gemvc\Core\SwooleServerConfig::getHost">getHost</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleServerConfig.php.html#41"><abbr title="Gemvc\Core\SwooleServerConfig::getPort">getPort</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="WebserverDetector.php.html#24"><abbr title="Gemvc\Core\WebserverDetector::get">get</abbr></a></td><td class="text-right">6</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <footer>
+    <hr/>
+    <p>
+     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 10.1.16</a> using <a href="https://www.php.net/" target="_top">PHP 8.2.12</a> and <a href="https://phpunit.de/">PHPUnit 10.5.60</a> at Sun Dec 28 19:48:24 CET 2025.</small>
+    </p>
+   </footer>
+  </div>
+  <script src="../_js/jquery.min.js?v=10.1.16" type="text/javascript"></script>
+  <script src="../_js/d3.min.js?v=10.1.16" type="text/javascript"></script>
+  <script src="../_js/nv.d3.min.js?v=10.1.16" type="text/javascript"></script>
+  <script type="text/javascript">
+$(document).ready(function() {
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#classCoverageDistribution svg')
+      .datum(getCoverageDistributionData([22,0,0,0,0,0,0,0,0,0,0,0], "Class Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#methodCoverageDistribution svg')
+      .datum(getCoverageDistributionData([225,0,0,0,0,0,0,0,0,0,0,0], "Method Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getCoverageDistributionData(data, label) {
+    var labels = [
+      '0%',
+      '0-10%',
+      '10-20%',
+      '20-30%',
+      '30-40%',
+      '40-50%',
+      '50-60%',
+      '60-70%',
+      '70-80%',
+      '80-90%',
+      '90-100%',
+      '100%'
+    ];
+    var values = [];
+    $.each(labels, function(key) {
+      values.push({x: labels[key], y: data[key]});
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Cyclomatic Complexity');
+
+    d3.select('#classComplexity svg')
+      .datum(getComplexityData([[0,62,"<a href=\"ApiDocGenerator.php.html#11\">Gemvc\\Core\\ApiDocGenerator<\/a>"],[0,52,"<a href=\"ApiService.php.html#19\">Gemvc\\Core\\ApiService<\/a>"],[0,13,"<a href=\"ApiService.php.html#450\">Gemvc\\Core\\ControllerTracingProxy<\/a>"],[0,66,"<a href=\"Bootstrap.php.html#17\">Gemvc\\Core\\Bootstrap<\/a>"],[0,58,"<a href=\"Controller.php.html#17\">Gemvc\\Core\\Controller<\/a>"],[0,24,"<a href=\"Documentation.php.html#13\">Gemvc\\Core\\Documentation<\/a>"],[0,19,"<a href=\"Documentation\/HtmlHelper.php.html#9\">Gemvc\\Core\\Documentation\\HtmlHelper<\/a>"],[0,4,"<a href=\"Documentation\/Index.php.html#12\">App\\Api\\Index<\/a>"],[0,48,"<a href=\"Documentation\/ParameterTableGenerator.php.html#9\">Gemvc\\Core\\Documentation\\ParameterTableGenerator<\/a>"],[0,47,"<a href=\"Documentation\/ParameterValidator.php.html#9\">Gemvc\\Core\\Documentation\\ParameterValidator<\/a>"],[0,1,"<a href=\"GemvcError.php.html#4\">Gemvc\\Core\\GemvcError<\/a>"],[0,14,"<a href=\"GemvcErrorHandler.php.html#6\">Gemvc\\Core\\GEMVCErrorHandler<\/a>"],[0,20,"<a href=\"HotReloadManager.php.html#10\">Gemvc\\Core\\HotReloadManager<\/a>"],[0,24,"<a href=\"OpenSwooleServer.php.html#16\">Gemvc\\Core\\OpenSwooleServer<\/a>"],[0,1,"<a href=\"RedisConnectionException.php.html#6\">Gemvc\\Core\\RedisConnectionException<\/a>"],[0,61,"<a href=\"RedisManager.php.html#8\">Gemvc\\Core\\RedisManager<\/a>"],[0,21,"<a href=\"SecurityManager.php.html#10\">Gemvc\\Core\\SecurityManager<\/a>"],[0,9,"<a href=\"SwooleApiService.php.html#15\">Gemvc\\Core\\SwooleApiService<\/a>"],[0,20,"<a href=\"SwooleBootstrap.php.html#15\">Gemvc\\Core\\SwooleBootstrap<\/a>"],[0,20,"<a href=\"SwooleServerConfig.php.html#10\">Gemvc\\Core\\SwooleServerConfig<\/a>"],[0,1,"<a href=\"ValidationException.php.html#9\">Gemvc\\Core\\ValidationException<\/a>"],[0,22,"<a href=\"WebserverDetector.php.html#11\">Gemvc\\Core\\WebserverDetector<\/a>"]], 'Class Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Method Complexity');
+
+    d3.select('#methodComplexity svg')
+      .datum(getComplexityData([[0,2,"<a href=\"ApiDocGenerator.php.html#30\">Gemvc\\Core\\ApiDocGenerator::__construct<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#53\">Gemvc\\Core\\ApiDocGenerator::generate<\/a>"],[0,6,"<a href=\"ApiDocGenerator.php.html#67\">Gemvc\\Core\\ApiDocGenerator::scanApiDirectory<\/a>"],[0,3,"<a href=\"ApiDocGenerator.php.html#87\">Gemvc\\Core\\ApiDocGenerator::processApiClass<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#110\">Gemvc\\Core\\ApiDocGenerator::isHidden<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#119\">Gemvc\\Core\\ApiDocGenerator::getClassNameFromFile<\/a>"],[0,1,"<a href=\"ApiDocGenerator.php.html#133\">Gemvc\\Core\\ApiDocGenerator::getEndpointName<\/a>"],[0,6,"<a href=\"ApiDocGenerator.php.html#151\">Gemvc\\Core\\ApiDocGenerator::getEndpoints<\/a>"],[0,14,"<a href=\"ApiDocGenerator.php.html#176\">Gemvc\\Core\\ApiDocGenerator::getMethodDetails<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#240\">Gemvc\\Core\\ApiDocGenerator::getHttpMethodFromDoc<\/a>"],[0,1,"<a href=\"ApiDocGenerator.php.html#250\">Gemvc\\Core\\ApiDocGenerator::getEndpointUrl<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#259\">Gemvc\\Core\\ApiDocGenerator::parseValidationRules<\/a>"],[0,4,"<a href=\"ApiDocGenerator.php.html#283\">Gemvc\\Core\\ApiDocGenerator::parseQueryParameters<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#312\">Gemvc\\Core\\ApiDocGenerator::parseValidationRulesAsOptional<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#334\">Gemvc\\Core\\ApiDocGenerator::getClassDocComment<\/a>"],[0,3,"<a href=\"ApiDocGenerator.php.html#340\">Gemvc\\Core\\ApiDocGenerator::getMethodDocComment<\/a>"],[0,3,"<a href=\"ApiDocGenerator.php.html#353\">Gemvc\\Core\\ApiDocGenerator::getMethodExample<\/a>"],[0,2,"<a href=\"ApiDocGenerator.php.html#366\">Gemvc\\Core\\ApiDocGenerator::formatDocComment<\/a>"],[0,3,"<a href=\"ApiDocGenerator.php.html#378\">Gemvc\\Core\\ApiDocGenerator::parseUrlParams<\/a>"],[0,1,"<a href=\"ApiService.php.html#46\">Gemvc\\Core\\ApiService::__construct<\/a>"],[0,9,"<a href=\"ApiService.php.html#63\">Gemvc\\Core\\ApiService::initializeTraceKit<\/a>"],[0,1,"<a href=\"ApiService.php.html#131\">Gemvc\\Core\\ApiService::getServiceName<\/a>"],[0,2,"<a href=\"ApiService.php.html#143\">Gemvc\\Core\\ApiService::getMethodName<\/a>"],[0,10,"<a href=\"ApiService.php.html#162\">Gemvc\\Core\\ApiService::getRequestBodyForTracing<\/a>"],[0,6,"<a href=\"ApiService.php.html#202\">Gemvc\\Core\\ApiService::flushTraceKit<\/a>"],[0,1,"<a href=\"ApiService.php.html#248\">Gemvc\\Core\\ApiService::callWithTracing<\/a>"],[0,4,"<a href=\"ApiService.php.html#259\">Gemvc\\Core\\ApiService::recordTraceKitException<\/a>"],[0,1,"<a href=\"ApiService.php.html#291\">Gemvc\\Core\\ApiService::addError<\/a>"],[0,1,"<a href=\"ApiService.php.html#303\">Gemvc\\Core\\ApiService::getErrors<\/a>"],[0,1,"<a href=\"ApiService.php.html#313\">Gemvc\\Core\\ApiService::hasErrors<\/a>"],[0,1,"<a href=\"ApiService.php.html#323\">Gemvc\\Core\\ApiService::clearErrors<\/a>"],[0,1,"<a href=\"ApiService.php.html#334\">Gemvc\\Core\\ApiService::index<\/a>"],[0,2,"<a href=\"ApiService.php.html#353\">Gemvc\\Core\\ApiService::validatePosts<\/a>"],[0,2,"<a href=\"ApiService.php.html#375\">Gemvc\\Core\\ApiService::validateStringPosts<\/a>"],[0,8,"<a href=\"ApiService.php.html#403\">Gemvc\\Core\\ApiService::parseJsonPostData<\/a>"],[0,1,"<a href=\"ApiService.php.html#427\">Gemvc\\Core\\ApiService::mockResponse<\/a>"],[0,1,"<a href=\"ApiService.php.html#455\">Gemvc\\Core\\ControllerTracingProxy::__construct<\/a>"],[0,12,"<a href=\"ApiService.php.html#471\">Gemvc\\Core\\ControllerTracingProxy::__call<\/a>"],[0,1,"<a href=\"Bootstrap.php.html#28\">Gemvc\\Core\\Bootstrap::__construct<\/a>"],[0,4,"<a href=\"Bootstrap.php.html#35\">Gemvc\\Core\\Bootstrap::runApp<\/a>"],[0,21,"<a href=\"Bootstrap.php.html#52\">Gemvc\\Core\\Bootstrap::handleApiRequest<\/a>"],[0,7,"<a href=\"Bootstrap.php.html#142\">Gemvc\\Core\\Bootstrap::handleWebRequest<\/a>"],[0,15,"<a href=\"Bootstrap.php.html#190\">Gemvc\\Core\\Bootstrap::setRequestedService<\/a>"],[0,1,"<a href=\"Bootstrap.php.html#255\">Gemvc\\Core\\Bootstrap::showNotFound<\/a>"],[0,2,"<a href=\"Bootstrap.php.html#261\">Gemvc\\Core\\Bootstrap::showWebNotFound<\/a>"],[0,3,"<a href=\"Bootstrap.php.html#280\">Gemvc\\Core\\Bootstrap::showServerError<\/a>"],[0,2,"<a href=\"Bootstrap.php.html#295\">Gemvc\\Core\\Bootstrap::show404Error<\/a>"],[0,4,"<a href=\"Bootstrap.php.html#311\">Gemvc\\Core\\Bootstrap::getTemplatePath<\/a>"],[0,6,"<a href=\"Bootstrap.php.html#343\">Gemvc\\Core\\Bootstrap::determineHttpCodeFromError<\/a>"],[0,1,"<a href=\"Controller.php.html#32\">Gemvc\\Core\\Controller::__construct<\/a>"],[0,4,"<a href=\"Controller.php.html#49\">Gemvc\\Core\\Controller::initializeTraceKit<\/a>"],[0,1,"<a href=\"Controller.php.html#78\">Gemvc\\Core\\Controller::getTraceKit<\/a>"],[0,5,"<a href=\"Controller.php.html#93\">Gemvc\\Core\\Controller::startTraceSpan<\/a>"],[0,5,"<a href=\"Controller.php.html#136\">Gemvc\\Core\\Controller::endTraceSpan<\/a>"],[0,3,"<a href=\"Controller.php.html#158\">Gemvc\\Core\\Controller::recordTraceKitException<\/a>"],[0,1,"<a href=\"Controller.php.html#182\">Gemvc\\Core\\Controller::getControllerName<\/a>"],[0,1,"<a href=\"Controller.php.html#196\">Gemvc\\Core\\Controller::addError<\/a>"],[0,1,"<a href=\"Controller.php.html#206\">Gemvc\\Core\\Controller::getErrors<\/a>"],[0,1,"<a href=\"Controller.php.html#216\">Gemvc\\Core\\Controller::hasErrors<\/a>"],[0,1,"<a href=\"Controller.php.html#226\">Gemvc\\Core\\Controller::clearErrors<\/a>"],[0,2,"<a href=\"Controller.php.html#237\">Gemvc\\Core\\Controller::createList<\/a>"],[0,1,"<a href=\"Controller.php.html#252\">Gemvc\\Core\\Controller::listJsonResponse<\/a>"],[0,2,"<a href=\"Controller.php.html#262\">Gemvc\\Core\\Controller::validateRequiredProperties<\/a>"],[0,4,"<a href=\"Controller.php.html#277\">Gemvc\\Core\\Controller::_handlePagination<\/a>"],[0,3,"<a href=\"Controller.php.html#302\">Gemvc\\Core\\Controller::_handleSortable<\/a>"],[0,6,"<a href=\"Controller.php.html#323\">Gemvc\\Core\\Controller::_handleFindable<\/a>"],[0,9,"<a href=\"Controller.php.html#351\">Gemvc\\Core\\Controller::_handleSearchable<\/a>"],[0,2,"<a href=\"Controller.php.html#390\">Gemvc\\Core\\Controller::_sanitizeInput<\/a>"],[0,5,"<a href=\"Controller.php.html#419\">Gemvc\\Core\\Controller::_listObjects<\/a>"],[0,1,"<a href=\"Documentation.php.html#19\">Gemvc\\Core\\Documentation::__construct<\/a>"],[0,1,"<a href=\"Documentation.php.html#28\">Gemvc\\Core\\Documentation::generateHtmlView<\/a>"],[0,1,"<a href=\"Documentation.php.html#34\">Gemvc\\Core\\Documentation::generateHtmlStructure<\/a>"],[0,10,"<a href=\"Documentation.php.html#85\">Gemvc\\Core\\Documentation::generateTreeNavigation<\/a>"],[0,2,"<a href=\"Documentation.php.html#112\">Gemvc\\Core\\Documentation::getStyles<\/a>"],[0,3,"<a href=\"Documentation.php.html#123\">Gemvc\\Core\\Documentation::getJavaScript<\/a>"],[0,3,"<a href=\"Documentation.php.html#340\">Gemvc\\Core\\Documentation::formatJson<\/a>"],[0,1,"<a href=\"Documentation.php.html#359\">Gemvc\\Core\\Documentation::show<\/a>"],[0,1,"<a href=\"Documentation.php.html#366\">Gemvc\\Core\\Documentation::html<\/a>"],[0,1,"<a href=\"Documentation.php.html#376\">Gemvc\\Core\\Documentation::htmlResponse<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#17\">Gemvc\\Core\\Documentation\\HtmlHelper::getMethodClass<\/a>"],[0,2,"<a href=\"Documentation\/HtmlHelper.php.html#28\">Gemvc\\Core\\Documentation\\HtmlHelper::getRequiredMarkup<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#39\">Gemvc\\Core\\Documentation\\HtmlHelper::generateMethodIcon<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#51\">Gemvc\\Core\\Documentation\\HtmlHelper::generateMethodBadge<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#64\">Gemvc\\Core\\Documentation\\HtmlHelper::generateEndpointHeader<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#82\">Gemvc\\Core\\Documentation\\HtmlHelper::generateServiceNavigation<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#107\">Gemvc\\Core\\Documentation\\HtmlHelper::generateMethodNavigation<\/a>"],[0,2,"<a href=\"Documentation\/HtmlHelper.php.html#128\">Gemvc\\Core\\Documentation\\HtmlHelper::generateParameterRow<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#147\">Gemvc\\Core\\Documentation\\HtmlHelper::generateTableHeader<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#158\">Gemvc\\Core\\Documentation\\HtmlHelper::generateTableWrapper<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#170\">Gemvc\\Core\\Documentation\\HtmlHelper::generateSectionHeader<\/a>"],[0,2,"<a href=\"Documentation\/HtmlHelper.php.html#182\">Gemvc\\Core\\Documentation\\HtmlHelper::generateDescription<\/a>"],[0,2,"<a href=\"Documentation\/HtmlHelper.php.html#201\">Gemvc\\Core\\Documentation\\HtmlHelper::generateExample<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#220\">Gemvc\\Core\\Documentation\\HtmlHelper::generateResponseSection<\/a>"],[0,1,"<a href=\"Documentation\/HtmlHelper.php.html#238\">Gemvc\\Core\\Documentation\\HtmlHelper::generateContentWrapper<\/a>"],[0,1,"<a href=\"Documentation\/Index.php.html#19\">App\\Api\\Index::__construct<\/a>"],[0,1,"<a href=\"Documentation\/Index.php.html#30\">App\\Api\\Index::index<\/a>"],[0,1,"<a href=\"Documentation\/Index.php.html#41\">App\\Api\\Index::document<\/a>"],[0,1,"<a href=\"Documentation\/Index.php.html#55\">App\\Api\\Index::mockResponse<\/a>"],[0,17,"<a href=\"Documentation\/ParameterTableGenerator.php.html#17\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::generateParameterTable<\/a>"],[0,1,"<a href=\"Documentation\/ParameterTableGenerator.php.html#60\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::generateParameterSection<\/a>"],[0,10,"<a href=\"Documentation\/ParameterTableGenerator.php.html#73\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::generateQueryParametersSection<\/a>"],[0,4,"<a href=\"Documentation\/ParameterTableGenerator.php.html#104\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::generateBasicParameterTable<\/a>"],[0,8,"<a href=\"Documentation\/ParameterTableGenerator.php.html#130\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::validateParameters<\/a>"],[0,4,"<a href=\"Documentation\/ParameterTableGenerator.php.html#148\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::getSafeArray<\/a>"],[0,3,"<a href=\"Documentation\/ParameterTableGenerator.php.html#170\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::hasParameters<\/a>"],[0,1,"<a href=\"Documentation\/ParameterTableGenerator.php.html#182\">Gemvc\\Core\\Documentation\\ParameterTableGenerator::generateJavaScriptFunction<\/a>"],[0,5,"<a href=\"Documentation\/ParameterValidator.php.html#17\">Gemvc\\Core\\Documentation\\ParameterValidator::isValidParameter<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#32\">Gemvc\\Core\\Documentation\\ParameterValidator::isValidMethod<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#45\">Gemvc\\Core\\Documentation\\ParameterValidator::isValidService<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#59\">Gemvc\\Core\\Documentation\\ParameterValidator::getSafeString<\/a>"],[0,4,"<a href=\"Documentation\/ParameterValidator.php.html#78\">Gemvc\\Core\\Documentation\\ParameterValidator::getSafeArray<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#100\">Gemvc\\Core\\Documentation\\ParameterValidator::hasParameters<\/a>"],[0,5,"<a href=\"Documentation\/ParameterValidator.php.html#114\">Gemvc\\Core\\Documentation\\ParameterValidator::getParameters<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#141\">Gemvc\\Core\\Documentation\\ParameterValidator::getQueryParameters<\/a>"],[0,1,"<a href=\"Documentation\/ParameterValidator.php.html#156\">Gemvc\\Core\\Documentation\\ParameterValidator::getMethodName<\/a>"],[0,1,"<a href=\"Documentation\/ParameterValidator.php.html#167\">Gemvc\\Core\\Documentation\\ParameterValidator::getUrl<\/a>"],[0,1,"<a href=\"Documentation\/ParameterValidator.php.html#178\">Gemvc\\Core\\Documentation\\ParameterValidator::getDescription<\/a>"],[0,1,"<a href=\"Documentation\/ParameterValidator.php.html#189\">Gemvc\\Core\\Documentation\\ParameterValidator::getExample<\/a>"],[0,3,"<a href=\"Documentation\/ParameterValidator.php.html#200\">Gemvc\\Core\\Documentation\\ParameterValidator::getResponse<\/a>"],[0,11,"<a href=\"Documentation\/ParameterValidator.php.html#221\">Gemvc\\Core\\Documentation\\ParameterValidator::isValidDocumentation<\/a>"],[0,1,"<a href=\"GemvcError.php.html#10\">Gemvc\\Core\\GemvcError::__construct<\/a>"],[0,4,"<a href=\"GemvcErrorHandler.php.html#14\">Gemvc\\Core\\GEMVCErrorHandler::handleErrors<\/a>"],[0,3,"<a href=\"GemvcErrorHandler.php.html#46\">Gemvc\\Core\\GEMVCErrorHandler::handleDevErrorMessage<\/a>"],[0,1,"<a href=\"GemvcErrorHandler.php.html#59\">Gemvc\\Core\\GEMVCErrorHandler::handleProductionErrorMessage<\/a>"],[0,2,"<a href=\"GemvcErrorHandler.php.html#69\">Gemvc\\Core\\GEMVCErrorHandler::handleErrorMessage<\/a>"],[0,4,"<a href=\"GemvcErrorHandler.php.html#85\">Gemvc\\Core\\GEMVCErrorHandler::determineHttpCodeForMultipleErrors<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#17\">Gemvc\\Core\\HotReloadManager::__construct<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#28\">Gemvc\\Core\\HotReloadManager::startHotReload<\/a>"],[0,3,"<a href=\"HotReloadManager.php.html#41\">Gemvc\\Core\\HotReloadManager::checkForChanges<\/a>"],[0,11,"<a href=\"HotReloadManager.php.html#62\">Gemvc\\Core\\HotReloadManager::getFileHash<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#89\">Gemvc\\Core\\HotReloadManager::setCheckInterval<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#97\">Gemvc\\Core\\HotReloadManager::setMinReloadInterval<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#105\">Gemvc\\Core\\HotReloadManager::addWatchDirectory<\/a>"],[0,1,"<a href=\"HotReloadManager.php.html#114\">Gemvc\\Core\\HotReloadManager::forceReload<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#24\">Gemvc\\Core\\OpenSwooleServer::__construct<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#37\">Gemvc\\Core\\OpenSwooleServer::start<\/a>"],[0,2,"<a href=\"OpenSwooleServer.php.html#45\">Gemvc\\Core\\OpenSwooleServer::validateEnvironment<\/a>"],[0,5,"<a href=\"OpenSwooleServer.php.html#55\">Gemvc\\Core\\OpenSwooleServer::loadDependencies<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#91\">Gemvc\\Core\\OpenSwooleServer::initializeComponents<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#101\">Gemvc\\Core\\OpenSwooleServer::createServer<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#112\">Gemvc\\Core\\OpenSwooleServer::configureServer<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#120\">Gemvc\\Core\\OpenSwooleServer::setupEventHandlers<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#131\">Gemvc\\Core\\OpenSwooleServer::setupServerStartHandler<\/a>"],[0,3,"<a href=\"OpenSwooleServer.php.html#141\">Gemvc\\Core\\OpenSwooleServer::setupWorkerStartHandler<\/a>"],[0,5,"<a href=\"OpenSwooleServer.php.html#154\">Gemvc\\Core\\OpenSwooleServer::setupRequestHandler<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#184\">Gemvc\\Core\\OpenSwooleServer::setupWorkerErrorHandler<\/a>"],[0,1,"<a href=\"OpenSwooleServer.php.html#194\">Gemvc\\Core\\OpenSwooleServer::handleRequestError<\/a>"],[0,1,"<a href=\"RedisConnectionException.php.html#8\">Gemvc\\Core\\RedisConnectionException::__construct<\/a>"],[0,1,"<a href=\"RedisManager.php.html#23\">Gemvc\\Core\\RedisManager::__construct<\/a>"],[0,1,"<a href=\"RedisManager.php.html#36\">Gemvc\\Core\\RedisManager::getHost<\/a>"],[0,1,"<a href=\"RedisManager.php.html#41\">Gemvc\\Core\\RedisManager::getPort<\/a>"],[0,1,"<a href=\"RedisManager.php.html#46\">Gemvc\\Core\\RedisManager::getTimeout<\/a>"],[0,1,"<a href=\"RedisManager.php.html#51\">Gemvc\\Core\\RedisManager::getPassword<\/a>"],[0,1,"<a href=\"RedisManager.php.html#56\">Gemvc\\Core\\RedisManager::getDatabase<\/a>"],[0,1,"<a href=\"RedisManager.php.html#61\">Gemvc\\Core\\RedisManager::getPrefix<\/a>"],[0,1,"<a href=\"RedisManager.php.html#66\">Gemvc\\Core\\RedisManager::getPersistent<\/a>"],[0,1,"<a href=\"RedisManager.php.html#71\">Gemvc\\Core\\RedisManager::getReadTimeout<\/a>"],[0,2,"<a href=\"RedisManager.php.html#77\">Gemvc\\Core\\RedisManager::getEnvString<\/a>"],[0,2,"<a href=\"RedisManager.php.html#83\">Gemvc\\Core\\RedisManager::getEnvInt<\/a>"],[0,2,"<a href=\"RedisManager.php.html#89\">Gemvc\\Core\\RedisManager::getEnvFloat<\/a>"],[0,1,"<a href=\"RedisManager.php.html#95\">Gemvc\\Core\\RedisManager::getEnvBool<\/a>"],[0,2,"<a href=\"RedisManager.php.html#107\">Gemvc\\Core\\RedisManager::getInstance<\/a>"],[0,6,"<a href=\"RedisManager.php.html#123\">Gemvc\\Core\\RedisManager::connect<\/a>"],[0,3,"<a href=\"RedisManager.php.html#165\">Gemvc\\Core\\RedisManager::disconnect<\/a>"],[0,2,"<a href=\"RedisManager.php.html#182\">Gemvc\\Core\\RedisManager::getRedis<\/a>"],[0,1,"<a href=\"RedisManager.php.html#190\">Gemvc\\Core\\RedisManager::isConnected<\/a>"],[0,1,"<a href=\"RedisManager.php.html#195\">Gemvc\\Core\\RedisManager::getError<\/a>"],[0,2,"<a href=\"RedisManager.php.html#211\">Gemvc\\Core\\RedisManager::set<\/a>"],[0,1,"<a href=\"RedisManager.php.html#219\">Gemvc\\Core\\RedisManager::setJsonResponse<\/a>"],[0,4,"<a href=\"RedisManager.php.html#224\">Gemvc\\Core\\RedisManager::getJsonResponse<\/a>"],[0,1,"<a href=\"RedisManager.php.html#245\">Gemvc\\Core\\RedisManager::get<\/a>"],[0,1,"<a href=\"RedisManager.php.html#250\">Gemvc\\Core\\RedisManager::delete<\/a>"],[0,1,"<a href=\"RedisManager.php.html#255\">Gemvc\\Core\\RedisManager::exists<\/a>"],[0,1,"<a href=\"RedisManager.php.html#260\">Gemvc\\Core\\RedisManager::ttl<\/a>"],[0,1,"<a href=\"RedisManager.php.html#265\">Gemvc\\Core\\RedisManager::flush<\/a>"],[0,1,"<a href=\"RedisManager.php.html#281\">Gemvc\\Core\\RedisManager::hSet<\/a>"],[0,1,"<a href=\"RedisManager.php.html#286\">Gemvc\\Core\\RedisManager::hGet<\/a>"],[0,1,"<a href=\"RedisManager.php.html#300\">Gemvc\\Core\\RedisManager::hGetAll<\/a>"],[0,1,"<a href=\"RedisManager.php.html#306\">Gemvc\\Core\\RedisManager::lPush<\/a>"],[0,1,"<a href=\"RedisManager.php.html#311\">Gemvc\\Core\\RedisManager::rPush<\/a>"],[0,1,"<a href=\"RedisManager.php.html#316\">Gemvc\\Core\\RedisManager::lPop<\/a>"],[0,1,"<a href=\"RedisManager.php.html#321\">Gemvc\\Core\\RedisManager::rPop<\/a>"],[0,1,"<a href=\"RedisManager.php.html#336\">Gemvc\\Core\\RedisManager::sAdd<\/a>"],[0,1,"<a href=\"RedisManager.php.html#350\">Gemvc\\Core\\RedisManager::sMembers<\/a>"],[0,1,"<a href=\"RedisManager.php.html#355\">Gemvc\\Core\\RedisManager::sIsMember<\/a>"],[0,1,"<a href=\"RedisManager.php.html#361\">Gemvc\\Core\\RedisManager::zAdd<\/a>"],[0,1,"<a href=\"RedisManager.php.html#367\">Gemvc\\Core\\RedisManager::zRange<\/a>"],[0,1,"<a href=\"RedisManager.php.html#381\">Gemvc\\Core\\RedisManager::publish<\/a>"],[0,1,"<a href=\"RedisManager.php.html#387\">Gemvc\\Core\\RedisManager::subscribe<\/a>"],[0,2,"<a href=\"RedisManager.php.html#402\">Gemvc\\Core\\RedisManager::pipeline<\/a>"],[0,2,"<a href=\"RedisManager.php.html#408\">Gemvc\\Core\\RedisManager::transaction<\/a>"],[0,1,"<a href=\"SecurityManager.php.html#17\">Gemvc\\Core\\SecurityManager::__construct<\/a>"],[0,6,"<a href=\"SecurityManager.php.html#25\">Gemvc\\Core\\SecurityManager::isRequestAllowed<\/a>"],[0,1,"<a href=\"SecurityManager.php.html#55\">Gemvc\\Core\\SecurityManager::sendSecurityResponse<\/a>"],[0,1,"<a href=\"SecurityManager.php.html#71\">Gemvc\\Core\\SecurityManager::loadSecurityRules<\/a>"],[0,3,"<a href=\"SecurityManager.php.html#95\">Gemvc\\Core\\SecurityManager::isBlockedPath<\/a>"],[0,3,"<a href=\"SecurityManager.php.html#108\">Gemvc\\Core\\SecurityManager::isBlockedFile<\/a>"],[0,2,"<a href=\"SecurityManager.php.html#121\">Gemvc\\Core\\SecurityManager::addBlockedPath<\/a>"],[0,2,"<a href=\"SecurityManager.php.html#131\">Gemvc\\Core\\SecurityManager::addBlockedExtension<\/a>"],[0,1,"<a href=\"SecurityManager.php.html#142\">Gemvc\\Core\\SecurityManager::getBlockedPaths<\/a>"],[0,1,"<a href=\"SecurityManager.php.html#151\">Gemvc\\Core\\SecurityManager::getBlockedExtensions<\/a>"],[0,1,"<a href=\"SwooleApiService.php.html#25\">Gemvc\\Core\\SwooleApiService::__construct<\/a>"],[0,1,"<a href=\"SwooleApiService.php.html#36\">Gemvc\\Core\\SwooleApiService::index<\/a>"],[0,2,"<a href=\"SwooleApiService.php.html#49\">Gemvc\\Core\\SwooleApiService::validatePosts<\/a>"],[0,2,"<a href=\"SwooleApiService.php.html#63\">Gemvc\\Core\\SwooleApiService::validateStringPosts<\/a>"],[0,1,"<a href=\"SwooleApiService.php.html#78\">Gemvc\\Core\\SwooleApiService::safeValidatePosts<\/a>"],[0,1,"<a href=\"SwooleApiService.php.html#91\">Gemvc\\Core\\SwooleApiService::safeValidateStringPosts<\/a>"],[0,1,"<a href=\"SwooleApiService.php.html#103\">Gemvc\\Core\\SwooleApiService::mockResponse<\/a>"],[0,1,"<a href=\"SwooleBootstrap.php.html#26\">Gemvc\\Core\\SwooleBootstrap::__construct<\/a>"],[0,13,"<a href=\"SwooleBootstrap.php.html#35\">Gemvc\\Core\\SwooleBootstrap::extractRouteInfo<\/a>"],[0,6,"<a href=\"SwooleBootstrap.php.html#81\">Gemvc\\Core\\SwooleBootstrap::processRequest<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#15\">Gemvc\\Core\\SwooleServerConfig::__construct<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#24\">Gemvc\\Core\\SwooleServerConfig::getConfig<\/a>"],[0,2,"<a href=\"SwooleServerConfig.php.html#32\">Gemvc\\Core\\SwooleServerConfig::getHost<\/a>"],[0,2,"<a href=\"SwooleServerConfig.php.html#41\">Gemvc\\Core\\SwooleServerConfig::getPort<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#49\">Gemvc\\Core\\SwooleServerConfig::isDev<\/a>"],[0,10,"<a href=\"SwooleServerConfig.php.html#57\">Gemvc\\Core\\SwooleServerConfig::loadConfig<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#78\">Gemvc\\Core\\SwooleServerConfig::get<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#86\">Gemvc\\Core\\SwooleServerConfig::set<\/a>"],[0,1,"<a href=\"SwooleServerConfig.php.html#94\">Gemvc\\Core\\SwooleServerConfig::has<\/a>"],[0,1,"<a href=\"ValidationException.php.html#11\">Gemvc\\Core\\ValidationException::__construct<\/a>"],[0,2,"<a href=\"WebserverDetector.php.html#24\">Gemvc\\Core\\WebserverDetector::get<\/a>"],[0,1,"<a href=\"WebserverDetector.php.html#38\">Gemvc\\Core\\WebserverDetector::forceRefresh<\/a>"],[0,16,"<a href=\"WebserverDetector.php.html#49\">Gemvc\\Core\\WebserverDetector::detect<\/a>"],[0,3,"<a href=\"WebserverDetector.php.html#87\">Gemvc\\Core\\WebserverDetector::getMetrics<\/a>"]], 'Method Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getComplexityData(data, label) {
+    var values = [];
+    $.each(data, function(key) {
+      var value = Math.round(data[key][0]*100) / 100;
+      values.push({
+        x: value,
+        y: data[key][1],
+        class: data[key][2],
+        size: 0.05,
+        shape: 'diamond'
+      });
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+});
+  </script>
+ </body>
+</html>

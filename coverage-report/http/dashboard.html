@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Dashboard for C:\Users\Ali\Desktop\gemvc\src\http</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="../_css/bootstrap.min.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/nv.d3.min.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/style.css?v=10.1.16" rel="stylesheet" type="text/css">
+  <link href="../_css/custom.css" rel="stylesheet" type="text/css">
+ </head>
+ <body>
+  <header>
+   <div class="container-fluid">
+    <div class="row">
+     <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+       <ol class="breadcrumb">
+         <li class="breadcrumb-item"><a href="../index.html">C:\Users\Ali\Desktop\gemvc\src</a></li>
+         <li class="breadcrumb-item"><a href="index.html">http</a></li>
+         <li class="breadcrumb-item active">(Dashboard)</li>
+
+       </ol>
+      </nav>
+     </div>
+    </div>
+   </div>
+  </header>
+  <div class="container-fluid">
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Classes</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="classCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="classComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ApacheRequest.php.html#12">Gemvc\Http\ApacheRequest</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#19">Gemvc\Http\ApiCall</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#5">Gemvc\Http\HtmlResponse</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#14">Gemvc\Http\JWTToken</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#8">Gemvc\Http\JsonResponse</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="NoCors.php.html#7">Gemvc\Http\NoCors</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#14">Gemvc\Http\Request</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#7">Gemvc\Http\Response</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#12">Gemvc\Http\SwooleRequest</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#37">Gemvc\Http\SwooleWebSocketHandler</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#176">Gemvc\Http\AsyncApiCall</a></td><td class="text-right">53%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Request.php.html#14">Gemvc\Http\Request</a></td><td class="text-right">29070</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#37">Gemvc\Http\SwooleWebSocketHandler</a></td><td class="text-right">13572</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#12">Gemvc\Http\ApacheRequest</a></td><td class="text-right">6806</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#12">Gemvc\Http\SwooleRequest</a></td><td class="text-right">6162</td></tr>
+       <tr><td><a href="ApiCall.php.html#19">Gemvc\Http\ApiCall</a></td><td class="text-right">3660</td></tr>
+       <tr><td><a href="JsonResponse.php.html#8">Gemvc\Http\JsonResponse</a></td><td class="text-right">1892</td></tr>
+       <tr><td><a href="JWTToken.php.html#14">Gemvc\Http\JWTToken</a></td><td class="text-right">1806</td></tr>
+       <tr><td><a href="Response.php.html#7">Gemvc\Http\Response</a></td><td class="text-right">870</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#176">Gemvc\Http\AsyncApiCall</a></td><td class="text-right">555</td></tr>
+       <tr><td><a href="NoCors.php.html#7">Gemvc\Http\NoCors</a></td><td class="text-right">240</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#5">Gemvc\Http\HtmlResponse</a></td><td class="text-right">42</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Methods</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="methodCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="methodComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ApacheRequest.php.html#16"><abbr title="Gemvc\Http\ApacheRequest::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#49"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllServerHttpRequestHeaders">sanitizeAllServerHttpRequestHeaders</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#66"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPostRequest">sanitizeAllHTTPPostRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#100"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPatchRequest">sanitizeAllHTTPPatchRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#132"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPGetRequest">sanitizeAllHTTPGetRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#152"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPutRequest">sanitizeAllHTTPPutRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#186"><abbr title="Gemvc\Http\ApacheRequest::sanitizeQueryString">sanitizeQueryString</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#194"><abbr title="Gemvc\Http\ApacheRequest::sanitizeRequestURI">sanitizeRequestURI</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#210"><abbr title="Gemvc\Http\ApacheRequest::sanitizeInput">sanitizeInput</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#218"><abbr title="Gemvc\Http\ApacheRequest::getUserAgent">getUserAgent</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#226"><abbr title="Gemvc\Http\ApacheRequest::getRemoteAddress">getRemoteAddress</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#239"><abbr title="Gemvc\Http\ApacheRequest::getRequestMethod">getRequestMethod</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#254"><abbr title="Gemvc\Http\ApacheRequest::getAuthHeader">getAuthHeader</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#271"><abbr title="Gemvc\Http\ApacheRequest::setHeaders">setHeaders</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#144"><abbr title="Gemvc\Http\ApiCall::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#162"><abbr title="Gemvc\Http\ApiCall::setTimeouts">setTimeouts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#173"><abbr title="Gemvc\Http\ApiCall::setSsl">setSsl</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#188"><abbr title="Gemvc\Http\ApiCall::setRetries">setRetries</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#201"><abbr title="Gemvc\Http\ApiCall::retryOnNetworkError">retryOnNetworkError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#213"><abbr title="Gemvc\Http\ApiCall::postForm">postForm</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#230"><abbr title="Gemvc\Http\ApiCall::postMultipart">postMultipart</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#242"><abbr title="Gemvc\Http\ApiCall::postRaw">postRaw</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#259"><abbr title="Gemvc\Http\ApiCall::get">get</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#279"><abbr title="Gemvc\Http\ApiCall::post">post</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#294"><abbr title="Gemvc\Http\ApiCall::put">put</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#309"><abbr title="Gemvc\Http\ApiCall::call">call</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#386"><abbr title="Gemvc\Http\ApiCall::setMethod">setMethod</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#402"><abbr title="Gemvc\Http\ApiCall::setHeaders">setHeaders</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#417"><abbr title="Gemvc\Http\ApiCall::setAuthorization">setAuthorization</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#435"><abbr title="Gemvc\Http\ApiCall::setData">setData</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ApiCall.php.html#473"><abbr title="Gemvc\Http\ApiCall::setFiles">setFiles</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#261"><abbr title="Gemvc\Http\AsyncApiCall::setMaxConcurrency">setMaxConcurrency</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#280"><abbr title="Gemvc\Http\AsyncApiCall::setSsl">setSsl</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#295"><abbr title="Gemvc\Http\AsyncApiCall::setRetries">setRetries</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#305"><abbr title="Gemvc\Http\AsyncApiCall::retryOnNetworkError">retryOnNetworkError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#315"><abbr title="Gemvc\Http\AsyncApiCall::setUserAgent">setUserAgent</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#332"><abbr title="Gemvc\Http\AsyncApiCall::addGet">addGet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#382"><abbr title="Gemvc\Http\AsyncApiCall::addPut">addPut</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#405"><abbr title="Gemvc\Http\AsyncApiCall::addPostForm">addPostForm</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#430"><abbr title="Gemvc\Http\AsyncApiCall::addPostMultipart">addPostMultipart</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#454"><abbr title="Gemvc\Http\AsyncApiCall::addPostRaw">addPostRaw</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#480"><abbr title="Gemvc\Http\AsyncApiCall::addRequest">addRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#598"><abbr title="Gemvc\Http\AsyncApiCall::waitForAll">waitForAll</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#660"><abbr title="Gemvc\Http\AsyncApiCall::executeInBackground">executeInBackground</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#672"><abbr title="Gemvc\Http\AsyncApiCall::clearQueue">clearQueue</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#682"><abbr title="Gemvc\Http\AsyncApiCall::getQueueSize">getQueueSize</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#15"><abbr title="Gemvc\Http\HtmlResponse::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#27"><abbr title="Gemvc\Http\HtmlResponse::showSwoole">showSwoole</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#39"><abbr title="Gemvc\Http\HtmlResponse::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#56"><abbr title="Gemvc\Http\HtmlResponse::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#35"><abbr title="Gemvc\Http\JWTToken::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#56"><abbr title="Gemvc\Http\JWTToken::setToken">setToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#61"><abbr title="Gemvc\Http\JWTToken::createAccessToken">createAccessToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#68"><abbr title="Gemvc\Http\JWTToken::createRefreshToken">createRefreshToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#75"><abbr title="Gemvc\Http\JWTToken::createLoginToken">createLoginToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#87"><abbr title="Gemvc\Http\JWTToken::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#116"><abbr title="Gemvc\Http\JWTToken::verify">verify</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#170"><abbr title="Gemvc\Http\JWTToken::renew">renew</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#185"><abbr title="Gemvc\Http\JWTToken::GetType">GetType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#214"><abbr title="Gemvc\Http\JWTToken::isJWT">isJWT</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#223"><abbr title="Gemvc\Http\JWTToken::extractToken">extractToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JWTToken.php.html#246"><abbr title="Gemvc\Http\JWTToken::bearerTokenPurify">bearerTokenPurify</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#17"><abbr title="Gemvc\Http\JsonResponse::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#22"><abbr title="Gemvc\Http\JsonResponse::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#42"><abbr title="Gemvc\Http\JsonResponse::success">success</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#47"><abbr title="Gemvc\Http\JsonResponse::updated">updated</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#52"><abbr title="Gemvc\Http\JsonResponse::created">created</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#57"><abbr title="Gemvc\Http\JsonResponse::successButNoContentToShow">successButNoContentToShow</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#62"><abbr title="Gemvc\Http\JsonResponse::deleted">deleted</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#66"><abbr title="Gemvc\Http\JsonResponse::unauthorized">unauthorized</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#70"><abbr title="Gemvc\Http\JsonResponse::forbidden">forbidden</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#74"><abbr title="Gemvc\Http\JsonResponse::notFound">notFound</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#79"><abbr title="Gemvc\Http\JsonResponse::internalError">internalError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#84"><abbr title="Gemvc\Http\JsonResponse::unknownError">unknownError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#89"><abbr title="Gemvc\Http\JsonResponse::notAcceptable">notAcceptable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#94"><abbr title="Gemvc\Http\JsonResponse::conflict">conflict</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#99"><abbr title="Gemvc\Http\JsonResponse::unsupportedMediaType">unsupportedMediaType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#104"><abbr title="Gemvc\Http\JsonResponse::unprocessableEntity">unprocessableEntity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#109"><abbr title="Gemvc\Http\JsonResponse::badRequest">badRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#113"><abbr title="Gemvc\Http\JsonResponse::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#138"><abbr title="Gemvc\Http\JsonResponse::payloadNeedItems">payloadNeedItems</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#148"><abbr title="Gemvc\Http\JsonResponse::setHttpMessage">setHttpMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="JsonResponse.php.html#185"><abbr title="Gemvc\Http\JsonResponse::showSwoole">showSwoole</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="NoCors.php.html#9"><abbr title="Gemvc\Http\NoCors::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="NoCors.php.html#16"><abbr title="Gemvc\Http\NoCors::apache">apache</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="NoCors.php.html#61"><abbr title="Gemvc\Http\NoCors::swoole">swoole</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#96"><abbr title="Gemvc\Http\Request::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#123"><abbr title="Gemvc\Http\Request::returnResponse">returnResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#138"><abbr title="Gemvc\Http\Request::auth">auth</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#158"><abbr title="Gemvc\Http\Request::userRole">userRole</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#178"><abbr title="Gemvc\Http\Request::authenticate">authenticate</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#207"><abbr title="Gemvc\Http\Request::authorize">authorize</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#231"><abbr title="Gemvc\Http\Request::filterable">filterable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#273"><abbr title="Gemvc\Http\Request::findable">findable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#311"><abbr title="Gemvc\Http\Request::sortable">sortable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#348"><abbr title="Gemvc\Http\Request::setPageNumber">setPageNumber</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#369"><abbr title="Gemvc\Http\Request::setPerPage">setPerPage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#389"><abbr title="Gemvc\Http\Request::getPageNumber">getPageNumber</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#394"><abbr title="Gemvc\Http\Request::getPerPage">getPerPage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#405"><abbr title="Gemvc\Http\Request::getFilterable">getFilterable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#414"><abbr title="Gemvc\Http\Request::getFindable">getFindable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#424"><abbr title="Gemvc\Http\Request::getSortable">getSortable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#433"><abbr title="Gemvc\Http\Request::getSortableAsc">getSortableAsc</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#439"><abbr title="Gemvc\Http\Request::__get">__get</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#444"><abbr title="Gemvc\Http\Request::getJwtToken">getJwtToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#449"><abbr title="Gemvc\Http\Request::setJwtToken">setJwtToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#462"><abbr title="Gemvc\Http\Request::userId">userId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#483"><abbr title="Gemvc\Http\Request::getError">getError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#488"><abbr title="Gemvc\Http\Request::getId">getId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#492"><abbr title="Gemvc\Http\Request::getTime">getTime</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#497"><abbr title="Gemvc\Http\Request::getStartExecutionTime">getStartExecutionTime</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#507"><abbr title="Gemvc\Http\Request::getMethod">getMethod</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#517"><abbr title="Gemvc\Http\Request::getUri">getUri</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#528"><abbr title="Gemvc\Http\Request::getHeader">getHeader</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#538"><abbr title="Gemvc\Http\Request::intValuePost">intValuePost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#546"><abbr title="Gemvc\Http\Request::floatValuePost">floatValuePost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#554"><abbr title="Gemvc\Http\Request::intValueGet">intValueGet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#562"><abbr title="Gemvc\Http\Request::floatValueGet">floatValueGet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#577"><abbr title="Gemvc\Http\Request::definePostSchema">definePostSchema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#587"><abbr title="Gemvc\Http\Request::defineGetSchema">defineGetSchema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#599"><abbr title="Gemvc\Http\Request::definePutSchema">definePutSchema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#611"><abbr title="Gemvc\Http\Request::definePatchSchema">definePatchSchema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#616"><abbr title="Gemvc\Http\Request::setPostToObject">setPostToObject</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#641"><abbr title="Gemvc\Http\Request::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#687"><abbr title="Gemvc\Http\Request::forwardToRemoteApi">forwardToRemoteApi</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#713"><abbr title="Gemvc\Http\Request::forwardPost">forwardPost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#741"><abbr title="Gemvc\Http\Request::mapPostToObject">mapPostToObject</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#796"><abbr title="Gemvc\Http\Request::mapPutToObject">mapPutToObject</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#846"><abbr title="Gemvc\Http\Request::_mapArrayToObject">_mapArrayToObject</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#862"><abbr title="Gemvc\Http\Request::mapPost">mapPost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#888"><abbr title="Gemvc\Http\Request::setErrorResponse">setErrorResponse</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Request.php.html#909"><abbr title="Gemvc\Http\Request::defineSchema">defineSchema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#9"><abbr title="Gemvc\Http\Response::success">success</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#13"><abbr title="Gemvc\Http\Response::updated">updated</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#19"><abbr title="Gemvc\Http\Response::created">created</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#25"><abbr title="Gemvc\Http\Response::successButNoContentToShow">successButNoContentToShow</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#31"><abbr title="Gemvc\Http\Response::deleted">deleted</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#36"><abbr title="Gemvc\Http\Response::unauthorized">unauthorized</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#41"><abbr title="Gemvc\Http\Response::forbidden">forbidden</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#46"><abbr title="Gemvc\Http\Response::notFound">notFound</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#52"><abbr title="Gemvc\Http\Response::internalError">internalError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#58"><abbr title="Gemvc\Http\Response::unknownError">unknownError</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#64"><abbr title="Gemvc\Http\Response::notAcceptable">notAcceptable</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#70"><abbr title="Gemvc\Http\Response::conflict">conflict</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#76"><abbr title="Gemvc\Http\Response::unsupportedMediaType">unsupportedMediaType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#82"><abbr title="Gemvc\Http\Response::unprocessableEntity">unprocessableEntity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Response.php.html#88"><abbr title="Gemvc\Http\Response::badRequest">badRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#22"><abbr title="Gemvc\Http\SwooleRequest::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#62"><abbr title="Gemvc\Http\SwooleRequest::getOriginalSwooleRequest">getOriginalSwooleRequest</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#70"><abbr title="Gemvc\Http\SwooleRequest::setData">setData</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#95"><abbr title="Gemvc\Http\SwooleRequest::setPost">setPost</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#119"><abbr title="Gemvc\Http\SwooleRequest::setHeaders">setHeaders</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#137"><abbr title="Gemvc\Http\SwooleRequest::setAuthorizationToken">setAuthorizationToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#149"><abbr title="Gemvc\Http\SwooleRequest::setFiles">setFiles</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#163"><abbr title="Gemvc\Http\SwooleRequest::normalizeFilesArray">normalizeFilesArray</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#202"><abbr title="Gemvc\Http\SwooleRequest::setGet">setGet</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#212"><abbr title="Gemvc\Http\SwooleRequest::setCookies">setCookies</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#243"><abbr title="Gemvc\Http\SwooleRequest::filterDangerousCookies">filterDangerousCookies</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#422"><abbr title="Gemvc\Http\SwooleRequest::setPut">setPut</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#445"><abbr title="Gemvc\Http\SwooleRequest::setPatch">setPatch</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#469"><abbr title="Gemvc\Http\SwooleRequest::parseAuthorizationToken">parseAuthorizationToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#483"><abbr title="Gemvc\Http\SwooleRequest::sanitizeInput">sanitizeInput</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#498"><abbr title="Gemvc\Http\SwooleRequest::sanitizeData">sanitizeData</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#521"><abbr title="Gemvc\Http\SwooleRequest::sanitizeRequestURI">sanitizeRequestURI</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#62"><abbr title="Gemvc\Http\SwooleWebSocketHandler::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#87"><abbr title="Gemvc\Http\SwooleWebSocketHandler::initRedis">initRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#124"><abbr title="Gemvc\Http\SwooleWebSocketHandler::registerHeartbeat">registerHeartbeat</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#146"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onOpen">onOpen</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#201"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onMessage">onMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#273"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleSubscribe">handleSubscribe</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#316"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleUnsubscribe">handleUnsubscribe</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#369"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleMessage">handleMessage</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#433"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onClose">onClose</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#463"><abbr title="Gemvc\Http\SwooleWebSocketHandler::performHeartbeat">performHeartbeat</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#495"><abbr title="Gemvc\Http\SwooleWebSocketHandler::cleanupExpiredConnections">cleanupExpiredConnections</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#527"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkRateLimit">checkRateLimit</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#565"><abbr title="Gemvc\Http\SwooleWebSocketHandler::updateLastActivity">updateLastActivity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#579"><abbr title="Gemvc\Http\SwooleWebSocketHandler::isSubscribedToChannel">isSubscribedToChannel</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#595"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getChannelRecipients">getChannelRecipients</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#614"><abbr title="Gemvc\Http\SwooleWebSocketHandler::storeConnectionInRedis">storeConnectionInRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#641"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getConnectionFromRedis">getConnectionFromRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#669"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getAllConnectionsFromRedis">getAllConnectionsFromRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#692"><abbr title="Gemvc\Http\SwooleWebSocketHandler::removeConnectionFromRedis">removeConnectionFromRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#718"><abbr title="Gemvc\Http\SwooleWebSocketHandler::subscribeChannelRedis">subscribeChannelRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#741"><abbr title="Gemvc\Http\SwooleWebSocketHandler::unsubscribeChannelRedis">unsubscribeChannelRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#764"><abbr title="Gemvc\Http\SwooleWebSocketHandler::isSubscribedToChannelRedis">isSubscribedToChannelRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#780"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getChannelRecipientsRedis">getChannelRecipientsRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#796"><abbr title="Gemvc\Http\SwooleWebSocketHandler::updateLastActivityRedis">updateLastActivityRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#812"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkRateLimitRedis">checkRateLimitRedis</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#853"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkServerCompatibility">checkServerCompatibility</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#742"><abbr title="Gemvc\Http\AsyncApiCall::setMethodAndData">setMethodAndData</abbr></a></td><td class="text-right">50%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#614"><abbr title="Gemvc\Http\AsyncApiCall::fireAndForget">fireAndForget</abbr></a></td><td class="text-right">64%</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#695"><abbr title="Gemvc\Http\AsyncApiCall::createCurlHandle">createCurlHandle</abbr></a></td><td class="text-right">81%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Request.php.html#909"><abbr title="Gemvc\Http\Request::defineSchema">defineSchema</abbr></a></td><td class="text-right">380</td></tr>
+       <tr><td><a href="ApiCall.php.html#435"><abbr title="Gemvc\Http\ApiCall::setData">setData</abbr></a></td><td class="text-right">306</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#243"><abbr title="Gemvc\Http\SwooleRequest::filterDangerousCookies">filterDangerousCookies</abbr></a></td><td class="text-right">306</td></tr>
+       <tr><td><a href="JsonResponse.php.html#148"><abbr title="Gemvc\Http\JsonResponse::setHttpMessage">setHttpMessage</abbr></a></td><td class="text-right">272</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#271"><abbr title="Gemvc\Http\ApacheRequest::setHeaders">setHeaders</abbr></a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="ApiCall.php.html#309"><abbr title="Gemvc\Http\ApiCall::call">call</abbr></a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="JWTToken.php.html#116"><abbr title="Gemvc\Http\JWTToken::verify">verify</abbr></a></td><td class="text-right">182</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#66"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPostRequest">sanitizeAllHTTPPostRequest</abbr></a></td><td class="text-right">156</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#163"><abbr title="Gemvc\Http\SwooleRequest::normalizeFilesArray">normalizeFilesArray</abbr></a></td><td class="text-right">156</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#201"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onMessage">onMessage</abbr></a></td><td class="text-right">156</td></tr>
+       <tr><td><a href="Request.php.html#311"><abbr title="Gemvc\Http\Request::sortable">sortable</abbr></a></td><td class="text-right">132</td></tr>
+       <tr><td><a href="Request.php.html#796"><abbr title="Gemvc\Http\Request::mapPutToObject">mapPutToObject</abbr></a></td><td class="text-right">132</td></tr>
+       <tr><td><a href="Request.php.html#641"><abbr title="Gemvc\Http\Request::validateStringPosts">validateStringPosts</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Request.php.html#741"><abbr title="Gemvc\Http\Request::mapPostToObject">mapPostToObject</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Request.php.html#231"><abbr title="Gemvc\Http\Request::filterable">filterable</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="Request.php.html#273"><abbr title="Gemvc\Http\Request::findable">findable</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#369"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleMessage">handleMessage</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#152"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPutRequest">sanitizeAllHTTPPutRequest</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#742"><abbr title="Gemvc\Http\AsyncApiCall::setMethodAndData">setMethodAndData</abbr></a></td><td class="text-right">64</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#100"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPPatchRequest">sanitizeAllHTTPPatchRequest</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="ApiCall.php.html#473"><abbr title="Gemvc\Http\ApiCall::setFiles">setFiles</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="NoCors.php.html#16"><abbr title="Gemvc\Http\NoCors::apache">apache</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="NoCors.php.html#61"><abbr title="Gemvc\Http\NoCors::swoole">swoole</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#119"><abbr title="Gemvc\Http\SwooleRequest::setHeaders">setHeaders</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#62"><abbr title="Gemvc\Http\SwooleWebSocketHandler::__construct">__construct</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#87"><abbr title="Gemvc\Http\SwooleWebSocketHandler::initRedis">initRedis</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#495"><abbr title="Gemvc\Http\SwooleWebSocketHandler::cleanupExpiredConnections">cleanupExpiredConnections</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#49"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllServerHttpRequestHeaders">sanitizeAllServerHttpRequestHeaders</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#132"><abbr title="Gemvc\Http\ApacheRequest::sanitizeAllHTTPGetRequest">sanitizeAllHTTPGetRequest</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#22"><abbr title="Gemvc\Http\SwooleRequest::__construct">__construct</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#212"><abbr title="Gemvc\Http\SwooleRequest::setCookies">setCookies</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#316"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleUnsubscribe">handleUnsubscribe</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#463"><abbr title="Gemvc\Http\SwooleWebSocketHandler::performHeartbeat">performHeartbeat</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#16"><abbr title="Gemvc\Http\ApacheRequest::__construct">__construct</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#254"><abbr title="Gemvc\Http\ApacheRequest::getAuthHeader">getAuthHeader</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="ApiCall.php.html#386"><abbr title="Gemvc\Http\ApiCall::setMethod">setMethod</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="JWTToken.php.html#185"><abbr title="Gemvc\Http\JWTToken::GetType">GetType</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="JWTToken.php.html#223"><abbr title="Gemvc\Http\JWTToken::extractToken">extractToken</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Request.php.html#138"><abbr title="Gemvc\Http\Request::auth">auth</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Request.php.html#207"><abbr title="Gemvc\Http\Request::authorize">authorize</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Request.php.html#462"><abbr title="Gemvc\Http\Request::userId">userId</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#95"><abbr title="Gemvc\Http\SwooleRequest::setPost">setPost</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#273"><abbr title="Gemvc\Http\SwooleWebSocketHandler::handleSubscribe">handleSubscribe</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#433"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onClose">onClose</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#527"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkRateLimit">checkRateLimit</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#692"><abbr title="Gemvc\Http\SwooleWebSocketHandler::removeConnectionFromRedis">removeConnectionFromRedis</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#194"><abbr title="Gemvc\Http\ApacheRequest::sanitizeRequestURI">sanitizeRequestURI</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#239"><abbr title="Gemvc\Http\ApacheRequest::getRequestMethod">getRequestMethod</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="JsonResponse.php.html#113"><abbr title="Gemvc\Http\JsonResponse::show">show</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#158"><abbr title="Gemvc\Http\Request::userRole">userRole</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#348"><abbr title="Gemvc\Http\Request::setPageNumber">setPageNumber</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#369"><abbr title="Gemvc\Http\Request::setPerPage">setPerPage</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#538"><abbr title="Gemvc\Http\Request::intValuePost">intValuePost</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#546"><abbr title="Gemvc\Http\Request::floatValuePost">floatValuePost</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#554"><abbr title="Gemvc\Http\Request::intValueGet">intValueGet</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#562"><abbr title="Gemvc\Http\Request::floatValueGet">floatValueGet</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#616"><abbr title="Gemvc\Http\Request::setPostToObject">setPostToObject</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#713"><abbr title="Gemvc\Http\Request::forwardPost">forwardPost</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#846"><abbr title="Gemvc\Http\Request::_mapArrayToObject">_mapArrayToObject</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Request.php.html#862"><abbr title="Gemvc\Http\Request::mapPost">mapPost</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#70"><abbr title="Gemvc\Http\SwooleRequest::setData">setData</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#498"><abbr title="Gemvc\Http\SwooleRequest::sanitizeData">sanitizeData</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#669"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getAllConnectionsFromRedis">getAllConnectionsFromRedis</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#718"><abbr title="Gemvc\Http\SwooleWebSocketHandler::subscribeChannelRedis">subscribeChannelRedis</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#812"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkRateLimitRedis">checkRateLimitRedis</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#186"><abbr title="Gemvc\Http\ApacheRequest::sanitizeQueryString">sanitizeQueryString</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#218"><abbr title="Gemvc\Http\ApacheRequest::getUserAgent">getUserAgent</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#226"><abbr title="Gemvc\Http\ApacheRequest::getRemoteAddress">getRemoteAddress</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="JWTToken.php.html#87"><abbr title="Gemvc\Http\JWTToken::create">create</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="JWTToken.php.html#170"><abbr title="Gemvc\Http\JWTToken::renew">renew</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="JsonResponse.php.html#185"><abbr title="Gemvc\Http\JsonResponse::showSwoole">showSwoole</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Request.php.html#178"><abbr title="Gemvc\Http\Request::authenticate">authenticate</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Request.php.html#687"><abbr title="Gemvc\Http\Request::forwardToRemoteApi">forwardToRemoteApi</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#422"><abbr title="Gemvc\Http\SwooleRequest::setPut">setPut</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#445"><abbr title="Gemvc\Http\SwooleRequest::setPatch">setPatch</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#146"><abbr title="Gemvc\Http\SwooleWebSocketHandler::onOpen">onOpen</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#565"><abbr title="Gemvc\Http\SwooleWebSocketHandler::updateLastActivity">updateLastActivity</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#579"><abbr title="Gemvc\Http\SwooleWebSocketHandler::isSubscribedToChannel">isSubscribedToChannel</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#614"><abbr title="Gemvc\Http\SwooleWebSocketHandler::storeConnectionInRedis">storeConnectionInRedis</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#641"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getConnectionFromRedis">getConnectionFromRedis</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#741"><abbr title="Gemvc\Http\SwooleWebSocketHandler::unsubscribeChannelRedis">unsubscribeChannelRedis</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#853"><abbr title="Gemvc\Http\SwooleWebSocketHandler::checkServerCompatibility">checkServerCompatibility</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#695"><abbr title="Gemvc\Http\AsyncApiCall::createCurlHandle">createCurlHandle</abbr></a></td><td class="text-right">8</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#614"><abbr title="Gemvc\Http\AsyncApiCall::fireAndForget">fireAndForget</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApacheRequest.php.html#210"><abbr title="Gemvc\Http\ApacheRequest::sanitizeInput">sanitizeInput</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiCall.php.html#188"><abbr title="Gemvc\Http\ApiCall::setRetries">setRetries</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiCall.php.html#259"><abbr title="Gemvc\Http\ApiCall::get">get</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiCall.php.html#402"><abbr title="Gemvc\Http\ApiCall::setHeaders">setHeaders</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="ApiCall.php.html#417"><abbr title="Gemvc\Http\ApiCall::setAuthorization">setAuthorization</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="AsyncApiCall.php.html#332"><abbr title="Gemvc\Http\AsyncApiCall::addGet">addGet</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#27"><abbr title="Gemvc\Http\HtmlResponse::showSwoole">showSwoole</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="HtmlResponse.php.html#39"><abbr title="Gemvc\Http\HtmlResponse::show">show</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#35"><abbr title="Gemvc\Http\JWTToken::__construct">__construct</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#61"><abbr title="Gemvc\Http\JWTToken::createAccessToken">createAccessToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#68"><abbr title="Gemvc\Http\JWTToken::createRefreshToken">createRefreshToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#75"><abbr title="Gemvc\Http\JWTToken::createLoginToken">createLoginToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#214"><abbr title="Gemvc\Http\JWTToken::isJWT">isJWT</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JWTToken.php.html#246"><abbr title="Gemvc\Http\JWTToken::bearerTokenPurify">bearerTokenPurify</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JsonResponse.php.html#22"><abbr title="Gemvc\Http\JsonResponse::create">create</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="JsonResponse.php.html#138"><abbr title="Gemvc\Http\JsonResponse::payloadNeedItems">payloadNeedItems</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Request.php.html#123"><abbr title="Gemvc\Http\Request::returnResponse">returnResponse</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Request.php.html#449"><abbr title="Gemvc\Http\Request::setJwtToken">setJwtToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Request.php.html#528"><abbr title="Gemvc\Http\Request::getHeader">getHeader</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#13"><abbr title="Gemvc\Http\Response::updated">updated</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#19"><abbr title="Gemvc\Http\Response::created">created</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#25"><abbr title="Gemvc\Http\Response::successButNoContentToShow">successButNoContentToShow</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#31"><abbr title="Gemvc\Http\Response::deleted">deleted</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#36"><abbr title="Gemvc\Http\Response::unauthorized">unauthorized</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#41"><abbr title="Gemvc\Http\Response::forbidden">forbidden</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#46"><abbr title="Gemvc\Http\Response::notFound">notFound</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#52"><abbr title="Gemvc\Http\Response::internalError">internalError</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#58"><abbr title="Gemvc\Http\Response::unknownError">unknownError</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#64"><abbr title="Gemvc\Http\Response::notAcceptable">notAcceptable</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#70"><abbr title="Gemvc\Http\Response::conflict">conflict</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#76"><abbr title="Gemvc\Http\Response::unsupportedMediaType">unsupportedMediaType</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#82"><abbr title="Gemvc\Http\Response::unprocessableEntity">unprocessableEntity</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Response.php.html#88"><abbr title="Gemvc\Http\Response::badRequest">badRequest</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#137"><abbr title="Gemvc\Http\SwooleRequest::setAuthorizationToken">setAuthorizationToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#469"><abbr title="Gemvc\Http\SwooleRequest::parseAuthorizationToken">parseAuthorizationToken</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#483"><abbr title="Gemvc\Http\SwooleRequest::sanitizeInput">sanitizeInput</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleRequest.php.html#521"><abbr title="Gemvc\Http\SwooleRequest::sanitizeRequestURI">sanitizeRequestURI</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#595"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getChannelRecipients">getChannelRecipients</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#764"><abbr title="Gemvc\Http\SwooleWebSocketHandler::isSubscribedToChannelRedis">isSubscribedToChannelRedis</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#780"><abbr title="Gemvc\Http\SwooleWebSocketHandler::getChannelRecipientsRedis">getChannelRecipientsRedis</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwooleWebSocketHandler.php.html#796"><abbr title="Gemvc\Http\SwooleWebSocketHandler::updateLastActivityRedis">updateLastActivityRedis</abbr></a></td><td class="text-right">6</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <footer>
+    <hr/>
+    <p>
+     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 10.1.16</a> using <a href="https://www.php.net/" target="_top">PHP 8.2.12</a> and <a href="https://phpunit.de/">PHPUnit 10.5.60</a> at Sun Dec 28 19:48:24 CET 2025.</small>
+    </p>
+   </footer>
+  </div>
+  <script src="../_js/jquery.min.js?v=10.1.16" type="text/javascript"></script>
+  <script src="../_js/d3.min.js?v=10.1.16" type="text/javascript"></script>
+  <script src="../_js/nv.d3.min.js?v=10.1.16" type="text/javascript"></script>
+  <script type="text/javascript">
+$(document).ready(function() {
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#classCoverageDistribution svg')
+      .datum(getCoverageDistributionData([10,0,0,0,0,0,1,0,0,0,0,0], "Class Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#methodCoverageDistribution svg')
+      .datum(getCoverageDistributionData([190,0,0,0,0,0,1,1,0,1,1,5], "Method Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getCoverageDistributionData(data, label) {
+    var labels = [
+      '0%',
+      '0-10%',
+      '10-20%',
+      '20-30%',
+      '30-40%',
+      '40-50%',
+      '50-60%',
+      '60-70%',
+      '70-80%',
+      '80-90%',
+      '90-100%',
+      '100%'
+    ];
+    var values = [];
+    $.each(labels, function(key) {
+      values.push({x: labels[key], y: data[key]});
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Cyclomatic Complexity');
+
+    d3.select('#classComplexity svg')
+      .datum(getComplexityData([[0,82,"<a href=\"ApacheRequest.php.html#12\">Gemvc\\Http\\ApacheRequest<\/a>"],[0,60,"<a href=\"ApiCall.php.html#19\">Gemvc\\Http\\ApiCall<\/a>"],[53.73831775700935,70,"<a href=\"AsyncApiCall.php.html#176\">Gemvc\\Http\\AsyncApiCall<\/a>"],[0,6,"<a href=\"HtmlResponse.php.html#5\">Gemvc\\Http\\HtmlResponse<\/a>"],[0,42,"<a href=\"JWTToken.php.html#14\">Gemvc\\Http\\JWTToken<\/a>"],[0,43,"<a href=\"JsonResponse.php.html#8\">Gemvc\\Http\\JsonResponse<\/a>"],[0,15,"<a href=\"NoCors.php.html#7\">Gemvc\\Http\\NoCors<\/a>"],[0,170,"<a href=\"Request.php.html#14\">Gemvc\\Http\\Request<\/a>"],[0,29,"<a href=\"Response.php.html#7\">Gemvc\\Http\\Response<\/a>"],[0,78,"<a href=\"SwooleRequest.php.html#12\">Gemvc\\Http\\SwooleRequest<\/a>"],[0,116,"<a href=\"SwooleWebSocketHandler.php.html#37\">Gemvc\\Http\\SwooleWebSocketHandler<\/a>"]], 'Class Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Method Complexity');
+
+    d3.select('#methodComplexity svg')
+      .datum(getComplexityData([[0,5,"<a href=\"ApacheRequest.php.html#16\">Gemvc\\Http\\ApacheRequest::__construct<\/a>"],[0,6,"<a href=\"ApacheRequest.php.html#49\">Gemvc\\Http\\ApacheRequest::sanitizeAllServerHttpRequestHeaders<\/a>"],[0,12,"<a href=\"ApacheRequest.php.html#66\">Gemvc\\Http\\ApacheRequest::sanitizeAllHTTPPostRequest<\/a>"],[0,7,"<a href=\"ApacheRequest.php.html#100\">Gemvc\\Http\\ApacheRequest::sanitizeAllHTTPPatchRequest<\/a>"],[0,6,"<a href=\"ApacheRequest.php.html#132\">Gemvc\\Http\\ApacheRequest::sanitizeAllHTTPGetRequest<\/a>"],[0,8,"<a href=\"ApacheRequest.php.html#152\">Gemvc\\Http\\ApacheRequest::sanitizeAllHTTPPutRequest<\/a>"],[0,3,"<a href=\"ApacheRequest.php.html#186\">Gemvc\\Http\\ApacheRequest::sanitizeQueryString<\/a>"],[0,4,"<a href=\"ApacheRequest.php.html#194\">Gemvc\\Http\\ApacheRequest::sanitizeRequestURI<\/a>"],[0,2,"<a href=\"ApacheRequest.php.html#210\">Gemvc\\Http\\ApacheRequest::sanitizeInput<\/a>"],[0,3,"<a href=\"ApacheRequest.php.html#218\">Gemvc\\Http\\ApacheRequest::getUserAgent<\/a>"],[0,3,"<a href=\"ApacheRequest.php.html#226\">Gemvc\\Http\\ApacheRequest::getRemoteAddress<\/a>"],[0,4,"<a href=\"ApacheRequest.php.html#239\">Gemvc\\Http\\ApacheRequest::getRequestMethod<\/a>"],[0,5,"<a href=\"ApacheRequest.php.html#254\">Gemvc\\Http\\ApacheRequest::getAuthHeader<\/a>"],[0,14,"<a href=\"ApacheRequest.php.html#271\">Gemvc\\Http\\ApacheRequest::setHeaders<\/a>"],[0,1,"<a href=\"ApiCall.php.html#144\">Gemvc\\Http\\ApiCall::__construct<\/a>"],[0,1,"<a href=\"ApiCall.php.html#162\">Gemvc\\Http\\ApiCall::setTimeouts<\/a>"],[0,1,"<a href=\"ApiCall.php.html#173\">Gemvc\\Http\\ApiCall::setSsl<\/a>"],[0,2,"<a href=\"ApiCall.php.html#188\">Gemvc\\Http\\ApiCall::setRetries<\/a>"],[0,1,"<a href=\"ApiCall.php.html#201\">Gemvc\\Http\\ApiCall::retryOnNetworkError<\/a>"],[0,1,"<a href=\"ApiCall.php.html#213\">Gemvc\\Http\\ApiCall::postForm<\/a>"],[0,1,"<a href=\"ApiCall.php.html#230\">Gemvc\\Http\\ApiCall::postMultipart<\/a>"],[0,1,"<a href=\"ApiCall.php.html#242\">Gemvc\\Http\\ApiCall::postRaw<\/a>"],[0,2,"<a href=\"ApiCall.php.html#259\">Gemvc\\Http\\ApiCall::get<\/a>"],[0,1,"<a href=\"ApiCall.php.html#279\">Gemvc\\Http\\ApiCall::post<\/a>"],[0,1,"<a href=\"ApiCall.php.html#294\">Gemvc\\Http\\ApiCall::put<\/a>"],[0,14,"<a href=\"ApiCall.php.html#309\">Gemvc\\Http\\ApiCall::call<\/a>"],[0,5,"<a href=\"ApiCall.php.html#386\">Gemvc\\Http\\ApiCall::setMethod<\/a>"],[0,2,"<a href=\"ApiCall.php.html#402\">Gemvc\\Http\\ApiCall::setHeaders<\/a>"],[0,2,"<a href=\"ApiCall.php.html#417\">Gemvc\\Http\\ApiCall::setAuthorization<\/a>"],[0,17,"<a href=\"ApiCall.php.html#435\">Gemvc\\Http\\ApiCall::setData<\/a>"],[0,7,"<a href=\"ApiCall.php.html#473\">Gemvc\\Http\\ApiCall::setFiles<\/a>"],[100,1,"<a href=\"AsyncApiCall.php.html#251\">Gemvc\\Http\\AsyncApiCall::__construct<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#261\">Gemvc\\Http\\AsyncApiCall::setMaxConcurrency<\/a>"],[100,1,"<a href=\"AsyncApiCall.php.html#270\">Gemvc\\Http\\AsyncApiCall::setTimeouts<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#280\">Gemvc\\Http\\AsyncApiCall::setSsl<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#295\">Gemvc\\Http\\AsyncApiCall::setRetries<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#305\">Gemvc\\Http\\AsyncApiCall::retryOnNetworkError<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#315\">Gemvc\\Http\\AsyncApiCall::setUserAgent<\/a>"],[0,2,"<a href=\"AsyncApiCall.php.html#332\">Gemvc\\Http\\AsyncApiCall::addGet<\/a>"],[100,1,"<a href=\"AsyncApiCall.php.html#359\">Gemvc\\Http\\AsyncApiCall::addPost<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#382\">Gemvc\\Http\\AsyncApiCall::addPut<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#405\">Gemvc\\Http\\AsyncApiCall::addPostForm<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#430\">Gemvc\\Http\\AsyncApiCall::addPostMultipart<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#454\">Gemvc\\Http\\AsyncApiCall::addPostRaw<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#480\">Gemvc\\Http\\AsyncApiCall::addRequest<\/a>"],[100,1,"<a href=\"AsyncApiCall.php.html#501\">Gemvc\\Http\\AsyncApiCall::onResponse<\/a>"],[97.82608695652173,12,"<a href=\"AsyncApiCall.php.html#514\">Gemvc\\Http\\AsyncApiCall::executeAll<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#598\">Gemvc\\Http\\AsyncApiCall::waitForAll<\/a>"],[64.70588235294117,5,"<a href=\"AsyncApiCall.php.html#614\">Gemvc\\Http\\AsyncApiCall::fireAndForget<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#660\">Gemvc\\Http\\AsyncApiCall::executeInBackground<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#672\">Gemvc\\Http\\AsyncApiCall::clearQueue<\/a>"],[0,1,"<a href=\"AsyncApiCall.php.html#682\">Gemvc\\Http\\AsyncApiCall::getQueueSize<\/a>"],[81.81818181818183,8,"<a href=\"AsyncApiCall.php.html#695\">Gemvc\\Http\\AsyncApiCall::createCurlHandle<\/a>"],[50,19,"<a href=\"AsyncApiCall.php.html#742\">Gemvc\\Http\\AsyncApiCall::setMethodAndData<\/a>"],[100,6,"<a href=\"AsyncApiCall.php.html#787\">Gemvc\\Http\\AsyncApiCall::processResponse<\/a>"],[0,1,"<a href=\"HtmlResponse.php.html#15\">Gemvc\\Http\\HtmlResponse::__construct<\/a>"],[0,2,"<a href=\"HtmlResponse.php.html#27\">Gemvc\\Http\\HtmlResponse::showSwoole<\/a>"],[0,2,"<a href=\"HtmlResponse.php.html#39\">Gemvc\\Http\\HtmlResponse::show<\/a>"],[0,1,"<a href=\"HtmlResponse.php.html#56\">Gemvc\\Http\\HtmlResponse::create<\/a>"],[0,2,"<a href=\"JWTToken.php.html#35\">Gemvc\\Http\\JWTToken::__construct<\/a>"],[0,1,"<a href=\"JWTToken.php.html#56\">Gemvc\\Http\\JWTToken::setToken<\/a>"],[0,2,"<a href=\"JWTToken.php.html#61\">Gemvc\\Http\\JWTToken::createAccessToken<\/a>"],[0,2,"<a href=\"JWTToken.php.html#68\">Gemvc\\Http\\JWTToken::createRefreshToken<\/a>"],[0,2,"<a href=\"JWTToken.php.html#75\">Gemvc\\Http\\JWTToken::createLoginToken<\/a>"],[0,3,"<a href=\"JWTToken.php.html#87\">Gemvc\\Http\\JWTToken::create<\/a>"],[0,13,"<a href=\"JWTToken.php.html#116\">Gemvc\\Http\\JWTToken::verify<\/a>"],[0,3,"<a href=\"JWTToken.php.html#170\">Gemvc\\Http\\JWTToken::renew<\/a>"],[0,5,"<a href=\"JWTToken.php.html#185\">Gemvc\\Http\\JWTToken::GetType<\/a>"],[0,2,"<a href=\"JWTToken.php.html#214\">Gemvc\\Http\\JWTToken::isJWT<\/a>"],[0,5,"<a href=\"JWTToken.php.html#223\">Gemvc\\Http\\JWTToken::extractToken<\/a>"],[0,2,"<a href=\"JWTToken.php.html#246\">Gemvc\\Http\\JWTToken::bearerTokenPurify<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#17\">Gemvc\\Http\\JsonResponse::__construct<\/a>"],[0,2,"<a href=\"JsonResponse.php.html#22\">Gemvc\\Http\\JsonResponse::create<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#42\">Gemvc\\Http\\JsonResponse::success<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#47\">Gemvc\\Http\\JsonResponse::updated<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#52\">Gemvc\\Http\\JsonResponse::created<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#57\">Gemvc\\Http\\JsonResponse::successButNoContentToShow<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#62\">Gemvc\\Http\\JsonResponse::deleted<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#66\">Gemvc\\Http\\JsonResponse::unauthorized<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#70\">Gemvc\\Http\\JsonResponse::forbidden<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#74\">Gemvc\\Http\\JsonResponse::notFound<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#79\">Gemvc\\Http\\JsonResponse::internalError<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#84\">Gemvc\\Http\\JsonResponse::unknownError<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#89\">Gemvc\\Http\\JsonResponse::notAcceptable<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#94\">Gemvc\\Http\\JsonResponse::conflict<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#99\">Gemvc\\Http\\JsonResponse::unsupportedMediaType<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#104\">Gemvc\\Http\\JsonResponse::unprocessableEntity<\/a>"],[0,1,"<a href=\"JsonResponse.php.html#109\">Gemvc\\Http\\JsonResponse::badRequest<\/a>"],[0,4,"<a href=\"JsonResponse.php.html#113\">Gemvc\\Http\\JsonResponse::show<\/a>"],[0,2,"<a href=\"JsonResponse.php.html#138\">Gemvc\\Http\\JsonResponse::payloadNeedItems<\/a>"],[0,16,"<a href=\"JsonResponse.php.html#148\">Gemvc\\Http\\JsonResponse::setHttpMessage<\/a>"],[0,3,"<a href=\"JsonResponse.php.html#185\">Gemvc\\Http\\JsonResponse::showSwoole<\/a>"],[0,1,"<a href=\"NoCors.php.html#9\">Gemvc\\Http\\NoCors::__construct<\/a>"],[0,7,"<a href=\"NoCors.php.html#16\">Gemvc\\Http\\NoCors::apache<\/a>"],[0,7,"<a href=\"NoCors.php.html#61\">Gemvc\\Http\\NoCors::swoole<\/a>"],[0,1,"<a href=\"Request.php.html#96\">Gemvc\\Http\\Request::__construct<\/a>"],[0,2,"<a href=\"Request.php.html#123\">Gemvc\\Http\\Request::returnResponse<\/a>"],[0,5,"<a href=\"Request.php.html#138\">Gemvc\\Http\\Request::auth<\/a>"],[0,4,"<a href=\"Request.php.html#158\">Gemvc\\Http\\Request::userRole<\/a>"],[0,3,"<a href=\"Request.php.html#178\">Gemvc\\Http\\Request::authenticate<\/a>"],[0,5,"<a href=\"Request.php.html#207\">Gemvc\\Http\\Request::authorize<\/a>"],[0,9,"<a href=\"Request.php.html#231\">Gemvc\\Http\\Request::filterable<\/a>"],[0,9,"<a href=\"Request.php.html#273\">Gemvc\\Http\\Request::findable<\/a>"],[0,11,"<a href=\"Request.php.html#311\">Gemvc\\Http\\Request::sortable<\/a>"],[0,4,"<a href=\"Request.php.html#348\">Gemvc\\Http\\Request::setPageNumber<\/a>"],[0,4,"<a href=\"Request.php.html#369\">Gemvc\\Http\\Request::setPerPage<\/a>"],[0,1,"<a href=\"Request.php.html#389\">Gemvc\\Http\\Request::getPageNumber<\/a>"],[0,1,"<a href=\"Request.php.html#394\">Gemvc\\Http\\Request::getPerPage<\/a>"],[0,1,"<a href=\"Request.php.html#405\">Gemvc\\Http\\Request::getFilterable<\/a>"],[0,1,"<a href=\"Request.php.html#414\">Gemvc\\Http\\Request::getFindable<\/a>"],[0,1,"<a href=\"Request.php.html#424\">Gemvc\\Http\\Request::getSortable<\/a>"],[0,1,"<a href=\"Request.php.html#433\">Gemvc\\Http\\Request::getSortableAsc<\/a>"],[0,1,"<a href=\"Request.php.html#439\">Gemvc\\Http\\Request::__get<\/a>"],[0,1,"<a href=\"Request.php.html#444\">Gemvc\\Http\\Request::getJwtToken<\/a>"],[0,2,"<a href=\"Request.php.html#449\">Gemvc\\Http\\Request::setJwtToken<\/a>"],[0,5,"<a href=\"Request.php.html#462\">Gemvc\\Http\\Request::userId<\/a>"],[0,1,"<a href=\"Request.php.html#483\">Gemvc\\Http\\Request::getError<\/a>"],[0,1,"<a href=\"Request.php.html#488\">Gemvc\\Http\\Request::getId<\/a>"],[0,1,"<a href=\"Request.php.html#492\">Gemvc\\Http\\Request::getTime<\/a>"],[0,1,"<a href=\"Request.php.html#497\">Gemvc\\Http\\Request::getStartExecutionTime<\/a>"],[0,1,"<a href=\"Request.php.html#507\">Gemvc\\Http\\Request::getMethod<\/a>"],[0,1,"<a href=\"Request.php.html#517\">Gemvc\\Http\\Request::getUri<\/a>"],[0,2,"<a href=\"Request.php.html#528\">Gemvc\\Http\\Request::getHeader<\/a>"],[0,4,"<a href=\"Request.php.html#538\">Gemvc\\Http\\Request::intValuePost<\/a>"],[0,4,"<a href=\"Request.php.html#546\">Gemvc\\Http\\Request::floatValuePost<\/a>"],[0,4,"<a href=\"Request.php.html#554\">Gemvc\\Http\\Request::intValueGet<\/a>"],[0,4,"<a href=\"Request.php.html#562\">Gemvc\\Http\\Request::floatValueGet<\/a>"],[0,1,"<a href=\"Request.php.html#577\">Gemvc\\Http\\Request::definePostSchema<\/a>"],[0,1,"<a href=\"Request.php.html#587\">Gemvc\\Http\\Request::defineGetSchema<\/a>"],[0,1,"<a href=\"Request.php.html#599\">Gemvc\\Http\\Request::definePutSchema<\/a>"],[0,1,"<a href=\"Request.php.html#611\">Gemvc\\Http\\Request::definePatchSchema<\/a>"],[0,4,"<a href=\"Request.php.html#616\">Gemvc\\Http\\Request::setPostToObject<\/a>"],[0,10,"<a href=\"Request.php.html#641\">Gemvc\\Http\\Request::validateStringPosts<\/a>"],[0,3,"<a href=\"Request.php.html#687\">Gemvc\\Http\\Request::forwardToRemoteApi<\/a>"],[0,4,"<a href=\"Request.php.html#713\">Gemvc\\Http\\Request::forwardPost<\/a>"],[0,10,"<a href=\"Request.php.html#741\">Gemvc\\Http\\Request::mapPostToObject<\/a>"],[0,11,"<a href=\"Request.php.html#796\">Gemvc\\Http\\Request::mapPutToObject<\/a>"],[0,4,"<a href=\"Request.php.html#846\">Gemvc\\Http\\Request::_mapArrayToObject<\/a>"],[0,4,"<a href=\"Request.php.html#862\">Gemvc\\Http\\Request::mapPost<\/a>"],[0,1,"<a href=\"Request.php.html#888\">Gemvc\\Http\\Request::setErrorResponse<\/a>"],[0,19,"<a href=\"Request.php.html#909\">Gemvc\\Http\\Request::defineSchema<\/a>"],[0,1,"<a href=\"Response.php.html#9\">Gemvc\\Http\\Response::success<\/a>"],[0,2,"<a href=\"Response.php.html#13\">Gemvc\\Http\\Response::updated<\/a>"],[0,2,"<a href=\"Response.php.html#19\">Gemvc\\Http\\Response::created<\/a>"],[0,2,"<a href=\"Response.php.html#25\">Gemvc\\Http\\Response::successButNoContentToShow<\/a>"],[0,2,"<a href=\"Response.php.html#31\">Gemvc\\Http\\Response::deleted<\/a>"],[0,2,"<a href=\"Response.php.html#36\">Gemvc\\Http\\Response::unauthorized<\/a>"],[0,2,"<a href=\"Response.php.html#41\">Gemvc\\Http\\Response::forbidden<\/a>"],[0,2,"<a href=\"Response.php.html#46\">Gemvc\\Http\\Response::notFound<\/a>"],[0,2,"<a href=\"Response.php.html#52\">Gemvc\\Http\\Response::internalError<\/a>"],[0,2,"<a href=\"Response.php.html#58\">Gemvc\\Http\\Response::unknownError<\/a>"],[0,2,"<a href=\"Response.php.html#64\">Gemvc\\Http\\Response::notAcceptable<\/a>"],[0,2,"<a href=\"Response.php.html#70\">Gemvc\\Http\\Response::conflict<\/a>"],[0,2,"<a href=\"Response.php.html#76\">Gemvc\\Http\\Response::unsupportedMediaType<\/a>"],[0,2,"<a href=\"Response.php.html#82\">Gemvc\\Http\\Response::unprocessableEntity<\/a>"],[0,2,"<a href=\"Response.php.html#88\">Gemvc\\Http\\Response::badRequest<\/a>"],[0,6,"<a href=\"SwooleRequest.php.html#22\">Gemvc\\Http\\SwooleRequest::__construct<\/a>"],[0,1,"<a href=\"SwooleRequest.php.html#62\">Gemvc\\Http\\SwooleRequest::getOriginalSwooleRequest<\/a>"],[0,4,"<a href=\"SwooleRequest.php.html#70\">Gemvc\\Http\\SwooleRequest::setData<\/a>"],[0,5,"<a href=\"SwooleRequest.php.html#95\">Gemvc\\Http\\SwooleRequest::setPost<\/a>"],[0,7,"<a href=\"SwooleRequest.php.html#119\">Gemvc\\Http\\SwooleRequest::setHeaders<\/a>"],[0,2,"<a href=\"SwooleRequest.php.html#137\">Gemvc\\Http\\SwooleRequest::setAuthorizationToken<\/a>"],[0,1,"<a href=\"SwooleRequest.php.html#149\">Gemvc\\Http\\SwooleRequest::setFiles<\/a>"],[0,12,"<a href=\"SwooleRequest.php.html#163\">Gemvc\\Http\\SwooleRequest::normalizeFilesArray<\/a>"],[0,1,"<a href=\"SwooleRequest.php.html#202\">Gemvc\\Http\\SwooleRequest::setGet<\/a>"],[0,6,"<a href=\"SwooleRequest.php.html#212\">Gemvc\\Http\\SwooleRequest::setCookies<\/a>"],[0,17,"<a href=\"SwooleRequest.php.html#243\">Gemvc\\Http\\SwooleRequest::filterDangerousCookies<\/a>"],[0,3,"<a href=\"SwooleRequest.php.html#422\">Gemvc\\Http\\SwooleRequest::setPut<\/a>"],[0,3,"<a href=\"SwooleRequest.php.html#445\">Gemvc\\Http\\SwooleRequest::setPatch<\/a>"],[0,2,"<a href=\"SwooleRequest.php.html#469\">Gemvc\\Http\\SwooleRequest::parseAuthorizationToken<\/a>"],[0,2,"<a href=\"SwooleRequest.php.html#483\">Gemvc\\Http\\SwooleRequest::sanitizeInput<\/a>"],[0,4,"<a href=\"SwooleRequest.php.html#498\">Gemvc\\Http\\SwooleRequest::sanitizeData<\/a>"],[0,2,"<a href=\"SwooleRequest.php.html#521\">Gemvc\\Http\\SwooleRequest::sanitizeRequestURI<\/a>"],[0,7,"<a href=\"SwooleWebSocketHandler.php.html#62\">Gemvc\\Http\\SwooleWebSocketHandler::__construct<\/a>"],[0,7,"<a href=\"SwooleWebSocketHandler.php.html#87\">Gemvc\\Http\\SwooleWebSocketHandler::initRedis<\/a>"],[0,1,"<a href=\"SwooleWebSocketHandler.php.html#124\">Gemvc\\Http\\SwooleWebSocketHandler::registerHeartbeat<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#146\">Gemvc\\Http\\SwooleWebSocketHandler::onOpen<\/a>"],[0,12,"<a href=\"SwooleWebSocketHandler.php.html#201\">Gemvc\\Http\\SwooleWebSocketHandler::onMessage<\/a>"],[0,5,"<a href=\"SwooleWebSocketHandler.php.html#273\">Gemvc\\Http\\SwooleWebSocketHandler::handleSubscribe<\/a>"],[0,6,"<a href=\"SwooleWebSocketHandler.php.html#316\">Gemvc\\Http\\SwooleWebSocketHandler::handleUnsubscribe<\/a>"],[0,9,"<a href=\"SwooleWebSocketHandler.php.html#369\">Gemvc\\Http\\SwooleWebSocketHandler::handleMessage<\/a>"],[0,5,"<a href=\"SwooleWebSocketHandler.php.html#433\">Gemvc\\Http\\SwooleWebSocketHandler::onClose<\/a>"],[0,6,"<a href=\"SwooleWebSocketHandler.php.html#463\">Gemvc\\Http\\SwooleWebSocketHandler::performHeartbeat<\/a>"],[0,7,"<a href=\"SwooleWebSocketHandler.php.html#495\">Gemvc\\Http\\SwooleWebSocketHandler::cleanupExpiredConnections<\/a>"],[0,5,"<a href=\"SwooleWebSocketHandler.php.html#527\">Gemvc\\Http\\SwooleWebSocketHandler::checkRateLimit<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#565\">Gemvc\\Http\\SwooleWebSocketHandler::updateLastActivity<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#579\">Gemvc\\Http\\SwooleWebSocketHandler::isSubscribedToChannel<\/a>"],[0,2,"<a href=\"SwooleWebSocketHandler.php.html#595\">Gemvc\\Http\\SwooleWebSocketHandler::getChannelRecipients<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#614\">Gemvc\\Http\\SwooleWebSocketHandler::storeConnectionInRedis<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#641\">Gemvc\\Http\\SwooleWebSocketHandler::getConnectionFromRedis<\/a>"],[0,4,"<a href=\"SwooleWebSocketHandler.php.html#669\">Gemvc\\Http\\SwooleWebSocketHandler::getAllConnectionsFromRedis<\/a>"],[0,5,"<a href=\"SwooleWebSocketHandler.php.html#692\">Gemvc\\Http\\SwooleWebSocketHandler::removeConnectionFromRedis<\/a>"],[0,4,"<a href=\"SwooleWebSocketHandler.php.html#718\">Gemvc\\Http\\SwooleWebSocketHandler::subscribeChannelRedis<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#741\">Gemvc\\Http\\SwooleWebSocketHandler::unsubscribeChannelRedis<\/a>"],[0,2,"<a href=\"SwooleWebSocketHandler.php.html#764\">Gemvc\\Http\\SwooleWebSocketHandler::isSubscribedToChannelRedis<\/a>"],[0,2,"<a href=\"SwooleWebSocketHandler.php.html#780\">Gemvc\\Http\\SwooleWebSocketHandler::getChannelRecipientsRedis<\/a>"],[0,2,"<a href=\"SwooleWebSocketHandler.php.html#796\">Gemvc\\Http\\SwooleWebSocketHandler::updateLastActivityRedis<\/a>"],[0,4,"<a href=\"SwooleWebSocketHandler.php.html#812\">Gemvc\\Http\\SwooleWebSocketHandler::checkRateLimitRedis<\/a>"],[0,3,"<a href=\"SwooleWebSocketHandler.php.html#853\">Gemvc\\Http\\SwooleWebSocketHandler::checkServerCompatibility<\/a>"]], 'Method Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getComplexityData(data, label) {
+    var values = [];
+    $.each(data, function(key) {
+      var value = Math.round(data[key][0]*100) / 100;
+      values.push({
+        x: value,
+        y: data[key][1],
+        class: data[key][2],
+        size: 0.05,
+        shape: 'diamond'
+      });
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+});
+  </script>
+ </body>
+</html>

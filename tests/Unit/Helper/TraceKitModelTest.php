@@ -27,6 +27,7 @@ class TraceKitModelTest extends TestCase
             'TRACEKIT_TRACE_RESPONSE' => $_ENV['TRACEKIT_TRACE_RESPONSE'] ?? null,
             'TRACEKIT_TRACE_DB_QUERY' => $_ENV['TRACEKIT_TRACE_DB_QUERY'] ?? null,
             'TRACEKIT_TRACE_REQUEST_BODY' => $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] ?? null,
+            'TRACEKIT_TRACE_RESPONSE_BODY' => $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] ?? null,
         ];
         
         // Clear environment
@@ -38,6 +39,7 @@ class TraceKitModelTest extends TestCase
         unset($_ENV['TRACEKIT_TRACE_RESPONSE']);
         unset($_ENV['TRACEKIT_TRACE_DB_QUERY']);
         unset($_ENV['TRACEKIT_TRACE_REQUEST_BODY']);
+        unset($_ENV['TRACEKIT_TRACE_RESPONSE_BODY']);
         
         // Clear static instance
         TraceKitModel::clearCurrentInstance();
@@ -149,6 +151,330 @@ class TraceKitModelTest extends TestCase
         $model = new TraceKitModel(['api_key' => 'test-key']);
         
         $this->assertSame($model, TraceKitModel::getCurrentInstance());
+    }
+    
+    // ==========================================
+    // Configuration Loading Methods Tests (Private)
+    // ==========================================
+    
+    public function testLoadApiKeyFromConfig(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadApiKey');
+        
+        $result = $method->invoke($model, ['api_key' => 'test-key']);
+        $this->assertEquals('test-key', $result);
+    }
+    
+    public function testLoadApiKeyFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_API_KEY'] = 'env-key';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadApiKey');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('env-key', $result);
+    }
+    
+    public function testLoadApiKeyReturnsEmptyWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadApiKey');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('', $result);
+    }
+    
+    public function testLoadApiKeyPrefersConfigOverEnv(): void
+    {
+        $_ENV['TRACEKIT_API_KEY'] = 'env-key';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadApiKey');
+        
+        $result = $method->invoke($model, ['api_key' => 'config-key']);
+        $this->assertEquals('config-key', $result);
+    }
+    
+    public function testLoadServiceNameFromConfig(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadServiceName');
+        
+        $result = $method->invoke($model, ['service_name' => 'custom-service']);
+        $this->assertEquals('custom-service', $result);
+    }
+    
+    public function testLoadServiceNameFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_SERVICE_NAME'] = 'env-service';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadServiceName');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('env-service', $result);
+    }
+    
+    public function testLoadServiceNameReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadServiceName');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('gemvc-app', $result);
+    }
+    
+    public function testLoadEndpointFromConfig(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadEndpoint');
+        
+        $result = $method->invoke($model, ['endpoint' => 'https://custom.tracekit.dev/v1/traces']);
+        $this->assertEquals('https://custom.tracekit.dev/v1/traces', $result);
+    }
+    
+    public function testLoadEndpointFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_ENDPOINT'] = 'https://env.tracekit.dev/v1/traces';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadEndpoint');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('https://env.tracekit.dev/v1/traces', $result);
+    }
+    
+    public function testLoadEndpointReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'loadEndpoint');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals('https://app.tracekit.dev/v1/traces', $result);
+    }
+    
+    public function testParseEnabledFlagFromConfigBoolean(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseEnabledFlag');
+        
+        $this->assertTrue($method->invoke($model, ['enabled' => true]));
+        $this->assertFalse($method->invoke($model, ['enabled' => false]));
+    }
+    
+    public function testParseEnabledFlagFromConfigString(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseEnabledFlag');
+        
+        $this->assertTrue($method->invoke($model, ['enabled' => 'true']));
+        $this->assertTrue($method->invoke($model, ['enabled' => '1']));
+        $this->assertFalse($method->invoke($model, ['enabled' => 'false']));
+        $this->assertFalse($method->invoke($model, ['enabled' => '0']));
+        $this->assertTrue($method->invoke($model, ['enabled' => 'yes'])); // Any other string is true
+    }
+    
+    public function testParseEnabledFlagFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_ENABLED'] = 'false';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseEnabledFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertFalse($result);
+    }
+    
+    public function testParseEnabledFlagReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseEnabledFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result); // Default is true
+    }
+    
+    public function testParseSampleRateFromConfig(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseSampleRate');
+        
+        $this->assertEquals(0.5, $method->invoke($model, ['sample_rate' => 0.5]));
+        $this->assertEquals(0.75, $method->invoke($model, ['sample_rate' => '0.75']));
+    }
+    
+    public function testParseSampleRateClampsToValidRange(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseSampleRate');
+        
+        $this->assertEquals(1.0, $method->invoke($model, ['sample_rate' => 2.0]));
+        $this->assertEquals(0.0, $method->invoke($model, ['sample_rate' => -1.0]));
+        $this->assertEquals(0.5, $method->invoke($model, ['sample_rate' => 0.5]));
+    }
+    
+    public function testParseSampleRateFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_SAMPLE_RATE'] = '0.25';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseSampleRate');
+        
+        $result = $method->invoke($model, []);
+        $this->assertEquals(0.25, $result);
+    }
+    
+    public function testParseSampleRateReturnsDefaultWhenInvalid(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseSampleRate');
+        
+        $this->assertEquals(1.0, $method->invoke($model, ['sample_rate' => 'invalid']));
+        $this->assertEquals(1.0, $method->invoke($model, ['sample_rate' => null]));
+    }
+    
+    public function testParseTraceResponseFlagFromConfigBoolean(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceResponseFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_response' => true]));
+        $this->assertFalse($method->invoke($model, ['trace_response' => false]));
+    }
+    
+    public function testParseTraceResponseFlagFromConfigString(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceResponseFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_response' => 'true']));
+        $this->assertTrue($method->invoke($model, ['trace_response' => '1']));
+        $this->assertFalse($method->invoke($model, ['trace_response' => 'false']));
+        $this->assertFalse($method->invoke($model, ['trace_response' => '0']));
+    }
+    
+    public function testParseTraceResponseFlagFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_TRACE_RESPONSE'] = 'true';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceResponseFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result);
+    }
+    
+    public function testParseTraceResponseFlagReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceResponseFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertFalse($result); // Default is false
+    }
+    
+    public function testParseTraceDbQueryFlagFromConfigBoolean(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceDbQueryFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_db_query' => true]));
+        $this->assertFalse($method->invoke($model, ['trace_db_query' => false]));
+    }
+    
+    public function testParseTraceDbQueryFlagFromConfigString(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceDbQueryFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_db_query' => 'true']));
+        $this->assertTrue($method->invoke($model, ['trace_db_query' => '1']));
+        $this->assertFalse($method->invoke($model, ['trace_db_query' => 'false']));
+        $this->assertFalse($method->invoke($model, ['trace_db_query' => '0']));
+    }
+    
+    public function testParseTraceDbQueryFlagFromEnvironment(): void
+    {
+        $_ENV['TRACEKIT_TRACE_DB_QUERY'] = '1';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceDbQueryFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result);
+    }
+    
+    public function testParseTraceDbQueryFlagReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceDbQueryFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertFalse($result); // Default is false
+    }
+    
+    public function testParseTraceRequestBodyFlagFromConfigBoolean(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_request_body' => true]));
+        $this->assertFalse($method->invoke($model, ['trace_request_body' => false]));
+    }
+    
+    public function testParseTraceRequestBodyFlagFromConfigString(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $this->assertTrue($method->invoke($model, ['trace_request_body' => 'true']));
+        $this->assertTrue($method->invoke($model, ['trace_request_body' => '1']));
+        $this->assertFalse($method->invoke($model, ['trace_request_body' => 'false']));
+        $this->assertFalse($method->invoke($model, ['trace_request_body' => '0']));
+    }
+    
+    public function testParseTraceRequestBodyFlagFromEnvironmentTraceResponseBody(): void
+    {
+        $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] = 'true';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result);
+    }
+    
+    public function testParseTraceRequestBodyFlagFromEnvironmentTraceRequestBody(): void
+    {
+        $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] = '1';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result);
+    }
+    
+    public function testParseTraceRequestBodyFlagPrefersTraceResponseBodyOverTraceRequestBody(): void
+    {
+        $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] = 'true';
+        $_ENV['TRACEKIT_TRACE_REQUEST_BODY'] = 'false';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertTrue($result); // Should use TRACEKIT_TRACE_RESPONSE_BODY
+    }
+    
+    public function testParseTraceRequestBodyFlagPrefersConfigOverEnvironment(): void
+    {
+        $_ENV['TRACEKIT_TRACE_RESPONSE_BODY'] = 'false';
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $result = $method->invoke($model, ['trace_request_body' => 'true']);
+        $this->assertTrue($result); // Config should override env
+    }
+    
+    public function testParseTraceRequestBodyFlagReturnsDefaultWhenNotFound(): void
+    {
+        $model = new TraceKitModel();
+        $method = $this->getPrivateMethod($model, 'parseTraceRequestBodyFlag');
+        
+        $result = $method->invoke($model, []);
+        $this->assertFalse($result); // Default is false
     }
     
     // ==========================================
@@ -476,6 +802,131 @@ class TraceKitModelTest extends TestCase
         $model->addEvent($span, 'test-event', ['key' => 'value']);
         
         $this->assertTrue(true);
+    }
+    
+    // ==========================================
+    // createEvent() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testCreateEventWithNameOnly(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $event = $method->invoke($model, 'test-event');
+        
+        $this->assertIsArray($event);
+        $this->assertEquals('test-event', $event['name']);
+        $this->assertIsInt($event['time']);
+        $this->assertGreaterThan(0, $event['time']);
+        $this->assertIsArray($event['attributes']);
+        $this->assertEmpty($event['attributes']);
+    }
+    
+    public function testCreateEventWithAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $attributes = [
+            'key1' => 'value1',
+            'key2' => 123,
+            'key3' => true,
+        ];
+        $event = $method->invoke($model, 'test-event', $attributes);
+        
+        $this->assertIsArray($event);
+        $this->assertEquals('test-event', $event['name']);
+        $this->assertIsInt($event['time']);
+        $this->assertIsArray($event['attributes']);
+        $this->assertEquals('value1', $event['attributes']['key1']);
+        $this->assertEquals(123, $event['attributes']['key2']);
+        $this->assertTrue($event['attributes']['key3']);
+    }
+    
+    public function testCreateEventNormalizesAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        // Test with non-scalar values that should be normalized
+        $attributes = [
+            'string' => 'test',
+            'number' => 42,
+            'float' => 3.14,
+            'bool' => true,
+            'array' => ['nested' => 'value'],
+        ];
+        $event = $method->invoke($model, 'test-event', $attributes);
+        
+        $this->assertIsArray($event['attributes']);
+        $this->assertEquals('test', $event['attributes']['string']);
+        $this->assertEquals(42, $event['attributes']['number']);
+        $this->assertEquals(3.14, $event['attributes']['float']);
+        $this->assertTrue($event['attributes']['bool']);
+        $this->assertIsArray($event['attributes']['array']);
+    }
+    
+    public function testCreateEventGeneratesTimestamp(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $event1 = $method->invoke($model, 'event1');
+        usleep(1000); // Sleep 1ms to ensure different timestamp
+        $event2 = $method->invoke($model, 'event2');
+        
+        $this->assertIsInt($event1['time']);
+        $this->assertIsInt($event2['time']);
+        $this->assertGreaterThanOrEqual($event1['time'], $event2['time']);
+    }
+    
+    public function testCreateEventWithEmptyName(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $event = $method->invoke($model, '');
+        
+        $this->assertIsArray($event);
+        $this->assertEquals('', $event['name']);
+        $this->assertIsInt($event['time']);
+        $this->assertIsArray($event['attributes']);
+    }
+    
+    public function testCreateEventWithComplexAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $attributes = [
+            'simple' => 'value',
+            'nested' => ['a' => 1, 'b' => 2],
+            'mixed' => ['string', 123, true],
+        ];
+        $event = $method->invoke($model, 'complex-event', $attributes);
+        
+        $this->assertEquals('complex-event', $event['name']);
+        $this->assertEquals('value', $event['attributes']['simple']);
+        $this->assertIsArray($event['attributes']['nested']);
+        $this->assertIsArray($event['attributes']['mixed']);
+    }
+    
+    public function testCreateEventReturnsCorrectStructure(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'createEvent');
+        
+        $event = $method->invoke($model, 'test', ['attr' => 'value']);
+        
+        // Verify structure matches expected format
+        $this->assertArrayHasKey('name', $event);
+        $this->assertArrayHasKey('time', $event);
+        $this->assertArrayHasKey('attributes', $event);
+        $this->assertCount(3, $event); // Should only have these 3 keys
+        $this->assertIsString($event['name']);
+        $this->assertIsInt($event['time']);
+        $this->assertIsArray($event['attributes']);
     }
     
     // ==========================================
