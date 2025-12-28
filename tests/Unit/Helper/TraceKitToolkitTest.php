@@ -652,5 +652,184 @@ class TraceKitToolkitTest extends TestCase
         
         $this->assertSame($toolkit, $result);
     }
+    
+    // ==========================================
+    // Private Helper Methods Tests
+    // ==========================================
+    
+    /**
+     * Test requireApiKey() returns null when API key is set
+     */
+    public function testRequireApiKeyWithApiKeySet(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('requireApiKey');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit);
+        
+        $this->assertNull($result);
+    }
+    
+    /**
+     * Test requireApiKey() returns unauthorized response when API key is empty
+     */
+    public function testRequireApiKeyWithEmptyApiKey(): void
+    {
+        $toolkit = new TraceKitToolkit('');
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('requireApiKey');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit);
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(401, $result->response_code);
+    }
+    
+    /**
+     * Test createApiCall() with authentication and JSON headers
+     */
+    public function testCreateApiCallWithAuthAndJson(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('createApiCall');
+        $method->setAccessible(true);
+        
+        $apiCall = $method->invoke($toolkit, true, true);
+        
+        $this->assertInstanceOf(\Gemvc\Http\ApiCall::class, $apiCall);
+        $this->assertEquals('test-api-key', $apiCall->header['X-API-Key'] ?? null);
+        $this->assertEquals('application/json', $apiCall->header['Content-Type'] ?? null);
+    }
+    
+    /**
+     * Test createApiCall() without authentication
+     */
+    public function testCreateApiCallWithoutAuth(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('createApiCall');
+        $method->setAccessible(true);
+        
+        $apiCall = $method->invoke($toolkit, false, false);
+        
+        $this->assertInstanceOf(\Gemvc\Http\ApiCall::class, $apiCall);
+        $this->assertArrayNotHasKey('X-API-Key', $apiCall->header);
+        $this->assertArrayNotHasKey('Content-Type', $apiCall->header);
+    }
+    
+    /**
+     * Test createApiCall() with authentication but no JSON header
+     */
+    public function testCreateApiCallWithAuthNoJson(): void
+    {
+        $toolkit = new TraceKitToolkit('test-api-key');
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('createApiCall');
+        $method->setAccessible(true);
+        
+        $apiCall = $method->invoke($toolkit, true, false);
+        
+        $this->assertInstanceOf(\Gemvc\Http\ApiCall::class, $apiCall);
+        $this->assertEquals('test-api-key', $apiCall->header['X-API-Key'] ?? null);
+        $this->assertArrayNotHasKey('Content-Type', $apiCall->header);
+    }
+    
+    /**
+     * Test parseJsonResponse() with valid JSON
+     */
+    public function testParseJsonResponseWithValidJson(): void
+    {
+        $toolkit = new TraceKitToolkit();
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('parseJsonResponse');
+        $method->setAccessible(true);
+        
+        $json = json_encode(['id' => 1, 'name' => 'Test']);
+        $result = $method->invoke($toolkit, $json, 'Test context');
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(200, $result->response_code);
+        $this->assertIsArray($result->data);
+        $this->assertEquals(1, $result->data['id'] ?? null);
+    }
+    
+    /**
+     * Test parseJsonResponse() with invalid JSON
+     */
+    public function testParseJsonResponseWithInvalidJson(): void
+    {
+        $toolkit = new TraceKitToolkit();
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('parseJsonResponse');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit, 'invalid json', 'Test context');
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(500, $result->response_code);
+    }
+    
+    /**
+     * Test parseJsonResponse() with false response
+     */
+    public function testParseJsonResponseWithFalseResponse(): void
+    {
+        $toolkit = new TraceKitToolkit();
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('parseJsonResponse');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit, false, 'Test context');
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(500, $result->response_code);
+    }
+    
+    /**
+     * Test parseJsonResponse() with non-array JSON
+     */
+    public function testParseJsonResponseWithNonArrayJson(): void
+    {
+        $toolkit = new TraceKitToolkit();
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('parseJsonResponse');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit, '"string"', 'Test context');
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(500, $result->response_code);
+    }
+    
+    /**
+     * Test parseJsonResponse() with null JSON
+     */
+    public function testParseJsonResponseWithNullJson(): void
+    {
+        $toolkit = new TraceKitToolkit();
+        
+        $reflection = new \ReflectionClass($toolkit);
+        $method = $reflection->getMethod('parseJsonResponse');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($toolkit, 'null', 'Test context');
+        
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(500, $result->response_code);
+    }
 }
 

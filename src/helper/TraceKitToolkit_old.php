@@ -23,7 +23,7 @@ use Gemvc\Http\ApiCall;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
 
-class TraceKitToolkit
+class TraceKitToolkit_old
 {
     private string $apiKey;
     private string $baseUrl;
