@@ -56,18 +56,13 @@ class ApiService
     /**
      * Initialize TraceKitModel for automatic request tracing
      * 
-     * This is optional - if TraceKitModel class doesn't exist, tracing is silently disabled
+     * TraceKitModel is part of the core library and will always be available.
+     * Tracing is controlled by environment variables (TRACEKIT_ENABLED, TRACEKIT_API_KEY).
      * 
      * @return void
      */
     private function initializeTraceKit(): void
     {
-        // Check if TraceKitModel class exists (optional dependency)
-        if (!class_exists('App\Model\TraceKitModel')) {
-            error_log("TraceKit: TraceKitModel class not found, skipping initialization");
-            return;
-        }
-        
         try {
             $this->tracekit = new TraceKitModel();
             

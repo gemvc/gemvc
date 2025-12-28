@@ -48,11 +48,6 @@ class Controller
      */
     private function initializeTraceKit(): void
     {
-        // Check if TraceKitModel class exists (optional dependency)
-        if (!class_exists('App\Model\TraceKitModel')) {
-            return;
-        }
-        
         try {
             // Get TraceKitModel instance from static registry (set by ApiService)
             // This ensures we use the SAME instance with the SAME traceId and spans array
