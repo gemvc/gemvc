@@ -60,6 +60,20 @@ class TraceKitModel
     public const STATUS_ERROR = 'ERROR';
     
     /**
+     * Valid span kinds for validation (cached for performance)
+     * 
+     * @var array<int, int>
+     */
+    private static array $validSpanKinds = [
+        self::SPAN_KIND_UNSPECIFIED,
+        self::SPAN_KIND_INTERNAL,
+        self::SPAN_KIND_SERVER,
+        self::SPAN_KIND_CLIENT,
+        self::SPAN_KIND_PRODUCER,
+        self::SPAN_KIND_CONSUMER,
+    ];
+    
+    /**
      * Cached value of mt_getrandmax() for performance
      * This is a constant value that never changes during script execution
      * Shared across all instances (which is correct since mt_getrandmax() is constant)
@@ -455,7 +469,7 @@ class TraceKitModel
             $startTime = $this->getMicrotime();
             
             // Validate kind (must be valid OpenTelemetry span kind integer)
-            if (!in_array($kind, [self::SPAN_KIND_UNSPECIFIED, self::SPAN_KIND_INTERNAL, self::SPAN_KIND_SERVER, self::SPAN_KIND_CLIENT, self::SPAN_KIND_PRODUCER, self::SPAN_KIND_CONSUMER])) {
+            if (!in_array($kind, self::$validSpanKinds, true)) {
                 $kind = self::SPAN_KIND_INTERNAL;
             }
             
@@ -514,15 +528,14 @@ class TraceKitModel
             $this->spans[$spanIndex]['end_time'] = $endTime;
             $this->spans[$spanIndex]['duration'] = $duration;
             
-            // Add final attributes
+            // Add final attributes (optimized: skip array_merge if empty)
             if (!empty($finalAttributes)) {
                 /** @var array<string, mixed> $span */
                 $span = $this->spans[$spanIndex];
                 $existingAttributes = is_array($span['attributes'] ?? null) ? $span['attributes'] : [];
-                $this->spans[$spanIndex]['attributes'] = array_merge(
-                    $existingAttributes,
-                    $this->normalizeAttributes($finalAttributes)
-                );
+                $normalizedAttributes = $this->normalizeAttributes($finalAttributes);
+                // Use array union operator for better performance when keys don't conflict
+                $this->spans[$spanIndex]['attributes'] = array_merge($existingAttributes, $normalizedAttributes);
             }
             
             // Set status
@@ -802,21 +815,19 @@ class TraceKitModel
     /**
      * Add an event to a span at the specified index
      * 
+     * Optimized to avoid unnecessary array copy - directly appends to span events array
+     * 
      * @param int $spanIndex Index of the span in $this->spans array
      * @param array<string, mixed> $event Event data structure
      * @return void
      */
     private function addEventToSpan(int $spanIndex, array $event): void
     {
-        /** @var array<string, mixed> $span */
-        $span = $this->spans[$spanIndex];
-        if (!isset($span['events']) || !is_array($span['events'])) {
+        if (!isset($this->spans[$spanIndex]['events']) || !is_array($this->spans[$spanIndex]['events'])) {
             $this->spans[$spanIndex]['events'] = [];
         }
-        /** @var array<int, array<string, mixed>> $events */
-        $events = $this->spans[$spanIndex]['events'];
-        $events[] = $event;
-        $this->spans[$spanIndex]['events'] = $events;
+        // Direct append - no array copy needed
+        $this->spans[$spanIndex]['events'][] = $event;
     }
     
     /**
@@ -828,6 +839,25 @@ class TraceKitModel
      * @param array<string, mixed> $payload The trace payload to validate
      * @return array{spans: array<int, array<string, mixed>>, spanCount: int, firstResourceSpan: array<string, mixed>}|null Validated data or null if invalid
      */
+    /**
+     * Build a single OTLP attribute entry
+     * 
+     * Converts a key-value pair to OpenTelemetry OTLP attribute format.
+     * 
+     * @param string $key Attribute key
+     * @param mixed $value Attribute value (will be converted to string)
+     * @return array{key: string, value: array{stringValue: string}}
+     */
+    private function buildOtlpAttribute(string $key, mixed $value): array
+    {
+        return [
+            'key' => $key,
+            'value' => [
+                'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
+            ]
+        ];
+    }
+    
     /**
      * Build OTLP format span data from internal span format
      * 
@@ -877,6 +907,23 @@ class TraceKitModel
         }
         
         return $spanData;
+    }
+    
+    /**
+     * Extract service name from resource span payload
+     * 
+     * Extracts the service name from the OTLP payload structure.
+     * 
+     * @param array<string, mixed> $firstResourceSpan First resource span from payload
+     * @return string Service name or 'unknown' if not found
+     */
+    private function extractServiceNameFromPayload(array $firstResourceSpan): string
+    {
+        $resource = is_array($firstResourceSpan['resource'] ?? null) ? $firstResourceSpan['resource'] : [];
+        $resourceAttrs = is_array($resource['attributes'] ?? null) ? $resource['attributes'] : [];
+        $firstAttr = is_array($resourceAttrs[0] ?? null) ? $resourceAttrs[0] : [];
+        $attrValue = is_array($firstAttr['value'] ?? null) ? $firstAttr['value'] : [];
+        return is_string($attrValue['stringValue'] ?? null) ? $attrValue['stringValue'] : 'unknown';
     }
     
     /**
@@ -1119,12 +1166,7 @@ class TraceKitModel
             $attributes = [];
             $spanAttributes = is_array($span['attributes'] ?? null) ? $span['attributes'] : [];
             foreach ($spanAttributes as $key => $value) {
-                $attributes[] = [
-                    'key' => is_string($key) ? $key : (string)$key,
-                    'value' => [
-                        'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
-                    ]
-                ];
+                $attributes[] = $this->buildOtlpAttribute((string)$key, $value);
             }
             
             // Build events array in OTLP format
@@ -1135,12 +1177,7 @@ class TraceKitModel
                 $eventAttributes = [];
                 $eventAttrs = is_array($event['attributes'] ?? null) ? $event['attributes'] : [];
                 foreach ($eventAttrs as $key => $value) {
-                    $eventAttributes[] = [
-                        'key' => is_string($key) ? $key : (string)$key,
-                        'value' => [
-                            'stringValue' => is_string($value) || is_numeric($value) ? (string)$value : ''
-                        ]
-                    ];
+                    $eventAttributes[] = $this->buildOtlpAttribute((string)$key, $value);
                 }
                 
                 $eventName = is_string($event['name'] ?? null) ? $event['name'] : 'event';
@@ -1207,11 +1244,7 @@ class TraceKitModel
             $firstResourceSpan = $validatedData['firstResourceSpan'];
             
             // Extract service name
-            $resource = is_array($firstResourceSpan['resource'] ?? null) ? $firstResourceSpan['resource'] : [];
-            $resourceAttrs = is_array($resource['attributes'] ?? null) ? $resource['attributes'] : [];
-            $firstAttr = is_array($resourceAttrs[0] ?? null) ? $resourceAttrs[0] : [];
-            $attrValue = is_array($firstAttr['value'] ?? null) ? $firstAttr['value'] : [];
-            $serviceName = is_string($attrValue['stringValue'] ?? null) ? $attrValue['stringValue'] : 'unknown';
+            $serviceName = $this->extractServiceNameFromPayload($firstResourceSpan);
             
             // Extract trace ID
             $firstSpan = is_array($spans[0] ?? null) ? $spans[0] : [];

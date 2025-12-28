@@ -1701,6 +1701,218 @@ class TraceKitModelTest extends TestCase
         $this->assertEquals($otlpEvents, $result['events']);
     }
     
+    // ==========================================
+    // buildOtlpAttribute() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testBuildOtlpAttributeWithStringValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'test-key', 'test-value');
+        
+        $this->assertEquals('test-key', $result['key']);
+        $this->assertEquals('test-value', $result['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpAttributeWithNumericValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'count', 42);
+        
+        $this->assertEquals('count', $result['key']);
+        $this->assertEquals('42', $result['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpAttributeWithFloatValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'rate', 3.14);
+        
+        $this->assertEquals('rate', $result['key']);
+        $this->assertEquals('3.14', $result['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpAttributeWithNonStringNonNumericValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'test', null);
+        
+        $this->assertEquals('test', $result['key']);
+        $this->assertEquals('', $result['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpAttributeWithArrayValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'test', ['not', 'an', 'array']);
+        
+        $this->assertEquals('test', $result['key']);
+        $this->assertEquals('', $result['value']['stringValue']);
+    }
+    
+    public function testBuildOtlpAttributeWithBooleanValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'buildOtlpAttribute');
+        
+        $result = $method->invoke($model, 'enabled', true);
+        
+        $this->assertEquals('enabled', $result['key']);
+        // Boolean values are not string or numeric, so they become empty string
+        $this->assertEquals('', $result['value']['stringValue']);
+    }
+    
+    // ==========================================
+    // extractServiceNameFromPayload() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testExtractServiceNameFromPayloadWithValidServiceName(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => [
+                    [
+                        'key' => 'service.name',
+                        'value' => [
+                            'stringValue' => 'my-service'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('my-service', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithMissingResource(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('unknown', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithMissingAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => []
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('unknown', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithEmptyAttributes(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => []
+            ]
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('unknown', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithMissingValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => [
+                    [
+                        'key' => 'service.name'
+                        // Missing 'value'
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('unknown', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithNonStringValue(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => [
+                    [
+                        'key' => 'service.name',
+                        'value' => [
+                            'stringValue' => 12345 // Non-string
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('unknown', $result);
+    }
+    
+    public function testExtractServiceNameFromPayloadWithComplexStructure(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'extractServiceNameFromPayload');
+        
+        $firstResourceSpan = [
+            'resource' => [
+                'attributes' => [
+                    [
+                        'key' => 'service.name',
+                        'value' => [
+                            'stringValue' => 'production-service'
+                        ]
+                    ],
+                    [
+                        'key' => 'other.attr',
+                        'value' => ['stringValue' => 'other-value']
+                    ]
+                ]
+            ],
+            'scopeSpans' => []
+        ];
+        
+        $result = $method->invoke($model, $firstResourceSpan);
+        
+        $this->assertEquals('production-service', $result);
+    }
+    
     public function testCreateSpanDataNormalizesAttributes(): void
     {
         $model = new TraceKitModel(['api_key' => 'test-key']);
