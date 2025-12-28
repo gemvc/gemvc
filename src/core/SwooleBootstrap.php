@@ -97,6 +97,15 @@ class SwooleBootstrap
         }
 
         $method = $this->requested_method;
-        return $serviceInstance->$method();
+        try {
+            return $serviceInstance->$method();
+        } catch (\Throwable $e) {
+            // Record exception in TraceKit if available
+            if (method_exists($serviceInstance, 'recordTraceKitException')) {
+                $serviceInstance->recordTraceKitException($e);
+            }
+            // Re-throw to let Swoole handle it
+            throw $e;
+        }
     }
 }

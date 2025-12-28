@@ -110,16 +110,32 @@ class Bootstrap
         } catch (\Gemvc\Core\ValidationException $e) {
             // Handle validation exceptions (400 Bad Request) from ApiService or Controller
             $this->errors[] = new GemvcError($e->getMessage(), 400, $e->getFile(), $e->getLine());
+            // Record exception in TraceKit if available
+            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
+                $serviceInstance->recordTraceKitException($e);
+            }
         } catch (\RuntimeException $e) {
             // Handle runtime exceptions (500 Internal Server Error) - typically from Controller database operations
             $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
+            // Record exception in TraceKit if available
+            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
+                $serviceInstance->recordTraceKitException($e);
+            }
         } catch (\Error $e) {
             // Handle PHP 7+ Error exceptions (method not found, etc.)
             $httpCode = self::determineHttpCodeFromError($e);
             $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
+            // Record exception in TraceKit if available
+            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
+                $serviceInstance->recordTraceKitException($e);
+            }
         } catch (\Throwable $e) {
             // Handle other exceptions (runtime errors, etc.)
             $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
+            // Record exception in TraceKit if available
+            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
+                $serviceInstance->recordTraceKitException($e);
+            }
         }
     }
 

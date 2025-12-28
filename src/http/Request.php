@@ -58,6 +58,14 @@ class Request
      * @var array<string, string>|null
      */
     public ?array $headers = null;
+    
+    /**
+     * TraceKitModel instance (set by ApiService for sharing with Controller and other layers)
+     * 
+     * @var object|null
+     */
+    public ?object $tracekit = null;
+    
     private string $id;
     private string $time;
     private float $start_exec;

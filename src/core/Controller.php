@@ -5,6 +5,7 @@ namespace Gemvc\Core;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
+use Gemvc\Helper\TraceKitModel;
 
 /**
  * Base class for all controllers
@@ -21,11 +22,157 @@ class Controller
      * @var array<GemvcError>
      */
     protected array $errors = [];
+    
+    /**
+     * TraceKitModel instance for automatic request tracing (optional)
+     * @var object|null
+     */
+    private ?object $tracekit = null;
 
     public function __construct(Request $request)
     {
         $this->errors = [];
         $this->request = $request;
+        
+        // Initialize TraceKitModel if available (optional dependency)
+        $this->initializeTraceKit();
+    }
+    
+    /**
+     * Initialize TraceKitModel for automatic request tracing
+     * 
+     * This is optional - if TraceKitModel class doesn't exist, tracing is silently disabled
+     * Note: Trace is already started in ApiService, so Controller uses existing trace for child spans
+     * 
+     * @return void
+     */
+    private function initializeTraceKit(): void
+    {
+        // Check if TraceKitModel class exists (optional dependency)
+        if (!class_exists('App\Model\TraceKitModel')) {
+            return;
+        }
+        
+        try {
+            // Get TraceKitModel instance from static registry (set by ApiService)
+            // This ensures we use the SAME instance with the SAME traceId and spans array
+            $this->tracekit = TraceKitModel::getCurrentInstance();
+            
+            if ($this->tracekit === null) {
+                error_log("TraceKit: Controller - No active TraceKitModel instance found (ApiService should create it)");
+            } else {
+                error_log("TraceKit: Controller using shared TraceKitModel instance from ApiService");
+            }
+        } catch (\Throwable $e) {
+            // Silently fail - don't let TraceKit break the application
+            error_log("TraceKit: Failed to initialize in Controller: " . $e->getMessage());
+            $this->tracekit = null;
+        }
+    }
+    
+    /**
+     * Get TraceKitModel instance (for creating child spans)
+     * 
+     * @return object|null TraceKitModel instance or null if not available
+     */
+    protected function getTraceKit(): ?object
+    {
+        return $this->tracekit;
+    }
+    
+    /**
+     * Start a child span for controller operations
+     * 
+     * This creates a child span under the root trace started by ApiService
+     * 
+     * @param string $operationName Operation name (e.g., 'database-query', 'business-logic')
+     * @param array $attributes Optional attributes
+     * @param string $kind Span kind: 'SERVER', 'CLIENT', or 'INTERNAL' (default: 'INTERNAL')
+     * @return array Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
+     */
+    protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = TraceKitModel::SPAN_KIND_INTERNAL): array
+    {
+        if ($this->tracekit === null || !$this->tracekit->isEnabled()) {
+            return [];
+        }
+        
+        try {
+            // Validate kind is a valid OpenTelemetry span kind integer
+            $validKinds = [
+                TraceKitModel::SPAN_KIND_UNSPECIFIED,
+                TraceKitModel::SPAN_KIND_INTERNAL,
+                TraceKitModel::SPAN_KIND_SERVER,
+                TraceKitModel::SPAN_KIND_CLIENT,
+                TraceKitModel::SPAN_KIND_PRODUCER,
+                TraceKitModel::SPAN_KIND_CONSUMER,
+            ];
+            
+            if (!in_array($kind, $validKinds)) {
+                $kind = TraceKitModel::SPAN_KIND_INTERNAL;
+            }
+            
+            return $this->tracekit->startSpan($operationName, $attributes, $kind);
+        } catch (\Throwable $e) {
+            error_log("TraceKit: Failed to start span in Controller: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * End a child span
+     * 
+     * @param array $spanData Span data returned from startTraceSpan()
+     * @param array $finalAttributes Optional attributes to add before ending
+     * @param string|null $status Span status: 'OK' or 'ERROR' (default: 'OK')
+     * @return void
+     */
+    protected function endTraceSpan(array $spanData, array $finalAttributes = [], ?string $status = 'OK'): void
+    {
+        if ($this->tracekit === null || empty($spanData)) {
+            return;
+        }
+        
+        try {
+            $statusValue = ($status === 'ERROR') ? TraceKitModel::STATUS_ERROR : TraceKitModel::STATUS_OK;
+            $this->tracekit->endSpan($spanData, $finalAttributes, $statusValue);
+        } catch (\Throwable $e) {
+            error_log("TraceKit: Failed to end span in Controller: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Record exception in TraceKit (called automatically on errors)
+     * 
+     * @param \Throwable $exception
+     * @return void
+     */
+    public function recordTraceKitException(\Throwable $exception): void
+    {
+        if ($this->tracekit === null) {
+            return;
+        }
+        
+        try {
+            // Use existing trace if available, or create one (errors are always logged)
+            $this->tracekit->recordException([], $exception, 'controller-operation', [
+                'controller' => $this->getControllerName(),
+            ]);
+        } catch (\Throwable $e) {
+            // Silently fail
+            error_log("TraceKit: Failed to record exception in Controller: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get controller name for tracing
+     * 
+     * @return string
+     */
+    private function getControllerName(): string
+    {
+        $className = get_class($this);
+        $parts = explode('\\', $className);
+        return $parts[count($parts) - 1] ?? 'Unknown';
     }
     
     /**

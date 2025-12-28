@@ -1,15 +1,13 @@
 <?php
 namespace App\Api;
 
-
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-use Gemvc\Core\Documentation;
 use Gemvc\Http\HtmlResponse;
-use App\Controller\DeveloperController;
-#use Gemvc\Core\RedisManager;
+use App\Controller\IndexController;
+
 class Index extends ApiService
 {
     /**
@@ -22,6 +20,7 @@ class Index extends ApiService
         parent::__construct($request);
     }
 
+
     /**
      * Create new Index
      * @return JsonResponse
@@ -30,10 +29,7 @@ class Index extends ApiService
      */
     public function index(): JsonResponse
     {
-        if($_ENV['APP_ENV'] !== 'dev'){
-            return Response::success('server running',1,'server running');
-        }
-        return (new DeveloperController($this->request))->devInfo();
+        return new IndexController($this->request)->index();
     }
 
     /**
@@ -44,8 +40,7 @@ class Index extends ApiService
      */
     public function document(): HtmlResponse
     {
-        $doc = new Documentation();
-        return $doc->htmlResponse();
+        return new IndexController($this->request)->document();
     }
 
     /**
@@ -58,13 +53,7 @@ class Index extends ApiService
      */
     public function developer(): HtmlResponse
     {
-        if(!$_ENV['APP_ENV'] === 'dev'){
-            //it is dummy page for production non dev environment
-            return new HtmlResponse('Page not found', 404);
-        }
-        $devController = new DeveloperController($this->request);
-        // Delegate to Controller show the login page
-        return $devController->app();
+        return new IndexController($this->request)->developer();
     }
 
     /** 
@@ -74,20 +63,17 @@ class Index extends ApiService
     * @description GEMVC Framework Developer Welcome Page Data
     * @hidden
     */
-   public function welcome(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    public function welcome(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return new IndexController($this->request)->welcome();
     }
-       // Check JWT authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }      
-       return (new DeveloperController($this->request))->welcome();
-   }
 
-       /**
+    /**
      * Export Table - Exports table data as CSV or SQL
      * 
      * @return \Gemvc\Http\HtmlResponse
@@ -97,14 +83,10 @@ class Index extends ApiService
      */
     public function export(): HtmlResponse
     {
-        if(!$_ENV['APP_ENV'] === 'dev'){
-            //it is dummy page for production non dev environment
-            return new HtmlResponse('Page not found', 404);
-        }
-        // Require admin authentication
+        // Authentication check
         if (!$this->request->auth(['developer','admin'])) {
-            return (new DeveloperController($this->request))->app();
-        }    
+            return (new \App\Controller\DeveloperController($this->request))->app();
+        }
         
         // Validate POST schema
         if (!$this->request->definePostSchema([
@@ -114,8 +96,7 @@ class Index extends ApiService
             return new HtmlResponse('Invalid request', 400);
         }
         
-        // Delegate to Controller (data extraction handled there)
-        return (new DeveloperController($this->request))->export();
+        return new IndexController($this->request)->export();
     }
 
     /**
@@ -128,19 +109,13 @@ class Index extends ApiService
      */
     public function import(): JsonResponse
     {
-        if(!$_ENV['APP_ENV'] === 'dev'){
-            //it is dummy page for production non dev environment
-            return Response::notFound('Page not found');
-        }
-        // Require admin authentication
+        // Authentication check
         if (!$this->request->auth(['developer','admin'])) {
             return Response::unauthorized('Authentication required');
         }
         
-        // Delegate to Controller
-        return (new DeveloperController($this->request))->import();
+        return new IndexController($this->request)->import();
     }
-
 
     /**
      * Database Management Page Data (JSON for SPA)
@@ -152,15 +127,12 @@ class Index extends ApiService
      */
     public function database(): JsonResponse
     {
-        if(!$_ENV['APP_ENV'] === 'dev'){
-            //it is dummy page for production non dev environment
-            return Response::notFound('Page not found');
-        }
-        // Require admin authentication
+        // Authentication check
         if (!$this->request->auth(['developer','admin'])) {
             return Response::unauthorized('Authentication required');
         }
-        return (new DeveloperController($this->request))->database();
+        
+        return new IndexController($this->request)->database();
     }
 
     /**
@@ -173,8 +145,7 @@ class Index extends ApiService
      */
     public function logo(): JsonResponse
     {
-        // Delegate to Controller
-        return (new DeveloperController($this->request))->logo();
+        return new IndexController($this->request)->logo();
     }
 
     /**
@@ -187,21 +158,7 @@ class Index extends ApiService
      */
     public function favicon(): HtmlResponse
     {
-        $faviconPath = __DIR__ . '/../../vendor/gemvc/library/src/startup/common/system_pages/favicon.ico';
-        
-        if (file_exists($faviconPath)) {
-            $faviconContent = file_get_contents($faviconPath);
-            if ($faviconContent !== false) {
-                $headers = [
-                    'Content-Type' => 'image/x-icon',
-                    'Cache-Control' => 'public, max-age=31536000'
-                ];
-                return new HtmlResponse($faviconContent, 200, $headers);
-            }
-        }
-        
-        // Return 404 if favicon not found
-        return new HtmlResponse('', 404);
+        return new IndexController($this->request)->favicon();
     }
 
     /**
@@ -214,20 +171,7 @@ class Index extends ApiService
      */
     public function config(): JsonResponse
     {
-        if(!$_ENV['APP_ENV'] === 'dev'){
-            //it is dummy page for production non dev environment
-            return Response::notFound('Page not found');
-        }
-        \Gemvc\Helper\ProjectHelper::loadEnv();
-        $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
-        $webserverType = \Gemvc\Core\WebserverDetector::get();
-        
-        return Response::success([
-            'apiBaseUrl' => $apiBaseUrl,
-            'webserverType' => $webserverType,
-            'publicServerPort' => $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80',
-            'apiSubUrl' => $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? ''
-        ]);
+        return new IndexController($this->request)->config();
     }
 
     /**
@@ -238,145 +182,359 @@ class Index extends ApiService
     * @description Check if database is connected and ready
     * @hidden
     */
-   public function isDbReady(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    public function isDbReady(): JsonResponse
+    {
+        return new IndexController($this->request)->isDbReady();
     }
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->isDbReady();
-   }
 
-   /**
-    * Initialize Database
-    * 
-    * @return JsonResponse
-    * @http POST
-    * @description Initialize database (create database if not exists)
-    * @hidden
-    */
-   public function initDatabase(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    /**
+     * Initialize Database
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Initialize database (create database if not exists)
+     * @hidden
+     */
+    public function initDatabase(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return new IndexController($this->request)->initDatabase();
     }
-       // Require admin authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }
-       
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->initDatabase();
-   }
 
-   /**
-    * Services Management Page Data (JSON for SPA)
-    * 
-    * @return JsonResponse
-    * @http GET
-    * @description Services management page with API endpoints list
-    * @hidden
-    */
-   public function services(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    /**
+     * Services Management Page Data (JSON for SPA)
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Services management page with API endpoints list
+     * @hidden
+     */
+    public function services(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return new IndexController($this->request)->services();
     }
-       // Require admin authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }
-       
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->services();
-   }
 
-   /**
-    * Create New Service
-    * 
-    * @return JsonResponse
-    * @http POST
-    * @description Create a new service (CRUD, service only, service+controller, service+model)
-    * @hidden
-    */
-   public function createService(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    /**
+     * Create New Service
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Create a new service (CRUD, service only, service+controller, service+model)
+     * @hidden
+     */
+    public function createService(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Validate POST schema
+        if (!$this->request->definePostSchema([
+            'serviceName' => 'string',
+            'type' => 'string'
+        ])) {
+            return $this->request->returnResponse();
+        }
+        
+        return new IndexController($this->request)->createService();
     }
-       // Require admin authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }
-       
-       // Validate POST schema
-       if (!$this->request->definePostSchema([
-           'serviceName' => 'string',
-           'type' => 'string'
-       ])) {
-           return $this->request->returnResponse();
-       }
-       
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->createService();
-   }
 
-   /**
-    * Tables Layer Management Page Data (JSON for SPA)
-    * 
-    * @return JsonResponse
-    * @http GET
-    * @description Tables Layer management page with all table classes and migration status
-    * @hidden
-    */
-   public function tables(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    /**
+     * Tables Layer Management Page Data (JSON for SPA)
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Tables Layer management page with all table classes and migration status
+     * @hidden
+     */
+    public function tables(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return new IndexController($this->request)->tables();
     }
-       // Require admin authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }
-       
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->tables();
-   }
 
-   /**
-    * Migrate or Update Table
-    * 
-    * @return JsonResponse
-    * @http POST
-    * @description Migrate or update a table class to database
-    * @hidden
-    */
-   public function migrateTable(): JsonResponse
-   {
-    if(!$_ENV['APP_ENV'] === 'dev'){
-        //it is dummy page for production non dev environment
-        return Response::notFound('Page not found');
+    /**
+     * Migrate or Update Table
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Migrate or update a table class to database
+     * @hidden
+     */
+    public function migrateTable(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        // Validate POST schema
+        if (!$this->request->definePostSchema([
+            'tableClassName' => 'string'
+        ])) {
+            return $this->request->returnResponse();
+        }
+        
+        return new IndexController($this->request)->migrateTable();
     }
-       // Require admin authentication
-       if (!$this->request->auth(['developer','admin'])) {
-           return Response::unauthorized('Authentication required');
-       }
-       
-       // Validate POST schema
-       if (!$this->request->definePostSchema([
-           'tableClassName' => 'string'
-       ])) {
-           return $this->request->returnResponse();
-       }
-       
-       // Delegate to Controller
-       return (new DeveloperController($this->request))->migrateTable();
-   }
+
+    // ==========================================
+    // TraceKit Model API Endpoints
+    // ==========================================
+
+    /**
+     * Test TraceKitModel - Test endpoint for TraceKit APM
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Test TraceKitModel implementation with nested spans
+     */
+    public function testTracekit(): JsonResponse
+    {
+        return new IndexController($this->request)->testTracekit();
+    }
+
+    /**
+     * Test TraceKitModel with Error - Test exception tracing
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Test TraceKitModel error/exception tracing
+     */
+    public function testTracekitError(): JsonResponse
+    {
+        return new IndexController($this->request)->testTracekitError();
+    }
+
+    // ==========================================
+    // TraceKit Toolkit API Endpoints
+    // ==========================================
+
+    /**
+     * Register TraceKit Service
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Register a new service in TraceKit (requires email verification)
+     */
+    public function tracekitRegister(): JsonResponse
+    {
+        if (!$this->request->definePostSchema([
+            'email' => 'email',
+            '?organization_name' => 'string',
+            '?source' => 'string',
+        ])) {
+            return $this->request->returnResponse();
+        }
+
+        return new IndexController($this->request)->tracekitRegister();
+    }
+
+    /**
+     * Debug POST Data (for testing)
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Debug endpoint to see what POST data is received
+     * @hidden
+     */
+    public function tracekitDebugPost(): JsonResponse
+    {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? 'unknown';
+        $rawInput = file_get_contents('php://input');
+        
+        $headerContentType = $this->request->getHeader('content-type');
+        
+        $manualJsonParse = null;
+        if (strpos($contentType, 'application/json') !== false || 
+            ($headerContentType && strpos($headerContentType, 'application/json') !== false)) {
+            if (!empty($rawInput)) {
+                $manualJsonParse = json_decode($rawInput, true);
+            }
+        }
+        
+        return Response::success([
+            'content_type_server' => $contentType,
+            'content_type_header' => $headerContentType,
+            'raw_input' => $rawInput,
+            'raw_input_length' => strlen($rawInput),
+            'parsed_post' => $this->request->post,
+            'post_count' => count($this->request->post ?? []),
+            'post_is_empty' => empty($this->request->post),
+            'request_method' => $this->request->requestMethod,
+            'is_json' => strpos($contentType, 'application/json') !== false || 
+                        ($headerContentType && strpos($headerContentType, 'application/json') !== false),
+            'manual_json_parse' => $manualJsonParse,
+            'json_decode_error' => json_last_error_msg(),
+        ], 1, 'Debug info');
+    }
+
+    /**
+     * Verify TraceKit Email Code
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Verify email code and get API key
+     */
+    public function tracekitVerify(): JsonResponse
+    {
+        $this->parseJsonPostData();
+        
+        if (empty($this->request->post)) {
+            return Response::badRequest('POST data is required. Make sure Content-Type is application/json and body contains JSON data. Use /api/Index/tracekitDebugPost to debug.');
+        }
+
+        if (!$this->request->definePostSchema([
+            'session_id' => 'string',
+            'code' => 'string',
+        ])) {
+            return $this->request->returnResponse();
+        }
+
+        return new IndexController($this->request)->tracekitVerify();
+    }
+
+    /**
+     * Get TraceKit Integration Status
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Get TraceKit integration status and service info
+     */
+    public function tracekitStatus(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitStatus();
+    }
+
+    /**
+     * Send TraceKit Heartbeat
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Send health heartbeat to TraceKit
+     */
+    public function tracekitHeartbeat(): JsonResponse
+    {
+        $this->parseJsonPostData();
+
+        if (!$this->request->definePostSchema([
+            '?status' => 'string',
+            '?metadata' => 'json',
+        ])) {
+            return $this->request->returnResponse();
+        }
+
+        return new IndexController($this->request)->tracekitHeartbeat();
+    }
+
+    /**
+     * Get TraceKit Service Metrics
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Get service metrics (latency, error rate, throughput)
+     */
+    public function tracekitMetrics(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitMetrics();
+    }
+
+    /**
+     * Get TraceKit Alerts Summary
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Get alerts summary
+     */
+    public function tracekitAlertsSummary(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitAlertsSummary();
+    }
+
+    /**
+     * Get TraceKit Active Alerts
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Get active alerts
+     */
+    public function tracekitActiveAlerts(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitActiveAlerts();
+    }
+
+    /**
+     * Get TraceKit Subscription Info
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Get current subscription and usage info
+     */
+    public function tracekitSubscription(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitSubscription();
+    }
+
+    /**
+     * List TraceKit Available Plans
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description List available subscription plans
+     */
+    public function tracekitPlans(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitPlans();
+    }
+
+    /**
+     * List TraceKit Webhooks
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description List all webhooks
+     */
+    public function tracekitWebhooks(): JsonResponse
+    {
+        return new IndexController($this->request)->tracekitWebhooks();
+    }
+
+    /**
+     * Create TraceKit Webhook
+     * 
+     * @return JsonResponse
+     * @http POST
+     * @description Create a new webhook
+     */
+    public function tracekitCreateWebhook(): JsonResponse
+    {
+        $this->parseJsonPostData();
+
+        if (!$this->request->definePostSchema([
+            'name' => 'string',
+            'url' => 'url',
+            'events' => 'json',
+            '?enabled' => 'boolean',
+        ])) {
+            return $this->request->returnResponse();
+        }
+
+        return new IndexController($this->request)->tracekitCreateWebhook();
+    }
 
     /**
      * Summary of mockResponse
