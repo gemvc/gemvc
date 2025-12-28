@@ -376,10 +376,8 @@ class TraceKitModel
         }
         
         try {
-            // Generate trace ID if not exists
-            if ($this->traceId === null) {
-                $this->traceId = $this->generateTraceId();
-            }
+            // Get or generate trace ID
+            $traceId = $this->getTraceIdOrGenerate();
             
             // Generate span ID
             $spanId = $this->generateSpanId();
@@ -388,9 +386,6 @@ class TraceKitModel
             $startTime = $this->getMicrotime();
             
             // Create span data
-            // traceId is guaranteed to be non-null here (generated above if needed)
-            /** @var string $traceId */
-            $traceId = $this->traceId;
             $spanData = $this->createSpanData($traceId, $spanId, null, $operationName, self::SPAN_KIND_SERVER, $startTime, $attributes);
             
             // Add to spans array
@@ -400,9 +395,6 @@ class TraceKitModel
             $this->pushSpan($spanData);
             
             // Return span reference
-            // traceId is guaranteed to be non-null here (generated above if needed)
-            /** @var string $traceId */
-            $traceId = $this->traceId;
             return $this->createSpanDataReturn($spanId, $traceId, $startTime);
         } catch (\Throwable $e) {
             // Graceful degradation - log error but don't break application
@@ -429,10 +421,8 @@ class TraceKitModel
         }
         
         try {
-            // Ensure trace ID exists
-            if ($this->traceId === null) {
-                $this->traceId = $this->generateTraceId();
-            }
+            // Get or generate trace ID
+            $traceId = $this->getTraceIdOrGenerate();
             
             // Get active span (parent)
             $activeSpan = $this->getActiveSpan();
@@ -451,9 +441,6 @@ class TraceKitModel
             }
             
             // Create span data
-            // traceId is guaranteed to be non-null here (generated above if needed)
-            /** @var string $traceId */
-            $traceId = $this->traceId;
             $spanData = $this->createSpanData($traceId, $spanId, $parentSpanId, $operationName, $kind, $startTime, $attributes);
             
             // Add to spans array
@@ -463,9 +450,6 @@ class TraceKitModel
             $this->pushSpan($spanData);
             
             // Return span reference
-            // traceId is guaranteed to be non-null here (generated above if needed)
-            /** @var string $traceId */
-            $traceId = $this->traceId;
             return $this->createSpanDataReturn($spanId, $traceId, $startTime);
         } catch (\Throwable $e) {
             // Graceful degradation
@@ -594,15 +578,7 @@ class TraceKitModel
             ]);
             
             // Add event to span
-            /** @var array<string, mixed> $span */
-            $span = $this->spans[$spanIndex];
-            if (!isset($span['events']) || !is_array($span['events'])) {
-                $this->spans[$spanIndex]['events'] = [];
-            }
-            /** @var array<int, array<string, mixed>> $events */
-            $events = $this->spans[$spanIndex]['events'];
-            $events[] = $event;
-            $this->spans[$spanIndex]['events'] = $events;
+            $this->addEventToSpan($spanIndex, $event);
             
             // Set span status to ERROR
             $this->spans[$spanIndex]['status'] = self::STATUS_ERROR;
@@ -645,15 +621,7 @@ class TraceKitModel
             $event = $this->createEvent($eventName, $attributes);
             
             // Add event to span
-            /** @var array<string, mixed> $span */
-            $span = $this->spans[$spanIndex];
-            if (!isset($span['events']) || !is_array($span['events'])) {
-                $this->spans[$spanIndex]['events'] = [];
-            }
-            /** @var array<int, array<string, mixed>> $events */
-            $events = $this->spans[$spanIndex]['events'];
-            $events[] = $event;
-            $this->spans[$spanIndex]['events'] = $events;
+            $this->addEventToSpan($spanIndex, $event);
         } catch (\Throwable $e) {
             // Graceful degradation
             error_log("TraceKit: Failed to add event: " . $e->getMessage());
@@ -791,6 +759,21 @@ class TraceKitModel
     }
     
     /**
+     * Get trace ID, generating it if it doesn't exist
+     * 
+     * @return string Guaranteed non-null trace ID
+     */
+    private function getTraceIdOrGenerate(): string
+    {
+        if ($this->traceId === null) {
+            $this->traceId = $this->generateTraceId();
+        }
+        /** @var string $traceId */
+        $traceId = $this->traceId;
+        return $traceId;
+    }
+    
+    /**
      * Extract span ID from span data
      * 
      * @param array<string, mixed> $spanData
@@ -816,6 +799,26 @@ class TraceKitModel
             }
         }
         return null;
+    }
+    
+    /**
+     * Add an event to a span at the specified index
+     * 
+     * @param int $spanIndex Index of the span in $this->spans array
+     * @param array<string, mixed> $event Event data structure
+     * @return void
+     */
+    private function addEventToSpan(int $spanIndex, array $event): void
+    {
+        /** @var array<string, mixed> $span */
+        $span = $this->spans[$spanIndex];
+        if (!isset($span['events']) || !is_array($span['events'])) {
+            $this->spans[$spanIndex]['events'] = [];
+        }
+        /** @var array<int, array<string, mixed>> $events */
+        $events = $this->spans[$spanIndex]['events'];
+        $events[] = $event;
+        $this->spans[$spanIndex]['events'] = $events;
     }
     
     /**
@@ -1105,15 +1108,6 @@ class TraceKitModel
         ];
     }
     
-    /**
-     * Send traces to TraceKit service (non-blocking)
-     * 
-     * Uses GEMVC's ApiCall for simple HTTP POST (non-blocking via short timeouts).
-     * This is called in shutdown handler, so it won't interfere with the response.
-     * 
-     * @param array $payload Trace payload
-     * @return void
-     */
     /**
      * Send traces to TraceKit using fire-and-forget (non-blocking)
      * 

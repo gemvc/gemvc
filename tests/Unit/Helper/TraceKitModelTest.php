@@ -1224,6 +1224,210 @@ class TraceKitModelTest extends TestCase
     }
     
     // ==========================================
+    // getTraceIdOrGenerate() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testGetTraceIdOrGenerateCreatesTraceIdWhenNull(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'getTraceIdOrGenerate');
+        
+        // Ensure traceId is null
+        $reflection = new \ReflectionClass($model);
+        $traceIdProperty = $reflection->getProperty('traceId');
+        $traceIdProperty->setAccessible(true);
+        $traceIdProperty->setValue($model, null);
+        
+        $result = $method->invoke($model);
+        
+        $this->assertIsString($result);
+        $this->assertEquals(32, strlen($result)); // 32 hex characters
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $result);
+    }
+    
+    public function testGetTraceIdOrGenerateReturnsExistingTraceId(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'getTraceIdOrGenerate');
+        
+        // Set existing traceId
+        $existingTraceId = '1234567890abcdef1234567890abcdef';
+        $reflection = new \ReflectionClass($model);
+        $traceIdProperty = $reflection->getProperty('traceId');
+        $traceIdProperty->setAccessible(true);
+        $traceIdProperty->setValue($model, $existingTraceId);
+        
+        $result = $method->invoke($model);
+        
+        $this->assertEquals($existingTraceId, $result);
+    }
+    
+    public function testGetTraceIdOrGenerateGeneratesUniqueIds(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $method = $this->getPrivateMethod($model, 'getTraceIdOrGenerate');
+        
+        // Ensure traceId is null
+        $reflection = new \ReflectionClass($model);
+        $traceIdProperty = $reflection->getProperty('traceId');
+        $traceIdProperty->setAccessible(true);
+        $traceIdProperty->setValue($model, null);
+        
+        $result1 = $method->invoke($model);
+        $traceIdProperty->setValue($model, null);
+        $result2 = $method->invoke($model);
+        
+        // Should generate different IDs
+        $this->assertNotEquals($result1, $result2);
+    }
+    
+    // ==========================================
+    // addEventToSpan() Helper Method Tests (Private)
+    // ==========================================
+    
+    public function testAddEventToSpanAddsEventToEmptyEventsArray(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $span = $model->startTrace('test');
+        
+        // Get span index
+        $reflection = new \ReflectionClass($model);
+        $spansProperty = $reflection->getProperty('spans');
+        $spansProperty->setAccessible(true);
+        $spans = $spansProperty->getValue($model);
+        $spanIndex = 0; // First span
+        
+        $method = $this->getPrivateMethod($model, 'addEventToSpan');
+        $event = [
+            'name' => 'test-event',
+            'time' => 1234567890,
+            'attributes' => ['key' => 'value'],
+        ];
+        
+        $method->invoke($model, $spanIndex, $event);
+        
+        $spans = $spansProperty->getValue($model);
+        $this->assertIsArray($spans[$spanIndex]['events']);
+        $this->assertCount(1, $spans[$spanIndex]['events']);
+        $this->assertEquals('test-event', $spans[$spanIndex]['events'][0]['name']);
+    }
+    
+    public function testAddEventToSpanAddsEventToExistingEventsArray(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $span = $model->startTrace('test');
+        $model->addEvent($span, 'first-event');
+        
+        // Get span index
+        $reflection = new \ReflectionClass($model);
+        $spansProperty = $reflection->getProperty('spans');
+        $spansProperty->setAccessible(true);
+        $spans = $spansProperty->getValue($model);
+        $spanIndex = 0; // First span
+        
+        $method = $this->getPrivateMethod($model, 'addEventToSpan');
+        $event = [
+            'name' => 'second-event',
+            'time' => 1234567890,
+            'attributes' => ['key' => 'value'],
+        ];
+        
+        $method->invoke($model, $spanIndex, $event);
+        
+        $spans = $spansProperty->getValue($model);
+        $this->assertCount(2, $spans[$spanIndex]['events']);
+        $this->assertEquals('first-event', $spans[$spanIndex]['events'][0]['name']);
+        $this->assertEquals('second-event', $spans[$spanIndex]['events'][1]['name']);
+    }
+    
+    public function testAddEventToSpanInitializesEventsArrayIfNotSet(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $span = $model->startTrace('test');
+        
+        // Manually remove events array to test initialization
+        $reflection = new \ReflectionClass($model);
+        $spansProperty = $reflection->getProperty('spans');
+        $spansProperty->setAccessible(true);
+        $spans = $spansProperty->getValue($model);
+        unset($spans[0]['events']);
+        $spansProperty->setValue($model, $spans);
+        
+        $method = $this->getPrivateMethod($model, 'addEventToSpan');
+        $event = [
+            'name' => 'test-event',
+            'time' => 1234567890,
+            'attributes' => [],
+        ];
+        
+        $method->invoke($model, 0, $event);
+        
+        $spans = $spansProperty->getValue($model);
+        $this->assertIsArray($spans[0]['events']);
+        $this->assertCount(1, $spans[0]['events']);
+    }
+    
+    public function testAddEventToSpanPreservesExistingEvents(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $span = $model->startTrace('test');
+        $model->addEvent($span, 'event1');
+        $model->addEvent($span, 'event2');
+        
+        // Get span index
+        $reflection = new \ReflectionClass($model);
+        $spansProperty = $reflection->getProperty('spans');
+        $spansProperty->setAccessible(true);
+        $spans = $spansProperty->getValue($model);
+        $spanIndex = 0;
+        
+        $method = $this->getPrivateMethod($model, 'addEventToSpan');
+        $event = [
+            'name' => 'event3',
+            'time' => 1234567890,
+            'attributes' => [],
+        ];
+        
+        $method->invoke($model, $spanIndex, $event);
+        
+        $spans = $spansProperty->getValue($model);
+        $this->assertCount(3, $spans[$spanIndex]['events']);
+        $this->assertEquals('event1', $spans[$spanIndex]['events'][0]['name']);
+        $this->assertEquals('event2', $spans[$spanIndex]['events'][1]['name']);
+        $this->assertEquals('event3', $spans[$spanIndex]['events'][2]['name']);
+    }
+    
+    public function testAddEventToSpanWithComplexEvent(): void
+    {
+        $model = new TraceKitModel(['api_key' => 'test-key']);
+        $span = $model->startTrace('test');
+        
+        $method = $this->getPrivateMethod($model, 'addEventToSpan');
+        $event = [
+            'name' => 'complex-event',
+            'time' => 1699123456789000000,
+            'attributes' => [
+                'attr1' => 'value1',
+                'attr2' => 42,
+                'attr3' => true,
+            ],
+        ];
+        
+        $method->invoke($model, 0, $event);
+        
+        $reflection = new \ReflectionClass($model);
+        $spansProperty = $reflection->getProperty('spans');
+        $spansProperty->setAccessible(true);
+        $spans = $spansProperty->getValue($model);
+        
+        $addedEvent = $spans[0]['events'][0];
+        $this->assertEquals('complex-event', $addedEvent['name']);
+        $this->assertEquals(1699123456789000000, $addedEvent['time']);
+        $this->assertIsArray($addedEvent['attributes']);
+        $this->assertEquals('value1', $addedEvent['attributes']['attr1']);
+    }
+    
+    // ==========================================
     // Flush Tests
     // ==========================================
     
