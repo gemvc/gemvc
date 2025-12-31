@@ -8,6 +8,7 @@ use Gemvc\Core\GemvcError;
 use Gemvc\Core\GEMVCErrorHandler;
 use Gemvc\Http\HtmlResponse;
 use Gemvc\Helper\ProjectHelper;
+use Gemvc\Core\Apm\ApmFactory;
 
 if(ProjectHelper::isDevEnvironment()) {
     ini_set('display_errors', 1);
@@ -337,15 +338,12 @@ class Bootstrap
      */
     private function recordExceptionInApm(\Throwable $exception): void
     {
-        // Early return if APM is disabled - avoid unnecessary processing
-        if (ProjectHelper::isApmEnabled() === null) {
+        $apmName = ApmFactory::isEnabled();
+        if (!$apmName) {
             return;
         }
-        
-        // Access APM instance directly via Request object
-        $apm = $this->request->apm ?? null;
-        if ($apm !== null) {
-            // ApmInterface::recordException() already has graceful error handling
+        $apm = ApmFactory::create($this->request);
+        if ($apm) {
             $apm->recordException([], $exception);
         }
     }

@@ -6,6 +6,7 @@ use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\ResponseInterface;
 use Gemvc\Helper\ProjectHelper;
+use Gemvc\Core\Apm\ApmFactory;
 
 /**
  * SwooleBootstrap - A Bootstrap alternative for OpenSwoole environment
@@ -117,10 +118,14 @@ class SwooleBootstrap
     private function recordExceptionInApm(\Throwable $exception): void
     {
         // Early return if APM is disabled - avoid unnecessary processing
-        if (ProjectHelper::isApmEnabled() === null) {
+        $apmName = ApmFactory::isEnabled();
+        if (!$apmName) {
             return;
         }
-        
+        $apm = ApmFactory::create($this->request);
+        if ($apm) {
+            $apm->recordException([], $exception);
+        }
         // Access APM instance directly via Request object
         $apm = $this->request->apm ?? null;
         if ($apm !== null) {

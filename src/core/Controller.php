@@ -59,30 +59,11 @@ class Controller
     private function initializeApm(): void
     {
         // Early return if APM is disabled - avoid unnecessary processing
-        if (ProjectHelper::isApmEnabled() === null) {
+        $apmName = ApmFactory::isEnabled();
+        if (!$apmName) {
             return;
         }
-        
-        try {
-            // Get APM instance from Request object (set by ApiService)
-            // This ensures we use the SAME instance with the SAME traceId and spans array
-            // NOT creating a new instance - just getting reference to existing one
-            $this->apm = $this->request->apm ?? null;
-            
-            if (ProjectHelper::isDevEnvironment()) {
-                if ($this->apm === null) {
-                    error_log("APM: Controller - No active APM instance found (ApiService should create it)");
-                } else {
-                    error_log("APM: Controller using shared APM instance from ApiService");
-                }
-            }
-        } catch (\Throwable $e) {
-            // Silently fail - don't let APM break the application
-            if (ProjectHelper::isDevEnvironment()) {
-                error_log("APM: Failed to initialize in Controller: " . $e->getMessage());
-            }
-            $this->apm = null;
-        }
+        $this->apm = ApmFactory::create($this->request);    
     }
     
     /**

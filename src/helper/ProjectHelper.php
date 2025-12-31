@@ -167,42 +167,6 @@ class ProjectHelper
         }
     }
 
-    /**
-     * Check if APM is enabled and return the APM provider name
-     * 
-     * Uses ApmFactory to check if any APM provider is enabled and configured.
-     * Returns the APM provider name (e.g., "TraceKit", "Datadog") if enabled,
-     * or null if no APM is enabled.
-     * 
-     * Checks both provider-specific API keys (e.g., TRACEKIT_API_KEY) and
-     * the unified APM_API_KEY environment variable.
-     * 
-     * @return string|null APM provider name if enabled, null otherwise
-     */
-    public static function isApmEnabled(): ?string
-    {
-        // Use ApmFactory to check if APM is enabled (works for TraceKit, Datadog, etc.)
-        if (!ApmFactory::isEnabled()) {
-            return null;
-        }
-        
-        // Get APM name from environment
-        $apmName = $_ENV['APM_NAME'] ?? 'TraceKit';
-        $apmNameString = is_string($apmName) ? $apmName : 'TraceKit';
-        return trim($apmNameString);
-    }
-    
-    /**
-     * Check if TraceKit is enabled (backward compatibility)
-     * 
-     * @deprecated Use isApmEnabled() instead. This method will be removed in a future version.
-     * @return bool True if TraceKit is enabled, false otherwise
-     */
-    public static function isTraceKitEnabled(): bool
-    {
-        $apmName = self::isApmEnabled();
-        return $apmName === 'TraceKit';
-    }
 
     /**
      * Check if the current environment is development
