@@ -1,6 +1,6 @@
 # GEMVC Framework - Release Notes
 
-## Version 5.2.1 - APM Contracts & Server Monitoring
+## Version 5.2.3 - APM Contracts & Server Monitoring
 
 **Release Date**: 2025-12-31  
 **Type**: Minor Release (Backward Compatible)
@@ -254,7 +254,7 @@ TRACEKIT_SERVICE_NAME=gemvc-app
 
 ## 🚀 Migration Guide
 
-### From 5.2.0 to 5.2.1
+### From 5.2.0 to 5.2.3
 
 This release is **fully backward compatible**. No breaking changes.
 
