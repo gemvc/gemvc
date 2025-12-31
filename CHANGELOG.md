@@ -5,6 +5,90 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.1] - 2025-01-XX
+
+### Added
+- **APM Contracts System** - Pluggable Application Performance Monitoring
+  - Integration with `gemvc/apm-contracts` package
+  - `ApmFactory` for creating APM instances
+  - `ApmInterface` for provider-agnostic APM operations
+  - Automatic APM initialization in `ApiService` and `Controller`
+  - Request tracing with root spans and child spans
+  - Database query tracing via `UniversalQueryExecuter`
+  - Exception recording for error tracking
+  - Support for multiple APM providers (TraceKit, Datadog, etc.)
+
+- **Apm Service** (`/api/Apm/*`) - Complete APM provider management
+  - Test endpoints for APM tracing
+  - Status and configuration endpoints
+  - TraceKit-specific registration and verification
+  - Health check heartbeat
+  - Metrics, alerts, and webhook management
+  - Subscription and plans information
+
+- **GemvcAssistant Service** (`/api/GemvcAssistant/*`) - Developer/admin tools
+  - Table data export/import (CSV/SQL)
+  - Database management interface
+  - Configuration management
+  - Service creation and listing
+  - Table migration management
+  - Moved from `Index.php` for better separation of concerns
+
+- **GemvcMonitoring Service** (`/api/GemvcMonitoring/*`) - Server monitoring
+  - RAM/memory usage metrics
+  - CPU usage and load metrics
+  - Network interface statistics
+  - Database connection monitoring
+  - Database pool statistics
+  - Database latency metrics
+
+- **ServerMonitorHelper** - Cross-platform server resource monitoring
+  - `getMemoryUsage()` - RAM metrics (current, peak, system)
+  - `getCpuLoad()` - CPU load average (1min, 5min, 15min)
+  - `getCpuCores()` - CPU core count
+  - `getCpuUsage()` - CPU usage percentage
+  - Supports Linux, Windows, and macOS
+
+- **NetworkHelper** - Network interface statistics
+  - `getNetworkStats()` - All network interfaces with totals
+  - `getNetworkInterfaces()` - List of available interfaces
+  - `getInterfaceStats()` - Statistics for specific interface
+  - Cross-platform support (Linux, Windows, macOS)
+
+- **ProjectHelper::isApmEnabled()** - Check if APM is enabled
+  - Returns APM provider name or null
+  - Replaces deprecated `isTraceKitEnabled()`
+
+### Changed
+- **ApiService** - Now automatically initializes APM via `ApmFactory`
+- **Controller** - Retrieves APM instance from Request for shared tracing
+- **JsonResponse** - Uses APM contracts for response tracing
+- **Bootstrap** / **SwooleBootstrap** - Updated exception recording to use APM contracts
+- **UniversalQueryExecuter** - Database query tracing via APM contracts
+- **Request Object** - Added `$apm` property (deprecated `$tracekit` for backward compatibility)
+- **Example Files** - Moved from `src/startup/user/` to `src/startup/common/init_example/`
+- **Documentation** - Comprehensive updates across all documentation files
+
+### Deprecated
+- `ProjectHelper::isTraceKitEnabled()` - Use `ProjectHelper::isApmEnabled()` instead
+- `Request::$tracekit` - Use `Request::$apm` instead
+
+### Fixed
+- **Resource Leak in AsyncApiCall** - Fixed `curl_close()` missing after `curl_multi_remove_handle()`
+  - Prevents file descriptor exhaustion in long-running processes
+  - Critical fix for Swoole environments
+
+- **PHPStan Level 9 Compliance** - Fixed all remaining type errors
+  - Added type checks for `NetworkHelper` and `ServerMonitorHelper`
+  - Fixed ternary operator warnings in `JsonResponse`
+  - Added `@phpstan-ignore-next-line` for abstract static method calls
+  - Enhanced `ProjectHelper` type safety
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- New services require proper authentication (`['developer','admin']` roles)
+
 ## [5.2.0] - 2024-12-27
 
 ### Added
