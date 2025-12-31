@@ -23,7 +23,9 @@ GEMVC now uses a contract-based APM system that supports multiple providers:
 
 - **`gemvc/apm-contracts` Package Integration**
   - `ApmFactory` - Factory pattern for creating APM instances
-  - `ApmInterface` - Standard interface for all APM providers
+  - `ApmInterface` - Standard interface for all APM providers (tracing)
+  - `ApmToolkitInterface` - Standard interface for APM toolkit operations (management)
+  - `AbstractApmToolkit` - Base class for provider toolkits with common functionality
   - Automatic provider detection and initialization
   - Backward compatible with existing TraceKit implementations
 
@@ -45,13 +47,13 @@ GEMVC now uses a contract-based APM system that supports multiple providers:
 
 #### 1. **Apm Service** (`/api/Apm/*`)
 
-Complete APM provider management and testing endpoints:
+Complete APM provider management and testing endpoints. **Fully provider-agnostic** - works with any APM provider that implements `ApmToolkitInterface`:
 
 - `GET /api/Apm/test` - Test APM tracing with nested spans
 - `GET /api/Apm/testError` - Test exception tracing
 - `GET /api/Apm/status` - Get APM provider status and configuration
-- `POST /api/Apm/register` - Register TraceKit service (TraceKit-specific)
-- `POST /api/Apm/verify` - Verify TraceKit email (TraceKit-specific)
+- `POST /api/Apm/register` - Register APM service (Provider-agnostic)
+- `POST /api/Apm/verify` - Verify APM email code (Provider-agnostic)
 - `POST /api/Apm/heartbeat` - Send health check heartbeat
 - `GET /api/Apm/metrics` - Get service metrics
 - `GET /api/Apm/alertsSummary` - Get alerts summary

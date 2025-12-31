@@ -18,7 +18,7 @@ $this->select()->where('id', $id)->run() // Query
 
 // APM (Application Performance Monitoring)
 ApmFactory::create($request)  // Returns ApmInterface or null
-ProjectHelper::isApmEnabled() // Returns APM provider name or null
+ApmFactory::isEnabled()        // Returns APM provider name or null
 
 // Server Monitoring (cross-platform)
 ServerMonitorHelper::getMemoryUsage()  // RAM metrics

@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **APM Contracts System** - Pluggable Application Performance Monitoring
   - Integration with `gemvc/apm-contracts` package
   - `ApmFactory` for creating APM instances
-  - `ApmInterface` for provider-agnostic APM operations
+  - `ApmInterface` for provider-agnostic APM operations (tracing)
+  - `ApmToolkitInterface` for provider-agnostic toolkit operations (management)
+  - `AbstractApmToolkit` base class with common toolkit functionality
   - Automatic APM initialization in `ApiService` and `Controller`
   - Request tracing with root spans and child spans
   - Database query tracing via `UniversalQueryExecuter`
@@ -21,10 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Apm Service** (`/api/Apm/*`) - Complete APM provider management
   - Test endpoints for APM tracing
   - Status and configuration endpoints
-  - TraceKit-specific registration and verification
+  - Provider-agnostic registration and verification (works with any APM provider)
   - Health check heartbeat
   - Metrics, alerts, and webhook management
   - Subscription and plans information
+  - Uses `ApmToolkitInterface` and `AbstractApmToolkit` for provider-agnostic operations
 
 - **GemvcAssistant Service** (`/api/GemvcAssistant/*`) - Developer/admin tools
   - Table data export/import (CSV/SQL)

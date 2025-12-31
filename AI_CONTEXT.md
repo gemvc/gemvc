@@ -116,7 +116,7 @@ $this->selectById($id)       // Custom method
 $apm = ApmFactory::create($request);  // Returns ApmInterface or null
 
 // Check if APM is enabled
-if (ProjectHelper::isApmEnabled() !== null) {
+if (ApmFactory::isEnabled() !== null) {
     // APM is enabled
 }
 
