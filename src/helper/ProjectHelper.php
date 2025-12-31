@@ -2,7 +2,6 @@
 namespace Gemvc\Helper;
 
 use Symfony\Component\Dotenv\Dotenv;
-use Gemvc\Core\Apm\ApmFactory;
 
 class ProjectHelper
 {
