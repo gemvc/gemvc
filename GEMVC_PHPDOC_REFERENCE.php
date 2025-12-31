@@ -574,5 +574,77 @@ interface HelperClasses {
      * @return bool True if valid image and converted successfully
      */
     public static function ImageHelper_convertToWebP(string $sourceFile, int $quality = 80): bool;
+    
+    /**
+     * Get memory usage metrics (cross-platform)
+     * 
+     * @return array<string, mixed> Memory usage information
+     */
+    public static function ServerMonitorHelper_getMemoryUsage(): array;
+    
+    /**
+     * Get CPU load average
+     * 
+     * @return array<string, float> Load average (1min, 5min, 15min)
+     */
+    public static function ServerMonitorHelper_getCpuLoad(): array;
+    
+    /**
+     * Get CPU core count
+     * 
+     * @return int Number of CPU cores
+     */
+    public static function ServerMonitorHelper_getCpuCores(): int;
+    
+    /**
+     * Get CPU usage percentage
+     * 
+     * @return float|null CPU usage percentage or null if unavailable
+     */
+    public static function ServerMonitorHelper_getCpuUsage(): ?float;
+    
+    /**
+     * Get network statistics for all interfaces
+     * 
+     * @return array<string, mixed> Network statistics
+     */
+    public static function NetworkHelper_getNetworkStats(): array;
+    
+    /**
+     * Get list of network interfaces
+     * 
+     * @return array<string> Interface names
+     */
+    public static function NetworkHelper_getNetworkInterfaces(): array;
+    
+    /**
+     * Get statistics for specific network interface
+     * 
+     * @param string $interface Interface name
+     * @return array<string, mixed> Interface statistics
+     */
+    public static function NetworkHelper_getInterfaceStats(string $interface): array;
+    
+    /**
+     * Check if APM is enabled and return provider name
+     * 
+     * @return string|null APM provider name if enabled, null otherwise
+     */
+    public static function ProjectHelper_isApmEnabled(): ?string;
+    
+    /**
+     * Create APM instance via factory
+     * 
+     * @param \Gemvc\Http\Request|null $request Request object
+     * @return \Gemvc\Core\Apm\ApmInterface|null APM instance or null
+     */
+    public static function ApmFactory_create(?\Gemvc\Http\Request $request): ?\Gemvc\Core\Apm\ApmInterface;
+    
+    /**
+     * Check if APM is enabled
+     * 
+     * @return bool True if APM is enabled
+     */
+    public static function ApmFactory_isEnabled(): bool;
 }
 

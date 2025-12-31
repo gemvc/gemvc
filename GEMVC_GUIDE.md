@@ -43,6 +43,15 @@ $this->select()->where('id', $id)->run()
 $this->insertSingleQuery()
 $this->updateSingleQuery()
 $this->deleteByIdQuery($id)
+
+// APM (Application Performance Monitoring)
+ApmFactory::create($request)  // Returns ApmInterface or null
+ProjectHelper::isApmEnabled() // Returns APM provider name or null
+
+// Server Monitoring (cross-platform)
+ServerMonitorHelper::getMemoryUsage()  // RAM metrics
+ServerMonitorHelper::getCpuLoad()      // CPU load
+NetworkHelper::getNetworkStats()       // Network stats
 ```
 
 ## Always Remember

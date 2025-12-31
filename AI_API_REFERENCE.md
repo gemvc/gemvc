@@ -222,6 +222,55 @@ TypeChecker::validateDate(string $date): bool
 TypeChecker::validateIp(string $ip): bool
 ```
 
+### ServerMonitorHelper
+**Namespace**: `Gemvc\Helper\ServerMonitorHelper`
+
+**Methods**:
+```php
+ServerMonitorHelper::getMemoryUsage(): array<string, mixed>  // RAM metrics
+ServerMonitorHelper::getCpuLoad(): array<string, float>      // CPU load average
+ServerMonitorHelper::getCpuCores(): int                      // CPU core count
+ServerMonitorHelper::getCpuUsage(): ?float                   // CPU usage percentage
+```
+
+### NetworkHelper
+**Namespace**: `Gemvc\Helper\NetworkHelper`
+
+**Methods**:
+```php
+NetworkHelper::getNetworkStats(): array<string, mixed>       // All network interfaces
+NetworkHelper::getNetworkInterfaces(): array<string>          // List of interfaces
+NetworkHelper::getInterfaceStats(string $interface): array    // Stats for specific interface
+```
+
+### ApmFactory (from gemvc/apm-contracts)
+**Namespace**: `Gemvc\Core\Apm\ApmFactory`
+
+**Methods**:
+```php
+ApmFactory::create(?Request $request): ?ApmInterface  // Create APM instance
+ApmFactory::isEnabled(): bool                         // Check if APM is enabled
+```
+
+### ApmInterface (from gemvc/apm-contracts)
+**Namespace**: `Gemvc\Core\Apm\ApmInterface`
+
+**Methods**:
+```php
+$apm->startSpan(string $name, array $attributes, string $kind): ?string
+$apm->endSpan(?string $spanId, array $attributes = []): void
+$apm->recordException(array $attributes, \Throwable $exception): void
+$apm->isEnabled(): bool
+```
+
+**Constants**:
+```php
+ApmInterface::SPAN_KIND_SERVER
+ApmInterface::SPAN_KIND_CLIENT
+ApmInterface::STATUS_OK
+ApmInterface::STATUS_ERROR
+```
+
 ### JWTToken
 **Namespace**: `Gemvc\Http\JWTToken`
 

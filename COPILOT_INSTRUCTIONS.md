@@ -15,6 +15,15 @@ Response::success($data, 1, "Message")    // Success response
 Response::created($data, 1, "Message")    // Created response
 Response::notFound("Message")             // Not found
 $this->select()->where('id', $id)->run() // Query
+
+// APM (Application Performance Monitoring)
+ApmFactory::create($request)  // Returns ApmInterface or null
+ProjectHelper::isApmEnabled() // Returns APM provider name or null
+
+// Server Monitoring (cross-platform)
+ServerMonitorHelper::getMemoryUsage()  // RAM metrics
+ServerMonitorHelper::getCpuLoad()      // CPU load
+NetworkHelper::getNetworkStats()       // Network stats
 ```
 
 ## 📋 Code Generation Pattern

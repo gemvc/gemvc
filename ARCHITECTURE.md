@@ -99,8 +99,8 @@ JsonResponse.php → Return JSON (via showSwoole())
 
 ### **core/** - Framework Core
 - `Bootstrap.php` / `SwooleBootstrap.php` - Request routing
-- `ApiService.php` / `SwooleApiService.php` - Base API service classes
-- `Controller.php` - Base controller with pagination, filtering, sanitization
+- `ApiService.php` / `SwooleApiService.php` - Base API service classes (with APM integration)
+- `Controller.php` - Base controller with pagination, filtering, sanitization (with APM integration)
 - `SecurityManager.php` - Path access protection
 - `WebserverDetector.php` - Environment detection (cached)
 - `OpenSwooleServer.php` - OpenSwoole server lifecycle
@@ -113,6 +113,7 @@ JsonResponse.php → Return JSON (via showSwoole())
 - Environment-aware routing
 - Developer-friendly base classes
 - Built-in documentation generation
+- **APM integration** (pluggable via `gemvc/apm-contracts` package)
 
 ### **http/** - HTTP Layer
 - `Request.php` - Unified request object (all inputs sanitized)
@@ -151,7 +152,7 @@ JsonResponse.php → Return JSON (via showSwoole())
 
 ### **helper/** - Utility Classes
 - `TypeChecker.php` - Runtime type validation (advanced options)
-- `ProjectHelper.php` - Path resolution (finds composer.lock)
+- `ProjectHelper.php` - Path resolution (finds composer.lock), APM detection
 - `FileHelper.php` - File operations + encryption
 - `ImageHelper.php` - Image processing + signature detection
 - `CryptHelper.php` - Password hashing (Argon2I) + AES-256-CBC encryption
@@ -160,12 +161,15 @@ JsonResponse.php → Return JSON (via showSwoole())
 - `JsonHelper.php` - JSON validation
 - `WebHelper.php` - Webserver detection
 - `ChatGptClient.php` - OpenAI integration
+- `ServerMonitorHelper.php` - Server resource monitoring (RAM, CPU)
+- `NetworkHelper.php` - Network statistics collection
 
 **Key Features**:
 - **File signature detection** (MIME type verification)
 - **File encryption** (AES-256-CBC + HMAC)
 - **Password security** (Argon2I)
 - **Type validation** (email, string length, regex, dates, etc.)
+- **Server monitoring** (cross-platform RAM, CPU, network metrics)
 
 ### **startup/** - Platform Initialization
 ```

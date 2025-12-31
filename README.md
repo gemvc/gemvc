@@ -91,6 +91,8 @@ GEMVC is a **multi-platform PHP REST API framework** that works identically on:
 - 📝 **Simple API** - Clean, straightforward code structure
 - ⚡ **High Performance** - Connection pooling, async capabilities
 - ✅ **PHPStan Level 9** - Write type-safe, bug-free code with the highest static analysis level
+- 📊 **APM Integration** - Pluggable Application Performance Monitoring via `gemvc/apm-contracts`
+- 📈 **Server Monitoring** - Built-in RAM, CPU, network, and database metrics
 
 ---
 
@@ -887,17 +889,22 @@ GET /api/User/list/?sort_by=name&find_like=name=John
 
 ## 🎓 Learning Path
 
-1. **Study the User Example** (`src/startup/user/`)
+1. **Study the User Example** (`src/startup/common/init_example/`)
    - See how all 4 layers work together
    - Understand request flow
    - Learn validation patterns
 
-2. **Generate Your First CRUD**
+2. **Explore Built-in Services**
+   - `Apm.php` - APM provider management and testing
+   - `GemvcAssistant.php` - Developer/admin tools
+   - `GemvcMonitoring.php` - Server monitoring metrics
+
+3. **Generate Your First CRUD**
    ```bash
    gemvc create:crud Product
    ```
 
-3. **Run PHPStan Level 9**
+4. **Run PHPStan Level 9**
    ```bash
    vendor/bin/phpstan analyse
    ```
@@ -905,11 +912,11 @@ GET /api/User/list/?sort_by=name&find_like=name=John
    - Write type-safe code
    - Catch bugs early!
 
-4. **Customize Templates** (`templates/cli/`)
+5. **Customize Templates** (`templates/cli/`)
    - Edit templates to match your coding style
    - Add custom methods and patterns
 
-5. **Read Documentation**
+6. **Read Documentation**
    - `ARCHITECTURE.md` - Full architecture details
    - `SECURITY.md` - Security features
    - `TEMPLATE_SYSTEM.md` - Template customization
@@ -924,6 +931,8 @@ GET /api/User/list/?sort_by=name&find_like=name=John
 - **Follow GEMVC patterns** - Use the User example as a reference
 - **4-Layer Architecture** - API → Controller → Model → Table
 - **Automatic Security** - Input sanitization, SQL injection prevention built-in
+- **APM Integration** - Uses `gemvc/apm-contracts` for pluggable APM providers (TraceKit, Datadog, etc.)
+- **Built-in Services** - Example services for APM, monitoring, and developer tools are included
 
 ### ✅ Do's:
 - ✅ Extend `ApiService` for API classes
@@ -1020,16 +1029,17 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 
 ### 💡 Learning Resources
 
-- **Example Code**: `src/startup/user/` - Complete User implementation (API, Controller, Model, Table)
+- **Example Code**: `src/startup/common/init_example/` - Complete examples including User, Apm, GemvcAssistant, GemvcMonitoring
 - **Template Examples**: `templates/cli/` - Default code generation templates
 - **Stubs**: `src/stubs/` - IDE type stubs for OpenSwoole and Redis
+- **Helper Classes**: `src/helper/` - ServerMonitorHelper, NetworkHelper, and other utilities
 
 ### 🎯 Quick Navigation for AI Assistants
 
 **To understand GEMVC architecture:**
 1. Start with [README.MD](README.MD) (this file) for overview
 2. Read [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive
-3. Study `src/startup/user/` for code examples
+3. Study `src/startup/common/init_example/` for code examples
 
 **To understand CLI commands:**
 1. Read [CLI.md](CLI.md) for complete command reference
@@ -1063,7 +1073,7 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 - 📖 Read [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture
 - 🔒 Read [SECURITY.md](SECURITY.md) for security features
 - 🎨 Read [TEMPLATE_SYSTEM.md](TEMPLATE_SYSTEM.md) for template customization
-- 💡 Study `src/startup/user/` for code examples
+- 💡 Study `src/startup/common/init_example/` for code examples
 
 ---
 

@@ -109,6 +109,35 @@ $this->selectById($id)       // Custom method
 
 **Only call**: `definePostSchema()` and `auth()`
 
+### APM (Application Performance Monitoring)
+```php
+// APM is automatically initialized in ApiService and Controller
+// Uses ApmFactory from gemvc/apm-contracts package
+$apm = ApmFactory::create($request);  // Returns ApmInterface or null
+
+// Check if APM is enabled
+if (ProjectHelper::isApmEnabled() !== null) {
+    // APM is enabled
+}
+
+// APM providers: TraceKit, Datadog, etc. (via separate packages)
+```
+
+### Server Monitoring Helpers
+```php
+// RAM metrics
+$ram = ServerMonitorHelper::getMemoryUsage();
+
+// CPU metrics
+$load = ServerMonitorHelper::getCpuLoad();
+$cores = ServerMonitorHelper::getCpuCores();
+$usage = ServerMonitorHelper::getCpuUsage();
+
+// Network statistics
+$network = NetworkHelper::getNetworkStats();
+$interfaces = NetworkHelper::getNetworkInterfaces();
+```
+
 ---
 
 ## 💡 Code Generation Examples
