@@ -3,7 +3,7 @@ namespace App\Model;
 
 use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
-use Gemvc\Helper\ProjectHelper;
+use Gemvc\Core\Apm\ApmToolkitInterface;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
 
@@ -12,9 +12,38 @@ use Gemvc\Http\Response;
  * 
  * This model handles APM provider operations without database dependencies.
  * It uses ApmFactory to work with any APM provider (TraceKit, Datadog, etc.)
+ * and ApmToolkitInterface for provider-agnostic toolkit operations.
  */
 class ApmModel
 {
+    /**
+     * Get APM Toolkit instance for the configured provider
+     * 
+     * Uses ApmFactory to determine the provider name, then builds the toolkit
+     * class name following the convention: Gemvc\Core\Apm\Providers\{ProviderName}\{ProviderName}Toolkit
+     * 
+     * @return ApmToolkitInterface|null Toolkit instance or null if not available
+     */
+    private function getToolkit(): ?ApmToolkitInterface
+    {
+        $providerName = ApmFactory::isEnabled();
+        if ($providerName === null) {
+            return null;
+        }
+        
+        $toolkitClassName = "Gemvc\\Core\\Apm\\Providers\\{$providerName}\\{$providerName}Toolkit";
+        
+        if (!class_exists($toolkitClassName)) {
+            return null;
+        }
+        
+        try {
+            /** @var ApmToolkitInterface */
+            return new $toolkitClassName();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
     /**
      * Test APM Provider with nested spans
      * 
@@ -25,7 +54,7 @@ class ApmModel
         $apm = ApmFactory::create(null);
         
         if ($apm === null || !$apm->isEnabled()) {
-            $apmName = ProjectHelper::isApmEnabled();
+            $apmName = ApmFactory::isEnabled();
             return Response::success([
                 'apm_enabled' => false,
                 'message' => $apmName === null 
@@ -120,7 +149,7 @@ class ApmModel
         $apm = ApmFactory::create(null);
         
         if ($apm === null || !$apm->isEnabled()) {
-            $apmName = ProjectHelper::isApmEnabled();
+            $apmName = ApmFactory::isEnabled();
             return Response::success([
                 'apm_enabled' => false,
                 'message' => $apmName === null 
@@ -217,7 +246,7 @@ class ApmModel
      */
     public function getStatus(): JsonResponse
     {
-        $apmName = ProjectHelper::isApmEnabled();
+        $apmName = ApmFactory::isEnabled();
         
         if ($apmName === null) {
             return Response::success([
@@ -241,7 +270,7 @@ class ApmModel
     }
 
     /**
-     * Register TraceKit Service (TraceKit-specific)
+     * Register APM Service (Provider-agnostic)
      * 
      * @param string $email
      * @param string|null $organizationName
@@ -250,25 +279,14 @@ class ApmModel
      */
     public function register(string $email, ?string $organizationName = null, string $source = 'gemvc'): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
-        
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         
         $sourceMetadata = [
             'version' => $_ENV['APP_VERSION'] ?? '5.2.0',
@@ -279,7 +297,7 @@ class ApmModel
     }
 
     /**
-     * Verify TraceKit Email Code (TraceKit-specific)
+     * Verify APM Email Code (Provider-agnostic)
      * 
      * @param string $sessionId
      * @param string $code
@@ -287,25 +305,15 @@ class ApmModel
      */
     public function verify(string $sessionId, string $code): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->verifyCode($sessionId, $code);
     }
 
@@ -318,25 +326,14 @@ class ApmModel
      */
     public function sendHeartbeat(string $status = 'healthy', array $metadata = []): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
-        
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         
         if (empty($metadata)) {
             $metadata = [
@@ -357,25 +354,14 @@ class ApmModel
      */
     public function getMetrics(string $window = '15m'): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
-        
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         
         $allowedWindows = ['5m', '15m', '1h', '6h', '24h'];
         if (!in_array($window, $allowedWindows)) {
@@ -392,25 +378,15 @@ class ApmModel
      */
     public function getAlertsSummary(): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->getAlertsSummary();
     }
 
@@ -422,25 +398,15 @@ class ApmModel
      */
     public function getActiveAlerts(int $limit = 50): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->getActiveAlerts($limit);
     }
 
@@ -451,25 +417,15 @@ class ApmModel
      */
     public function getSubscription(): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->getSubscription();
     }
 
@@ -480,25 +436,15 @@ class ApmModel
      */
     public function listPlans(): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->listPlans();
     }
 
@@ -509,25 +455,15 @@ class ApmModel
      */
     public function listWebhooks(): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->listWebhooks();
     }
 
@@ -542,25 +478,15 @@ class ApmModel
      */
     public function createWebhook(string $name, string $url, array $events, bool $enabled = true): JsonResponse
     {
-        // Try multiple possible namespaces for TraceKitToolkit
-        $toolkitClass = null;
-        $possibleNamespaces = [
-            'Gemvc\Core\Apm\Providers\TraceKit\TraceKitToolkit',
-            'Gemvc\Helper\TraceKitToolkit',
-        ];
-        
-        foreach ($possibleNamespaces as $namespace) {
-            if (class_exists($namespace)) {
-                $toolkitClass = $namespace;
-                break;
+        $toolkit = $this->getToolkit();
+        if ($toolkit === null) {
+            $providerName = ApmFactory::isEnabled();
+            if ($providerName === null) {
+                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
             }
+            return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
-        if ($toolkitClass === null) {
-            return Response::notFound('TraceKit package not installed. Install with: composer require gemvc/apm-tracekit');
-        }
-        
-        $toolkit = new $toolkitClass();
         return $toolkit->createWebhook($name, $url, $events, $enabled);
     }
 }

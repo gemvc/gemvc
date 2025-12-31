@@ -59,12 +59,12 @@ class Apm extends ApiService
     }
 
     /**
-     * Register TraceKit Service (TraceKit-specific)
+     * Register APM Service (Provider-agnostic)
      * 
      * @return JsonResponse
      * @http POST
-     * @description Register a new service in TraceKit (requires email verification)
-     * @requires gemvc/apm-tracekit
+     * @description Register a new service in APM provider (requires email verification)
+     * @requires gemvc/apm-{provider} (e.g., gemvc/apm-tracekit)
      * @example /api/Apm/register
      */
     public function register(): JsonResponse
@@ -81,12 +81,12 @@ class Apm extends ApiService
     }
 
     /**
-     * Verify TraceKit Email Code (TraceKit-specific)
+     * Verify APM Email Code (Provider-agnostic)
      * 
      * @return JsonResponse
      * @http POST
      * @description Verify email code and get API key
-     * @requires gemvc/apm-tracekit
+     * @requires gemvc/apm-{provider} (e.g., gemvc/apm-tracekit)
      * @example /api/Apm/verify
      */
     public function verify(): JsonResponse

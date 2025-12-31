@@ -48,7 +48,7 @@ class ApmController extends Controller
     }
 
     /**
-     * Register TraceKit Service
+     * Register APM Service
      * 
      * @return JsonResponse
      */
@@ -63,7 +63,7 @@ class ApmController extends Controller
     }
 
     /**
-     * Verify TraceKit Email Code
+     * Verify APM Email Code
      * 
      * @return JsonResponse
      */
