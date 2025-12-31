@@ -2,7 +2,7 @@
 
 ## Version 5.2.1 - APM Contracts & Server Monitoring
 
-**Release Date**: 2025-01-XX  
+**Release Date**: 2025-12-31  
 **Type**: Minor Release (Backward Compatible)
 
 ---
