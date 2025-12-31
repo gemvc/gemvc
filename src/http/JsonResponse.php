@@ -2,6 +2,10 @@
 
 namespace Gemvc\Http;
 
+use Gemvc\Core\Apm\ApmFactory;
+use Gemvc\Core\Apm\ApmInterface;
+use Gemvc\Helper\ProjectHelper;
+
 /**
  * this class is responsible for creating consistently formatted structured JSON responses to use in API
  */
@@ -13,6 +17,28 @@ class JsonResponse implements ResponseInterface
     public ?int $count;
     public ?string $service_message;
     public mixed $data;
+    
+    /**
+     * APM span reference (set automatically by Response static methods when called from Model)
+     * Properties starting with _ are ignored in CRUD operations, so this won't affect database operations
+     * 
+     * @var array<string, mixed>
+     */
+    public array $_apm_span = [];
+    
+    /**
+     * Model name for APM (set automatically)
+     * 
+     * @var string|null
+     */
+    public ?string $_apm_model_name = null;
+    
+    /**
+     * Method name for APM (set automatically)
+     * 
+     * @var string|null
+     */
+    public ?string $_apm_method_name = null;
 
     public function __construct()
     {
@@ -112,6 +138,9 @@ class JsonResponse implements ResponseInterface
     }
     public function show():void
     {
+        // Automatically end Model span if it was started (from Response static methods)
+        $this->endModelSpanIfStarted();
+        
         header('Content-Type: application/json',true,$this->response_code);
         if(!isset($this->json_response) || $this->json_response === false)
         {
@@ -184,6 +213,9 @@ class JsonResponse implements ResponseInterface
 
     public function showSwoole(object $swooleResponse): void
     {
+        // Automatically end Model span if it was started (from Response static methods)
+        $this->endModelSpanIfStarted();
+        
         // @phpstan-ignore-next-line
         $swooleResponse->header('Content-Type', 'application/json');
         
@@ -199,6 +231,58 @@ class JsonResponse implements ResponseInterface
         
         // @phpstan-ignore-next-line
         $swooleResponse->end($this->json_response);
+    }
+    
+    /**
+     * Automatically end Model span if it was started (called from Response static methods)
+     * 
+     * This provides 100% automatic Model tracing with response body capture
+     * 
+     * @return void
+     */
+    private function endModelSpanIfStarted(): void
+    {
+        if (empty($this->_apm_span)) {
+            return;
+        }
+        if (ProjectHelper::isApmEnabled() === null) {
+            return;
+        }
+        
+        // Get APM instance (can work without Request for ending spans)
+        $apm = ApmFactory::create(null);
+        if ($apm === null) {
+            return;
+        }
+        
+        try {
+            // Determine status based on response code
+            /** @phpstan-ignore-next-line */
+            $status = ApmInterface::determineStatusFromHttpCode($this->response_code);
+            
+            // Build final attributes with response details
+            $finalAttributes = [
+                'http.status_code' => $this->response_code,
+                'response.message' => $this->message ?? '',
+                'response.service_message' => $this->service_message ?? '',
+            ];
+            
+            // Include response body if tracing is enabled
+            if ($apm->shouldTraceResponse() && $this->json_response !== false) {
+                // $this->json_response is guaranteed to be string here (not false)
+                /** @phpstan-ignore-next-line */
+                $finalAttributes['response.body'] = ApmInterface::limitStringForTracing($this->json_response);
+                $finalAttributes['response.count'] = $this->count !== null ? (string)$this->count : 'null';
+            }
+            
+            // End the model span with all response details
+            $apm->endSpan($this->_apm_span, $finalAttributes, $status);
+        } catch (\Throwable $e) {
+            // Silently fail - don't let APM break response sending
+            if (ProjectHelper::isDevEnvironment()) {
+                error_log("APM: Failed to end model span in JsonResponse: " . $e->getMessage());
+            }
+        }
     }
 
 }

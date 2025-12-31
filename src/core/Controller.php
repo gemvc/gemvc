@@ -5,7 +5,9 @@ namespace Gemvc\Core;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
-use Gemvc\Helper\TraceKitModel;
+use Gemvc\Core\Apm\ApmFactory;
+use Gemvc\Core\Apm\ApmInterface;
+use Gemvc\Helper\ProjectHelper;
 
 /**
  * Base class for all controllers
@@ -24,55 +26,73 @@ class Controller
     protected array $errors = [];
     
     /**
-     * TraceKitModel instance for automatic request tracing (optional)
-     * @var object|null
+     * APM instance for automatic request tracing (optional)
+     * @var ApmInterface|null
      */
-    private ?object $tracekit = null;
+    private ?ApmInterface $apm = null;
 
     public function __construct(Request $request)
     {
         $this->errors = [];
         $this->request = $request;
         
-        // Initialize TraceKitModel if available (optional dependency)
-        $this->initializeTraceKit();
+        // Initialize APM provider if available (optional dependency)
+        $this->initializeApm();
     }
     
     /**
-     * Initialize TraceKitModel for automatic request tracing
+     * Initialize APM provider reference for automatic request tracing
      * 
-     * This is optional - if TraceKitModel class doesn't exist, tracing is silently disabled
-     * Note: Trace is already started in ApiService, so Controller uses existing trace for child spans
+     * IMPORTANT: This does NOT create a new APM instance.
+     * It retrieves the existing instance created by ApiService via Request object.
+     * 
+     * Lifecycle:
+     * 1. ApiService creates ONE APM instance per request (in its constructor)
+     * 2. APM instance is stored in Request object ($request->apm)
+     * 3. Controller retrieves that SAME instance here (shares same traceId and spans)
+     * 4. UniversalQueryExecuter also uses APM for DB query spans
+     * 
+     * This ensures all spans (root, controller, database) share the same traceId.
      * 
      * @return void
      */
-    private function initializeTraceKit(): void
+    private function initializeApm(): void
     {
+        // Early return if APM is disabled - avoid unnecessary processing
+        if (ProjectHelper::isApmEnabled() === null) {
+            return;
+        }
+        
         try {
-            // Get TraceKitModel instance from static registry (set by ApiService)
+            // Get APM instance from Request object (set by ApiService)
             // This ensures we use the SAME instance with the SAME traceId and spans array
-            $this->tracekit = TraceKitModel::getCurrentInstance();
+            // NOT creating a new instance - just getting reference to existing one
+            $this->apm = $this->request->apm ?? null;
             
-            if ($this->tracekit === null) {
-                error_log("TraceKit: Controller - No active TraceKitModel instance found (ApiService should create it)");
-            } else {
-                error_log("TraceKit: Controller using shared TraceKitModel instance from ApiService");
+            if (ProjectHelper::isDevEnvironment()) {
+                if ($this->apm === null) {
+                    error_log("APM: Controller - No active APM instance found (ApiService should create it)");
+                } else {
+                    error_log("APM: Controller using shared APM instance from ApiService");
+                }
             }
         } catch (\Throwable $e) {
-            // Silently fail - don't let TraceKit break the application
-            error_log("TraceKit: Failed to initialize in Controller: " . $e->getMessage());
-            $this->tracekit = null;
+            // Silently fail - don't let APM break the application
+            if (ProjectHelper::isDevEnvironment()) {
+                error_log("APM: Failed to initialize in Controller: " . $e->getMessage());
+            }
+            $this->apm = null;
         }
     }
     
     /**
-     * Get TraceKitModel instance (for creating child spans)
+     * Get APM instance (for creating child spans)
      * 
-     * @return object|null TraceKitModel instance or null if not available
+     * @return ApmInterface|null APM instance or null if not available
      */
-    protected function getTraceKit(): ?object
+    protected function getApm(): ?ApmInterface
     {
-        return $this->tracekit;
+        return $this->apm;
     }
     
     /**
@@ -85,37 +105,36 @@ class Controller
      * @param int $kind Span kind: SPAN_KIND_SERVER (2), SPAN_KIND_CLIENT (3), or SPAN_KIND_INTERNAL (1) (default: SPAN_KIND_INTERNAL)
      * @return array<string, mixed> Span data: ['span_id' => string, 'trace_id' => string, 'start_time' => int]
      */
-    protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = TraceKitModel::SPAN_KIND_INTERNAL): array
+    protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = ApmInterface::SPAN_KIND_INTERNAL): array
     {
-        if ($this->tracekit === null) {
+        if ($this->apm === null) {
             return [];
         }
         
-        /** @var \Gemvc\Helper\TraceKitModel $tracekit */
-        $tracekit = $this->tracekit;
-        
-        if (!$tracekit->isEnabled()) {
+        if (!$this->apm->isEnabled()) {
             return [];
         }
         
         try {
             // Validate kind is a valid OpenTelemetry span kind integer
             $validKinds = [
-                TraceKitModel::SPAN_KIND_UNSPECIFIED,
-                TraceKitModel::SPAN_KIND_INTERNAL,
-                TraceKitModel::SPAN_KIND_SERVER,
-                TraceKitModel::SPAN_KIND_CLIENT,
-                TraceKitModel::SPAN_KIND_PRODUCER,
-                TraceKitModel::SPAN_KIND_CONSUMER,
+                ApmInterface::SPAN_KIND_UNSPECIFIED,
+                ApmInterface::SPAN_KIND_INTERNAL,
+                ApmInterface::SPAN_KIND_SERVER,
+                ApmInterface::SPAN_KIND_CLIENT,
+                ApmInterface::SPAN_KIND_PRODUCER,
+                ApmInterface::SPAN_KIND_CONSUMER,
             ];
             
             if (!in_array($kind, $validKinds)) {
-                $kind = TraceKitModel::SPAN_KIND_INTERNAL;
+                $kind = ApmInterface::SPAN_KIND_INTERNAL;
             }
             
-            return $tracekit->startSpan($operationName, $attributes, $kind);
+            return $this->apm->startSpan($operationName, $attributes, $kind);
         } catch (\Throwable $e) {
-            error_log("TraceKit: Failed to start span in Controller: " . $e->getMessage());
+            if (ProjectHelper::isDevEnvironment()) {
+                error_log("APM: Failed to start span in Controller: " . $e->getMessage());
+            }
             return [];
         }
     }
@@ -130,42 +149,40 @@ class Controller
      */
     protected function endTraceSpan(array $spanData, array $finalAttributes = [], ?string $status = 'OK'): void
     {
-        if ($this->tracekit === null || empty($spanData)) {
+        if ($this->apm === null || empty($spanData)) {
             return;
         }
         
         try {
-            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
-            $tracekit = $this->tracekit;
-            $statusValue = ($status === 'ERROR') ? TraceKitModel::STATUS_ERROR : TraceKitModel::STATUS_OK;
-            $tracekit->endSpan($spanData, $finalAttributes, $statusValue);
+            $statusValue = ($status === 'ERROR') ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
+            $this->apm->endSpan($spanData, $finalAttributes, $statusValue);
         } catch (\Throwable $e) {
-            error_log("TraceKit: Failed to end span in Controller: " . $e->getMessage());
+            if (ProjectHelper::isDevEnvironment()) {
+                error_log("APM: Failed to end span in Controller: " . $e->getMessage());
+            }
         }
     }
     
     /**
-     * Record exception in TraceKit (called automatically on errors)
+     * Record exception in APM (called automatically on errors)
      * 
      * @param \Throwable $exception
      * @return void
      */
-    public function recordTraceKitException(\Throwable $exception): void
+    public function recordApmException(\Throwable $exception): void
     {
-        if ($this->tracekit === null) {
+        if ($this->apm === null) {
             return;
         }
         
         try {
-            /** @var \Gemvc\Helper\TraceKitModel $tracekit */
-            $tracekit = $this->tracekit;
             // Use existing trace if available, or create one (errors are always logged)
-            $tracekit->recordException([], $exception, 'controller-operation', [
-                'controller' => $this->getControllerName(),
-            ]);
+            $this->apm->recordException([], $exception);
         } catch (\Throwable $e) {
             // Silently fail
-            error_log("TraceKit: Failed to record exception in Controller: " . $e->getMessage());
+            if (ProjectHelper::isDevEnvironment()) {
+                error_log("APM: Failed to record exception in Controller: " . $e->getMessage());
+            }
         }
     }
     
@@ -173,6 +190,7 @@ class Controller
      * Get controller name for tracing
      * 
      * @return string
+     * @phpstan-ignore-next-line
      */
     private function getControllerName(): string
     {

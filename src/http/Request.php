@@ -60,8 +60,16 @@ class Request
     public ?array $headers = null;
     
     /**
-     * TraceKitModel instance (set by ApiService for sharing with Controller and other layers)
+     * APM instance (set by ApiService/ApmFactory for sharing with Controller and other layers)
      * 
+     * @var \Gemvc\Core\Apm\ApmInterface|null
+     */
+    public ?\Gemvc\Core\Apm\ApmInterface $apm = null;
+    
+    /**
+     * APM instance (backward compatibility - same as $apm)
+     * 
+     * @deprecated Use $apm instead. This property is kept for backward compatibility.
      * @var object|null
      */
     public ?object $tracekit = null;
@@ -69,6 +77,20 @@ class Request
     private string $id;
     private string $time;
     private float $start_exec;
+    
+    /**
+     * Service name determined by Bootstrap during routing (e.g., 'User', 'Index')
+     * 
+     * @var string|null
+     */
+    private ?string $serviceName = null;
+    
+    /**
+     * Method name determined by Bootstrap during routing (e.g., 'create', 'read', 'index')
+     * 
+     * @var string|null
+     */
+    private ?string $methodName = null;
 
     public mixed $cookies;
 
@@ -89,7 +111,7 @@ class Request
     private int $_pageNumber;
     private int $_per_page;
 
-    public ?JsonResponse    $response;
+    public ?JsonResponse $response;
 
 
 
@@ -533,6 +555,48 @@ class Request
         
         $normalized = strtolower($name);
         return $this->headers[$normalized] ?? null;
+    }
+    
+    /**
+     * Set the service name (called by Bootstrap during routing)
+     * 
+     * @param string $serviceName The service name (e.g., 'User', 'Index')
+     * @return void
+     */
+    public function setServiceName(string $serviceName): void
+    {
+        $this->serviceName = $serviceName;
+    }
+    
+    /**
+     * Get the service name determined during routing
+     * 
+     * @return string The service name or 'Index' if not set (default service)
+     */
+    public function getServiceName(): string
+    {
+        return $this->serviceName ?? 'Index';
+    }
+    
+    /**
+     * Set the method name (called by Bootstrap during routing)
+     * 
+     * @param string $methodName The method name (e.g., 'create', 'read', 'index')
+     * @return void
+     */
+    public function setMethodName(string $methodName): void
+    {
+        $this->methodName = $methodName;
+    }
+    
+    /**
+     * Get the method name determined during routing
+     * 
+     * @return string The method name or 'index' if not set
+     */
+    public function getMethodName(): string
+    {
+        return $this->methodName ?? 'index';
     }
 
     public function intValuePost(string $key): int|false

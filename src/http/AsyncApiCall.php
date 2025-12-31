@@ -569,7 +569,6 @@ class AsyncApiCall
                         }
 
                         curl_multi_remove_handle($multiHandle, $ch);
-                        curl_close($ch);
                         unset($this->requestMetadata[$handleId]);
                         unset($handleMap[$handleId]);
                         $activeRequests--;
@@ -618,11 +617,14 @@ class AsyncApiCall
         }
 
         // For Apache/Nginx with PHP-FPM: finish request first, then execute
+        // Note: fastcgi_finish_request() may have already been called in shutdown function
+        // If it was already called, this will do nothing (safe to call multiple times)
         if (function_exists('fastcgi_finish_request')) {
-            // Send response to client immediately
-            fastcgi_finish_request();
+            // Try to send response to client immediately (if not already sent)
+            // This is safe to call even if response was already sent
+            @fastcgi_finish_request();
             
-            // Now execute requests in background (client already got response)
+            // Now execute requests in background (client already got or getting response)
             $this->executeAll();
             return true;
         }

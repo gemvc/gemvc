@@ -7,8 +7,9 @@ use Gemvc\Http\JsonResponse;
 use Gemvc\Core\GemvcError;
 use Gemvc\Core\GEMVCErrorHandler;
 use Gemvc\Http\HtmlResponse;
+use Gemvc\Helper\ProjectHelper;
 
-if($_ENV['APP_ENV'] === 'dev') {
+if(ProjectHelper::isDevEnvironment()) {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
@@ -17,8 +18,6 @@ if($_ENV['APP_ENV'] === 'dev') {
 class Bootstrap
 {
     private Request $request;
-    private string $requested_service;
-    private string $requested_method;
     private bool $is_web = false;
     /**
      * @var array<GemvcError>
@@ -51,12 +50,13 @@ class Bootstrap
 
     private function handleApiRequest(): void
     {
-        if (!file_exists('./app/api/'.$this->requested_service.'.php')) {
-            $this->errors[] = new GemvcError("The API service '$this->requested_service' does not exist", 404, __FILE__, __LINE__);
+        $serviceName = $this->request->getServiceName();
+        if (!file_exists('./app/api/'.$serviceName.'.php')) {
+            $this->errors[] = new GemvcError("The API service '$serviceName' does not exist", 404, __FILE__, __LINE__);
             return;
         }
         try {
-            $service = 'App\\Api\\' . $this->requested_service;
+            $service = 'App\\Api\\' . $serviceName;
             
             // Validate service class exists and extends ApiService
             if (!class_exists($service)) {
@@ -68,16 +68,16 @@ class Bootstrap
             
             // Validate service extends ApiService
             if (!($serviceInstance instanceof \Gemvc\Core\ApiService)) {
-                $this->errors[] = new GemvcError("The API service '$this->requested_service' must extend ApiService", 500, __FILE__, __LINE__);
+                $this->errors[] = new GemvcError("The API service '$serviceName' must extend ApiService", 500, __FILE__, __LINE__);
                 return;
             }
             
             // Use default index method if method is empty (ApiService provides index())
-            $method = $this->requested_method ?: 'index';
+            $method = $this->request->getMethodName();
             
             // Validate method exists
             if (!method_exists($serviceInstance, $method)) {
-                $this->errors[] = new GemvcError("API method '$method' does not exist in service '$this->requested_service'", 404, __FILE__, __LINE__);
+                $this->errors[] = new GemvcError("API method '$method' does not exist in service '$serviceName'", 404, __FILE__, __LINE__);
                 return;
             }
             
@@ -110,32 +110,24 @@ class Bootstrap
         } catch (\Gemvc\Core\ValidationException $e) {
             // Handle validation exceptions (400 Bad Request) from ApiService or Controller
             $this->errors[] = new GemvcError($e->getMessage(), 400, $e->getFile(), $e->getLine());
-            // Record exception in TraceKit if available
-            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
-                $serviceInstance->recordTraceKitException($e);
-            }
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
         } catch (\RuntimeException $e) {
             // Handle runtime exceptions (500 Internal Server Error) - typically from Controller database operations
             $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
-            // Record exception in TraceKit if available
-            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
-                $serviceInstance->recordTraceKitException($e);
-            }
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
         } catch (\Error $e) {
             // Handle PHP 7+ Error exceptions (method not found, etc.)
             $httpCode = self::determineHttpCodeFromError($e);
             $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
-            // Record exception in TraceKit if available
-            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
-                $serviceInstance->recordTraceKitException($e);
-            }
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
         } catch (\Throwable $e) {
             // Handle other exceptions (runtime errors, etc.)
             $this->errors[] = new GemvcError($e->getMessage(), 500, $e->getFile(), $e->getLine());
-            // Record exception in TraceKit if available
-            if (isset($serviceInstance) && method_exists($serviceInstance, 'recordTraceKitException')) {
-                $serviceInstance->recordTraceKitException($e);
-            }
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
         }
     }
 
@@ -143,13 +135,14 @@ class Bootstrap
     {
         header('Content-Type: text/html; charset=UTF-8');
         try {
+            $serviceName = $this->request->getServiceName();
             // Load the appropriate web service class
-            $serviceClass = 'App\\Web\\' . $this->requested_service;
+            $serviceClass = 'App\\Web\\' . $serviceName;
             
             // If class doesn't exist, try the default controller
             if (!class_exists($serviceClass)) {
                 // Check if we're looking for a static page
-                $staticPath = './app/web/pages/' . strtolower($this->requested_service) . '.php';
+                $staticPath = './app/web/pages/' . strtolower($serviceName) . '.php';
                 if (file_exists($staticPath)) {
                     include $staticPath;
                     die;
@@ -164,7 +157,7 @@ class Bootstrap
             $serviceInstance = new $serviceClass($this->request);
                        
             // Check if the requested method exists
-            $method = $this->requested_method ?: 'index';
+            $method = $this->request->getMethodName();
             if (!method_exists($serviceInstance, $method)) {
                 // Try using the method as a parameter to the index method
                 if (method_exists($serviceInstance, 'index')) {
@@ -200,8 +193,8 @@ class Bootstrap
         if ($isRootUrl) {
             // Route root URL to Index/index API endpoint
             $this->is_web = false;
-            $this->requested_service = "Index";
-            $this->requested_method = "index";
+            $this->request->setServiceName("Index");
+            $this->request->setMethodName("index");
             return;
         }
         
@@ -244,8 +237,10 @@ class Bootstrap
             }
         }
         
-        $this->requested_service = $service;
-        $this->requested_method = $method;
+        // Set service and method name on Request object for framework-wide access
+        // This allows ApiService, APM providers, and other components to access routing metadata
+        $this->request->setServiceName($service);
+        $this->request->setMethodName($method);
     }
 
     /**
@@ -334,6 +329,27 @@ class Bootstrap
         return $templatePath;
     }
 
+    /**
+     * Record exception in APM (if available via Request object)
+     * 
+     * @param \Throwable $exception
+     * @return void
+     */
+    private function recordExceptionInApm(\Throwable $exception): void
+    {
+        // Early return if APM is disabled - avoid unnecessary processing
+        if (ProjectHelper::isApmEnabled() === null) {
+            return;
+        }
+        
+        // Access APM instance directly via Request object
+        $apm = $this->request->apm ?? null;
+        if ($apm !== null) {
+            // ApmInterface::recordException() already has graceful error handling
+            $apm->recordException([], $exception);
+        }
+    }
+    
     /**
      * Determine HTTP status code from Error exception
      * 

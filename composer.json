@@ -8,7 +8,8 @@
         "symfony/dotenv": "^6.4 || ^7.2",
         "gemvc/connection-contracts": "^1.0",
         "gemvc/connection-pdo": "^1.0",
-        "gemvc/connection-openswoole": "^1.0"
+        "gemvc/connection-openswoole": "^1.0",
+        "gemvc/apm-contracts": "^1.0"
     },
     "license": "MIT",
     "archive": {
@@ -53,7 +54,13 @@
             "email": "ali.khorsandfard@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "extra": {
+        "branch-alias": {
+            "dev-main": "5.2.x-dev"
+        }
+    },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.1"

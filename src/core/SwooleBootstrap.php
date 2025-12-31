@@ -5,6 +5,7 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\ResponseInterface;
+use Gemvc\Helper\ProjectHelper;
 
 /**
  * SwooleBootstrap - A Bootstrap alternative for OpenSwoole environment
@@ -15,8 +16,6 @@ use Gemvc\Http\ResponseInterface;
 class SwooleBootstrap
 {
     private Request $request;
-    private string $requested_service;
-    private string $requested_method;
 
     /**
      * Constructor
@@ -47,12 +46,10 @@ class SwooleBootstrap
             // Load environment to check APP_ENV
             try {
                 \Gemvc\Helper\ProjectHelper::loadEnv();
-                $isDevelopment = ($_ENV['APP_ENV'] ?? '') === 'dev';
-
-                if ($isDevelopment) {
+                if (ProjectHelper::isDevEnvironment()) {
                     // Route root URL to Developer/app (SPA shell) in dev mode
-                    $this->requested_service = "Developer";
-                    $this->requested_method = "app";
+                    $this->request->setServiceName("Developer");
+                    $this->request->setMethodName("app");
                     return;
                 }
             } catch (\Exception $e) {
@@ -69,8 +66,10 @@ class SwooleBootstrap
             $method = $segments[$methodIndex];
         }
 
-        $this->requested_service = $service;
-        $this->requested_method = $method;
+        // Set service and method name on Request object for framework-wide access
+        // This allows ApiService, APM providers, and other components to access routing metadata
+        $this->request->setServiceName($service);
+        $this->request->setMethodName($method);
     }
 
     /**
@@ -80,32 +79,53 @@ class SwooleBootstrap
      */
     public function processRequest(): ?ResponseInterface
     {
-        if (!file_exists('./app/api/' . $this->requested_service . '.php')) {
-            return Response::notFound("The service path for '$this->requested_service' does not exist, check your service name if properly typed");
+        $serviceName = $this->request->getServiceName();
+        if (!file_exists('./app/api/' . $serviceName . '.php')) {
+            return Response::notFound("The service path for '$serviceName' does not exist, check your service name if properly typed");
         }
 
         $serviceInstance = false;
         try {
-            $service = 'App\\Api\\' . $this->requested_service;
+            $service = 'App\\Api\\' . $serviceName;
             $serviceInstance = new $service($this->request);
         } catch (\Throwable $e) {
             return Response::notFound($e->getMessage());
         }
 
-        if (!method_exists($serviceInstance, $this->requested_method)) {
-            return Response::notFound("Requested method '$this->requested_method' does not exist in service, check if you typed it correctly");
+        $methodName = $this->request->getMethodName();
+        if (!method_exists($serviceInstance, $methodName)) {
+            return Response::notFound("Requested method '$methodName' does not exist in service, check if you typed it correctly");
         }
 
-        $method = $this->requested_method;
+        $method = $methodName;
         try {
             return $serviceInstance->$method();
         } catch (\Throwable $e) {
-            // Record exception in TraceKit if available
-            if (method_exists($serviceInstance, 'recordTraceKitException')) {
-                $serviceInstance->recordTraceKitException($e);
-            }
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
             // Re-throw to let Swoole handle it
             throw $e;
+        }
+    }
+    
+    /**
+     * Record exception in APM (if available via Request object)
+     * 
+     * @param \Throwable $exception
+     * @return void
+     */
+    private function recordExceptionInApm(\Throwable $exception): void
+    {
+        // Early return if APM is disabled - avoid unnecessary processing
+        if (ProjectHelper::isApmEnabled() === null) {
+            return;
+        }
+        
+        // Access APM instance directly via Request object
+        $apm = $this->request->apm ?? null;
+        if ($apm !== null) {
+            // ApmInterface::recordException() already has graceful error handling
+            $apm->recordException([], $exception);
         }
     }
 }

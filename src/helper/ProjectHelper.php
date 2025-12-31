@@ -1,6 +1,8 @@
 <?php
 namespace Gemvc\Helper;
+
 use Symfony\Component\Dotenv\Dotenv;
+use Gemvc\Core\Apm\ApmFactory;
 
 class ProjectHelper
 {
@@ -163,6 +165,115 @@ class ProjectHelper
         } catch (\Exception $e) {
             return 'unknown';
         }
+    }
+
+    /**
+     * Check if APM is enabled and return the APM provider name
+     * 
+     * Uses ApmFactory to check if any APM provider is enabled and configured.
+     * Returns the APM provider name (e.g., "TraceKit", "Datadog") if enabled,
+     * or null if no APM is enabled.
+     * 
+     * Checks both provider-specific API keys (e.g., TRACEKIT_API_KEY) and
+     * the unified APM_API_KEY environment variable.
+     * 
+     * @return string|null APM provider name if enabled, null otherwise
+     */
+    public static function isApmEnabled(): ?string
+    {
+        // Use ApmFactory to check if APM is enabled (works for TraceKit, Datadog, etc.)
+        if (!ApmFactory::isEnabled()) {
+            return null;
+        }
+        
+        // Get APM name from environment
+        $apmName = $_ENV['APM_NAME'] ?? 'TraceKit';
+        $apmNameString = is_string($apmName) ? $apmName : 'TraceKit';
+        return trim($apmNameString);
+    }
+    
+    /**
+     * Check if TraceKit is enabled (backward compatibility)
+     * 
+     * @deprecated Use isApmEnabled() instead. This method will be removed in a future version.
+     * @return bool True if TraceKit is enabled, false otherwise
+     */
+    public static function isTraceKitEnabled(): bool
+    {
+        $apmName = self::isApmEnabled();
+        return $apmName === 'TraceKit';
+    }
+
+    /**
+     * Check if the current environment is development
+     * 
+     * @return bool True if development environment, false otherwise
+     */
+    public static function isDevEnvironment(): bool
+    {
+        return $_ENV['APP_ENV'] === 'dev';
+    }
+
+    /**
+     * Update multiple environment variables in .env file
+     * 
+     * @param array<string, string> $variables Key-value pairs of env variables
+     * @return bool Success status
+     */
+    public static function updateEnvVariables(array $variables): bool
+    {
+        $envPath = self::rootDir() . DIRECTORY_SEPARATOR . '.env';
+        
+        if (!file_exists($envPath)) {
+            return false;
+        }
+        
+        $envContent = file_get_contents($envPath);
+        if ($envContent === false) {
+            return false;
+        }
+        
+        // Update or add each variable
+        foreach ($variables as $key => $value) {
+            // Pattern to match variable line (handles quoted and unquoted values)
+            // Matches: KEY=value or KEY="value" or KEY='value'
+            $pattern = '/^' . preg_quote($key, '/') . '\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\n\r]*)/m';
+            
+            // Escape value if needed (wrap in quotes if contains spaces/special chars)
+            $escapedValue = self::escapeEnvValue($value);
+            $replacement = $key . '=' . $escapedValue;
+            
+            if (preg_match($pattern, $envContent)) {
+                // Update existing
+                $replaced = preg_replace($pattern, $replacement, $envContent);
+                $envContent = is_string($replaced) ? $replaced : $envContent;
+            } else {
+                // Add new - try to add after APP_ENV if found, otherwise append to end
+                if (preg_match('/^APP_ENV\s*=.*$/m', $envContent, $matches, PREG_OFFSET_CAPTURE)) {
+                    $pos = $matches[0][1] + strlen($matches[0][0]);
+                    $envContent = substr_replace($envContent, "\n" . $replacement, $pos, 0);
+                } else {
+                    $envContent .= "\n" . $replacement . "\n";
+                }
+            }
+        }
+        
+        return file_put_contents($envPath, $envContent) !== false;
+    }
+
+    /**
+     * Escape value for .env file
+     * 
+     * @param string $value Value to escape
+     * @return string Escaped value (quoted if needed)
+     */
+    private static function escapeEnvValue(string $value): string
+    {
+        // If value contains spaces or special chars, wrap in quotes
+        if (preg_match('/[\s"\'=#]/', $value)) {
+            return '"' . str_replace('"', '\\"', $value) . '"';
+        }
+        return $value;
     }
 }
 
