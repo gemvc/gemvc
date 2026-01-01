@@ -110,6 +110,7 @@ class InitSwoole extends AbstractInit
         $this->setPackageName('swoole');
         // OpenSwoole dependencies (including gemvc/connection-openswoole) are automatically
         // installed via installSwooleDependencies() method when OpenSwoole is selected
+        $this->installSwooleDependencies();
     }
     
     protected function getStartupTemplatePath(): string
@@ -178,6 +179,73 @@ class InitSwoole extends AbstractInit
             " • WebSocket support available via OpenSwooleServer class",
             " • View logs: \033[1;95mtail -f swoole.log\033[0m"
         ];
+    }
+    
+    /**
+     * Install OpenSwoole-specific dependencies
+     * 
+     * Installs gemvc/connection-openswoole which automatically includes all required
+     * Hyperf dependencies via its own composer.json require section.
+     * 
+     * @return void
+     */
+    private function installSwooleDependencies(): void
+    {
+        // Only need to install gemvc/connection-openswoole
+        // Composer will automatically install all its dependencies (Hyperf packages, PSR packages, etc.)
+        $requiredPackage = 'gemvc/connection-openswoole';
+        
+        if (!$this->isPackageInstalled($requiredPackage)) {
+            $this->info("Installing OpenSwoole dependencies (gemvc/connection-openswoole and all required packages)...");
+            $this->installPackage($requiredPackage);
+        }
+    }
+    
+    /**
+     * Check if a package is installed
+     * 
+     * @param string $packageName
+     * @return bool
+     */
+    private function isPackageInstalled(string $packageName): bool
+    {
+        $composerLockFile = getcwd() . '/composer.lock';
+        if (!file_exists($composerLockFile)) {
+            return false;
+        }
+        
+        $lockContent = file_get_contents($composerLockFile);
+        if ($lockContent === false) {
+            return false;
+        }
+        
+        return strpos($lockContent, '"name": "' . $packageName . '"') !== false;
+    }
+    
+    /**
+     * Install a single package via composer
+     * 
+     * @param string $packageName
+     * @return void
+     */
+    private function installPackage(string $packageName): void
+    {
+        $command = "composer require {$packageName}";
+        
+        $this->info("Running: {$command}");
+        
+        $output = [];
+        $returnCode = 0;
+        
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        if ($returnCode === 0) {
+            $this->info("✅ OpenSwoole dependencies installed successfully!");
+        } else {
+            $this->error("Failed to install OpenSwoole dependencies:");
+            $this->error(implode("\n", $output));
+            $this->info("Please install manually: {$command}");
+        }
     }
     
 }
