@@ -5,7 +5,6 @@ namespace Gemvc\Database;
 use Gemvc\Core\WebserverDetector;
 use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
 use Gemvc\Database\Connection\Pdo\PdoConnection;
-use Gemvc\Database\Connection\OpenSwoole\SwooleConnection;
 
 /**
  * Database Manager Factory - Thin wrapper for environment detection
@@ -40,11 +39,28 @@ class DatabaseManagerFactory
         if (self::$instance === null) {
             $environment = self::getCachedEnvironment();
             self::$instance = match ($environment) {
-                'swoole' => SwooleConnection::getInstance(),
+                'swoole' => self::getSwooleConnection(),
                 default => PdoConnection::getInstance(),
             };
         }
         return self::$instance;
+    }
+    
+    /**
+     * Get SwooleConnection instance if available, otherwise fallback to PdoConnection
+     * 
+     * @return ConnectionManagerInterface
+     */
+    private static function getSwooleConnection(): ConnectionManagerInterface
+    {
+        // Check if gemvc/connection-openswoole package is installed
+        if (class_exists('Gemvc\Database\Connection\OpenSwoole\SwooleConnection')) {
+            return \Gemvc\Database\Connection\OpenSwoole\SwooleConnection::getInstance();
+        }
+        
+        // Fallback to PDO if OpenSwoole package is not installed
+        // This can happen if user is running on Apache/Nginx but environment was detected as swoole
+        return PdoConnection::getInstance();
     }
 
     /**
@@ -71,8 +87,12 @@ class DatabaseManagerFactory
             // Reset the underlying manager if it has resetInstance static method
             if (self::$instance instanceof PdoConnection) {
                 PdoConnection::resetInstance();
-            } elseif (self::$instance instanceof SwooleConnection) {
-                SwooleConnection::resetInstance();
+            } elseif (class_exists('Gemvc\Database\Connection\OpenSwoole\SwooleConnection')) {
+                /** @var class-string $swooleClass */
+                $swooleClass = 'Gemvc\Database\Connection\OpenSwoole\SwooleConnection';
+                if (method_exists($swooleClass, 'resetInstance')) {
+                    $swooleClass::resetInstance();
+                }
             }
             self::$instance = null;
         }

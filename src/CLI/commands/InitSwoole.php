@@ -108,8 +108,8 @@ class InitSwoole extends AbstractInit
     {
         parent::__construct($args, $options);
         $this->setPackageName('swoole');
-        // All OpenSwoole dependencies are automatically installed via gemvc/connection-openswoole
-        // which is a dependency of gemvc/library
+        // OpenSwoole dependencies (including gemvc/connection-openswoole) are automatically
+        // installed via installSwooleDependencies() method when OpenSwoole is selected
     }
     
     protected function getStartupTemplatePath(): string

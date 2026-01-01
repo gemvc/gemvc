@@ -182,63 +182,20 @@ class InitSwoole extends AbstractInit
     /**
      * Install OpenSwoole-specific dependencies
      * 
+     * Installs gemvc/connection-openswoole which automatically includes all required
+     * Hyperf dependencies via its own composer.json require section.
+     * 
      * @return void
      */
     private function installSwooleDependencies(): void
     {
-        $requiredPackages = [
-            'hyperf/db-connection',
-            'hyperf/database', 
-            'hyperf/di',
-            'hyperf/pool',
-            'hyperf/config',
-            'hyperf/utils',
-            'hyperf/engine',
-            'hyperf/context',
-            'hyperf/coroutine',
-            'hyperf/support',
-            'hyperf/serializer',
-            'hyperf/coordinator',
-            'hyperf/codec',
-            'hyperf/code-parser',
-            'hyperf/stdlib',
-            'hyperf/pipeline',
-            'hyperf/event',
-            'hyperf/model-listener',
-            'hyperf/framework',
-            'hyperf/engine-contract',
-            'nesbot/carbon',
-            'carbonphp/carbon-doctrine-types',
-            'doctrine/inflector',
-            'doctrine/instantiator',
-            'fig/http-message-util',
-            'graham-campbell/result-type',
-            'php-di/phpdoc-reader',
-            'phpoption/phpoption',
-            'psr/clock',
-            'psr/container',
-            'psr/event-dispatcher',
-            'psr/log',
-            'symfony/deprecation-contracts',
-            'symfony/finder',
-            'symfony/polyfill-ctype',
-            'symfony/polyfill-mbstring',
-            'symfony/polyfill-php80',
-            'symfony/translation',
-            'symfony/translation-contracts'
-        ];
+        // Only need to install gemvc/connection-openswoole
+        // Composer will automatically install all its dependencies (Hyperf packages, PSR packages, etc.)
+        $requiredPackage = 'gemvc/connection-openswoole';
         
-        $missingPackages = [];
-        
-        foreach ($requiredPackages as $package) {
-            if (!$this->isPackageInstalled($package)) {
-                $missingPackages[] = $package;
-            }
-        }
-        
-        if (!empty($missingPackages)) {
-            $this->info("Installing OpenSwoole dependencies...");
-            $this->installPackages($missingPackages);
+        if (!$this->isPackageInstalled($requiredPackage)) {
+            $this->info("Installing OpenSwoole dependencies (gemvc/connection-openswoole and all required packages)...");
+            $this->installPackage($requiredPackage);
         }
     }
     
@@ -264,15 +221,14 @@ class InitSwoole extends AbstractInit
     }
     
     /**
-     * Install multiple packages via composer
+     * Install a single package via composer
      * 
-     * @param array<string> $packages
+     * @param string $packageName
      * @return void
      */
-    private function installPackages(array $packages): void
+    private function installPackage(string $packageName): void
     {
-        $packageList = implode(' ', $packages);
-        $command = "composer require {$packageList}";
+        $command = "composer require {$packageName}";
         
         $this->info("Running: {$command}");
         

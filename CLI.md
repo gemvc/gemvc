@@ -606,9 +606,12 @@ gemvc init --server=apache
 - ✅ Copies templates (`templates/cli/`) for code generation
 - ✅ Sets up `.env` file from `example.env`
 - ✅ Installs dependencies (`composer.json`)
+- ✅ **Automatically installs OpenSwoole-specific packages** (when OpenSwoole is selected: `gemvc/connection-openswoole` package, which includes all required Hyperf dependencies)
 - ✅ **Offers Docker setup** (interactive service selection via `DockerComposeInit`)
 - ✅ Offers PHPStan installation (optional)
 - ✅ Offers testing framework (optional)
+
+**Note**: The `gemvc/connection-openswoole` package is only installed when OpenSwoole is selected. Apache and Nginx projects do not include this package, reducing default package size.
 
 **Flags**:
 - `--swoole` - Initialize for OpenSwoole
