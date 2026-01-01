@@ -1,3 +1,4 @@
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.2.3...5.2.4
 # GEMVC Framework - Release Notes
 
 ## Version 5.2.4 - CLI Optimization & Code Cleanup
@@ -482,4 +483,7 @@ composer update gemvc/library
 **Deprecations**: `ProjectHelper::isTraceKitEnabled()`, `Request::$tracekit`  
 **Minimum PHP Version**: 8.2+  
 **Recommended PHP Version**: 8.4+
+---
 
+## [Gemvc PHP Framework built for Microservices](https://gemvc.de)
+### Made with ❤️ by Ali Khorsandfard
