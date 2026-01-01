@@ -5,6 +5,31 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.4] - 2026-01-01
+
+### Changed
+- **CLI Initialization Optimization** - Cleaned up startup file structure
+  - Removed unused duplicate files from root `src/startup/` directory
+  - Centralized `appIndex.php` in `src/startup/common/` (already done in 5.2.3)
+  - All webserver-specific files now properly organized in `src/startup/{apache|nginx|swoole}/`
+  - Common files centralized in `src/startup/common/`
+  - Improved code maintainability and reduced duplication
+
+### Fixed
+- **Startup File Structure** - Removed redundant root-level startup files
+  - Deleted unused `src/startup/index.php` (duplicate of `swoole/index.php`)
+  - Deleted unused `src/startup/Dockerfile` (webserver-specific ones exist)
+  - Deleted unused `src/startup/.gitignore` (webserver-specific ones exist)
+  - Deleted unused `src/startup/.dockerignore` (webserver-specific ones exist)
+  - Deleted unused `src/startup/docker-compose.yml` (created dynamically)
+  - Deleted unused `src/startup/example.env` (webserver-specific ones exist)
+  - Deleted unused `src/startup/phpstan.neon` (already in `common/`)
+  - All files were unused fallbacks that were never accessed due to webserver-specific directories existing
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.2.3] - 2025-12-31
 
 ### Added

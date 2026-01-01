@@ -1,5 +1,149 @@
 # GEMVC Framework - Release Notes
 
+## Version 5.2.4 - CLI Optimization & Code Cleanup
+
+**Release Date**: 2026-01-01  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 🎉 Overview
+
+This release focuses on **CLI optimization and code cleanup**, removing unused duplicate files and improving the startup file structure. All changes are internal improvements with no breaking changes.
+
+---
+
+## ✨ Changes
+
+### 🧹 Startup File Structure Cleanup
+
+**Removed Unused Root Files**
+
+Cleaned up the `src/startup/` directory by removing redundant root-level files that were never used:
+
+- ✅ Removed `src/startup/index.php` (duplicate of `swoole/index.php`)
+- ✅ Removed `src/startup/Dockerfile` (webserver-specific ones exist)
+- ✅ Removed `src/startup/.gitignore` (webserver-specific ones exist)
+- ✅ Removed `src/startup/.dockerignore` (webserver-specific ones exist)
+- ✅ Removed `src/startup/docker-compose.yml` (created dynamically by `DockerComposeInit`)
+- ✅ Removed `src/startup/example.env` (webserver-specific ones exist)
+- ✅ Removed `src/startup/phpstan.neon` (already in `common/`)
+
+**Why These Files Were Safe to Remove**:
+
+- The `findStartupPath()` method in `AbstractInit` prioritizes webserver-specific directories (`swoole/`, `apache/`, `nginx/`)
+- Root files were only used as fallback if webserver-specific directories didn't exist
+- Since webserver-specific directories always exist, root files were never accessed
+- All functionality remains intact with cleaner, more organized structure
+
+**New Clean Structure**:
+```
+src/startup/
+├── apache/          # Apache-specific files (used)
+├── nginx/           # Nginx-specific files (used)
+├── swoole/          # OpenSwoole-specific files (used)
+└── common/          # Shared files (used)
+    ├── appIndex.php
+    ├── phpstan.neon
+    └── init_example/
+```
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.2.3 to 5.2.4
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Internal file structure cleanup
+- No API changes
+- No configuration changes
+- No breaking changes
+
+**Benefits**:
+- Cleaner codebase
+- Reduced duplication
+- Better maintainability
+- Same functionality
+
+---
+
+## 🐛 Bug Fixes
+
+- **File Structure** - Removed unused duplicate files that were never accessed
+- **Code Organization** - Improved startup file structure for better maintainability
+
+---
+
+## 📚 Documentation Updates
+
+- Updated `CHANGELOG.md` with 5.2.4 release notes
+- Updated `RELEASE_NOTES.md` with cleanup details
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required.
+
+---
+
+## 🚀 Performance
+
+- **No performance impact** - Internal cleanup only
+- **Reduced package size** - Removed unused files
+
+---
+
+## 🧪 Testing
+
+- All existing tests pass
+- Installation test verified
+- PHPStan Level 9 compliance maintained
+
+---
+
+## 🙏 Acknowledgments
+
+Special thanks to the community for feedback and contributions.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/library
+- **Issues**: https://github.com/gemvc/library/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
 ## Version 5.2.3 - APM Contracts & Server Monitoring
 
 **Release Date**: 2025-12-31  
