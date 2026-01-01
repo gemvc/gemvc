@@ -21,10 +21,9 @@ class InitSwoole extends AbstractInit
     /**
      * OpenSwoole-specific file mappings
      * Maps source files to destination paths
+     * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()
      */
-    private const SWOOLE_FILE_MAPPINGS = [
-        'appIndex.php' => 'app/api/Index.php'
-    ];
+    private const SWOOLE_FILE_MAPPINGS = [];
     
     /**
      * Get the webserver type identifier
@@ -54,8 +53,8 @@ class InitSwoole extends AbstractInit
      * This includes:
      * - index.php (OpenSwoole bootstrap)
      * - Dockerfile (OpenSwoole container configuration)
-     * - appIndex.php -> app/api/Index.php
      * 
+     * Note: appIndex.php is now copied centrally in AbstractInit::copyAppIndexFile()
      * Note: server/handlers/ directory copying is commented out (unused legacy code)
      * 
      * @return void
@@ -84,18 +83,6 @@ class InitSwoole extends AbstractInit
             }
         }
         
-        // Copy appIndex.php to app/api/Index.php
-        foreach (self::SWOOLE_FILE_MAPPINGS as $sourceFileName => $destPath) {
-            $sourceFile = $startupPath . DIRECTORY_SEPARATOR . $sourceFileName;
-            $destFile = $this->basePath . DIRECTORY_SEPARATOR . $destPath;
-            
-            if (file_exists($sourceFile)) {
-                // Ensure directory exists
-                $destDir = dirname($destFile);
-                $this->fileSystem->createDirectoryIfNotExists($destDir);
-                $this->fileSystem->copyFileWithConfirmation($sourceFile, $destFile, $sourceFileName);
-            }
-        }       
         $this->info("✅ OpenSwoole files copied");
     }
     
@@ -133,6 +120,8 @@ class InitSwoole extends AbstractInit
     
     /**
      * Get OpenSwoole-specific file mappings
+     * 
+     * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()
      * 
      * @return array<string, string>
      */

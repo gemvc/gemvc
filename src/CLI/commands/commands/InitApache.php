@@ -27,10 +27,9 @@ class InitApache extends AbstractInit
     /**
      * Apache-specific file mappings
      * Maps source files to destination paths
+     * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()
      */
-    private const APACHE_FILE_MAPPINGS = [
-        'appIndex.php' => 'app/api/Index.php'
-    ];
+    private const APACHE_FILE_MAPPINGS = [];
     
     /**
      * Constructor - set Apache package name
@@ -67,9 +66,11 @@ class InitApache extends AbstractInit
      * This includes:
      * - index.php (Apache bootstrap)
      * - .htaccess (URL rewriting rules)
-     * - .env (from example.env)
-     * - composer.json, Dockerfile, docker-compose.yml
+     * - composer.json, Dockerfile
      * - .gitignore, .dockerignore
+     * 
+     * Note: appIndex.php is now copied centrally in AbstractInit::copyAppIndexFile()
+     * Note: .env is created by createEnvFile() method in AbstractInit
      * 
      * @return void
      */
@@ -98,22 +99,6 @@ class InitApache extends AbstractInit
                 $this->fileSystem->copyFileWithConfirmation($sourceFile, $destFile, $file);
             }
         }
-        
-        // Copy appIndex.php to app/api/Index.php
-        foreach (self::APACHE_FILE_MAPPINGS as $sourceFileName => $destPath) {
-            $sourceFile = $startupPath . DIRECTORY_SEPARATOR . $sourceFileName;
-            $destFile = $this->basePath . DIRECTORY_SEPARATOR . $destPath;
-            
-            if (file_exists($sourceFile)) {
-                // Ensure directory exists
-                $destDir = dirname($destFile);
-                $this->fileSystem->createDirectoryIfNotExists($destDir);
-                $this->fileSystem->copyFileWithConfirmation($sourceFile, $destFile, $sourceFileName);
-            }
-        }
-        
-        // Note: .env is created by createEnvFile() method in AbstractInit
-        // No need to copy it here to avoid duplicate prompts
         
         $this->info("✅ Apache files copied");
     }
@@ -145,6 +130,8 @@ class InitApache extends AbstractInit
     
     /**
      * Get Apache-specific file mappings
+     * 
+     * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()
      * 
      * @return array<string, string>
      */

@@ -228,7 +228,48 @@ abstract class AbstractInit extends Command
         // Copy init example files to app directory
         $this->copyUserFiles($startupPath);
         
+        // Copy appIndex.php from common directory to app/api/Index.php
+        // This file is identical across all webservers, so it's centralized here
+        $this->copyAppIndexFile();
+        
         $this->info("\033[32m✓\033[0m Common files copied");
+    }
+    
+    /**
+     * Copy appIndex.php from common directory to app/api/Index.php
+     * This file is identical across all webservers, so it's centralized here
+     * 
+     * @return void
+     */
+    protected function copyAppIndexFile(): void
+    {
+        // Get common directory path
+        $commonPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common';
+        
+        // Try Composer package path with package name from property
+        if (!is_dir($commonPath)) {
+            $commonPath = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common';
+        }
+        
+        // Try both appIndex.php (lowercase) and AppIndex.php (capital A) for compatibility
+        $sourceFile = $commonPath . DIRECTORY_SEPARATOR . 'appIndex.php';
+        if (!file_exists($sourceFile)) {
+            $sourceFile = $commonPath . DIRECTORY_SEPARATOR . 'AppIndex.php';
+        }
+        
+        if (!file_exists($sourceFile)) {
+            $this->warning("appIndex.php not found in common directory ({$commonPath}), skipping");
+            return;
+        }
+        
+        $destFile = $this->basePath . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'Index.php';
+        
+        // Ensure target directory exists
+        $destDir = dirname($destFile);
+        $this->fileSystem->createDirectoryIfNotExists($destDir);
+        
+        // Copy the file
+        $this->fileSystem->copyFileWithConfirmation($sourceFile, $destFile, 'appIndex.php');
     }
     
     /**
