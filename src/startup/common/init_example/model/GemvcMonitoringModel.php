@@ -30,6 +30,13 @@ class GemvcMonitoringModel extends DeveloperTable
         return Response::success($metrics, 1, 'RAM metrics retrieved successfully');
     }
 
+    public function getDockerContainerMemoryUsage(): JsonResponse
+    {
+        $metrics = ServerMonitorHelper::getDockerContainerMemoryUsage();
+        $metrics['timestamp'] = date('Y-m-d H:i:s');
+        return Response::success($metrics, 1, 'Docker container memory usage retrieved successfully');
+    }
+
     /**
      * Get CPU metrics
      * 
@@ -49,6 +56,13 @@ class GemvcMonitoringModel extends DeveloperTable
         ];
         
         return Response::success($metrics, 1, 'CPU metrics retrieved successfully');
+    }
+
+    public function getDockerContainerCpuLoad(): JsonResponse
+    {
+        $metrics = ServerMonitorHelper::getDockerContainerCpuLoad();
+        $metrics['timestamp'] = date('Y-m-d H:i:s');
+        return Response::success($metrics, 1, 'Docker container CPU load retrieved successfully');
     }
 
     /**

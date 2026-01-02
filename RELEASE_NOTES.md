@@ -1,87 +1,115 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.2.3...5.2.4
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.2.5...5.3.0
 # GEMVC Framework - Release Notes
 
-## Version 5.2.4 - CLI Optimization & Code Cleanup
+## Version 5.3.0 - Server Monitoring Dashboard
 
-**Release Date**: 2026-01-01  
-**Type**: Patch Release (Backward Compatible)
-
----
-
-## 🎉 Overview
-
-This release focuses on **CLI optimization and code cleanup**, removing unused duplicate files and improving the startup file structure. All changes are internal improvements with no breaking changes.
+**Release Date**: 2026-01-03  
+**Type**: Minor Release (Backward Compatible)
 
 ---
 
-## ✨ Changes
+##  Overview
 
-### 🧹 Startup File Structure Cleanup
-
-**Removed Unused Root Files**
-
-Cleaned up the `src/startup/` directory by removing redundant root-level files that were never used:
-
-- ✅ Removed `src/startup/index.php` (duplicate of `swoole/index.php`)
-- ✅ Removed `src/startup/Dockerfile` (webserver-specific ones exist)
-- ✅ Removed `src/startup/.gitignore` (webserver-specific ones exist)
-- ✅ Removed `src/startup/.dockerignore` (webserver-specific ones exist)
-- ✅ Removed `src/startup/docker-compose.yml` (created dynamically by `DockerComposeInit`)
-- ✅ Removed `src/startup/example.env` (webserver-specific ones exist)
-- ✅ Removed `src/startup/phpstan.neon` (already in `common/`)
-
-**Why These Files Were Safe to Remove**:
-
-- The `findStartupPath()` method in `AbstractInit` prioritizes webserver-specific directories (`swoole/`, `apache/`, `nginx/`)
-- Root files were only used as fallback if webserver-specific directories didn't exist
-- Since webserver-specific directories always exist, root files were never accessed
-- All functionality remains intact with cleaner, more organized structure
-
-**New Clean Structure**:
-```
-src/startup/
-├── apache/          # Apache-specific files (used)
-├── nginx/           # Nginx-specific files (used)
-├── swoole/          # OpenSwoole-specific files (used)
-└── common/          # Shared files (used)
-    ├── appIndex.php
-    ├── phpstan.neon
-    └── init_example/
-```
+This release introduces a **Server Monitoring Dashboard** in the Developer Assistant, providing real-time visualization of server resources including RAM, CPU, network, and database metrics. The monitoring system features interactive charts, Docker container metrics, and a user-friendly interface for tracking system performance.
 
 ---
 
-## 🔄 Migration Guide
+##  New Features
 
-### From 5.2.3 to 5.2.4
+### 📊 Server Monitoring Dashboard
 
-This release is **fully backward compatible**. No action required.
+A complete real-time monitoring solution integrated into the Developer Assistant SPA, providing visual insights into server performance.
 
-**What Changed**:
-- Internal file structure cleanup
-- No API changes
-- No configuration changes
-- No breaking changes
+#### **Key Features**:
 
-**Benefits**:
-- Cleaner codebase
-- Reduced duplication
-- Better maintainability
-- Same functionality
+1. **Real-Time Charts** (6 interactive charts):
+   - **RAM Usage** - System memory usage with used/total/free metrics
+   - **Docker Container RAM** - Container memory limits and PHP memory usage
+   - **Docker Container CPU** - Container CPU usage with throttling detection
+   - **CPU Usage** - System CPU usage with load averages and core count
+   - **Network Bandwidth** - Network traffic (received/sent bytes)
+   - **Database Latency** - Database query latency (min/max/average)
+
+2. **Interactive Controls**:
+   - Configurable refresh intervals (2s, 3s, 5s, 10s, or custom)
+   - Pause/Resume functionality
+   - Manual refresh button
+   - Preferences saved to localStorage
+
+3. **Database Connections Table**:
+   - Expandable table showing active database connections
+   - Process list with connection details (ID, User, Host, DB, Command, Time, State, Info)
+   - Real-time connection count display
+
+4. **Smart Features**:
+   - Page Visibility API integration (pauses when browser tab is hidden)
+   - Automatic canvas resizing on window resize
+   - Color-coded charts (green <70%, orange 70-90%, red >90%)
+   - Circular buffer (60 data points) for efficient memory usage
+   - Smooth chart rendering with HTML5 Canvas
+
+#### **Access**:
+- URL: `/index/developer#monitoring`
+- Environment: Development only (`APP_ENV=dev`)
+- Authentication: Requires `['developer','admin']` roles
+
+#### **Technical Implementation**:
+- **Frontend**: Self-contained JavaScript module (`monitoring.js`)
+- **Backend**: Uses existing `/api/GemvcMonitoring/*` endpoints
+- **Architecture**: Client-side rendering with server-side data fetching
+- **Performance**: Parallel API calls for all metrics
+- **Compatibility**: Works with all webserver types (Apache, Nginx, OpenSwoole)
+
+### 🐳 Docker Container Metrics
+
+Enhanced monitoring capabilities specifically for Docker environments:
+
+- **Docker Container RAM** (`/api/GemvcMonitoring/dockerRam`):
+  - Container memory limits and usage
+  - PHP memory consumption within container
+  - Memory usage percentage calculation
+
+- **Docker Container CPU** (`/api/GemvcMonitoring/dockerCpu`):
+  - Container CPU usage percentage
+  - Assigned CPU cores detection
+  - CPU throttling detection (warns when >95%)
+  - Cgroup-based CPU metrics
+
+---
+
+## 🔄 Changes
+
+### Developer Assistant SPA
+
+- **New Monitoring Page** - Added complete monitoring dashboard
+- **Navigation** - Added "Monitoring" link to Developer Assistant menu
+- **Module System** - Integrated monitoring JavaScript module with proper cleanup
+
+### GemvcMonitoring API
+
+- **Docker RAM Endpoint** - Returns container memory metrics
+- **Docker CPU Endpoint** - Returns container CPU metrics with throttling detection
+
+### Monitoring JavaScript Module
+
+- **Chart Rendering** - HTML5 Canvas-based line charts
+- **Data Management** - Circular buffer for efficient data storage
+- **Event Handling** - Proper event listener management with cleanup
+- **Error Handling** - Graceful degradation when metrics unavailable
 
 ---
 
 ## 🐛 Bug Fixes
 
-- **File Structure** - Removed unused duplicate files that were never accessed
-- **Code Organization** - Improved startup file structure for better maintainability
+- **Database Latency Chart** - Changed line color to consistent orange for better visibility
 
 ---
 
 ## 📚 Documentation Updates
 
-- Updated `CHANGELOG.md` with 5.2.4 release notes
-- Updated `RELEASE_NOTES.md` with cleanup details
+- Added monitoring page documentation
+- Updated Developer Assistant feature list
+- Documented Docker container metrics endpoints
 
 ---
 
@@ -89,47 +117,78 @@ This release is **fully backward compatible**. No action required.
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
+- Monitoring endpoints require proper authentication (`['developer','admin']` roles)
+- Monitoring page only accessible in development environment
 
 ---
 
 ## ⚙️ Configuration
 
-No configuration changes required.
+No configuration changes required. The monitoring system uses existing GemvcMonitoring API endpoints.
 
 ---
 
 ## 🚀 Performance
 
-- **No performance impact** - Internal cleanup only
-- **Reduced package size** - Removed unused files
+- **Efficient Data Storage** - Circular buffer limits memory usage to 60 data points per chart
+- **Parallel API Calls** - All metrics fetched simultaneously for faster updates
+- **Smart Pausing** - Automatically pauses when browser tab is hidden
+- **Canvas Optimization** - Efficient chart rendering with proper dimension management
 
 ---
 
 ## 🧪 Testing
 
-- All existing tests pass
-- Installation test verified
-- PHPStan Level 9 compliance maintained
+- All monitoring charts verified and functional
+- Docker container metrics tested in Docker environments
+- Refresh interval changes tested
+- Pause/resume functionality verified
+- Database connections table tested
+- Page visibility API integration verified
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.2.5 to 5.3.0
+
+This release is **fully backward compatible**. No action required.
+
+**What's New**:
+- New monitoring dashboard in Developer Assistant
+- Enhanced Docker container metrics
+- No breaking changes to existing APIs
+
+**Benefits**:
+- Real-time server monitoring
+- Visual performance insights
+- Docker container metrics
+- Better debugging capabilities
+
+**Optional Usage**:
+- Access monitoring at `/index/developer#monitoring`
+- Configure refresh intervals as needed
+- Use pause/resume for detailed analysis
 
 ---
 
 ## 🙏 Acknowledgments
 
-Special thanks to the community for feedback and contributions.
+Special thanks to the community for feedback and feature requests that led to this comprehensive monitoring solution.
 
 ---
 
 ## 📝 Full Changelog
 
-For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+For detailed changes, see [CHANGELOG_5.2.5.md](CHANGELOG_5.2.5.md).
 
 ---
 
 ## 🔗 Links
 
 - **Documentation**: https://gemvc.de
-- **GitHub**: https://github.com/gemvc/library
-- **Issues**: https://github.com/gemvc/library/issues
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
 
 ---
 
@@ -145,345 +204,6 @@ composer update gemvc/library
 
 ---
 
-## Version 5.2.3 - APM Contracts & Server Monitoring
-
-**Release Date**: 2025-12-31  
-**Type**: Minor Release (Backward Compatible)
-
----
-
-## 🎉 Overview
-
-This release introduces a major architectural improvement with the **APM Contracts System**, making GEMVC compatible with multiple APM providers (TraceKit, Datadog, etc.) through a pluggable interface. Additionally, we've added comprehensive server monitoring capabilities and new developer tools, all while maintaining full backward compatibility.
-
----
-
-## ✨ New Features
-
-### 🔌 APM Contracts System
-
-**Pluggable Application Performance Monitoring**
-
-GEMVC now uses a contract-based APM system that supports multiple providers:
-
-- **`gemvc/apm-contracts` Package Integration**
-  - `ApmFactory` - Factory pattern for creating APM instances
-  - `ApmInterface` - Standard interface for all APM providers (tracing)
-  - `ApmToolkitInterface` - Standard interface for APM toolkit operations (management)
-  - `AbstractApmToolkit` - Base class for provider toolkits with common functionality
-  - Automatic provider detection and initialization
-  - Backward compatible with existing TraceKit implementations
-
-- **Automatic APM Integration**
-  - `ApiService` and `Controller` automatically initialize APM instances
-  - Request tracing with root spans and child spans
-  - Database query tracing via `UniversalQueryExecuter`
-  - Exception recording for error tracking
-  - Shared trace IDs across all layers
-
-- **Provider-Agnostic Design**
-  - Switch between APM providers without code changes
-  - Support for TraceKit, Datadog, and future providers
-  - Environment-based configuration via `.env`
-
-**Migration Path**: Existing TraceKit code continues to work. New projects can use any APM provider by installing the corresponding package (e.g., `composer require gemvc/apm-tracekit`).
-
-### 📊 New Built-in Services
-
-#### 1. **Apm Service** (`/api/Apm/*`)
-
-Complete APM provider management and testing endpoints. **Fully provider-agnostic** - works with any APM provider that implements `ApmToolkitInterface`:
-
-- `GET /api/Apm/test` - Test APM tracing with nested spans
-- `GET /api/Apm/testError` - Test exception tracing
-- `GET /api/Apm/status` - Get APM provider status and configuration
-- `POST /api/Apm/register` - Register APM service (Provider-agnostic)
-- `POST /api/Apm/verify` - Verify APM email code (Provider-agnostic)
-- `POST /api/Apm/heartbeat` - Send health check heartbeat
-- `GET /api/Apm/metrics` - Get service metrics
-- `GET /api/Apm/alertsSummary` - Get alerts summary
-- `GET /api/Apm/activeAlerts` - Get active alerts
-- `GET /api/Apm/subscription` - Get subscription information
-- `GET /api/Apm/plans` - List available plans
-- `GET /api/Apm/webhooks` - List webhooks
-- `POST /api/Apm/createWebhook` - Create webhook
-
-**Authentication**: Requires `['developer','admin']` roles
-
-#### 2. **GemvcAssistant Service** (`/api/GemvcAssistant/*`)
-
-Developer and admin tools for project management:
-
-- `POST /api/GemvcAssistant/export` - Export table data (CSV/SQL)
-- `POST /api/GemvcAssistant/import` - Import table data from file
-- `GET /api/GemvcAssistant/database` - Database management page data
-- `GET /api/GemvcAssistant/config` - Configuration page data
-- `GET /api/GemvcAssistant/isDbReady` - Check if database is ready
-- `POST /api/GemvcAssistant/initDatabase` - Initialize database
-- `GET /api/GemvcAssistant/services` - List all API services
-- `POST /api/GemvcAssistant/createService` - Create new service
-- `GET /api/GemvcAssistant/tables` - List all tables
-- `POST /api/GemvcAssistant/migrateTable` - Migrate table
-
-**Authentication**: Requires `['developer','admin']` roles
-
-**Note**: These endpoints were moved from `Index.php` to provide better separation of concerns.
-
-#### 3. **GemvcMonitoring Service** (`/api/GemvcMonitoring/*`)
-
-Real-time server monitoring metrics:
-
-- `GET /api/GemvcMonitoring/ram` - Get RAM/memory usage metrics
-- `GET /api/GemvcMonitoring/cpu` - Get CPU usage and load metrics
-- `GET /api/GemvcMonitoring/network` - Get network interface statistics
-- `GET /api/GemvcMonitoring/databaseConnections` - Get database connection count
-- `GET /api/GemvcMonitoring/databasePool` - Get database pool statistics
-- `GET /api/GemvcMonitoring/databaseLatency` - Get database latency metrics
-
-**Authentication**: Requires `['developer','admin']` roles
-
-**Cross-Platform Support**: All monitoring endpoints work on Linux, Windows, and macOS.
-
-### 🛠️ New Helper Classes
-
-#### **ServerMonitorHelper**
-
-Cross-platform server resource monitoring:
-
-```php
-// RAM metrics
-$ram = ServerMonitorHelper::getMemoryUsage();
-// Returns: ['current', 'peak', 'system_total', 'system_free', 'system_used', 'usage_percent']
-
-// CPU metrics
-$load = ServerMonitorHelper::getCpuLoad();      // Load average (1min, 5min, 15min)
-$cores = ServerMonitorHelper::getCpuCores();     // CPU core count
-$usage = ServerMonitorHelper::getCpuUsage();     // CPU usage percentage
-```
-
-**Platforms Supported**: Linux, Windows, macOS
-
-#### **NetworkHelper**
-
-Network interface statistics collection:
-
-```php
-// All network interfaces
-$network = NetworkHelper::getNetworkStats();
-// Returns: ['interfaces' => [...], 'totals' => [...]]
-
-// List interfaces
-$interfaces = NetworkHelper::getNetworkInterfaces();
-
-// Specific interface stats
-$stats = NetworkHelper::getInterfaceStats('eth0');
-// Returns: ['bytes_received', 'bytes_sent', 'packets_received', 'packets_sent', ...]
-```
-
-**Platforms Supported**: Linux, Windows, macOS
-
----
-
-## 🔄 Changes
-
-### Core Framework
-
-- **`ApiService`** - Now automatically initializes APM via `ApmFactory`
-- **`Controller`** - Retrieves APM instance from Request object for shared tracing
-- **`JsonResponse`** - Uses APM contracts for response tracing
-- **`Bootstrap`** / **`SwooleBootstrap`** - Updated exception recording to use APM contracts
-- **`UniversalQueryExecuter`** - Database query tracing via APM contracts
-- **`ProjectHelper`** - Added `isApmEnabled()` method (replaces deprecated `isTraceKitEnabled()`)
-
-### Request Object
-
-- **`Request::$apm`** - New property for APM instance (replaces `$tracekit`)
-- **`Request::$tracekit`** - Deprecated but maintained for backward compatibility
-
-### Example Files
-
-- **Directory Structure**: Example files moved from `src/startup/user/` to `src/startup/common/init_example/`
-- **New Examples**: Added complete examples for Apm, GemvcAssistant, and GemvcMonitoring services
-
----
-
-## 🐛 Bug Fixes
-
-### Resource Management
-
-- **Fixed `curl_close()` Resource Leak in `AsyncApiCall`**
-  - Added explicit `curl_close($ch)` after `curl_multi_remove_handle()`
-  - Prevents file descriptor exhaustion in long-running processes
-  - Critical fix for Swoole environments
-
-### PHPStan Compliance
-
-- **Fixed PHPStan Level 9 Errors**
-  - Added type checks for `NetworkHelper` and `ServerMonitorHelper`
-  - Fixed ternary operator warnings in `JsonResponse`
-  - Added `@phpstan-ignore-next-line` for abstract static method calls
-  - All framework code now passes PHPStan Level 9
-
-### Type Safety
-
-- **Enhanced `ProjectHelper` Type Safety**
-  - Improved type checking for `trim()`, `preg_match()`, `preg_replace()`
-  - Better null handling and type narrowing
-  - Removed redundant type checks
-
----
-
-## 📚 Documentation Updates
-
-### Comprehensive Documentation Refresh
-
-All documentation files have been updated to reflect the new architecture:
-
-- **ARCHITECTURE.md** - Added APM integration, new helper classes, and example services
-- **README.md** - Added APM and monitoring features, updated example paths
-- **AI_API_REFERENCE.md** - Complete API reference for new classes and services
-- **AI_CONTEXT.md** - Added APM and server monitoring examples
-- **GEMVC_GUIDE.md** - Added APM and monitoring helper methods
-- **GEMVC_PHPDOC_REFERENCE.php** - Added PHPDoc for new helper classes
-- **COPILOT_INSTRUCTIONS.md** - Added APM and monitoring references
-- **HTTP_REQUEST_LIFE_CYCLE.md** - No changes (already up-to-date)
-- **DATABASE_LAYER.md** - No changes (already up-to-date)
-
-### Path Updates
-
-- Updated all references from `src/startup/user/` to `src/startup/common/init_example/`
-
----
-
-## 🔧 Dependencies
-
-### New Dependencies
-
-- **`gemvc/apm-contracts`** (^1.0) - APM contracts interface package
-
-### Updated Dependencies
-
-- No breaking changes to existing dependencies
-- All dependencies remain compatible
-
----
-
-## 🔒 Security
-
-- **No security vulnerabilities** reported in this release
-- All existing security features maintained (90% automatic security)
-- New services require proper authentication (`['developer','admin']` roles)
-
----
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-New optional environment variables for APM:
-
-```env
-# APM Configuration
-APM_NAME=TraceKit          # APM provider name (TraceKit, Datadog, etc.)
-APM_ENABLED=true           # Enable/disable APM
-
-# Provider-specific (e.g., TraceKit)
-TRACEKIT_API_KEY=your_key
-TRACEKIT_BASE_URL=https://app.tracekit.dev
-TRACEKIT_SERVICE_NAME=gemvc-app
-```
-
-**Note**: APM is optional. If not configured, the framework works normally without APM.
-
----
-
-## 🚀 Migration Guide
-
-### From 5.2.0 to 5.2.3
-
-This release is **fully backward compatible**. No breaking changes.
-
-#### Optional: Enable APM
-
-1. **Install APM Provider Package**
-   ```bash
-   composer require gemvc/apm-tracekit
-   # or
-   composer require gemvc/apm-datadog  # When available
-   ```
-
-2. **Configure Environment**
-   ```env
-   APM_NAME=TraceKit
-   APM_ENABLED=true
-   TRACEKIT_API_KEY=your_api_key
-   ```
-
-3. **No Code Changes Required**
-   - APM is automatically initialized in `ApiService` and `Controller`
-   - Existing code continues to work without modifications
-
-#### Optional: Use New Services
-
-The new services (Apm, GemvcAssistant, GemvcMonitoring) are included as examples during `gemvc init`. They are automatically copied to your `app/` directory.
-
-**No action required** - they're ready to use if you need them.
-
-#### Deprecated Methods
-
-- `ProjectHelper::isTraceKitEnabled()` - Use `ProjectHelper::isApmEnabled()` instead
-- `Request::$tracekit` - Use `Request::$apm` instead
-
-**Note**: Deprecated methods still work but will be removed in a future version.
-
----
-
-## 📊 Performance
-
-- **No performance regressions** - All changes maintain or improve performance
-- **APM overhead** - Minimal when enabled, zero when disabled
-- **Monitoring helpers** - Efficient cross-platform implementation
-
----
-
-## 🧪 Testing
-
-- All existing tests pass
-- PHPStan Level 9 compliance verified
-- Cross-platform testing for monitoring helpers (Linux, Windows, macOS)
-
----
-
-## 🙏 Acknowledgments
-
-Special thanks to the community for feedback and contributions that helped shape this release.
-
----
-
-## 📝 Full Changelog
-
-For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
-
----
-
-## 🔗 Links
-
-- **Documentation**: https://gemvc.de
-- **GitHub**: https://github.com/gemvc/library
-- **Issues**: https://github.com/gemvc/library/issues
-
----
-
-**Upgrade Command**:
-```bash
-composer update gemvc/library
-```
-
-**Breaking Changes**: None  
-**Deprecations**: `ProjectHelper::isTraceKitEnabled()`, `Request::$tracekit`  
-**Minimum PHP Version**: 8.2+  
-**Recommended PHP Version**: 8.4+
----
-
 ## [Gemvc PHP Framework built for Microservices](https://gemvc.de)
 ### Made with ❤️ by Ali Khorsandfard
+

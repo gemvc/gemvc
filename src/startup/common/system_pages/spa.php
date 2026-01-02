@@ -50,6 +50,21 @@ try {
                 -moz-osx-font-smoothing: grayscale;
             }
         </style>
+        <script>
+<?php
+$monitoringJsPath = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'monitoring.js';
+if (file_exists($monitoringJsPath)) {
+    $monitoringJs = file_get_contents($monitoringJsPath);
+    if ($monitoringJs !== false) {
+        echo $monitoringJs;
+    } else {
+        echo 'console.error("Failed to load monitoring.js");';
+    }
+} else {
+    echo 'console.error("monitoring.js file not found at: ' . htmlspecialchars($monitoringJsPath, ENT_QUOTES, 'UTF-8') . '");';
+}
+?>
+        </script>
     </head>
     <body
         class="min-h-screen bg-gradient-to-br from-gemvc-green to-gemvc-green-dark font-sans font-normal pt-20 pb-24">
@@ -65,6 +80,7 @@ try {
                         <a href="#" data-route="services" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Services</a>
                         <a href="#" data-route="tables" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Tables Layer</a>
                         <a href="#" data-route="database" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Database</a>
+                        <a href="#" data-route="monitoring" class="nav-link text-base font-medium transition-colors no-underline text-gray-600 hover:text-gemvc-green">Monitoring</a>
                     </div>
                     <div class="flex items-center gap-4">
                         <button onclick="logout()" class="text-base font-medium transition-colors text-gray-600 hover:text-red-600 bg-transparent border-0 cursor-pointer">Logout</button>
@@ -248,6 +264,17 @@ try {
                         const content = document.getElementById('content');
                         content.innerHTML = '<div class="text-center">Loading...</div>';
 
+                        // Store previous route for cleanup check
+                        const previousRoute = currentRoute;
+                        currentRoute = route;
+
+                        // Cleanup monitoring if leaving monitoring page
+                        if (previousRoute === 'monitoring' && route !== 'monitoring') {
+                            if (window.MonitoringModule && typeof window.MonitoringModule.cleanup === 'function') {
+                                window.MonitoringModule.cleanup();
+                            }
+                        }
+
                         switch (route) {
                             case 'login':
                                 await renderLogin();
@@ -263,6 +290,9 @@ try {
                                 break;
                             case 'database':
                                 await renderDatabase();
+                                break;
+                            case 'monitoring':
+                                await renderMonitoring();
                                 break;
                             default: content.innerHTML = '<div class="text-center text-red-600">Page not found</div>';
                         }
@@ -997,6 +1027,121 @@ try {
                     const schemaSvg = document.getElementById('schemaSvg');
                     if (schemaSvg && data.data && data.data.relationships) {
                         renderSchemaDiagram(schemaSvg, data.data.relationships, data.data.tableClasses);
+                    }
+                }
+
+                async function renderMonitoring() {
+                    // Reset content area styling for normal pages
+                    const appDiv = document.getElementById('app');
+                    appDiv.className = 'flex items-center justify-center p-5';
+                    const contentWrapper = appDiv.querySelector('div');
+                    contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
+
+                    // Generate monitoring page HTML directly (no backend endpoint needed)
+                    const content = document.getElementById('content');
+                    content.innerHTML = `
+                        <div class="container mx-auto px-4 py-6">
+                            <div class="bg-white rounded-lg shadow-lg p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h1 class="text-2xl font-bold text-gray-800">Server Monitoring</h1>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-sm font-medium">Refresh:</label>
+                                        <select id="refreshInterval" class="border rounded px-2 py-1">
+                                            <option value="2000">2 seconds</option>
+                                            <option value="3000">3 seconds</option>
+                                            <option value="5000">5 seconds</option>
+                                            <option value="10000">10 seconds</option>
+                                            <option value="custom">Custom</option>
+                                        </select>
+                                        <input type="number" id="customInterval" class="border rounded px-2 py-1 w-20 hidden" 
+                                               placeholder="ms" min="1000" step="1000">
+                                        <button id="pauseBtn" class="px-3 py-1 bg-gray-200 rounded">⏸️ Pause</button>
+                                        <button id="refreshNowBtn" class="px-3 py-1 bg-gemvc-green text-white rounded">🔄 Refresh Now</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Charts Grid -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                    <!-- RAM Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">RAM Usage</h3>
+                                        <canvas id="ramChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="ramStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <!-- Docker Container RAM Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">Docker Container RAM</h3>
+                                        <canvas id="dockerRamChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="dockerRamStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <!-- Docker Container CPU Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">Docker Container CPU</h3>
+                                        <canvas id="dockerCpuChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="dockerCpuStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <!-- CPU Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">CPU Usage</h3>
+                                        <canvas id="cpuChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="cpuStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <!-- Network Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">Network Bandwidth</h3>
+                                        <canvas id="networkChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="networkStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <!-- Database Latency Chart -->
+                                    <div class="bg-gray-50 rounded p-4">
+                                        <h3 class="font-semibold mb-2">Database Latency</h3>
+                                        <canvas id="latencyChart" style="width: 100%; height: 200px;"></canvas>
+                                        <div id="latencyStats" class="mt-2 text-sm text-gray-600"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Database Connections -->
+                                <div class="mt-6">
+                                    <button id="connectionsToggle" class="w-full text-left bg-gray-100 rounded p-3 font-semibold">
+                                        Database Connections (<span id="connectionCount">0</span> active) ▼
+                                    </button>
+                                    <div id="connectionsTable" class="hidden mt-2 overflow-x-auto">
+                                        <table class="min-w-full bg-white border">
+                                            <thead>
+                                                <tr class="bg-gray-100">
+                                                    <th class="px-4 py-2 border">ID</th>
+                                                    <th class="px-4 py-2 border">User</th>
+                                                    <th class="px-4 py-2 border">Host</th>
+                                                    <th class="px-4 py-2 border">DB</th>
+                                                    <th class="px-4 py-2 border">Command</th>
+                                                    <th class="px-4 py-2 border">Time</th>
+                                                    <th class="px-4 py-2 border">State</th>
+                                                    <th class="px-4 py-2 border">Info</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="connectionsBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 text-sm text-gray-500 text-center">
+                                    Last updated: <span id="lastUpdate">Never</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Initialize monitoring module after HTML is loaded
+                    if (window.MonitoringModule && typeof window.MonitoringModule.render === 'function') {
+                        await window.MonitoringModule.render(API_BASE);
+                    } else {
+                        console.error('MonitoringModule not available');
+                        content.innerHTML = '<div class="text-center text-red-600">Monitoring module not loaded. Check browser console for errors.</div>';
                     }
                 }
 

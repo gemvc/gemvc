@@ -24,6 +24,12 @@ class GemvcMonitoringController extends Controller
         return $model->getRamMetrics();
     }
 
+    public function dockerRam(): JsonResponse
+    {
+        $model = new GemvcMonitoringModel();
+        return $model->getDockerContainerMemoryUsage();
+    }
+
     /**
      * Get CPU metrics
      * 
@@ -33,6 +39,12 @@ class GemvcMonitoringController extends Controller
     {
         $model = new GemvcMonitoringModel();
         return $model->getCpuMetrics();
+    }
+
+    public function dockerCpu(): JsonResponse
+    {
+        $model = new GemvcMonitoringModel();
+        return $model->getDockerContainerCpuLoad();
     }
 
     /**

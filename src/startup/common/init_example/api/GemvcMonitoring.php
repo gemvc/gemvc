@@ -38,6 +38,26 @@ class GemvcMonitoring extends ApiService
         return (new GemvcMonitoringController($this->request))->ram();
     }
 
+    public function dockerRam(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return (new GemvcMonitoringController($this->request))->dockerRam();
+    }
+
+    public function dockerCpu(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return (new GemvcMonitoringController($this->request))->dockerCpu();
+    }
+
     /**
      * Get CPU Metrics
      * 

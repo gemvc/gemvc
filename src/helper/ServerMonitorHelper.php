@@ -1,4 +1,5 @@
 <?php
+
 namespace Gemvc\Helper;
 
 /**
@@ -18,12 +19,12 @@ class ServerMonitorHelper
     {
         $current = memory_get_usage(true);
         $peak = memory_get_peak_usage(true);
-        
+
         // Get system memory info if available
         $systemTotal = null;
         $systemFree = null;
         $systemUsed = null;
-        
+
         if (PHP_OS_FAMILY === 'Linux') {
             // Parse /proc/meminfo
             if (file_exists('/proc/meminfo')) {
@@ -44,7 +45,7 @@ class ServerMonitorHelper
             if ($output !== null && is_string($output) && preg_match('/TotalPhysicalMemory=(\d+)/', $output, $matches)) {
                 $systemTotal = (int)$matches[1];
             }
-            
+
             $output = @shell_exec('wmic OS get FreePhysicalMemory /value 2>nul');
             if ($output !== null && is_string($output) && preg_match('/FreePhysicalMemory=(\d+)/', $output, $matches)) {
                 $systemFree = (int)$matches[1] * 1024; // Convert to bytes
@@ -53,7 +54,7 @@ class ServerMonitorHelper
                 }
             }
         }
-        
+
         return [
             'php_current' => $current,
             'php_current_mb' => round($current / 1024 / 1024, 2),
@@ -65,11 +66,38 @@ class ServerMonitorHelper
             'system_free_mb' => $systemFree !== null ? round($systemFree / 1024 / 1024, 2) : null,
             'system_used' => $systemUsed,
             'system_used_mb' => $systemUsed !== null ? round($systemUsed / 1024 / 1024, 2) : null,
-            'system_usage_percent' => ($systemTotal !== null && $systemUsed !== null) 
-                ? round(($systemUsed / $systemTotal) * 100, 2) 
+            'system_usage_percent' => ($systemTotal !== null && $systemUsed !== null)
+                ? round(($systemUsed / $systemTotal) * 100, 2)
                 : null,
         ];
     }
+/**
+ * Get Docker RAM metrics based on verified CLI output (cgroup v1)
+ * * @return array<string, mixed>
+ */
+public static function getDockerContainerMemoryUsage(): array
+{
+    $usagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes';
+    $limitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes';
+
+    // Reading the values from the files you just checked in CLI
+    $usageBytes = file_exists($usagePath) ? (int)trim(file_get_contents($usagePath)) : 0;
+    $limitBytes = file_exists($limitPath) ? (int)trim(file_get_contents($limitPath)) : 0;
+
+    // Convert to Megabytes
+    $usageMb = round($usageBytes / 1024 / 1024, 2);
+    $limitMb = round($limitBytes / 1024 / 1024, 2);
+
+    // Calculate percentage (55MB / 2048MB * 100)
+    $percentage = ($limitBytes > 0) ? round(($usageBytes / $limitBytes) * 100, 2) : 0;
+
+    return [
+        'container_usage_mb' => $usageMb,           // Should show ~55.49 MB
+        'container_limit_mb' => $limitMb,           // Should show 2048.00 MB
+        'container_usage_percent' => $percentage,   // Should show ~2.71%
+        'php_peak_usage_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2)
+    ];
+}
 
     /**
      * Get CPU load average
@@ -79,7 +107,7 @@ class ServerMonitorHelper
     public static function getCpuLoad(): array
     {
         $loadAvg = function_exists('sys_getloadavg') ? sys_getloadavg() : null;
-        
+
         return [
             'load_1min' => $loadAvg !== false && isset($loadAvg[0]) ? round($loadAvg[0], 2) : null,
             'load_5min' => $loadAvg !== false && isset($loadAvg[1]) ? round($loadAvg[1], 2) : null,
@@ -99,12 +127,12 @@ class ServerMonitorHelper
         if (class_exists('\Hyperf\Support\System')) {
             return \Hyperf\Support\System::getCpuCoresNum();
         }
-        
+
         // Try Swoole function
         if (function_exists('swoole_cpu_num')) {
             return swoole_cpu_num();
         }
-        
+
         // Linux: Parse /proc/cpuinfo
         if (PHP_OS_FAMILY === 'Linux' && file_exists('/proc/cpuinfo')) {
             $cpuinfo = file_get_contents('/proc/cpuinfo');
@@ -116,7 +144,7 @@ class ServerMonitorHelper
                 }
             }
         }
-        
+
         // Windows: Use WMIC
         if (PHP_OS_FAMILY === 'Windows') {
             $process = @popen('wmic cpu get NumberOfCores', 'rb');
@@ -132,7 +160,7 @@ class ServerMonitorHelper
                 }
             }
         }
-        
+
         // macOS/BSD: Use sysctl
         if (PHP_OS_FAMILY === 'Darwin' || PHP_OS_FAMILY === 'BSD') {
             $process = @popen('sysctl -n hw.ncpu', 'rb');
@@ -147,7 +175,7 @@ class ServerMonitorHelper
                 }
             }
         }
-        
+
         // Default fallback
         return 1;
     }
@@ -161,7 +189,7 @@ class ServerMonitorHelper
     {
         $cores = self::getCpuCores();
         $loadAvg = self::getCpuLoad();
-        
+
         // Calculate CPU usage from load average
         $usagePercent = null;
         $load1min = $loadAvg['load_1min'];
@@ -170,7 +198,7 @@ class ServerMonitorHelper
             // Divide by cores to get approximate CPU usage percentage
             $usagePercent = min(100, round(($load1min / $cores) * 100, 2));
         }
-        
+
         // Try to get more accurate CPU usage from /proc/stat (Linux only)
         $cpuUsage = null;
         if (PHP_OS_FAMILY === 'Linux' && file_exists('/proc/stat')) {
@@ -181,17 +209,17 @@ class ServerMonitorHelper
                 if ($stat2 !== false) {
                     preg_match('/cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/', $stat1, $match1);
                     preg_match('/cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/', $stat2, $match2);
-                    
+
                     if (count($match1) === 9 && count($match2) === 9) {
                         $idle1 = (int)$match1[4] + (int)$match1[5];
                         $total1 = array_sum(array_slice($match1, 1, 8));
-                        
+
                         $idle2 = (int)$match2[4] + (int)$match2[5];
                         $total2 = array_sum(array_slice($match2, 1, 8));
-                        
+
                         $idleDiff = $idle2 - $idle1;
                         $totalDiff = $total2 - $total1;
-                        
+
                         if ($totalDiff > 0) {
                             $cpuUsage = round((1 - ($idleDiff / $totalDiff)) * 100, 2);
                         }
@@ -199,7 +227,7 @@ class ServerMonitorHelper
                 }
             }
         }
-        
+
         return [
             'cores' => $cores,
             'usage_percent' => $cpuUsage ?? $usagePercent,
@@ -207,5 +235,78 @@ class ServerMonitorHelper
             'load_average' => $loadAvg,
         ];
     }
+
+
+/**
+ * Get CPU load metrics specifically for Docker containers with fallback mechanisms.
+ * @return array<string, mixed> Container CPU usage information
+ */
+public static function getDockerContainerCpuLoad(): array
+{
+    // Try to find the correct path for CPU stats
+    $pathV2 = '/sys/fs/cgroup/cpu.stat';
+    $pathV1 = '/sys/fs/cgroup/cpuacct/cpuacct.usage';
+    
+    $isV2 = file_exists($pathV2);
+    $isV1 = file_exists($pathV1);
+
+    if (!$isV2 && !$isV1) {
+        return [
+            'available' => false,
+            'message' => 'Cgroup stats not accessible'
+        ];
+    }
+
+    // 1. Get Initial Usage
+    $usageBefore = self::getRawCpuUsage($isV2 ? $pathV2 : $pathV1, $isV2);
+    usleep(100000); // 100ms sample
+    $usageAfter = self::getRawCpuUsage($isV2 ? $pathV2 : $pathV1, $isV2);
+
+    $deltaUsage = $usageAfter - $usageBefore;
+    
+    // 2. Detect CPU Cores (Quota)
+    $cpuCores = self::getDockerCpuCores();
+
+    // Calculate percentage (V2 is in microseconds, V1 is in nanoseconds)
+    $divisor = $isV2 ? 100000 : 100000000; 
+    $rawCpuPercent = ($deltaUsage / $divisor) * 100;
+    
+    return [
+        'available' => true,
+        'container_cpu_percent' => round(min($rawCpuPercent / $cpuCores, 100), 2),
+        'assigned_cores' => $cpuCores,
+        'cgroup_version' => $isV2 ? 'v2' : 'v1'
+    ];
 }
 
+private static function getRawCpuUsage(string $path, bool $isV2): int
+{
+    $content = @file_get_contents($path);
+    if (!$content) return 0;
+
+    if ($isV2) {
+        if (preg_match('/usage_usec (\d+)/', $content, $matches)) return (int)$matches[1];
+    } else {
+        return (int)trim($content);
+    }
+    return 0;
+}
+
+private static function getDockerCpuCores(): float
+{
+    $maxPath = '/sys/fs/cgroup/cpu.max'; // v2
+    $quotaPath = '/sys/fs/cgroup/cpu/cpu.cfs_quota_us'; // v1
+    $periodPath = '/sys/fs/cgroup/cpu/cpu.cfs_period_us'; // v1
+
+    if (file_exists($maxPath)) {
+        $data = explode(' ', trim(file_get_contents($maxPath)));
+        if (isset($data[0]) && $data[0] !== 'max') return (int)$data[0] / (int)$data[1];
+    } elseif (file_exists($quotaPath) && file_exists($periodPath)) {
+        $quota = (int)trim(file_get_contents($quotaPath));
+        $period = (int)trim(file_get_contents($periodPath));
+        if ($quota > 0) return $quota / $period;
+    }
+
+    return 1.0; // Default to 1 core if no limit found
+}
+}

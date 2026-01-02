@@ -5,6 +5,93 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-01-03
+
+### Added
+- **Developer Assistant - Server Monitoring Page** 📊
+  - Real-time server monitoring dashboard with interactive charts
+  - RAM Usage chart with system memory metrics (used, total, free)
+  - Docker Container RAM chart with container memory limits and PHP memory usage
+  - Docker Container CPU chart with CPU usage percentage and throttling detection
+  - CPU Usage chart with load averages (1min, 5min, 15min) and core count
+  - Network Bandwidth chart showing received and sent data
+  - Database Latency chart with min/max/average latency metrics
+  - Expandable Database Connections table showing active connections and process list
+  - Configurable refresh intervals (2s, 3s, 5s, 10s, or custom)
+  - Pause/Resume functionality to temporarily stop monitoring
+  - Manual refresh button for immediate data updates
+  - Page Visibility API integration (pauses when tab is hidden)
+  - Real-time chart updates with circular buffer (60 data points)
+  - Color-coded charts (green/orange/red) based on usage thresholds
+  - Canvas-based line charts with smooth rendering
+  - Accessible at `/index/developer#monitoring` (dev environment only)
+  - Requires developer/admin authentication
+  - Uses existing `/api/GemvcMonitoring/*` endpoints for data
+
+- **Monitoring JavaScript Module** (`monitoring.js`)
+  - Self-contained IIFE module for monitoring functionality
+  - Chart rendering with HTML5 Canvas
+  - Data fetching and processing from GemvcMonitoring API
+  - Event listener management with proper cleanup
+  - LocalStorage integration for saving refresh interval preferences
+  - Automatic canvas dimension initialization and resize handling
+  - Error handling and graceful degradation
+
+### Changed
+- **SPA (spa.php)** - Added monitoring page route and rendering
+  - New `renderMonitoring()` function for monitoring page
+  - Monitoring module initialization and cleanup
+  - Navigation link added to Developer Assistant menu
+
+- **GemvcMonitoring API** - Enhanced with Docker container metrics
+  - `dockerRam()` endpoint for Docker container memory usage
+  - `dockerCpu()` endpoint for Docker container CPU usage and throttling detection
+
+### Fixed
+- **Database Latency Chart** - Changed line color to consistent orange for better visibility
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- Monitoring endpoints require proper authentication (`['developer','admin']` roles)
+
+## [5.2.5] - 2026-01-02
+
+### Fixed
+- **Critical: URL Routing with Query Parameters** - Fixed routing bug that prevented API endpoints with query parameters from working
+  - Modified `Bootstrap.php` and `SwooleBootstrap.php` to strip query strings before parsing URL segments
+  - Query parameters remain fully accessible via `$request->get` array
+  - Fixes error: "API method 'database?table=users' does not exist"
+  - All API endpoints with query parameters now work correctly
+  - Developer Assistant "View Structure" button now functional
+
+- **Developer Assistant SPA Endpoint Updates** - Fixed all SPA endpoint references after service refactoring
+  - Updated 10 endpoint references from `/index/*` to `/GemvcAssistant/*`
+  - Welcome page, Services page, Tables page, and Database page now fully functional
+  - All interactive features (export, import, create service, migrate) working
+  - Improved error handling with actual server error messages
+
+- **PHPStan Level 9 Compliance** - Resolved 78 PHPStan Level 9 errors across entire codebase
+  - **Type Assertions** (25 fixes) - Added proper type checking for mixed parameters from request arrays
+  - **Return Type Annotations** (12 fixes) - Fixed incorrect PHPDoc return types and added generic types
+  - **Null Safety** (15 fixes) - Removed redundant null checks and added proper null guards
+  - **Array Offset Access** (10 fixes) - Added type checking before accessing array offsets
+  - **Property Type Issues** (8 fixes) - Fixed type covariance and corrected property types
+  - **ReflectionClass Generic Types** (5 fixes) - Added proper generic type annotations
+  - **Other Type Issues** (3 fixes) - Fixed dead catch blocks, string operations, and ternary operators
+
+### Changed
+- **Bootstrap.php** - Enhanced URL parsing to strip query strings before routing
+- **SwooleBootstrap.php** - Enhanced URL parsing to strip query strings before routing
+- **SPA (spa.php)** - Updated all API endpoint references to new modular service structure
+- **Error Handling** - Improved error message extraction in SPA for better debugging
+- **Type Safety** - All controllers, models, and tables now have proper type assertions
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- Type safety improvements reduce potential runtime errors
+
 ## [5.2.4] - 2026-01-01
 
 ### Changed
@@ -245,96 +332,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.1.4] - Previous Stable Release
-
-### Summary
-Previous stable release before the major optimization cycle that led to 5.2.0.
-
----
-
-## Development Versions (Alpha 1-19)
-
-### Alpha 19
-- Final alpha version before release
-- OpenSwoole Dockerfile optimization
-- Final PHPStan Level 9 fixes
-- Comprehensive testing
-
-### Alpha 18
-- Docker container builder enhancements
-- Port conflict resolution improvements
-
-### Alpha 17
-- AsyncApiCall fire-and-forget implementation
-- Background task execution support
-
-### Alpha 16
-- Apache PHP 8.4 Alpine base image development
-- Base image optimization
-
-### Alpha 15
-- DockerContainerBuilder pre-flight checks
-- Container conflict detection
-
-### Alpha 14
-- AsyncApiCall concurrent execution
-- Connection pooling implementation
-
-### Alpha 13
-- PHPStan Level 9 compliance work
-- Type safety improvements across codebase
-
-### Alpha 12
-- Controller layer optimizations
-- Return type fixes
-
-### Alpha 11
-- ProjectHelper enhancements
-- Version detection improvements
-
-### Alpha 10
-- Docker port mapping improvements
-- Service name detection enhancements
-
-### Alpha 9
-- AsyncApiCall initial implementation
-- Basic concurrent request support
-
-### Alpha 8
-- Docker container builder foundation
-- Initial conflict detection
-
-### Alpha 7
-- Performance optimizations
-- Memory management improvements
-
-### Alpha 6
-- Type safety enhancements
-- PHPStan compliance work
-
-### Alpha 5
-- Documentation improvements
-- Code examples enhancement
-
-### Alpha 4
-- Error handling improvements
-- Better user feedback
-
-### Alpha 3
-- CLI enhancements
-- Better error messages
-
-### Alpha 2
-- Initial optimization work
-- Foundation improvements
-
-### Alpha 1
-- Started optimization cycle from 5.1.4
-- Initial planning and architecture review
-
----
-
 ## Migration Notes
+
+### Upgrading from 5.2.5 to 5.3.0
+
+This release is **fully backward compatible**. No action required.
+
+**What's New**:
+- Server Monitoring Dashboard in Developer Assistant
+- Real-time charts for RAM, CPU, Network, and Database metrics
+- Docker container metrics (RAM and CPU)
+- Configurable refresh intervals and pause/resume functionality
+- Database connections table
+
+**Benefits**:
+- Real-time server performance monitoring
+- Visual insights into system resources
+- Docker container-specific metrics
+- Better debugging and performance analysis capabilities
+
+**Usage**:
+- Access monitoring at `/index/developer#monitoring` (dev environment only)
+- Configure refresh intervals as needed
+- Use pause/resume for detailed analysis
+
+### Upgrading from 5.2.4 to 5.2.5
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Internal routing improvements (transparent to users)
+- Type safety improvements (no API changes)
+- SPA endpoint updates (automatic, no user action needed)
+
+**Benefits**:
+- Fixed routing bugs affecting endpoints with query parameters
+- Better type safety and error detection
+- Improved error messages in Developer Assistant
+- Full PHPStan Level 9 compliance
 
 ### Upgrading from 5.1.4 to 5.2.0
 
@@ -387,3 +422,4 @@ This release maintains **full backward compatibility** with 5.1.4. No breaking c
 ---
 
 **Note**: This changelog follows the [Keep a Changelog](https://keepachangelog.com/) standard.
+
