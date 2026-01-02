@@ -13,10 +13,10 @@ use Gemvc\Database\Schema;
  * User table class for handling User database operations
  * @property int $id User's unique identifier column id in database table
  * @property string $name User's name column name in database table
- * @property string $description User's description column description in database table
+ * @property string|null $description User's description column description in database table
  * @property string $password User's password column password in database table
  * @property string $created_at User's created_at column created_at in database table
- * @property string $updated_at User's updated_at column updated_at in database table
+ * @property string|null $updated_at User's updated_at column updated_at in database table
  * @property string $role User's role column role in database table
  * @property string $story User's story column story in database table Very Long Text
  */
@@ -38,7 +38,7 @@ class UserTable extends Table
      * Summary of type mapping for properties
      * it is used to map the properties to the database columns
      * it is used in the TableGenerator class to generate the schema for the table
-     * @var array
+     * @var array<string, string>
      */
     protected array $_type_map = [
         'id' => 'int',
@@ -51,10 +51,11 @@ class UserTable extends Table
         'role' => 'string',
         'story' => 'longText'
     ];
-    /*
-    * Summary of defineSchema() method
+    /**
+     * Summary of defineSchema() method
      * it is used to map the properties to the database columns
      * it is used in the TableGenerator class to generate the schema for the table
+     * @return array<int, mixed>
      */
     public function defineSchema(): array 
     {
@@ -94,17 +95,26 @@ class UserTable extends Table
     }
 
     /**
-     * @return null|static[]
+     * @return array<static>|null
      * null or array of UserTable Objects
      */
     public function selectByName(string $name): null|array
     {
-        return $this->select()->whereLike('name', $name)->run();
+        /** @var array<static>|null $result */
+        $result = $this->select()->whereLike('name', $name)->run();
+        return $result;
     }
 
+    /**
+     * @return static|null
+     */
     public function selectByEmail(string $email): null|static
     {
+        /** @var array<static>|null $arr */
         $arr = $this->select()->whereEqual('email', $email)->limit(1)->run();
-        return $arr[0] ?? null;
+        if (is_array($arr) && isset($arr[0])) {
+            return $arr[0];
+        }
+        return null;
     }
 } 

@@ -56,7 +56,7 @@ class DeveloperController extends Controller
         $info->server = WebserverDetector::get();
         $info->version = \Gemvc\Helper\ProjectHelper::getVersion();
         $info->environment = $_ENV['APP_ENV'];
-        $info->databaseName = $developerModel->getDatabaseName() ?? 'unknown';
+        $info->databaseName = $developerModel->getDatabaseName();
         $info->database = $developerModel->isDatabaseReady() ? 'ready' :  $developerModel->getError();
         $info->devAssistantUrl = $developerModel->getDevAssistantUrl();
         $info->documentationUrl = $developerModel->getDocumentationUrl();

@@ -23,10 +23,9 @@ class GemvcAssistantController extends Controller
     public function export(): HtmlResponse
     {
         $model = new GemvcAssistantModel();
-        return $model->export(
-            $this->request->post['table'],
-            $this->request->post['format']
-        );
+        $table = isset($this->request->post['table']) && is_string($this->request->post['table']) ? $this->request->post['table'] : '';
+        $format = isset($this->request->post['format']) && is_string($this->request->post['format']) ? $this->request->post['format'] : 'csv';
+        return $model->export($table, $format);
     }
 
     /**
@@ -37,9 +36,19 @@ class GemvcAssistantController extends Controller
     public function import(): JsonResponse
     {
         $model = new GemvcAssistantModel();
-        $table = $this->request->post['table'] ?? '';
-        $format = $this->request->post['format'] ?? 'csv';
-        $file = $this->request->files['import_file'] ?? null;
+        $table = isset($this->request->post['table']) && is_string($this->request->post['table']) ? $this->request->post['table'] : '';
+        $format = isset($this->request->post['format']) && is_string($this->request->post['format']) ? $this->request->post['format'] : 'csv';
+        $file = null;
+        if (isset($this->request->files['import_file']) && is_array($this->request->files['import_file'])) {
+            // Ensure array is properly typed as array<string, mixed>
+            $fileArray = [];
+            foreach ($this->request->files['import_file'] as $key => $value) {
+                if (is_string($key)) {
+                    $fileArray[$key] = $value;
+                }
+            }
+            $file = $fileArray;
+        }
         
         return $model->import($table, $format, $file);
     }
@@ -109,10 +118,9 @@ class GemvcAssistantController extends Controller
     public function createService(): JsonResponse
     {
         $model = new GemvcAssistantModel();
-        return $model->createService(
-            $this->request->post['serviceName'],
-            $this->request->post['type']
-        );
+        $serviceName = isset($this->request->post['serviceName']) && is_string($this->request->post['serviceName']) ? $this->request->post['serviceName'] : '';
+        $type = isset($this->request->post['type']) && is_string($this->request->post['type']) ? $this->request->post['type'] : 'crud';
+        return $model->createService($serviceName, $type);
     }
 
     /**
@@ -135,7 +143,8 @@ class GemvcAssistantController extends Controller
     public function migrateTable(): JsonResponse
     {
         $model = new GemvcAssistantModel();
-        return $model->migrateTable($this->request->post['tableClassName']);
+        $tableClassName = isset($this->request->post['tableClassName']) && is_string($this->request->post['tableClassName']) ? $this->request->post['tableClassName'] : '';
+        return $model->migrateTable($tableClassName);
     }
 }
 

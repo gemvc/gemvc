@@ -520,6 +520,10 @@ class DeveloperTable extends Table
                 }
                 
                 try {
+                    if (!class_exists($className)) {
+                        continue;
+                    }
+                    /** @var \ReflectionClass<object> $reflection */
                     $reflection = new \ReflectionClass($className);
                     
                     // Check if service is hidden
@@ -609,6 +613,9 @@ class DeveloperTable extends Table
      * @param \ReflectionClass $reflection
      * @return bool
      */
+    /**
+     * @param \ReflectionClass<object> $reflection
+     */
     private function isServiceHidden(\ReflectionClass $reflection): bool
     {
         $docComment = $reflection->getDocComment();
@@ -622,6 +629,10 @@ class DeveloperTable extends Table
      * Get all endpoints including hidden ones
      * 
      * @param \ReflectionClass $reflection
+     * @return array<int, array<string, mixed>>
+     */
+    /**
+     * @param \ReflectionClass<object> $reflection
      * @return array<int, array<string, mixed>>
      */
     private function getAllEndpoints(\ReflectionClass $reflection): array
@@ -663,6 +674,10 @@ class DeveloperTable extends Table
      * 
      * @param \ReflectionMethod $method
      * @param \ReflectionClass $class
+     * @return array<string, mixed>
+     */
+    /**
+     * @param \ReflectionClass<object> $class
      * @return array<string, mixed>
      */
     private function getEndpointDetails(\ReflectionMethod $method, \ReflectionClass $class): array
@@ -763,6 +778,9 @@ class DeveloperTable extends Table
      * @param \ReflectionClass $reflection
      * @return string
      */
+    /**
+     * @param \ReflectionClass<object> $reflection
+     */
     private function getClassDocComment(\ReflectionClass $reflection): string
     {
         $docComment = $reflection->getDocComment();
@@ -814,6 +832,9 @@ class DeveloperTable extends Table
      * @param string $className
      * @return string|null
      */
+    /**
+     * @param \ReflectionClass<object> $reflection
+     */
     private function getTableNameFromClass(\ReflectionClass $reflection, string $className): ?string
     {
         try {
@@ -860,9 +881,17 @@ class DeveloperTable extends Table
             // Fallback: try to infer from class name
             $shortName = $reflection->getShortName();
             if (str_ends_with($shortName, 'Table')) {
+                // substr with negative offset always returns string (never false)
                 $baseName = substr($shortName, 0, -5); // Remove "Table" suffix
+                if ($baseName === '') {
+                    return null;
+                }
                 // Convert PascalCase to snake_case and pluralize
-                $tableName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $baseName)) . 's';
+                $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $baseName);
+                if ($replaced === null) {
+                    return null;
+                }
+                $tableName = strtolower($replaced) . 's';
                 return $tableName;
             }
             
@@ -942,13 +971,9 @@ class DeveloperTable extends Table
                             continue;
                         }
                         
-                        // Load the file - wrap in try-catch to handle any initialization errors
+                        // Load the file
                         try {
                             require_once $filePath;
-                        } catch (\Exception $e) {
-                            // If require fails, skip this file
-                            error_log("Failed to require {$filePath}: " . $e->getMessage());
-                            continue;
                         } catch (\Throwable $e) {
                             error_log("Failed to require {$filePath}: " . $e->getMessage());
                             continue;
@@ -958,13 +983,9 @@ class DeveloperTable extends Table
                             continue;
                         }
                         
-                        // Use reflection - this should be safe
-                        try {
-                            $reflection = new \ReflectionClass($className);
-                        } catch (\Exception $e) {
-                            error_log("Failed to reflect {$className}: " . $e->getMessage());
-                            continue;
-                        }
+                        // Use reflection - safe because class_exists already validated
+                        /** @var \ReflectionClass<object> $reflection */
+                        $reflection = new \ReflectionClass($className);
                         
                         if (!$reflection->isSubclassOf('Gemvc\Database\Table')) {
                             continue;
@@ -991,7 +1012,11 @@ class DeveloperTable extends Table
                             ");
                             $stmt->execute([$dbName, $tableName]);
                             $result = $stmt->fetch(\PDO::FETCH_NUM);
-                            $isMigrated = ($result !== false && isset($result[0]) && (int)$result[0] > 0);
+                            $isMigrated = false;
+                            if (is_array($result) && isset($result[0])) {
+                                $count = is_numeric($result[0]) ? (int)$result[0] : 0;
+                                $isMigrated = $count > 0;
+                            }
                             
                             // Get foreign key relationships
                             $foreignKeys = $isMigrated ? $this->getTableForeignKeys($pdo, $dbName, $tableName) : [];

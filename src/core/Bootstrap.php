@@ -184,11 +184,16 @@ class Bootstrap
     private function setRequestedService(): void
     {
         $method = "index";
-        $segments = explode('/', $this->request->requestedUrl);
+        // Strip query string from URL before parsing segments
+        $urlPath = $this->request->requestedUrl;
+        if (($queryPos = strpos($urlPath, '?')) !== false) {
+            $urlPath = substr($urlPath, 0, $queryPos);
+        }
+        $segments = explode('/', $urlPath);
         
         // Check if this is a root URL (/) - route to Index/index API
-        $isRootUrl = empty($this->request->requestedUrl) ||
-            $this->request->requestedUrl === '/' ||
+        $isRootUrl = empty($urlPath) ||
+            $urlPath === '/' ||
             (count($segments) <= 1 && empty(array_filter($segments)));
         
         if ($isRootUrl) {

@@ -115,7 +115,7 @@ class DeveloperModel extends DeveloperTable
                     }
                     
                     // If table is selected, get its structure and relationships using same connection
-                    if ($selectedTable && !empty($selectedTable)) {
+                    if ($selectedTable !== null && $selectedTable !== '') {
                         // Check if table exists
                         $stmt = $pdo->prepare("
                             SELECT COUNT(*) 
@@ -125,7 +125,11 @@ class DeveloperModel extends DeveloperTable
                         ");
                         $stmt->execute([$dbName, $selectedTable]);
                         $tableExistsResult = $stmt->fetch(PDO::FETCH_NUM);
-                        $tableExists = ($tableExistsResult !== false && isset($tableExistsResult[0]) && (int)$tableExistsResult[0] > 0);
+                        $tableExists = false;
+                        if (is_array($tableExistsResult) && isset($tableExistsResult[0])) {
+                            $count = is_numeric($tableExistsResult[0]) ? (int)$tableExistsResult[0] : 0;
+                            $tableExists = $count > 0;
+                        }
                         
                         if ($tableExists) {
                             // Get table structure
@@ -547,8 +551,10 @@ class DeveloperModel extends DeveloperTable
             $outputStr = implode("\n", $output);
             
             if ($returnVar === 0) {
-                // Verify service was created
-                if ($this->serviceExists($serviceName)) {
+                // Verify service was created (check after creation, so it may now exist)
+                /** @var bool $serviceCreated */
+                $serviceCreated = $this->serviceExists($serviceName);
+                if ($serviceCreated) {
                     return Response::success([
                         'message' => $message,
                         'serviceName' => $serviceName,
@@ -667,6 +673,9 @@ class DeveloperModel extends DeveloperTable
                 
                 // Create table instance
                 $table = new $className();
+                if (!($table instanceof \Gemvc\Database\Table)) {
+                    return Response::badRequest("Invalid table class: {$className}");
+                }
                 $generator = new \Gemvc\Database\TableGenerator($pdo);
                 
                 // Check if table exists using INFORMATION_SCHEMA (more reliable)
@@ -687,7 +696,11 @@ class DeveloperModel extends DeveloperTable
                 ");
                 $stmt->execute([$dbName, $tableName]);
                 $result = $stmt->fetch(\PDO::FETCH_NUM);
-                $tableExists = ($result !== false && isset($result[0]) && (int)$result[0] > 0);
+                $tableExists = false;
+                if (is_array($result) && isset($result[0])) {
+                    $count = is_numeric($result[0]) ? (int)$result[0] : 0;
+                    $tableExists = $count > 0;
+                }
                 
                 if ($tableExists) {
                     // Update existing table
@@ -786,17 +799,14 @@ class DeveloperModel extends DeveloperTable
 
     public function getDevAssistantUrl(): string
     {
-        $port = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-        $subUrl = $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? '';
+        $port = isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) && is_string($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) ? $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] : '80';
+        $subUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) ? $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] : '';
         $url = 'http://localhost';
-        if($port === '80' ) {
-            $url = 'http://localhost';
+        if($port !== '80') {
+            $url = 'http://localhost:' . $port;
         }
-        else {
-            $url = 'http://localhost:'.$port;
-        }
-        if(!empty($subUrl)) {
-            $url .= '/'.$subUrl;
+        if($subUrl !== '') {
+            $url .= '/' . $subUrl;
         }
         $url .= '/index/developer';
         return $url;
@@ -804,17 +814,14 @@ class DeveloperModel extends DeveloperTable
 
     public function getDocumentationUrl(): string
     {
-        $port = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-        $subUrl = $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] ?? '';
+        $port = isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) && is_string($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) ? $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] : '80';
+        $subUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) ? $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] : '';
         $url = 'http://localhost';
-        if($port === '80' ) {
-            $url = 'http://localhost';
+        if($port !== '80') {
+            $url = 'http://localhost:' . $port;
         }
-        else {
-            $url = 'http://localhost:'.$port;
-        }
-        if(!empty($subUrl)) {
-            $url .= '/'.$subUrl;
+        if($subUrl !== '') {
+            $url .= '/' . $subUrl;
         }
         $url .= '/index/document';
         return $url;

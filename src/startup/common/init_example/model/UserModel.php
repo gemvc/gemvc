@@ -20,12 +20,12 @@ use stdClass;
 
 class UserModel extends UserTable
 {
-    private ?string $_message;
+    /** @phpstan-ignore-next-line */
+    private ?string $_message = null;
 
     public function __construct()
     {
         parent::__construct();
-        $this->_message = null;
     }
 
     public function getMessage(): ?string
@@ -54,7 +54,7 @@ class UserModel extends UserTable
         if($qb->getError()) {
             return Response::internalError("Failed to retrieve User: " . $qb->getError());
         }
-        if(count($results) !== 0) {
+        if(is_array($results) && count($results) !== 0) {
             return Response::forbidden("Admin user already exists");
         }
         $this->email = $email;
@@ -80,11 +80,13 @@ class UserModel extends UserTable
         if($qb->getError()) {
             return Response::internalError("Failed to retrieve User: " . $qb->getError());
         }
-        if (count($results) === 0) {
+        if (!is_array($results) || count($results) === 0) {
             return Response::notFound("User not found");
         }
         $result = $results[0];
-        $result['password'] = "-";
+        if (is_array($result)) {
+            $result['password'] = "-";
+        }
         return Response::success($result, 1, "User retrieved successfully");
     }
 
@@ -144,7 +146,7 @@ class UserModel extends UserTable
         }
         $token = new JWTToken();
         // Set role from user before creating tokens
-        if (isset($user->role) && is_string($user->role)) {
+        if ($user->role !== null) {
             $token->role = $user->role;
         }
         $loginToken = $token->createLoginToken($user->id);

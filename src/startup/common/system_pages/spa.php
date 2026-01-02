@@ -377,8 +377,8 @@ try {
 
                     // Fetch welcome page HTML and database status in parallel
                     const [welcomeResponse, dbStatusResponse] = await Promise.all([
-                        fetch(API_BASE + '/index/welcome', { headers: headers }),
-                        fetch(API_BASE + '/index/isDbReady', { headers: headers })
+                        fetch(API_BASE + '/GemvcAssistant/welcome', { headers: headers }),
+                        fetch(API_BASE + '/GemvcAssistant/isDbReady', { headers: headers })
                     ]);
 
                     if (! welcomeResponse.ok) {
@@ -449,7 +449,7 @@ try {
                                     button.textContent = 'Initializing...';
                                     
                                     try {
-                                        const initResponse = await fetch(API_BASE + '/index/initDatabase', {
+                                        const initResponse = await fetch(API_BASE + '/GemvcAssistant/initDatabase', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
@@ -559,14 +559,23 @@ try {
 
                             try {
                                 // Build URL with table parameter if provided
-                                let url = API_BASE + '/index/database/';
+                                let url = API_BASE + '/GemvcAssistant/database';
                                 if (tableName) {
                                     url += '?table=' + encodeURIComponent(tableName);
                                 }
 
+                                // Get current token for debugging
+                                const currentToken = localStorage.getItem('gemvc_admin_token');
+                                console.log('Fetching database page:', url, 'Token exists:', !!currentToken);
+
                                 const response = await fetch(url, {
-                                    signal: databaseRequestController.signal
+                                    signal: databaseRequestController.signal,
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
                                 });
+                                
+                                console.log('Database page response status:', response.status, response.statusText);
                                 
                                 if (! response.ok) {
                                     if (response.status === 401) {
@@ -574,7 +583,16 @@ try {
                                         resolve();
                                         return;
                                     }
-                                    throw new Error('Failed to load database page');
+                                    // Try to get error message from response
+                                    let errorMessage = 'Failed to load database page';
+                                    try {
+                                        const errorData = await response.clone().json();
+                                        errorMessage = errorData.service_message || errorData.message || errorMessage;
+                                    } catch (e) {
+                                        // If response is not JSON, use status text
+                                        errorMessage = response.statusText || errorMessage;
+                                    }
+                                    throw new Error(errorMessage);
                                 }
 
                                 const data = await response.json();
@@ -628,7 +646,7 @@ try {
                                                 const format = exportFormatInput.value;
 
                                                 try {
-                                                    const exportResponse = await fetch(API_BASE + '/index/export', {
+                                                    const exportResponse = await fetch(API_BASE + '/GemvcAssistant/export', {
                                                         method: 'POST',
                                                         headers: {
                                                             'Content-Type': 'application/json'
@@ -680,7 +698,7 @@ try {
                                         const format = importFormatInput.value;
                                         
                                         try {
-                                            const importResponse = await fetch(API_BASE + '/index/import', {
+                                            const importResponse = await fetch(API_BASE + '/GemvcAssistant/import', {
                                                 method: 'POST',
                                                 body: formData
                                             });
@@ -728,7 +746,7 @@ try {
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/index/services');
+                    const response = await fetch(API_BASE + '/GemvcAssistant/services');
                     if (!response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
@@ -782,7 +800,7 @@ try {
                             }
                             
                             try {
-                                const createResponse = await fetch(API_BASE + '/index/createService', {
+                                const createResponse = await fetch(API_BASE + '/GemvcAssistant/createService', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -876,7 +894,7 @@ try {
                     const contentWrapper = appDiv.querySelector('div');
                     contentWrapper.className = 'bg-white rounded-xl shadow-2xl max-w-6xl w-full p-10';
 
-                    const response = await fetch(API_BASE + '/index/tables');
+                    const response = await fetch(API_BASE + '/GemvcAssistant/tables');
                     if (!response.ok) {
                         if (response.status === 401) {
                             setRoute('login');
@@ -907,7 +925,7 @@ try {
                         button.textContent = isUpdate ? 'Updating...' : 'Migrating...';
                         
                         try {
-                            const migrateResponse = await fetch(API_BASE + '/index/migrateTable', {
+                            const migrateResponse = await fetch(API_BASE + '/GemvcAssistant/migrateTable', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',

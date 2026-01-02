@@ -55,11 +55,10 @@ class ApmController extends Controller
     public function register(): JsonResponse
     {
         $model = new ApmModel();
-        return $model->register(
-            $this->request->post['email'],
-            $this->request->post['organization_name'] ?? null,
-            $this->request->post['source'] ?? 'gemvc'
-        );
+        $email = isset($this->request->post['email']) && is_string($this->request->post['email']) ? $this->request->post['email'] : '';
+        $organizationName = isset($this->request->post['organization_name']) && is_string($this->request->post['organization_name']) ? $this->request->post['organization_name'] : null;
+        $source = isset($this->request->post['source']) && is_string($this->request->post['source']) ? $this->request->post['source'] : 'gemvc';
+        return $model->register($email, $organizationName, $source);
     }
 
     /**
@@ -70,10 +69,9 @@ class ApmController extends Controller
     public function verify(): JsonResponse
     {
         $model = new ApmModel();
-        return $model->verify(
-            $this->request->post['session_id'],
-            $this->request->post['code']
-        );
+        $sessionId = isset($this->request->post['session_id']) && is_string($this->request->post['session_id']) ? $this->request->post['session_id'] : '';
+        $code = isset($this->request->post['code']) && is_string($this->request->post['code']) ? $this->request->post['code'] : '';
+        return $model->verify($sessionId, $code);
     }
 
     /**
@@ -84,8 +82,8 @@ class ApmController extends Controller
     public function heartbeat(): JsonResponse
     {
         $model = new ApmModel();
-        $status = $this->request->post['status'] ?? 'healthy';
-        $metadata = $this->request->post['metadata'] ?? [];
+        $status = isset($this->request->post['status']) && is_string($this->request->post['status']) ? $this->request->post['status'] : 'healthy';
+        $metadata = isset($this->request->post['metadata']) && is_array($this->request->post['metadata']) ? $this->request->post['metadata'] : [];
         return $model->sendHeartbeat($status, $metadata);
     }
 
@@ -97,7 +95,7 @@ class ApmController extends Controller
     public function metrics(): JsonResponse
     {
         $model = new ApmModel();
-        $window = $this->request->get['window'] ?? '15m';
+        $window = isset($this->request->get['window']) && is_string($this->request->get['window']) ? $this->request->get['window'] : '15m';
         return $model->getMetrics($window);
     }
 
@@ -120,7 +118,10 @@ class ApmController extends Controller
     public function activeAlerts(): JsonResponse
     {
         $model = new ApmModel();
-        $limit = isset($this->request->get['limit']) ? (int)$this->request->get['limit'] : 50;
+        $limit = 50;
+        if (isset($this->request->get['limit']) && is_numeric($this->request->get['limit'])) {
+            $limit = (int)$this->request->get['limit'];
+        }
         $limit = max(1, min(100, $limit));
         return $model->getActiveAlerts($limit);
     }
@@ -166,17 +167,20 @@ class ApmController extends Controller
     public function createWebhook(): JsonResponse
     {
         $model = new ApmModel();
-        $events = $this->request->post['events'];
+        $events = $this->request->post['events'] ?? [];
         if (!is_array($events)) {
             return Response::badRequest('events must be an array');
         }
-        $enabled = $this->request->post['enabled'] ?? true;
-        return $model->createWebhook(
-            $this->request->post['name'],
-            $this->request->post['url'],
-            $events,
-            $enabled
-        );
+        $eventsArray = [];
+        foreach ($events as $event) {
+            if (is_string($event)) {
+                $eventsArray[] = $event;
+            }
+        }
+        $name = isset($this->request->post['name']) && is_string($this->request->post['name']) ? $this->request->post['name'] : '';
+        $url = isset($this->request->post['url']) && is_string($this->request->post['url']) ? $this->request->post['url'] : '';
+        $enabled = isset($this->request->post['enabled']) ? (bool)$this->request->post['enabled'] : true;
+        return $model->createWebhook($name, $url, $eventsArray, $enabled);
     }
 }
 

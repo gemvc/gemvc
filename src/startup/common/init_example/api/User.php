@@ -98,8 +98,11 @@ class User extends ApiService
         //Manually define posts before passing this->request to UserController
         $this->request->post['updated_at'] = date('Y-m-d H:i:s');
         //Manually hash the password before passing this->request to UserController if post password is not empty
-        if($this->request->post['password'] && !empty($this->request->post['password'])) {
-            $this->request->post['password'] = CryptHelper::hashPassword($this->request->post['password']);
+        if(isset($this->request->post['password']) && $this->request->post['password'] !== '') {
+            $password = is_string($this->request->post['password']) ? $this->request->post['password'] : '';
+            if($password !== '') {
+                $this->request->post['password'] = CryptHelper::hashPassword($password);
+            }
         }
         return (new UserController($this->request))->update();
     }

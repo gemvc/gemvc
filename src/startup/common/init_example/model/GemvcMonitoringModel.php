@@ -76,6 +76,7 @@ class GemvcMonitoringModel extends DeveloperTable
         try {
             $activeConnections = 0;
             $processList = [];
+            $dbInfo = null;
             
             if ($pdo !== null) {
                 // Get process list from MySQL
@@ -87,7 +88,6 @@ class GemvcMonitoringModel extends DeveloperTable
                 
                 // Get connection info
                 $dbNameResult = $pdo->query("SELECT DATABASE() as db_name, CONNECTION_ID() as connection_id");
-                $dbInfo = null;
                 if ($dbNameResult !== false) {
                     $dbInfo = $dbNameResult->fetch(PDO::FETCH_ASSOC);
                 }

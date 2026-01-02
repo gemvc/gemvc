@@ -336,10 +336,18 @@ class ApmModel
         }
         
         if (empty($metadata)) {
+            $cpuLoad = null;
+            if (function_exists('sys_getloadavg')) {
+                $loadAvg = sys_getloadavg();
+                if (is_array($loadAvg)) {
+                    // sys_getloadavg() always returns array{float, float, float} when successful
+                    $cpuLoad = $loadAvg[0];
+                }
+            }
             $metadata = [
                 'memory_usage' => memory_get_usage(true),
                 'memory_peak' => memory_get_peak_usage(true),
-                'cpu_load' => function_exists('sys_getloadavg') ? sys_getloadavg()[0] : null,
+                'cpu_load' => $cpuLoad,
             ];
         }
         

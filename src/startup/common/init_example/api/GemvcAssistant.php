@@ -20,6 +20,23 @@ class GemvcAssistant extends ApiService
         parent::__construct($request);
     }
 
+    /** 
+    *  Developer Welcome Page Data (JSON for SPA)
+    * @return JsonResponse
+    * @http GET
+    * @description GEMVC Framework Developer Welcome Page Data
+    * @hidden
+    */
+    public function welcome(): JsonResponse
+    {
+        // Authentication check
+        if (!$this->request->auth(['developer','admin'])) {
+            return Response::unauthorized('Authentication required');
+        }
+        
+        return (new \App\Controller\DeveloperController($this->request))->welcome();
+    }
+
     /**
      * Export Table - Exports table data as CSV or SQL
      * 

@@ -35,12 +35,16 @@ class SwooleBootstrap
     private function extractRouteInfo(): void
     {
         $method = "index";
-
-        $segments = explode('/', $this->request->requestedUrl);
+        // Strip query string from URL before parsing segments
+        $urlPath = $this->request->requestedUrl;
+        if (($queryPos = strpos($urlPath, '?')) !== false) {
+            $urlPath = substr($urlPath, 0, $queryPos);
+        }
+        $segments = explode('/', $urlPath);
 
         // Check if this is a root URL (/) in development mode
-        $isRootUrl = empty($this->request->requestedUrl) ||
-            $this->request->requestedUrl === '/' ||
+        $isRootUrl = empty($urlPath) ||
+            $urlPath === '/' ||
             (count($segments) <= 2 && empty(array_filter($segments)));
 
         if ($isRootUrl) {
