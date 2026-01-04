@@ -5,6 +5,123 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-01-04
+
+### Added
+- **Native APM Integration with Request Propagation** 🚀
+  - APM initialization moved to `Bootstrap.php` and `SwooleBootstrap.php` for early tracing
+  - Root trace automatically created at request start (captures full request lifecycle)
+  - Trace context propagation via `$request->apm` through all layers
+  - All spans share the same `traceId` for complete request visibility
+  - Exception tracking automatically records all exceptions in traces
+  - Fire-and-forget pattern for non-blocking trace sending (after HTTP response)
+
+- **Controller Tracing** (Environment-Controlled)
+  - `ApiService::callController()` method for automatic controller method tracing
+  - Controlled via `APM_TRACE_CONTROLLER=1` environment variable
+  - Automatic spans for controller method calls
+  - Captures method name, HTTP response code, execution time, and response data
+  - Zero code changes needed - same code works with/without tracing
+  - `callWithTracing()` deprecated in favor of `callController()` (better naming)
+
+- **Database Query Tracing** (Environment-Controlled)
+  - Automatic APM spans for all database queries via `UniversalQueryExecuter`
+  - Controlled via `APM_TRACE_DB_QUERY=1` environment variable
+  - Captures query type (SELECT, INSERT, UPDATE, DELETE), execution time, rows affected, and SQL statement
+  - Request propagation chain: `Table` → `ConnectionManager` → `PdoQuery` → `UniversalQueryExecuter`
+  - `Table::setRequest()` method for trace context propagation
+  - `Controller::createModel()` helper automatically sets Request on models
+
+- **ApmTracingTrait** - Unified APM Tracing Methods
+  - Centralized APM tracing logic for reuse across all layers
+  - `startApmSpan()` - Start a new APM span with attributes
+  - `endApmSpan()` - End a span with status and attributes
+  - `recordApmException()` - Record exceptions in spans
+  - `traceApm()` - Convenience method for wrapping operations in spans
+  - Used by `ApiService` and available for custom tracing in Models/Controllers
+
+- **Comprehensive APM Documentation**
+  - `GEMVC_APM_INTEGRATION.md` - Complete APM integration guide
+  - Architecture overview, configuration, usage examples, best practices
+  - Performance considerations, troubleshooting, and advanced usage
+  - Sample rate documentation (`TRACEKIT_SAMPLE_RATE` environment variable)
+  - Updated `README.md` with prominent APM integration section
+  - Updated `ARCHITECTURE.md` with APM architecture flow diagrams
+
+- **Unit Tests for APM Integration**
+  - `ControllerCreateModelTest` - Tests Request propagation to models via `createModel()`
+  - `TableRequestPropagationTest` - Tests Request propagation through database layers
+  - `UniversalQueryExecuterApmTest` - Tests APM tracing in database queries
+  - Comprehensive coverage of APM tracing functionality
+
+### Changed
+- **Bootstrap.php** / **SwooleBootstrap.php** - APM initialization moved to constructor
+  - Early APM initialization ensures root trace captures full request lifecycle
+  - Explicit `$request->apm` setting for guaranteed trace context propagation
+  - Exception handlers updated to set `$request->apm` for fallback APM instances
+
+- **ApiService** - APM initialization removed (now handled by Bootstrap)
+  - `callController()` method introduced as recommended way to invoke controllers
+  - `callWithTracing()` deprecated (kept for backward compatibility)
+  - Uses `ApmTracingTrait` for unified tracing methods
+  - Fixed static method calls to use `AbstractApm` instead of interface
+
+- **Controller** - APM initialization removed (now retrieved from `$request->apm`)
+  - `getApm()` method retrieves APM from Request object
+  - `createModel()` helper method for automatic Request propagation to models
+  - `createList()` and `_listObjects()` updated to use `createModel()`
+
+- **Table** - Request propagation support
+  - `setRequest()` method for trace context propagation
+  - Request automatically propagated to `ConnectionManager` when set
+
+- **ConnectionManager** - Request propagation support
+  - `setRequest()` method for trace context propagation
+  - Request automatically propagated to `PdoQuery` when set
+
+- **PdoQuery** - Request propagation support
+  - `setRequest()` method for trace context propagation
+  - Request automatically propagated to `UniversalQueryExecuter` when set
+
+- **UniversalQueryExecuter** - Database query tracing
+  - Constructor accepts optional `Request` parameter for trace context
+  - APM tracing implemented in `execute()` method (controlled by `APM_TRACE_DB_QUERY`)
+  - Captures comprehensive query metadata (type, time, rows, SQL)
+
+- **JsonResponse** - Implements `JsonSerializable` interface
+  - Internal APM properties (`_apm_span`, `_apm_model_name`, `_apm_method_name`) excluded from JSON output
+  - Clean API responses without internal tracing metadata
+  - `jsonSerialize()` method explicitly controls serialized properties
+
+- **Property Naming Convention** - All new Request properties follow `$_request` pattern
+  - `Table::$_request` (was `$request`)
+  - `ConnectionManager::$_request` (was `$request`)
+  - `PdoQuery::$_request` (was `$request`)
+  - `UniversalQueryExecuter::$_request` (was `$request`)
+
+### Fixed
+- **ApiService::callController()** - Fixed static method calls
+  - Changed `ApmInterface::determineStatusFromHttpCode()` to inline status determination
+  - Changed `ApmInterface::limitStringForTracing()` to `AbstractApm::limitStringForTracing()`
+  - Resolves "Cannot call abstract method" errors
+
+- **JsonResponse JSON Output** - Removed internal APM properties from responses
+  - `_apm_span`, `_apm_model_name`, `_apm_method_name` no longer appear in API responses
+  - Clean JSON output for all endpoints
+
+### Testing
+- Added comprehensive test coverage for APM integration
+  - `ControllerCreateModelTest` - Tests Request propagation to models
+  - `TableRequestPropagationTest` - Tests Request propagation through database layers
+  - `UniversalQueryExecuterApmTest` - Tests APM tracing in database queries
+  - All tests passing with PHPUnit
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- APM tracing is read-only (no data modification)
+- Trace data sent asynchronously (fire-and-forget pattern)
+
 ## [5.3.0] - 2026-01-03
 
 ### Added
@@ -333,6 +450,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Migration Notes
+
+### Upgrading from 5.3.0 to 5.4.0
+
+This release is **fully backward compatible**. No action required.
+
+**What's New**:
+- Native APM integration with automatic request tracing
+- Controller tracing via `callController()` method (environment-controlled)
+- Database query tracing (environment-controlled)
+- Request propagation through all layers for complete trace visibility
+- `ApmTracingTrait` for unified APM tracing across all layers
+- `Controller::createModel()` helper for automatic Request propagation
+- Comprehensive APM integration documentation
+
+**Benefits**:
+- Zero-configuration APM tracing (works out of the box)
+- Complete request visibility from Bootstrap to Database
+- Environment-controlled tracing (enable/disable via env vars)
+- Non-blocking trace sending (no performance impact)
+- Same code works with/without tracing (no code changes needed)
+
+**Optional Configuration**:
+- Enable controller tracing: Set `APM_TRACE_CONTROLLER=1` in `.env`
+- Enable database tracing: Set `APM_TRACE_DB_QUERY=1` in `.env`
+- Configure sample rate: Set `TRACEKIT_SAMPLE_RATE=1.0` (0.0 to 1.0)
+
+**Usage**:
+- Use `$this->callController()` in API services for controller tracing
+- Use `$this->createModel()` in controllers for automatic Request propagation
+- See `GEMVC_APM_INTEGRATION.md` for complete documentation
+
+**Breaking Changes**:
+- None - `callWithTracing()` still works but is deprecated (use `callController()` instead)
 
 ### Upgrading from 5.2.5 to 5.3.0
 

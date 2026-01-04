@@ -1,115 +1,158 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.2.5...5.3.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.3.0...5.4.0
 # GEMVC Framework - Release Notes
 
-## Version 5.3.0 - Server Monitoring Dashboard
+## Version 5.4.0 - Native APM Integration
 
-**Release Date**: 2026-01-03  
+**Release Date**: 2026-01-04  
 **Type**: Minor Release (Backward Compatible)
 
 ---
 
 ##  Overview
 
-This release introduces a **Server Monitoring Dashboard** in the Developer Assistant, providing real-time visualization of server resources including RAM, CPU, network, and database metrics. The monitoring system features interactive charts, Docker container metrics, and a user-friendly interface for tracking system performance.
+This release introduces **Native APM (Application Performance Monitoring) Integration** with automatic request tracing, controller method tracing, and database query tracing. The APM system provides complete visibility into your application's performance with zero configuration required. All tracing is environment-controlled, allowing you to enable or disable features without code changes.
 
 ---
 
 ##  New Features
 
-### 📊 Server Monitoring Dashboard
+### 🚀 Native APM Integration
 
-A complete real-time monitoring solution integrated into the Developer Assistant SPA, providing visual insights into server performance.
+A complete Application Performance Monitoring solution built directly into the framework, providing automatic tracing of requests, controllers, and database queries with zero configuration required.
 
 #### **Key Features**:
 
-1. **Real-Time Charts** (6 interactive charts):
-   - **RAM Usage** - System memory usage with used/total/free metrics
-   - **Docker Container RAM** - Container memory limits and PHP memory usage
-   - **Docker Container CPU** - Container CPU usage with throttling detection
-   - **CPU Usage** - System CPU usage with load averages and core count
-   - **Network Bandwidth** - Network traffic (received/sent bytes)
-   - **Database Latency** - Database query latency (min/max/average)
+1. **Automatic Root Tracing**:
+   - APM initialized early in `Bootstrap.php` and `SwooleBootstrap.php`
+   - Root trace automatically created at request start
+   - Captures full request lifecycle from start to finish
+   - All spans share the same `traceId` for complete request visibility
+   - Exception tracking automatically records all exceptions
 
-2. **Interactive Controls**:
-   - Configurable refresh intervals (2s, 3s, 5s, 10s, or custom)
-   - Pause/Resume functionality
-   - Manual refresh button
-   - Preferences saved to localStorage
+2. **Controller Tracing** (Environment-Controlled):
+   - Use `$this->callController()` in API services for automatic tracing
+   - Controlled via `APM_TRACE_CONTROLLER=1` environment variable
+   - Automatic spans for controller method calls
+   - Captures method name, HTTP response code, execution time, and response data
+   - Zero code changes needed - same code works with/without tracing
 
-3. **Database Connections Table**:
-   - Expandable table showing active database connections
-   - Process list with connection details (ID, User, Host, DB, Command, Time, State, Info)
-   - Real-time connection count display
+3. **Database Query Tracing** (Environment-Controlled):
+   - Automatic APM spans for all database queries
+   - Controlled via `APM_TRACE_DB_QUERY=1` environment variable
+   - Captures query type (SELECT, INSERT, UPDATE, DELETE), execution time, rows affected, and SQL statement
+   - Request propagation through all database layers
+   - Use `$this->createModel()` in controllers for automatic Request propagation
 
-4. **Smart Features**:
-   - Page Visibility API integration (pauses when browser tab is hidden)
-   - Automatic canvas resizing on window resize
-   - Color-coded charts (green <70%, orange 70-90%, red >90%)
-   - Circular buffer (60 data points) for efficient memory usage
-   - Smooth chart rendering with HTML5 Canvas
+4. **Trace Context Propagation**:
+   - Request object carries APM instance (`$request->apm`)
+   - Automatic propagation: Bootstrap → ApiService → Controller → Table → Database
+   - All spans automatically linked to root trace
+   - Fire-and-forget pattern for non-blocking trace sending
 
 #### **Access**:
-- URL: `/index/developer#monitoring`
-- Environment: Development only (`APP_ENV=dev`)
-- Authentication: Requires `['developer','admin']` roles
+- Works automatically when APM provider is configured
+- No special endpoints or URLs required
+- Traces sent asynchronously after HTTP response
 
 #### **Technical Implementation**:
-- **Frontend**: Self-contained JavaScript module (`monitoring.js`)
-- **Backend**: Uses existing `/api/GemvcMonitoring/*` endpoints
-- **Architecture**: Client-side rendering with server-side data fetching
-- **Performance**: Parallel API calls for all metrics
+- **Early Initialization**: APM created in Bootstrap/SwooleBootstrap constructors
+- **Request Propagation**: `$request->apm` carries trace context through all layers
+- **Environment Control**: Tracing enabled/disabled via environment variables
+- **Provider Agnostic**: Works with any APM provider via `gemvc/apm-contracts`
+- **Performance**: Non-blocking trace sending (fire-and-forget pattern)
 - **Compatibility**: Works with all webserver types (Apache, Nginx, OpenSwoole)
 
-### 🐳 Docker Container Metrics
+### 🔧 Developer Tools
 
-Enhanced monitoring capabilities specifically for Docker environments:
+#### **ApmTracingTrait**
+- Unified APM tracing methods for reuse across all layers
+- `startApmSpan()` - Start a new APM span with attributes
+- `endApmSpan()` - End a span with status and attributes
+- `recordApmException()` - Record exceptions in spans
+- `traceApm()` - Convenience method for wrapping operations in spans
 
-- **Docker Container RAM** (`/api/GemvcMonitoring/dockerRam`):
-  - Container memory limits and usage
-  - PHP memory consumption within container
-  - Memory usage percentage calculation
+#### **Controller::createModel()**
+- Helper method for automatic Request propagation to models
+- Ensures trace context is available for database query tracing
+- Simple one-line usage: `$model = $this->createModel(new UserModel());`
 
-- **Docker Container CPU** (`/api/GemvcMonitoring/dockerCpu`):
-  - Container CPU usage percentage
-  - Assigned CPU cores detection
-  - CPU throttling detection (warns when >95%)
-  - Cgroup-based CPU metrics
+#### **ApiService::callController()**
+- Recommended method for invoking controllers with automatic tracing
+- Better naming than deprecated `callWithTracing()`
+- Environment-controlled (respects `APM_TRACE_CONTROLLER` flag)
 
 ---
 
 ## 🔄 Changes
 
-### Developer Assistant SPA
+### Bootstrap / SwooleBootstrap
 
-- **New Monitoring Page** - Added complete monitoring dashboard
-- **Navigation** - Added "Monitoring" link to Developer Assistant menu
-- **Module System** - Integrated monitoring JavaScript module with proper cleanup
+- **APM Initialization** - Moved to constructor for early tracing
+- **Root Trace Creation** - Automatic root trace at request start
+- **Request APM Setting** - Explicit `$request->apm` assignment for trace context
+- **Exception Handling** - Updated to set `$request->apm` for fallback APM instances
 
-### GemvcMonitoring API
+### ApiService
 
-- **Docker RAM Endpoint** - Returns container memory metrics
-- **Docker CPU Endpoint** - Returns container CPU metrics with throttling detection
+- **APM Initialization Removed** - Now handled by Bootstrap (earlier in lifecycle)
+- **callController() Method** - New recommended method for controller invocation with tracing
+- **callWithTracing() Deprecated** - Kept for backward compatibility, use `callController()` instead
+- **ApmTracingTrait Integration** - Uses unified tracing methods
 
-### Monitoring JavaScript Module
+### Controller
 
-- **Chart Rendering** - HTML5 Canvas-based line charts
-- **Data Management** - Circular buffer for efficient data storage
-- **Event Handling** - Proper event listener management with cleanup
-- **Error Handling** - Graceful degradation when metrics unavailable
+- **APM Retrieval** - Gets APM instance from `$request->apm` (shared trace context)
+- **createModel() Helper** - New method for automatic Request propagation to models
+- **createList() Updated** - Now uses `createModel()` for Request propagation
+
+### Database Layer
+
+- **Table::setRequest()** - New method for trace context propagation
+- **ConnectionManager::setRequest()** - Propagates Request to PdoQuery
+- **PdoQuery::setRequest()** - Propagates Request to UniversalQueryExecuter
+- **UniversalQueryExecuter** - Database query tracing implementation
+- **Request Propagation Chain** - Complete trace context flow through all database layers
+
+### JsonResponse
+
+- **JsonSerializable Implementation** - Excludes internal APM properties from JSON output
+- **Clean API Responses** - `_apm_span`, `_apm_model_name`, `_apm_method_name` no longer appear in responses
 
 ---
 
 ## 🐛 Bug Fixes
 
-- **Database Latency Chart** - Changed line color to consistent orange for better visibility
+- **ApiService::callController()** - Fixed static method calls to use `AbstractApm` instead of interface
+  - Resolves "Cannot call abstract method" errors
+  - Changed `ApmInterface::determineStatusFromHttpCode()` to inline status determination
+  - Changed `ApmInterface::limitStringForTracing()` to `AbstractApm::limitStringForTracing()`
+
+- **JsonResponse JSON Output** - Removed internal APM properties from API responses
+  - `_apm_span`, `_apm_model_name`, `_apm_method_name` no longer appear in JSON
+  - Clean API responses for all endpoints
 
 ---
 
 ## 📚 Documentation Updates
 
-- Added monitoring page documentation
-- Updated Developer Assistant feature list
-- Documented Docker container metrics endpoints
+- **GEMVC_APM_INTEGRATION.md** - Comprehensive APM integration guide
+  - Architecture overview and trace flow diagrams
+  - Configuration instructions and environment variables
+  - Usage examples and best practices
+  - Performance considerations and troubleshooting
+  - Advanced usage patterns
+
+- **README.md** - Updated with prominent APM integration section
+  - Key features highlighting native APM
+  - Quick setup instructions
+  - What gets traced automatically
+  - Performance notes and documentation links
+
+- **ARCHITECTURE.md** - Added APM Integration Architecture section
+  - Request flow diagrams with APM tracing
+  - APM architecture flow diagram
+  - Component breakdown with APM features
+  - Performance characteristics
 
 ---
 
@@ -117,58 +160,115 @@ Enhanced monitoring capabilities specifically for Docker environments:
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
-- Monitoring endpoints require proper authentication (`['developer','admin']` roles)
-- Monitoring page only accessible in development environment
+- APM tracing is read-only (no data modification)
+- Trace data sent asynchronously (fire-and-forget pattern)
+- No sensitive data exposed in traces (configurable via APM provider)
 
 ---
 
 ## ⚙️ Configuration
 
-No configuration changes required. The monitoring system uses existing GemvcMonitoring API endpoints.
+### Required Configuration
+
+1. **Install APM Provider Package**:
+   ```bash
+   composer require gemvc/apm-tracekit
+   # or your preferred APM provider
+   ```
+
+2. **Set APM Provider in `.env`**:
+   ```env
+   APM_NAME=TraceKit
+   TRACEKIT_API_KEY=your-api-key
+   TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+   ```
+
+### Optional Configuration
+
+1. **Enable Controller Tracing**:
+   ```env
+   APM_TRACE_CONTROLLER=1
+   ```
+
+2. **Enable Database Query Tracing**:
+   ```env
+   APM_TRACE_DB_QUERY=1
+   ```
+
+3. **Configure Sample Rate** (TraceKit):
+   ```env
+   TRACEKIT_SAMPLE_RATE=1.0  # 0.0 to 1.0 (1.0 = 100%)
+   ```
+
+### Usage in Code
+
+1. **In API Services** - Use `callController()`:
+   ```php
+   return $this->callController(new UserController($this->request))->create();
+   ```
+
+2. **In Controllers** - Use `createModel()`:
+   ```php
+   $model = $this->createModel(new UserModel());
+   ```
 
 ---
 
 ## 🚀 Performance
 
-- **Efficient Data Storage** - Circular buffer limits memory usage to 60 data points per chart
-- **Parallel API Calls** - All metrics fetched simultaneously for faster updates
-- **Smart Pausing** - Automatically pauses when browser tab is hidden
-- **Canvas Optimization** - Efficient chart rendering with proper dimension management
+- **Zero Overhead When Disabled** - Environment flags control tracing (no performance impact when off)
+- **Minimal Overhead When Enabled** - ~0.25ms per request when tracing is active
+- **Non-Blocking Trace Sending** - Traces sent after HTTP response (fire-and-forget pattern)
+- **Sample Rate Support** - Control trace volume via `TRACEKIT_SAMPLE_RATE` (reduce overhead)
+- **Efficient Span Management** - Spans created and closed efficiently with minimal memory footprint
+- **Request Propagation** - Single APM instance shared across all layers (no duplication)
 
 ---
 
 ## 🧪 Testing
 
-- All monitoring charts verified and functional
-- Docker container metrics tested in Docker environments
-- Refresh interval changes tested
-- Pause/resume functionality verified
-- Database connections table tested
-- Page visibility API integration verified
+- **ControllerCreateModelTest** - Tests Request propagation to models via `createModel()`
+- **TableRequestPropagationTest** - Tests Request propagation through database layers
+- **UniversalQueryExecuterApmTest** - Tests APM tracing in database queries
+- All tests passing with PHPUnit
+- Comprehensive coverage of APM tracing functionality
 
 ---
 
 ## 🔄 Migration Guide
 
-### From 5.2.5 to 5.3.0
+### From 5.3.0 to 5.4.0
 
 This release is **fully backward compatible**. No action required.
 
 **What's New**:
-- New monitoring dashboard in Developer Assistant
-- Enhanced Docker container metrics
-- No breaking changes to existing APIs
+- Native APM integration with automatic request tracing
+- Controller tracing via `callController()` method (environment-controlled)
+- Database query tracing (environment-controlled)
+- Request propagation through all layers for complete trace visibility
+- `ApmTracingTrait` for unified APM tracing
+- `Controller::createModel()` helper for automatic Request propagation
 
 **Benefits**:
-- Real-time server monitoring
-- Visual performance insights
-- Docker container metrics
-- Better debugging capabilities
+- Zero-configuration APM tracing (works out of the box)
+- Complete request visibility from Bootstrap to Database
+- Environment-controlled tracing (enable/disable via env vars)
+- Non-blocking trace sending (no performance impact)
+- Same code works with/without tracing (no code changes needed)
 
-**Optional Usage**:
-- Access monitoring at `/index/developer#monitoring`
-- Configure refresh intervals as needed
-- Use pause/resume for detailed analysis
+**Optional Configuration**:
+1. Install APM provider: `composer require gemvc/apm-tracekit`
+2. Set `APM_NAME=TraceKit` in `.env`
+3. Enable controller tracing: `APM_TRACE_CONTROLLER=1`
+4. Enable database tracing: `APM_TRACE_DB_QUERY=1`
+
+**Optional Code Changes**:
+- Replace `callWithTracing()` with `callController()` (better naming)
+- Use `createModel()` in controllers for automatic Request propagation
+- See `GEMVC_APM_INTEGRATION.md` for complete documentation
+
+**Breaking Changes**:
+- None - `callWithTracing()` still works but is deprecated
 
 ---
 
@@ -180,7 +280,7 @@ Special thanks to the community for feedback and feature requests that led to th
 
 ## 📝 Full Changelog
 
-For detailed changes, see [CHANGELOG_5.2.5.md](CHANGELOG_5.2.5.md).
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

@@ -156,9 +156,12 @@ $this->validateId($id, $operation)          // Validate ID > 0
 // Gemvc\Core\Controller - Base controller
 class UserController extends Controller {
     
+    // Use createModel() to automatically set Request for APM trace context propagation
+    $model = $this->createModel(new UserModel());
+    
     // Map POST data to Model with custom handlers
     $model = $this->request->mapPostToObject(
-        new UserModel(),
+        $model,
         [
             'email' => 'email',              // Direct mapping
             'name' => 'name',                // Direct mapping
@@ -205,13 +208,17 @@ public function create(): JsonResponse {
     ])) {
         return $this->request->returnResponse();
     }
-    return (new UserController($this->request))->create();
+    // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
+    return $this->callController(new UserController($this->request))->create();
 }
 
 // Controller Layer (app/controller/UserController.php)
 public function create(): JsonResponse {
+    // Use createModel() to automatically set Request for APM trace context propagation
+    $model = $this->createModel(new UserModel());
+    
     $model = $this->request->mapPostToObject(
-        new UserModel(),
+        $model,
         ['email'=>'email', 'name'=>'name', 'password'=>'setPassword()']
     );
     if(!$model instanceof UserModel) {
@@ -267,7 +274,7 @@ public function update(): JsonResponse {
         return $this->request->returnResponse();  // 400
     }
     
-    return (new UserController($this->request))->update();
+    return $this->callController(new UserController($this->request))->update();
 }
 ```
 
@@ -301,7 +308,7 @@ public function list(): JsonResponse {
         'email' => 'email'
     ]);
     $this->request->sortable(['id', 'name', 'created_at']);
-    return (new UserController($this->request))->list();
+    return $this->callController(new UserController($this->request))->list();
 }
 
 // Controller Layer
@@ -325,6 +332,8 @@ public function list(): JsonResponse {
 - Use `protected` for sensitive data (passwords)
 - Use nullable types (`?string`) for optional fields
 - Use `Auth()` for authentication checks
+- **Use `callController()` in API services** - Enables automatic controller tracing
+- **Use `createModel()` in controllers** - Enables automatic database query tracing
 
 ### ❌ DON'Ts
 - Don't use Laravel conventions
@@ -563,7 +572,49 @@ TOKEN_ISSUER=MyCompany
 # Application
 APP_ENV=production
 QUERY_LIMIT=10
+
+# APM Integration (Optional)
+APM_NAME=TraceKit                    # APM provider name
+APM_TRACE_CONTROLLER=1              # Enable controller tracing (1 or true)
+APM_TRACE_DB_QUERY=1                # Enable database query tracing (1 or true)
+TRACEKIT_API_KEY=your-api-key       # TraceKit-specific
+TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+TRACEKIT_SAMPLE_RATE=1.0           # 0.0 to 1.0 (1.0 = 100%)
 ```
+
+## APM Integration
+
+### Automatic Tracing
+- **Root Trace**: Automatically created in Bootstrap/SwooleBootstrap (no code needed)
+- **Controller Tracing**: Use `callController()` in API services (controlled by `APM_TRACE_CONTROLLER=1`)
+- **Database Tracing**: Use `createModel()` in controllers (controlled by `APM_TRACE_DB_QUERY=1`)
+- **Exception Tracking**: Automatic (no code needed)
+
+### APM Patterns
+```php
+// API Service - Enable controller tracing
+return $this->callController(new UserController($this->request))->create();
+
+// Controller - Enable database query tracing
+$model = $this->createModel(new UserModel());
+
+// Model - Custom tracing (optional)
+use Gemvc\Core\Apm\ApmTracingTrait;
+class UserModel extends UserTable {
+    use ApmTracingTrait;
+    
+    public function complexOperation(): JsonResponse {
+        return $this->traceApm('operation-name', function() {
+            return $this->doWork();
+        }, ['attribute' => 'value']);
+    }
+}
+```
+
+### Environment Control
+- Tracing is **environment-controlled** - no code changes needed to enable/disable
+- Use `APM_TRACE_CONTROLLER=1` and `APM_TRACE_DB_QUERY=1` in `.env`
+- All spans share the same `traceId` via `$request->apm`
 
 ## Key Takeaways
 
@@ -574,6 +625,7 @@ QUERY_LIMIT=10
 5. **Use aggregation properties** - `_property` prefix for relations
 6. **Microservice-friendly** - 1-10 tables per service
 7. **No routing config** - URLs auto-map to classes
+8. **APM is native** - Use `callController()` and `createModel()` for automatic tracing
 
 ## Remember
 

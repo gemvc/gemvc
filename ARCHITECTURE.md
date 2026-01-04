@@ -47,17 +47,19 @@ HTTP Request
     ↓
 index.php (startup/apache/index.php)
     ↓
-Bootstrap.php → Security check (automatic)
+Bootstrap.php → APM initialized (early tracing) → Security check (automatic)
     ↓
 ApacheRequest.php → Sanitize all inputs (automatic)
     ↓
 app/api/User.php → Developer schema validation (optional)
     ↓
-UserController.php → Business logic
+UserController.php → Business logic (traced if APM_TRACE_CONTROLLER=1)
     ↓
-UserTable.php → Database operations (prepared statements - automatic)
+UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, prepared statements - automatic)
     ↓
 JsonResponse.php → Return JSON
+    ↓
+APM traces sent (fire-and-forget, non-blocking)
 ```
 
 ### OpenSwoole Flow:
@@ -68,15 +70,17 @@ OpenSwooleServer.php → Security check (automatic)
     ↓
 SwooleRequest.php → Sanitize all inputs (automatic)
     ↓
-SwooleBootstrap.php → Route to API service
+SwooleBootstrap.php → APM initialized (early tracing) → Route to API service
     ↓
 app/api/User.php → Developer schema validation (optional)
     ↓
-UserController.php → Business logic
+UserController.php → Business logic (traced if APM_TRACE_CONTROLLER=1)
     ↓
-UserTable.php → Database operations (connection pooling - automatic)
+UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, connection pooling - automatic)
     ↓
 JsonResponse.php → Return JSON (via showSwoole())
+    ↓
+APM traces sent (fire-and-forget, non-blocking)
 ```
 
 ---
@@ -98,9 +102,14 @@ JsonResponse.php → Return JSON (via showSwoole())
 - File system management with overwrite protection
 
 ### **core/** - Framework Core
-- `Bootstrap.php` / `SwooleBootstrap.php` - Request routing
-- `ApiService.php` / `SwooleApiService.php` - Base API service classes (with APM integration)
-- `Controller.php` - Base controller with pagination, filtering, sanitization (with APM integration)
+- `Bootstrap.php` / `SwooleBootstrap.php` - Request routing, **APM initialization (early tracing)**
+- `ApiService.php` / `SwooleApiService.php` - Base API service classes
+  - `callController()` method for automatic controller tracing
+  - Uses `$request->apm` for trace context propagation
+- `Controller.php` - Base controller with pagination, filtering, sanitization
+  - `createModel()` helper for automatic Request propagation
+  - Uses `$request->apm` for trace context
+- `ApmTracingTrait.php` - Unified APM tracing methods (reusable across layers)
 - `SecurityManager.php` - Path access protection
 - `WebserverDetector.php` - Environment detection (cached)
 - `OpenSwooleServer.php` - OpenSwoole server lifecycle
@@ -113,7 +122,11 @@ JsonResponse.php → Return JSON (via showSwoole())
 - Environment-aware routing
 - Developer-friendly base classes
 - Built-in documentation generation
-- **APM integration** (pluggable via `gemvc/apm-contracts` package)
+- **Native APM integration** - Automatic tracing with zero configuration
+  - Early APM initialization in Bootstrap/SwooleBootstrap
+  - Controller tracing via `callController()` (environment-controlled)
+  - Database query tracing (environment-controlled)
+  - Trace context propagation through all layers
 
 ### **http/** - HTTP Layer
 - `Request.php` - Unified request object (all inputs sanitized)
@@ -134,7 +147,15 @@ JsonResponse.php → Return JSON (via showSwoole())
 
 ### **database/** - Database Layer
 - `Table.php` - Main ORM class (fluent interface)
+  - `setRequest()` method for APM trace context propagation
 - `UniversalQueryExecuter.php` - **Enforces prepared statements**
+  - **APM query tracing** (if `APM_TRACE_DB_QUERY=1`)
+  - Captures query type, execution time, rows affected
+  - Uses `$request->apm` for trace context
+- `ConnectionManager.php` - Connection management
+  - `setRequest()` method for Request propagation
+- `PdoQuery.php` - PDO query wrapper
+  - `setRequest()` method for Request propagation
 - `DatabaseManagerFactory.php` - Auto-selects DB manager
 - `SwooleDatabaseManager.php` - Connection pooling (OpenSwoole)
 - `SimplePdoDatabaseManager.php` - Standard PDO (Apache/Nginx)
@@ -149,6 +170,7 @@ JsonResponse.php → Return JSON (via showSwoole())
 - **Environment-aware connection management**
 - **Migration system**
 - **Schema generation**
+- **APM query tracing** - Automatic spans for all database queries (optional)
 
 ### **helper/** - Utility Classes
 - `TypeChecker.php` - Runtime type validation (advanced options)
@@ -213,6 +235,72 @@ startup/
 3. ⚙️ **Authorization** - Call `$request->auth(['role'])` (role checking)
 4. ⚙️ **File Signature Detection** - Use `ImageHelper` methods
 5. ⚙️ **File Encryption** - Use `FileHelper::encrypt()`
+
+---
+
+## 📊 APM Integration Architecture
+
+### **Automatic APM Tracing (Zero Configuration)**:
+1. ✅ **Root Trace** - Automatically created in Bootstrap/SwooleBootstrap
+   - Captures full request lifecycle
+   - Initialized early (before routing)
+   - Stored in `$request->apm` for trace context propagation
+2. ✅ **Exception Tracking** - All exceptions automatically recorded
+3. ✅ **Trace Context Propagation** - All spans share the same `traceId`
+   - Bootstrap → ApiService → Controller → Table → UniversalQueryExecuter
+4. ✅ **Fire-and-Forget Pattern** - Traces sent after HTTP response (non-blocking)
+
+### **Environment-Controlled Tracing (Optional)**:
+1. ⚙️ **Controller Tracing** - Enable via `APM_TRACE_CONTROLLER=1`
+   - Use `callController()` in API services
+   - Automatic spans for controller method calls
+   - Captures method name, response code, execution time
+2. ⚙️ **Database Query Tracing** - Enable via `APM_TRACE_DB_QUERY=1`
+   - Use `createModel()` in controllers (sets Request on models)
+   - Automatic spans for all SQL queries
+   - Captures query type, execution time, rows affected, SQL statement
+
+### **APM Architecture Flow**:
+```
+Bootstrap/SwooleBootstrap
+    ↓ (APM initialized, root trace started)
+    ↓ ($request->apm set)
+ApiService
+    ↓ (uses $request->apm)
+    ↓ (callController() creates controller span if enabled)
+Controller
+    ↓ (uses $request->apm)
+    ↓ (createModel() sets Request on model)
+Table → ConnectionManager → PdoQuery
+    ↓ (Request propagated through all layers)
+UniversalQueryExecuter
+    ↓ (uses $request->apm for query span if enabled)
+Database Query Executed
+    ↓
+Response Sent
+    ↓
+APM Traces Sent (fire-and-forget, non-blocking)
+```
+
+### **APM Components**:
+- `Bootstrap.php` / `SwooleBootstrap.php` - Early APM initialization
+- `ApiService::callController()` - Controller tracing proxy
+- `Controller::createModel()` - Request propagation helper
+- `Table::setRequest()` - Request propagation to database layer
+- `UniversalQueryExecuter` - Database query tracing
+- `ApmTracingTrait` - Unified tracing methods for custom spans
+
+### **APM Provider Support**:
+- Works with any APM provider via `gemvc/apm-contracts` package
+- TraceKit (`gemvc/apm-tracekit`)
+- Datadog, New Relic, Elastic APM (custom providers)
+- Provider-agnostic design
+
+### **Performance**:
+- **Zero overhead when disabled** - Environment flags control tracing
+- **Minimal overhead when enabled** - ~0.25ms per request
+- **Non-blocking** - Traces sent after HTTP response
+- **Sample rate support** - Control trace volume via `TRACEKIT_SAMPLE_RATE`
 
 ---
 
@@ -324,6 +412,7 @@ UserTable::create() performs database operation
 ✅ **Prevents SQL injection** with 100% prepared statement coverage  
 ✅ **Sanitizes all inputs** automatically (XSS prevention)  
 ✅ **Provides JWT authentication** out of the box  
+✅ **Native APM integration** - Automatic performance monitoring with zero configuration  
 ✅ **Supports WebSockets** on OpenSwoole  
 ✅ **Includes hot reload** for development  
 ✅ **Auto-generates API docs** from docblocks  

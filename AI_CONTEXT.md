@@ -111,16 +111,37 @@ $this->selectById($id)       // Custom method
 
 ### APM (Application Performance Monitoring)
 ```php
-// APM is automatically initialized in ApiService and Controller
-// Uses ApmFactory from gemvc/apm-contracts package
-$apm = ApmFactory::create($request);  // Returns ApmInterface or null
+// APM is automatically initialized in Bootstrap/SwooleBootstrap (early in request lifecycle)
+// Available via $this->request->apm throughout the application
 
-// Check if APM is enabled
-if (ApmFactory::isEnabled() !== null) {
-    // APM is enabled
+// In API Service - Use callController() for automatic controller tracing
+return $this->callController(new UserController($this->request))->create();
+// ↑ Automatically creates controller span if APM_TRACE_CONTROLLER=1
+
+// In Controller - Use createModel() for automatic database query tracing
+$model = $this->createModel(new UserModel());
+// ↑ Automatically sets Request on model, enabling database query tracing if APM_TRACE_DB_QUERY=1
+
+// Environment Variables (in .env)
+APM_NAME=TraceKit                    // Required: APM provider name
+APM_TRACE_CONTROLLER=1              // Optional: Enable controller tracing
+APM_TRACE_DB_QUERY=1                // Optional: Enable database query tracing
+
+// Manual Tracing (in Models) - Use ApmTracingTrait
+use Gemvc\Core\Apm\ApmTracingTrait;
+
+class UserModel extends UserTable {
+    use ApmTracingTrait;
+    
+    public function complexOperation(): JsonResponse {
+        return $this->traceApm('complex-calculation', function() {
+            return $this->doComplexWork();
+        }, ['model' => 'UserModel']);
+    }
 }
 
 // APM providers: TraceKit, Datadog, etc. (via separate packages)
+// See GEMVC_APM_INTEGRATION.md for complete guide
 ```
 
 ### Server Monitoring Helpers
@@ -156,15 +177,19 @@ class User extends ApiService {
         ])) {
             return $this->request->returnResponse();
         }
-        return (new UserController($this->request))->create();
+        // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
+        return $this->callController(new UserController($this->request))->create();
     }
 }
 
 // app/controller/UserController.php
 class UserController extends Controller {
     public function create(): JsonResponse {
+        // Use createModel() to automatically set Request for APM trace context
+        $model = $this->createModel(new UserModel());
+        
         $model = $this->request->mapPostToObject(
-            new UserModel(),
+            $model,
             ['email'=>'email', 'name'=>'name', 'password'=>'setPassword()']
         );
         if(!$model instanceof UserModel) {
@@ -250,6 +275,21 @@ class UserTable extends Table {
 ✅ class UserController extends Controller { }
 ✅ class UserModel extends UserTable { }  // Or Table directly
 ✅ class UserTable extends Table { }
+```
+
+### APM Integration Patterns:
+```php
+// ✅ In API Service - Use callController() for tracing
+return $this->callController(new UserController($this->request))->create();
+
+// ✅ In Controller - Use createModel() for Request propagation
+$model = $this->createModel(new UserModel());
+
+// ✅ In Model - Use ApmTracingTrait for custom tracing
+use Gemvc\Core\Apm\ApmTracingTrait;
+class UserModel extends UserTable {
+    use ApmTracingTrait;
+}
 ```
 
 ### Always Implement Required Methods:
@@ -431,6 +471,7 @@ Response::internalError($this->getError())
 **For more details, see:**
 - `.cursorrules` - Detailed AI assistant rules
 - `AI_API_REFERENCE.md` - Complete API reference
+- `GEMVC_APM_INTEGRATION.md` - Complete APM integration guide
 - `gemvc-api-reference.jsonc` - Structured API data
-- Source files in `src/startup/user/` - Example implementation
+- Source files in `src/startup/common/init_example/` - Example implementation
 

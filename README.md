@@ -91,7 +91,13 @@ GEMVC is a **multi-platform PHP REST API framework** that works identically on:
 - 📝 **Simple API** - Clean, straightforward code structure
 - ⚡ **High Performance** - Connection pooling, async capabilities
 - ✅ **PHPStan Level 9** - Write type-safe, bug-free code with the highest static analysis level
-- 📊 **APM Integration** - Pluggable Application Performance Monitoring via `gemvc/apm-contracts`
+- 📊 **Native APM Integration** - Automatic Application Performance Monitoring with zero configuration
+  - Automatic request tracing (root spans)
+  - Controller operation tracing (optional)
+  - Database query tracing (optional)
+  - Environment-controlled via `.env` flags
+  - Works with any APM provider (TraceKit, Datadog, New Relic, etc.)
+  - Fire-and-forget pattern (zero performance impact)
 - 📈 **Server Monitoring** - Built-in RAM, CPU, network, and database metrics
 
 ---
@@ -122,6 +128,90 @@ app/model/UserModel.php           → Data validations, transformations
     ↓
 app/table/UserTable.php           → Database operations
 ```
+
+---
+
+## 📊 Native APM Integration
+
+GEMVC includes **native Application Performance Monitoring (APM)** integration that works automatically with zero code changes. The APM system captures the full request lifecycle and provides deep insights into your application's performance.
+
+### Key Features
+
+✅ **Automatic Root Trace** - Captures full request lifecycle from Bootstrap  
+✅ **Controller Tracing** - Automatic spans for controller operations (optional)  
+✅ **Database Query Tracing** - Automatic spans for all SQL queries (optional)  
+✅ **Exception Tracking** - Automatic exception recording in traces  
+✅ **Environment-Controlled** - Enable/disable via `.env` variables  
+✅ **Zero Performance Impact** - Fire-and-forget pattern, traces sent after HTTP response  
+✅ **Provider-Agnostic** - Works with any APM provider (TraceKit, Datadog, New Relic, etc.)
+
+### Quick Setup
+
+**1. Install APM Provider:**
+```bash
+composer require gemvc/apm-tracekit
+```
+
+**2. Configure Environment:**
+```env
+APM_NAME=TraceKit
+TRACEKIT_API_KEY=your-api-key
+TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+
+# Optional: Enable controller and database tracing
+APM_TRACE_CONTROLLER=1
+APM_TRACE_DB_QUERY=1
+```
+
+**3. Use `callController()` in API Services:**
+```php
+// app/api/User.php
+public function create(): JsonResponse
+{
+    // Automatic controller tracing (if APM_TRACE_CONTROLLER=1)
+    return $this->callController(new UserController($this->request))->create();
+}
+```
+
+**4. Use `createModel()` in Controllers:**
+```php
+// app/controller/UserController.php
+public function create(): JsonResponse
+{
+    // Automatic Request propagation for database tracing
+    $model = $this->createModel(new UserModel());
+    // ... rest of code
+}
+```
+
+**That's it!** APM tracing works automatically. No code changes needed beyond using `callController()` and `createModel()`.
+
+### What Gets Traced
+
+- **Root Request** - Full request lifecycle (automatic)
+- **Controller Operations** - Method calls with response codes (if `APM_TRACE_CONTROLLER=1`)
+- **Database Queries** - All SQL queries with execution time (if `APM_TRACE_DB_QUERY=1`)
+- **Exceptions** - All exceptions automatically recorded
+
+### Trace Structure
+
+```
+Root Trace (Bootstrap)
+  └─ controller-operation (UserController::create)
+      └─ database-query (INSERT INTO users ...)
+```
+
+All spans share the same `traceId` for complete request visibility.
+
+### Performance
+
+- **Zero Overhead When Disabled** - Environment flags control tracing
+- **Minimal Overhead When Enabled** - ~0.25ms per request
+- **Non-Blocking** - Traces sent after HTTP response (fire-and-forget)
+
+### Documentation
+
+For complete APM integration guide, see **[GEMVC_APM_INTEGRATION.md](GEMVC_APM_INTEGRATION.md)**
 
 ---
 
@@ -931,7 +1021,12 @@ GET /api/User/list/?sort_by=name&find_like=name=John
 - **Follow GEMVC patterns** - Use the User example as a reference
 - **4-Layer Architecture** - API → Controller → Model → Table
 - **Automatic Security** - Input sanitization, SQL injection prevention built-in
-- **APM Integration** - Uses `gemvc/apm-contracts` for pluggable APM providers (TraceKit, Datadog, etc.)
+- **Native APM Integration** - Automatic Application Performance Monitoring
+  - Zero configuration required (just install APM provider)
+  - Environment-controlled tracing (`APM_TRACE_CONTROLLER`, `APM_TRACE_DB_QUERY`)
+  - Use `callController()` for controller tracing
+  - Use `createModel()` for database query tracing
+  - See [GEMVC_APM_INTEGRATION.md](GEMVC_APM_INTEGRATION.md) for complete guide
 - **Built-in Services** - Example services for APM, monitoring, and developer tools are included
 
 ### ✅ Do's:
@@ -945,6 +1040,8 @@ GET /api/User/list/?sort_by=name&find_like=name=John
 - ✅ Add type hints to all methods and properties
 - ✅ Use strict types: `declare(strict_types=1);`
 - ✅ **Use `_` prefix for aggregation** - Properties starting with `_` are ignored in CRUD operations
+- ✅ **Use `callController()` in API services** - Enables automatic controller tracing
+- ✅ **Use `createModel()` in controllers** - Enables automatic database query tracing
 
 ### ❌ Don'ts:
 - ❌ Don't use Laravel conventions
@@ -1021,6 +1118,15 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 - JWT authentication/authorization
 - Schema validation for mass assignment prevention
 
+#### 📊 [GEMVC_APM_INTEGRATION.md](GEMVC_APM_INTEGRATION.md) - APM Integration Guide
+**Learn**: Application Performance Monitoring, tracing, performance insights
+- Automatic request tracing setup
+- Controller and database query tracing
+- Environment variable configuration
+- Custom tracing with ApmTracingTrait
+- Performance optimization and sample rates
+- Troubleshooting and best practices
+
 ### 📑 Additional Documentation
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and notable changes
@@ -1065,6 +1171,12 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 1. Read [SECURITY.md](SECURITY.md)
 2. Learn about automatic security features
 3. Understand attack prevention mechanisms
+
+**To understand APM integration:**
+1. Read [GEMVC_APM_INTEGRATION.md](GEMVC_APM_INTEGRATION.md) for complete guide
+2. Learn about automatic tracing and environment controls
+3. Understand trace context propagation
+4. Study `src/startup/common/init_example/api/Apm.php` for examples
 
 ---
 

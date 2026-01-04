@@ -138,6 +138,8 @@ defineSchema(): array  // Return schema constraints
 ```php
 __construct(Request $request): void
 createList(Table $model): JsonResponse  // Auto pagination/filtering
+protected function createModel(object $model): object  // Sets Request on model for APM tracing
+protected function getApm(): ?ApmInterface  // Returns $this->request->apm
 ```
 
 ### API Service Base
@@ -151,6 +153,7 @@ protected Request $request;
 **Methods**:
 ```php
 __construct(Request $request): void
+protected function callController(Controller $controller): ControllerTracingProxy  // For APM tracing
 ```
 
 ### Schema Constraints For Tables layer Classes
@@ -249,7 +252,7 @@ NetworkHelper::getInterfaceStats(string $interface): array    // Stats for speci
 **Methods**:
 ```php
 ApmFactory::create(?Request $request): ?ApmInterface  // Create APM instance
-ApmFactory::isEnabled(): bool                         // Check if APM is enabled
+ApmFactory::isEnabled(): ?string                      // Returns APM name or null
 ```
 
 ### ApmInterface (from gemvc/apm-contracts)
@@ -257,18 +260,81 @@ ApmFactory::isEnabled(): bool                         // Check if APM is enabled
 
 **Methods**:
 ```php
-$apm->startSpan(string $name, array $attributes, string $kind): ?string
-$apm->endSpan(?string $spanId, array $attributes = []): void
-$apm->recordException(array $attributes, \Throwable $exception): void
+$apm->startSpan(string $operationName, array $attributes = [], int $kind = SPAN_KIND_INTERNAL): array
+$apm->endSpan(array $spanData, array $finalAttributes = [], ?string $status = STATUS_OK): void
+$apm->recordException(array $spanData, \Throwable $exception): array
 $apm->isEnabled(): bool
+$apm->shouldTraceResponse(): bool
+$apm->shouldTraceDbQuery(): bool
+$apm->getTraceId(): ?string
+$apm->flush(): void
 ```
 
 **Constants**:
 ```php
-ApmInterface::SPAN_KIND_SERVER
-ApmInterface::SPAN_KIND_CLIENT
-ApmInterface::STATUS_OK
-ApmInterface::STATUS_ERROR
+ApmInterface::SPAN_KIND_UNSPECIFIED = 0
+ApmInterface::SPAN_KIND_INTERNAL = 1
+ApmInterface::SPAN_KIND_SERVER = 2
+ApmInterface::SPAN_KIND_CLIENT = 3
+ApmInterface::SPAN_KIND_PRODUCER = 4
+ApmInterface::SPAN_KIND_CONSUMER = 5
+ApmInterface::STATUS_OK = 'OK'
+ApmInterface::STATUS_ERROR = 'ERROR'
+```
+
+**Static Methods**:
+```php
+ApmInterface::determineStatusFromHttpCode(int $statusCode): string  // Use AbstractApm:: instead
+ApmInterface::limitStringForTracing(string $value): string           // Use AbstractApm:: instead
+```
+
+### ApmTracingTrait
+**Namespace**: `Gemvc\Core\Apm\ApmTracingTrait`
+
+**Methods** (available when trait is used):
+```php
+protected function getApm(): ?ApmInterface
+protected function startApmSpan(string $operationName, array $attributes = [], int $kind = SPAN_KIND_INTERNAL): array
+protected function endApmSpan(array $spanData, array $attributes = [], string $status = 'OK'): void
+protected function recordApmException(array $spanData, \Throwable $exception): void
+protected function traceApm(string $operationName, callable $callback, array $attributes = []): mixed
+```
+
+### ApiService - APM Methods
+**Namespace**: `Gemvc\Core\ApiService`
+
+**Methods**:
+```php
+protected function callController(Controller $controller): ControllerTracingProxy
+// Returns proxy that automatically traces controller operations (if APM_TRACE_CONTROLLER=1)
+```
+
+### Controller - APM Methods
+**Namespace**: `Gemvc\Core\Controller`
+
+**Methods**:
+```php
+protected function getApm(): ?ApmInterface  // Returns $this->request->apm
+protected function createModel(object $model): object  // Sets Request on model for APM tracing
+protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = SPAN_KIND_INTERNAL): array
+protected function endTraceSpan(array $spanData, array $finalAttributes = [], ?string $status = 'OK'): void
+public function recordApmException(\Throwable $exception): void
+```
+
+### Table - APM Methods
+**Namespace**: `Gemvc\Database\Table`
+
+**Methods**:
+```php
+public function setRequest(?Request $request): void  // Set Request for APM trace context propagation
+```
+
+### Request Object - APM Property
+**Namespace**: `Gemvc\Http\Request`
+
+**Properties**:
+```php
+public ?ApmInterface $apm = null;  // APM instance (set by Bootstrap/SwooleBootstrap)
 ```
 
 ### JWTToken
@@ -325,13 +391,17 @@ public function create(): JsonResponse {
     ])) {
         return $this->request->returnResponse();
     }
-    return (new UserController($this->request))->create();
+    // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
+    return $this->callController(new UserController($this->request))->create();
 }
 
 // Controller Layer
 public function create(): JsonResponse {
+    // Use createModel() to automatically set Request for APM trace context propagation
+    $model = $this->createModel(new UserModel());
+    
     $model = $this->request->mapPostToObject(
-        new UserModel(),
+        $model,
         ['email'=>'email', 'name'=>'name', 'password'=>'setPassword()']
     );
     if(!$model instanceof UserModel) {
@@ -374,7 +444,8 @@ public function read(): JsonResponse {
         return $this->request->returnResponse();
     }
     $this->request->post['id'] = $id;
-    return (new UserController($this->request))->read();
+    // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
+    return $this->callController(new UserController($this->request))->read();
 }
 
 // Model Layer
@@ -394,12 +465,14 @@ public function readModel(): JsonResponse {
 public function list(): JsonResponse {
     $this->request->findable(['name' => 'string', 'email' => 'email']);
     $this->request->sortable(['id', 'name', 'created_at']);
-    return (new UserController($this->request))->list();
+    // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
+    return $this->callController(new UserController($this->request))->list();
 }
 
 // Controller Layer
 public function list(): JsonResponse {
-    $model = new UserModel();
+    // Use createModel() to automatically set Request for APM trace context propagation
+    $model = $this->createModel(new UserModel());
     return $this->createList($model);  // Auto pagination/filtering/sorting
 }
 ```

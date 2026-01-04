@@ -62,6 +62,14 @@ This directory contains comprehensive documentation for AI assistants (Cursor, G
   - Auto-documentation system
   - How to create beautiful API docs
 
+- **`GEMVC_APM_INTEGRATION.md`** - APM Integration Guide
+  - Complete APM integration documentation
+  - Automatic tracing setup
+  - Controller and database query tracing
+  - Environment variable configuration
+  - Custom tracing patterns
+  - Performance optimization
+
 ## 🎯 How AI Assistants Use These Files
 
 ### Cursor AI
