@@ -25,55 +25,26 @@ class Controller
      */
     protected array $errors = [];
     
-    /**
-     * APM instance for automatic request tracing (optional)
-     * @var ApmInterface|null
-     */
-    private ?ApmInterface $apm = null;
-
     public function __construct(Request $request)
     {
         $this->errors = [];
         $this->request = $request;
         
-        // Initialize APM provider if available (optional dependency)
-        $this->initializeApm();
-    }
-    
-    /**
-     * Initialize APM provider reference for automatic request tracing
-     * 
-     * IMPORTANT: This does NOT create a new APM instance.
-     * It retrieves the existing instance created by ApiService via Request object.
-     * 
-     * Lifecycle:
-     * 1. ApiService creates ONE APM instance per request (in its constructor)
-     * 2. APM instance is stored in Request object ($request->apm)
-     * 3. Controller retrieves that SAME instance here (shares same traceId and spans)
-     * 4. UniversalQueryExecuter also uses APM for DB query spans
-     * 
-     * This ensures all spans (root, controller, database) share the same traceId.
-     * 
-     * @return void
-     */
-    private function initializeApm(): void
-    {
-        // Early return if APM is disabled - avoid unnecessary processing
-        $apmName = ApmFactory::isEnabled();
-        if (!$apmName) {
-            return;
-        }
-        $this->apm = ApmFactory::create($this->request);    
+        // APM is now initialized in Bootstrap/SwooleBootstrap, available via $request->apm
+        // No need to initialize here - this ensures all spans share the same traceId
     }
     
     /**
      * Get APM instance (for creating child spans)
      * 
+     * Returns the APM instance from Request object, which was initialized in Bootstrap/SwooleBootstrap.
+     * This ensures all spans (root, controller, database) share the same traceId.
+     * 
      * @return ApmInterface|null APM instance or null if not available
      */
     protected function getApm(): ?ApmInterface
     {
-        return $this->apm;
+        return $this->request->apm;
     }
     
     /**
@@ -88,11 +59,12 @@ class Controller
      */
     protected function startTraceSpan(string $operationName, array $attributes = [], int $kind = ApmInterface::SPAN_KIND_INTERNAL): array
     {
-        if ($this->apm === null) {
+        $apm = $this->getApm();
+        if ($apm === null) {
             return [];
         }
         
-        if (!$this->apm->isEnabled()) {
+        if (!$apm->isEnabled()) {
             return [];
         }
         
@@ -111,7 +83,7 @@ class Controller
                 $kind = ApmInterface::SPAN_KIND_INTERNAL;
             }
             
-            return $this->apm->startSpan($operationName, $attributes, $kind);
+            return $apm->startSpan($operationName, $attributes, $kind);
         } catch (\Throwable $e) {
             if (ProjectHelper::isDevEnvironment()) {
                 error_log("APM: Failed to start span in Controller: " . $e->getMessage());
@@ -130,13 +102,14 @@ class Controller
      */
     protected function endTraceSpan(array $spanData, array $finalAttributes = [], ?string $status = 'OK'): void
     {
-        if ($this->apm === null || empty($spanData)) {
+        $apm = $this->getApm();
+        if ($apm === null || empty($spanData)) {
             return;
         }
         
         try {
             $statusValue = ($status === 'ERROR') ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
-            $this->apm->endSpan($spanData, $finalAttributes, $statusValue);
+            $apm->endSpan($spanData, $finalAttributes, $statusValue);
         } catch (\Throwable $e) {
             if (ProjectHelper::isDevEnvironment()) {
                 error_log("APM: Failed to end span in Controller: " . $e->getMessage());
@@ -152,13 +125,14 @@ class Controller
      */
     public function recordApmException(\Throwable $exception): void
     {
-        if ($this->apm === null) {
+        $apm = $this->getApm();
+        if ($apm === null) {
             return;
         }
         
         try {
             // Use existing trace if available, or create one (errors are always logged)
-            $this->apm->recordException([], $exception);
+            $apm->recordException([], $exception);
         } catch (\Throwable $e) {
             // Silently fail
             if (ProjectHelper::isDevEnvironment()) {

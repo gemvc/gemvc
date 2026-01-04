@@ -7,6 +7,7 @@ use Gemvc\Http\Response;
 use Gemvc\Http\ResponseInterface;
 use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\Apm\ApmFactory;
+use Gemvc\Core\Apm\ApmInterface;
 
 /**
  * SwooleBootstrap - A Bootstrap alternative for OpenSwoole environment
@@ -17,6 +18,12 @@ use Gemvc\Core\Apm\ApmFactory;
 class SwooleBootstrap
 {
     private Request $request;
+    
+    /**
+     * APM instance for request tracing (optional)
+     * @var ApmInterface|null
+     */
+    private ?ApmInterface $apm = null;
 
     /**
      * Constructor
@@ -26,7 +33,29 @@ class SwooleBootstrap
     public function __construct(Request $request)
     {
         $this->request = $request;
+        
+        // Initialize APM early to capture full request lifecycle
+        $this->initializeApm();
+        
         $this->extractRouteInfo();
+    }
+    
+    /**
+     * Initialize APM provider for request tracing
+     * 
+     * APM is initialized early (before routing) to capture the full request lifecycle.
+     * The APM instance is stored in $request->apm for use by ApiService, Controller, etc.
+     * 
+     * @return void
+     */
+    private function initializeApm(): void
+    {
+        $apmName = ApmFactory::isEnabled();
+        if (!$apmName) {
+            return;
+        }
+        $this->apm = ApmFactory::create($this->request);
+        // ApmFactory::create() already sets $this->request->apm
     }
 
     /**
@@ -121,17 +150,17 @@ class SwooleBootstrap
      */
     private function recordExceptionInApm(\Throwable $exception): void
     {
-        // Early return if APM is disabled - avoid unnecessary processing
-        $apmName = ApmFactory::isEnabled();
-        if (!$apmName) {
-            return;
-        }
-        $apm = ApmFactory::create($this->request);
-        if ($apm) {
-            $apm->recordException([], $exception);
-        }
-        // Access APM instance directly via Request object
+        // Use APM instance from Request (initialized in constructor)
+        // Fallback to creating APM if not initialized (edge case: exception before initialization)
         $apm = $this->request->apm ?? null;
+        if ($apm === null) {
+            // Fallback: try to create APM for exception logging
+            $apmName = ApmFactory::isEnabled();
+            if ($apmName) {
+                $apm = ApmFactory::create($this->request);
+            }
+        }
+        
         if ($apm !== null) {
             // ApmInterface::recordException() already has graceful error handling
             $apm->recordException([], $exception);

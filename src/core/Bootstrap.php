@@ -9,6 +9,7 @@ use Gemvc\Core\GEMVCErrorHandler;
 use Gemvc\Http\HtmlResponse;
 use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\Apm\ApmFactory;
+use Gemvc\Core\Apm\ApmInterface;
 
 if(ProjectHelper::isDevEnvironment()) {
     ini_set('display_errors', 1);
@@ -24,12 +25,40 @@ class Bootstrap
      * @var array<GemvcError>
      */
     private array $errors = [];
+    
+    /**
+     * APM instance for request tracing (optional)
+     * @var ApmInterface|null
+     */
+    private ?ApmInterface $apm = null;
 
     public function __construct(Request $request)
     {
         $this->request = $request;
+        
+        // Initialize APM early to capture full request lifecycle
+        $this->initializeApm();
+        
         $this->setRequestedService();
         $this->runApp();
+    }
+    
+    /**
+     * Initialize APM provider for request tracing
+     * 
+     * APM is initialized early (before routing) to capture the full request lifecycle.
+     * The APM instance is stored in $request->apm for use by ApiService, Controller, etc.
+     * 
+     * @return void
+     */
+    private function initializeApm(): void
+    {
+        $apmName = ApmFactory::isEnabled();
+        if (!$apmName) {
+            return;
+        }
+        $this->apm = ApmFactory::create($this->request);
+        // ApmFactory::create() already sets $this->request->apm
     }
 
     private function runApp(): void
@@ -343,12 +372,19 @@ class Bootstrap
      */
     private function recordExceptionInApm(\Throwable $exception): void
     {
-        $apmName = ApmFactory::isEnabled();
-        if (!$apmName) {
-            return;
+        // Use APM instance from Request (initialized in constructor)
+        // Fallback to creating APM if not initialized (edge case: exception before initialization)
+        $apm = $this->request->apm ?? null;
+        if ($apm === null) {
+            // Fallback: try to create APM for exception logging
+            $apmName = ApmFactory::isEnabled();
+            if ($apmName) {
+                $apm = ApmFactory::create($this->request);
+            }
         }
-        $apm = ApmFactory::create($this->request);
-        if ($apm) {
+        
+        if ($apm !== null) {
+            // ApmInterface::recordException() already has graceful error handling
             $apm->recordException([], $exception);
         }
     }
