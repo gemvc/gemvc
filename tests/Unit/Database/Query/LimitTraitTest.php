@@ -419,15 +419,15 @@ class LimitTraitTest extends TestCase
         
         $result = $this->testObject->exposeLimitMaker();
         
-        // Should use large limit with offset
+        // Should use PHP_INT_MAX as limit with offset
         // Note: The constant may be converted to scientific notation in string concatenation
         $this->assertStringContainsString('LIMIT', $result);
         $this->assertStringContainsString('OFFSET 50', $result);
-        // Verify it's a very large number (either full number or scientific notation)
+        // Verify it uses PHP_INT_MAX (9223372036854775807 on 64-bit systems)
         $this->assertTrue(
-            str_contains($result, '18446744073709551615') || 
-            str_contains($result, '1.844674407371E+19'),
-            'Expected very large LIMIT value'
+            str_contains($result, (string)PHP_INT_MAX) || 
+            str_contains($result, '9.2233720368548E+18'),
+            'Expected PHP_INT_MAX as LIMIT value'
         );
     }
     

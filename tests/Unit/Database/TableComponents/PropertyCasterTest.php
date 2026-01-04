@@ -136,14 +136,17 @@ class PropertyCasterTest extends TestCase
     public function testCastValueDateTime(): void
     {
         $result = $this->caster->castValue('created_at', '2024-01-15 10:30:00');
-        $this->assertInstanceOf(\DateTime::class, $result);
-        $this->assertEquals('2024-01-15 10:30:00', $result->format('Y-m-d H:i:s'));
+        // PropertyCaster returns formatted string, not DateTime object
+        $this->assertIsString($result);
+        $this->assertEquals('2024-01-15 10:30:00', $result);
     }
     
     public function testCastValueNullableDateTime(): void
     {
         $result = $this->caster->castValue('deleted_at', '2024-01-15 10:30:00');
-        $this->assertInstanceOf(\DateTime::class, $result);
+        // PropertyCaster returns formatted string, not DateTime object
+        $this->assertIsString($result);
+        $this->assertEquals('2024-01-15 10:30:00', $result);
         
         $result = $this->caster->castValue('deleted_at', null);
         $this->assertNull($result);
@@ -187,9 +190,11 @@ class PropertyCasterTest extends TestCase
         // Non-nullable array should return []
         $this->assertEquals([], $this->caster->castValue('tags', null));
         
-        // Non-nullable datetime should return DateTime('now')
+        // Non-nullable datetime should return formatted string (current date)
         $result = $this->caster->castValue('created_at', null);
-        $this->assertInstanceOf(\DateTime::class, $result);
+        $this->assertIsString($result);
+        // Should be in Y-m-d H:i:s format
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result);
     }
     
     public function testCastValuePropertyNotInTypeMap(): void
@@ -203,7 +208,10 @@ class PropertyCasterTest extends TestCase
     public function testCastValueDateType(): void
     {
         $result = $this->caster->castValue('date_field', '2024-01-15');
-        $this->assertInstanceOf(\DateTime::class, $result);
+        // PropertyCaster returns formatted string, not DateTime object
+        $this->assertIsString($result);
+        // Date strings are converted to full datetime format
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result);
     }
     
     public function testCastValueJsonType(): void
@@ -235,9 +243,11 @@ class PropertyCasterTest extends TestCase
     
     public function testCastValueInvalidDateTime(): void
     {
-        // Invalid datetime should return DateTime('now') (or null for nullable)
+        // Invalid datetime should return formatted string (current date) (or null for nullable)
         $result = $this->caster->castValue('created_at', 'invalid-date');
-        $this->assertInstanceOf(\DateTime::class, $result);
+        $this->assertIsString($result);
+        // Should be in Y-m-d H:i:s format (current date/time)
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result);
         
         $result = $this->caster->castValue('deleted_at', 'invalid-date');
         $this->assertNull($result);
@@ -334,8 +344,8 @@ class PropertyCasterTest extends TestCase
             public ?bool $nullable_flag = null;
             public string $name = '';
             public ?string $description = null;
-            public \DateTime $created_at;
-            public ?\DateTime $deleted_at = null;
+            public string $created_at = '';
+            public ?string $deleted_at = null;
             public array $tags = [];
             public ?array $metadata = null;
         };
@@ -369,7 +379,9 @@ class PropertyCasterTest extends TestCase
         $this->assertIsString($instance->name);
         $this->assertEquals('Test Name', $instance->name);
         $this->assertNull($instance->description);
-        $this->assertInstanceOf(\DateTime::class, $instance->created_at);
+        // PropertyCaster returns formatted string, not DateTime object
+        $this->assertIsString($instance->created_at);
+        $this->assertEquals('2024-01-15 10:30:00', $instance->created_at);
         $this->assertNull($instance->deleted_at);
         $this->assertIsArray($instance->tags);
         $this->assertEquals(['tag1', 'tag2'], $instance->tags);

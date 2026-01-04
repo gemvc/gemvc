@@ -130,7 +130,8 @@ class ResponseTest extends TestCase
     
     public function testUnknownErrorResponse(): void
     {
-        $response = Response::unknownError('Unknown error occurred', ['debug' => 'info']);
+        // Method signature: unknownError(mixed $data, ?string $service_message = null)
+        $response = Response::unknownError(['debug' => 'info'], 'Unknown error occurred');
         
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(0, $response->response_code);

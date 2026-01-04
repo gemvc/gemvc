@@ -248,7 +248,8 @@ class JsonResponseTest extends TestCase
     {
         $response = new JsonResponse();
         $data = ['error' => 'details'];
-        $result = $response->unknownError('Unknown error', $data);
+        // Method signature: unknownError(mixed $data, ?string $service_message = null)
+        $result = $response->unknownError($data, 'Unknown error');
         
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(0, $response->response_code);
