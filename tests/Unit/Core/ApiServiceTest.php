@@ -68,11 +68,51 @@ class ApiServiceTest extends TestCase
         
         $service = new TestApiService($this->request);
         
-        // Verify that callWithTracing uses request->apm
+        // Verify that callController and callWithTracing use request->apm
         // We can't easily test this without a real Controller, but we verify the service
         // doesn't have its own $apm property (it was removed in refactoring)
         $this->assertInstanceOf(ApiService::class, $service);
-        // The service should work with request->apm (tested indirectly via callWithTracing)
+        // The service should work with request->apm (tested indirectly via callController/callWithTracing)
+    }
+    
+    public function testCallControllerReturnsProxy(): void
+    {
+        $service = new TestApiService($this->request);
+        
+        // Use reflection to access protected method
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('callController');
+        $method->setAccessible(true);
+        
+        // Create a simple mock controller
+        $controller = $this->createMock(\Gemvc\Core\Controller::class);
+        $proxy = $method->invoke($service, $controller);
+        
+        // Verify it returns a ControllerTracingProxy
+        $this->assertInstanceOf(\Gemvc\Core\ControllerTracingProxy::class, $proxy);
+    }
+    
+    public function testCallWithTracingCallsCallController(): void
+    {
+        $service = new TestApiService($this->request);
+        
+        // Use reflection to access protected methods
+        $reflection = new \ReflectionClass($service);
+        $callControllerMethod = $reflection->getMethod('callController');
+        $callControllerMethod->setAccessible(true);
+        
+        $callWithTracingMethod = $reflection->getMethod('callWithTracing');
+        $callWithTracingMethod->setAccessible(true);
+        
+        // Create a simple mock controller
+        $controller = $this->createMock(\Gemvc\Core\Controller::class);
+        
+        // Both should return the same type
+        $proxy1 = $callControllerMethod->invoke($service, $controller);
+        $proxy2 = $callWithTracingMethod->invoke($service, $controller);
+        
+        $this->assertInstanceOf(\Gemvc\Core\ControllerTracingProxy::class, $proxy1);
+        $this->assertInstanceOf(\Gemvc\Core\ControllerTracingProxy::class, $proxy2);
     }
     
     public function testValidatePostsWithValidSchema(): void

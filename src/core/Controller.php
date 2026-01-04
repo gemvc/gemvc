@@ -197,6 +197,29 @@ class Controller
     }
 
     /**
+     * Create a model instance with Request automatically set for APM trace context propagation
+     * 
+     * This helper method ensures that models created in Controller methods automatically
+     * have the Request object set, enabling APM trace context propagation to database queries.
+     * 
+     * Usage:
+     *   $model = $this->createModel(new UserModel());
+     *   $model = $this->createModel(new ProductModel());
+     * 
+     * @template T of object
+     * @param T $model Model instance (must extend Table or have setRequest method)
+     * @return T The same model instance with Request set
+     */
+    protected function createModel(object $model): object
+    {
+        // Check if model has setRequest method (Table and Models that extend Table have it)
+        if (method_exists($model, 'setRequest')) {
+            $model->setRequest($this->request);
+        }
+        return $model;
+    }
+
+    /**
      * columns "id,name,email" only return id name and email
      * @param object $model
      * @param string|null $columns
@@ -204,6 +227,9 @@ class Controller
      */
     public function createList(object $model, ?string $columns = null): JsonResponse
     {
+        // Automatically set Request on model for APM trace context propagation
+        $this->createModel($model);
+        
         if(!$columns) {
             $columns = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
         }
@@ -386,6 +412,9 @@ class Controller
      */
    private function _listObjects(object $model, ?string $columns = null): array
     {
+        // Ensure Request is set on model for APM trace context propagation
+        $this->createModel($model);
+        
         $model = $this->_handleSearchable($model);
         $model = $this->_handleFindable($model);
         $model = $this->_handleSortable($model);

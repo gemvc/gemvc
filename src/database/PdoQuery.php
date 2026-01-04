@@ -2,6 +2,7 @@
 
 namespace Gemvc\Database;
 use Gemvc\Database\UniversalQueryExecuter;
+use Gemvc\Http\Request;
 
 /**
  * PdoQuery uses UniversalQueryExecuter as a component with lazy loading to provide high-level methods for common database operations
@@ -20,6 +21,8 @@ class PdoQuery
     /** @var bool Whether we have an active database connection */
     private bool $isConnected = false;
 
+    /** @var Request|null Request object for APM trace context propagation */
+    private ?Request $_request = null;
 
     /**
      * Clean constructor - no parameters needed!
@@ -31,13 +34,26 @@ class PdoQuery
     }
 
     /**
+     * Set Request object for APM trace context propagation
+     * 
+     * @param Request|null $request Request object to pass to UniversalQueryExecuter
+     * @return void
+     */
+    public function setRequest(?Request $request): void
+    {
+        $this->_request = $request;
+        // If executer already exists, we can't update it, but that's okay
+        // The Request is only needed when creating the executer
+    }
+
+    /**
      * Lazy initialization of UniversalQueryExecuter.
      * Connection is automatically acquired from the appropriate manager when needed.
      */
     private function getExecuter(): UniversalQueryExecuter
     {
         if ($this->executer === null) {
-            $this->executer = new UniversalQueryExecuter();
+            $this->executer = new UniversalQueryExecuter($this->_request);
             $this->isConnected = true;
         }
         

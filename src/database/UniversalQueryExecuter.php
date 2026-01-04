@@ -7,6 +7,10 @@ use PDOStatement;
 use Throwable;
 use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
 use Gemvc\Database\Connection\Contracts\ConnectionInterface;
+use Gemvc\Http\Request;
+use Gemvc\Core\Apm\ApmFactory;
+use Gemvc\Core\Apm\ApmInterface;
+use Gemvc\Helper\ProjectHelper;
 
 /**
  * Universal Query Executer for Multiple Web Server Environments
@@ -42,13 +46,19 @@ class UniversalQueryExecuter
     /** @var ConnectionManagerInterface The database manager */
     private ConnectionManagerInterface $dbManager;
 
+    /** @var Request|null Request object for APM trace context propagation */
+    private ?Request $_request = null;
+
     /**
      * Constructor - automatically detects environment and uses appropriate manager
+     * 
+     * @param Request|null $request Optional Request object for APM trace context propagation
      */
-    public function __construct()
+    public function __construct(?Request $request = null)
     {
         $this->startExecutionTime = microtime(true);
         $this->dbManager = DatabaseManagerFactory::getManager();
+        $this->_request = $request;
     }
 
     /**
@@ -251,6 +261,20 @@ class UniversalQueryExecuter
     }
 
     /**
+     * Check if database query tracing is enabled via environment variable
+     * 
+     * NO static cache - env vars are fast enough, and static cache causes issues in OpenSwoole
+     * 
+     * @return bool True if APM_TRACE_DB_QUERY is set to '1' or 'true'
+     */
+    private static function shouldTraceDbQuery(): bool
+    {
+        $value = $_ENV['APM_TRACE_DB_QUERY'] ?? null;
+        // $_ENV always returns strings, so only check strings
+        return ($value === '1' || $value === 'true');
+    }
+
+    /**
      * Executes the prepared statement
      *
      * @return bool Returns TRUE on success or FALSE on failure
@@ -271,6 +295,59 @@ class UniversalQueryExecuter
             return false;
         }
 
+        // APM tracing for database queries
+        $dbSpan = [];
+        $shouldTrace = false;
+        $apm = null;
+        
+        // Try to use Request APM first (shares traceId)
+        if ($this->_request !== null && $this->_request->apm !== null) {
+            $apm = $this->_request->apm;
+        } elseif (ApmFactory::isEnabled() !== null) {
+            // Fallback: standalone APM for CLI/background jobs
+            $apm = ApmFactory::create(null);
+        }
+        
+        // Check if tracing is enabled (no static cache - see Fix 1 in review)
+        if ($apm !== null && $apm->isEnabled() && self::shouldTraceDbQuery()) {
+            $shouldTrace = true;
+            
+            // Optimize query type detection (only check first 10 chars)
+            $queryStart = substr($this->query, 0, 10);
+            $queryUpper = strtoupper(ltrim($queryStart));
+            $queryType = match(true) {
+                str_starts_with($queryUpper, 'SELECT') => 'SELECT',
+                str_starts_with($queryUpper, 'INSERT') => 'INSERT',
+                str_starts_with($queryUpper, 'UPDATE') => 'UPDATE',
+                str_starts_with($queryUpper, 'DELETE') => 'DELETE',
+                str_starts_with($queryUpper, 'CREATE') => 'CREATE',
+                str_starts_with($queryUpper, 'ALTER') => 'ALTER',
+                str_starts_with($queryUpper, 'DROP') => 'DROP',
+                default => 'UNKNOWN'
+            };
+            
+            // Detect database system from connection (default to mysql)
+            $dbSystem = 'mysql'; // TODO: Detect from connection if needed
+            
+            // Start database query span with error handling
+            try {
+                $dbSpan = $apm->startSpan('database-query', [
+                    'db.system' => $dbSystem,
+                    'db.operation' => $queryType,
+                    'db.statement' => $this->query,
+                    'db.parameter_count' => (string)count($this->bindings),  // Performance: count only, not json_encode
+                    'db.in_transaction' => $this->inTransaction ? 'true' : 'false',
+                ], ApmInterface::SPAN_KIND_CLIENT);
+            } catch (\Throwable $e) {
+                // Graceful degradation - don't break queries if APM fails
+                if (ProjectHelper::isDevEnvironment()) {
+                    error_log("APM tracing error: " . $e->getMessage());
+                }
+                $dbSpan = [];
+                $shouldTrace = false;
+            }
+        }
+
         try {
             $this->statement->execute();
             $this->affectedRows = $this->statement->rowCount();
@@ -285,6 +362,23 @@ class UniversalQueryExecuter
             }
             $this->endExecutionTime = microtime(true);
             
+            // APM: End span with success details (BEFORE connection release)
+            if ($shouldTrace && !empty($dbSpan) && $apm !== null) {
+                try {
+                    $executionTime = $this->getExecutionTime();
+                    $apm->endSpan($dbSpan, [
+                        'db.rows_affected' => (string)$this->affectedRows,
+                        'db.execution_time_ms' => (string)$executionTime,
+                        'db.last_insert_id' => $this->lastInsertedId !== false ? (string)$this->lastInsertedId : 'none',
+                    ], ApmInterface::STATUS_OK);
+                } catch (\Throwable $e) {
+                    // Graceful degradation
+                    if (ProjectHelper::isDevEnvironment()) {
+                        error_log("APM endSpan error: " . $e->getMessage());
+                    }
+                }
+            }
+            
             // PERFORMANCE: Release connection immediately after INSERT/UPDATE/DELETE
             // Don't wait for destructor - release as soon as we're done
             // SELECT queries need to keep connection open for fetching
@@ -295,6 +389,21 @@ class UniversalQueryExecuter
             
             return true;
         } catch (\PDOException $e) {
+            // APM: Record exception and end span with error
+            if ($shouldTrace && !empty($dbSpan) && $apm !== null) {
+                try {
+                    $apm->recordException($dbSpan, $e);
+                    $executionTime = $this->getExecutionTime();
+                    $apm->endSpan($dbSpan, [
+                        'db.execution_time_ms' => (string)$executionTime,
+                    ], ApmInterface::STATUS_ERROR);
+                } catch (\Throwable $apmError) {
+                    // Graceful degradation
+                    if (ProjectHelper::isDevEnvironment()) {
+                        error_log("APM error handling failed: " . $apmError->getMessage());
+                    }
+                }
+            }
             $context = [
                 'query' => $this->query,
                 'bindings' => $this->bindings,

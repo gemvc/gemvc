@@ -7,6 +7,7 @@ use Gemvc\Http\Response;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
+use Gemvc\Core\Apm\ApmTracingTrait;
 use Gemvc\Helper\ProjectHelper;
 
 
@@ -19,6 +20,7 @@ use Gemvc\Helper\ProjectHelper;
  */
 class ApiService
 {
+    use ApmTracingTrait;
     protected Request $request;
     
     /**
@@ -45,19 +47,32 @@ class ApiService
     /**
      * Call a controller method with automatic APM span creation
      * 
-     * This method accepts a Controller object and returns a proxy that intercepts
-     * method calls to automatically create spans for controller operations.
+     * This is the recommended method name. Tracing is controlled by APM_TRACE_CONTROLLER
+     * environment variable. When enabled, automatically creates spans for controller operations.
      * 
      * Usage in API layer:
-     *   return $this->callWithTracing(new ProductController($this->request))->create();
-     *   return $this->callWithTracing(new ProductController($this->request))->delete();
+     *   return $this->callController(new ProductController($this->request))->create();
+     *   return $this->callController(new ProductController($this->request))->delete();
+     * 
+     * @param Controller $controller The controller instance
+     * @return ControllerTracingProxy A proxy object that intercepts method calls
+     */
+    protected function callController(Controller $controller): ControllerTracingProxy
+    {
+        return new ControllerTracingProxy($controller, $this->request->apm);
+    }
+    
+    /**
+     * Call a controller method with automatic APM span creation
+     * 
+     * @deprecated Use callController() instead. This method will be removed in a future version.
      * 
      * @param Controller $controller The controller instance
      * @return ControllerTracingProxy A proxy object that intercepts method calls
      */
     protected function callWithTracing(Controller $controller): ControllerTracingProxy
     {
-        return new ControllerTracingProxy($controller, $this->request->apm);
+        return $this->callController($controller);
     }
     
     /**
@@ -241,7 +256,8 @@ class ControllerTracingProxy
      * Intercept method calls and create APM spans
      * 
      * This magic method intercepts all method calls to the controller and automatically
-     * creates APM spans for the operation.
+     * creates APM spans for the operation. Tracing is controlled by APM_TRACE_CONTROLLER
+     * environment variable.
      * 
      * @param string $methodName The method name being called
      * @param array<mixed> $args The arguments passed to the method
@@ -249,6 +265,16 @@ class ControllerTracingProxy
      */
     public function __call(string $methodName, array $args): JsonResponse
     {
+        // Check if APM_TRACE_CONTROLLER is enabled (environment-controlled)
+        // If disabled, call method directly without tracing overhead
+        if (!self::shouldTraceController()) {
+            /** @var callable $callable */
+            $callable = [$this->controller, $methodName];
+            /** @var JsonResponse $result */
+            $result = call_user_func_array($callable, $args);
+            return $result;
+        }
+        
         // If APM is not available, just call the method directly
         if ($this->apm === null) {
             /** @var callable $callable */
@@ -332,5 +358,19 @@ class ControllerTracingProxy
             
             throw $e;
         }
+    }
+    
+    /**
+     * Check if controller tracing is enabled via environment variable
+     * 
+     * Tracing is controlled by APM_TRACE_CONTROLLER environment variable.
+     * Supports both '1' and 'true' values for compatibility.
+     * 
+     * @return bool True if APM_TRACE_CONTROLLER is set to '1' or 'true'
+     */
+    private static function shouldTraceController(): bool
+    {
+        $value = $_ENV['APM_TRACE_CONTROLLER'] ?? null;
+        return ($value === '1' || $value === 'true');
     }
 }

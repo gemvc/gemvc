@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gemvc\Database\TableComponents;
 
 use Gemvc\Database\PdoQuery;
+use Gemvc\Http\Request;
 
 /**
  * Connection Manager for Table Class
@@ -16,6 +17,22 @@ class ConnectionManager
 {
     private ?PdoQuery $pdoQuery = null;
     private ?string $storedError = null;
+    private ?Request $_request = null;
+    
+    /**
+     * Set Request object for APM trace context propagation
+     * 
+     * @param Request|null $request Request object to pass to PdoQuery
+     * @return void
+     */
+    public function setRequest(?Request $request): void
+    {
+        $this->_request = $request;
+        // If PdoQuery already exists, update it
+        if ($this->pdoQuery !== null) {
+            $this->pdoQuery->setRequest($request);
+        }
+    }
     
     /**
      * Get or create PdoQuery instance (lazy loading)
@@ -29,6 +46,10 @@ class ConnectionManager
     {
         if ($this->pdoQuery === null) {
             $this->pdoQuery = new PdoQuery();
+            // Set Request if available (for APM trace context propagation)
+            if ($this->_request !== null) {
+                $this->pdoQuery->setRequest($this->_request);
+            }
             // Transfer any stored error to the new PdoQuery instance
             if ($this->storedError !== null) {
                 $this->pdoQuery->setError($this->storedError);

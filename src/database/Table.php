@@ -9,6 +9,7 @@ use Gemvc\Database\TableComponents\PaginationManager;
 use Gemvc\Database\TableComponents\ConnectionManager;
 use Gemvc\Database\TableComponents\CrudOperationsTrait;
 use Gemvc\Database\TableComponents\SoftDeleteOperationsTrait;
+use Gemvc\Http\Request;
 
 /**
  * Base table class for database operations
@@ -24,6 +25,9 @@ abstract class Table
     
     /** @var ConnectionManager Lazy-loaded connection manager */
     private ?ConnectionManager $_connectionManager = null;
+
+    /** @var Request|null Request object for APM trace context propagation */
+    private ?Request $_request = null;
 
     /** @var string|null SQL query being built */
     private ?string $_query = null;
@@ -136,6 +140,21 @@ abstract class Table
     }
 
     /**
+     * Set Request object for APM trace context propagation
+     * 
+     * @param Request|null $request Request object to pass to ConnectionManager
+     * @return void
+     */
+    public function setRequest(?Request $request): void
+    {
+        $this->_request = $request;
+        // If ConnectionManager already exists, update it
+        if ($this->_connectionManager !== null) {
+            $this->_connectionManager->setRequest($request);
+        }
+    }
+
+    /**
      * Get or create ConnectionManager instance
      * 
      * @return ConnectionManager The connection manager instance
@@ -144,6 +163,10 @@ abstract class Table
     {
         if ($this->_connectionManager === null) {
             $this->_connectionManager = new ConnectionManager();
+            // Set Request if available (for APM trace context propagation)
+            if ($this->_request !== null) {
+                $this->_connectionManager->setRequest($this->_request);
+            }
         }
         return $this->_connectionManager;
     }
