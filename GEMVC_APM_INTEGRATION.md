@@ -95,6 +95,27 @@ TRACEKIT_API_KEY=your-api-key
 TRACEKIT_API_URL=https://api.tracekit.io
 ```
 
+### Optional Configuration
+
+```env
+# Sample rate: 0.0 to 1.0 (default: 1.0 = 100%)
+# Examples: 1.0 = 100% (all requests), 0.05 = 5%, 0.1 = 10%
+# NOTE: Errors are ALWAYS logged regardless of sample rate
+TRACEKIT_SAMPLE_RATE=1.0
+
+# Service name (default: 'gemvc-app')
+TRACEKIT_SERVICE_NAME=my-service
+
+# Enable/disable tracing (default: true)
+TRACEKIT_ENABLED=true
+
+# Include response data in traces (default: false)
+TRACEKIT_TRACE_RESPONSE=false
+
+# Include request body in traces (default: false)
+TRACEKIT_TRACE_REQUEST_BODY=false
+```
+
 ### Optional Tracing Flags
 
 ```env
@@ -112,6 +133,13 @@ APM_TRACE_DB_QUERY=1
 | Variable | Values | Default | Description |
 |----------|--------|---------|-------------|
 | `APM_NAME` | `TraceKit`, `Datadog`, etc. | `null` (disabled) | APM provider name |
+| `TRACEKIT_API_KEY` | String | `null` (required) | TraceKit API key |
+| `TRACEKIT_API_URL` | URL string | `https://app.tracekit.dev/v1/traces` | TraceKit endpoint |
+| `TRACEKIT_SAMPLE_RATE` | `0.0` to `1.0` | `1.0` (100%) | Sample rate (0.0 = 0%, 1.0 = 100%) |
+| `TRACEKIT_SERVICE_NAME` | String | `gemvc-app` | Service name for traces |
+| `TRACEKIT_ENABLED` | `true`, `1`, `false`, `0` | `true` | Enable/disable tracing |
+| `TRACEKIT_TRACE_RESPONSE` | `true`, `1`, `false`, `0` | `false` | Include response data in traces |
+| `TRACEKIT_TRACE_REQUEST_BODY` | `true`, `1`, `false`, `0` | `false` | Include request body in traces |
 | `APM_TRACE_CONTROLLER` | `1`, `true`, or not set | `disabled` | Enable controller tracing |
 | `APM_TRACE_DB_QUERY` | `1`, `true`, or not set | `disabled` | Enable database query tracing |
 
@@ -617,6 +645,47 @@ $span = $this->startApmSpan('api-call', [], ApmInterface::SPAN_KIND_SERVER);
 ```
 
 ## Performance Considerations
+
+### Sample Rate
+
+**Sample rate** controls what percentage of requests are traced. This is useful for high-traffic applications to reduce APM costs and overhead.
+
+```env
+# Trace 100% of requests (default)
+TRACEKIT_SAMPLE_RATE=1.0
+
+# Trace 10% of requests (recommended for high traffic)
+TRACEKIT_SAMPLE_RATE=0.1
+
+# Trace 5% of requests (for very high traffic)
+TRACEKIT_SAMPLE_RATE=0.05
+
+# Trace 0% of requests (disabled, but errors still logged)
+TRACEKIT_SAMPLE_RATE=0.0
+```
+
+**Important Notes:**
+- ✅ **Errors are ALWAYS logged** regardless of sample rate
+- ✅ Sample rate range: `0.0` (0%) to `1.0` (100%)
+- ✅ Default: `1.0` (100% - all requests traced)
+- ✅ Sampling is random per request (not deterministic)
+
+**When to Use Sample Rate:**
+- **High Traffic** (>1000 req/sec): Use `0.1` (10%) or `0.05` (5%)
+- **Medium Traffic** (100-1000 req/sec): Use `0.5` (50%) or `1.0` (100%)
+- **Low Traffic** (<100 req/sec): Use `1.0` (100%)
+
+**Example:**
+```env
+# Production: High traffic, sample 10% of requests
+TRACEKIT_SAMPLE_RATE=0.1
+
+# Staging: Medium traffic, sample 50% of requests
+TRACEKIT_SAMPLE_RATE=0.5
+
+# Development: Low traffic, trace everything
+TRACEKIT_SAMPLE_RATE=1.0
+```
 
 ### Environment Variable Checks
 
