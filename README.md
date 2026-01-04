@@ -1,3 +1,6 @@
+![gemvc-tracekit](https://github.com/user-attachments/assets/c730d3b8-877f-4793-9261-34ca392cf692)
+
+
 # [GEMVC](https://www.gemvc.de) - The PHP Multi-Platform Microservices REST API Framework
 
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.2-777bb4.svg?style=flat-square&logo=php&logoColor=white)](https://www.php.net/releases/)
