@@ -32,24 +32,14 @@ class ApiService
      */
     protected array $errors = [];
     
-    /**
-     * APM instance for automatic request tracing (optional)
-     * @var ApmInterface|null
-     */
-    private ?ApmInterface $apm = null;
-    
     public function __construct(Request $request)
     {
         //$this->error = null;
         $this->errors = [];
         $this->request = $request;
         
-        // Initialize APM provider via factory (TraceKit, Datadog, etc.)
-        // APM provider will automatically initialize root trace and register shutdown function
-        $this->apm = ApmFactory::create($this->request);
-        
-        // Backward compatibility: also set tracekit property on request
-        // (AbstractApm constructor already sets $request->apm and $request->tracekit)
+        // APM is now initialized in Bootstrap/SwooleBootstrap, available via $request->apm
+        // No need to initialize here - this ensures APM captures the full request lifecycle
     }
     
     /**
@@ -67,7 +57,7 @@ class ApiService
      */
     protected function callWithTracing(Controller $controller): ControllerTracingProxy
     {
-        return new ControllerTracingProxy($controller, $this->apm);
+        return new ControllerTracingProxy($controller, $this->request->apm);
     }
     
     /**

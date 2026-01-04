@@ -116,6 +116,40 @@ class ControllerTest extends TestCase
         $this->assertNull($controller->error);
     }
     
+    public function testControllerUsesRequestApm(): void
+    {
+        // Create a mock APM and set it on request
+        $mockApm = $this->createMock(\Gemvc\Core\Apm\ApmInterface::class);
+        $mockApm->method('isEnabled')->willReturn(true);
+        $this->request->apm = $mockApm;
+        
+        $controller = new TestController($this->request);
+        
+        // Verify that getApm() returns request->apm
+        $reflection = new \ReflectionClass($controller);
+        $getApmMethod = $reflection->getMethod('getApm');
+        $getApmMethod->setAccessible(true);
+        $apm = $getApmMethod->invoke($controller);
+        
+        $this->assertSame($mockApm, $apm);
+    }
+    
+    public function testControllerHandlesNullApm(): void
+    {
+        // Test that Controller works when APM is not initialized
+        $this->request->apm = null;
+        
+        $controller = new TestController($this->request);
+        
+        // Verify that getApm() returns null
+        $reflection = new \ReflectionClass($controller);
+        $getApmMethod = $reflection->getMethod('getApm');
+        $getApmMethod->setAccessible(true);
+        $apm = $getApmMethod->invoke($controller);
+        
+        $this->assertNull($apm);
+    }
+    
     // ============================================
     // Pagination, Sorting, Filtering Tests (test private _listObjects indirectly via createList)
     // ============================================
