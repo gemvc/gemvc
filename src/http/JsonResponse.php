@@ -9,7 +9,7 @@ use Gemvc\Helper\ProjectHelper;
 /**
  * this class is responsible for creating consistently formatted structured JSON responses to use in API
  */
-class JsonResponse implements ResponseInterface
+class JsonResponse implements ResponseInterface , \JsonSerializable
 {
     public string|false $json_response;
     public int $response_code;
@@ -54,7 +54,7 @@ class JsonResponse implements ResponseInterface
         $this->count = $count;
         $this->service_message = $service_message;
         $this->data = $data;
-        $this->json_response = json_encode($this, JSON_PRETTY_PRINT);
+        $this->json_response = json_encode($this->jsonSerialize(), JSON_PRETTY_PRINT);
         if(!$this->json_response) {
             $this->response_code = 500;
             $this->message = 'internal error';
@@ -254,5 +254,21 @@ class JsonResponse implements ResponseInterface
             $apm->endSpan($this->_apm_span);
         }
     }
+
+    /**
+ * Custom JSON serialization - excludes internal APM properties
+ * 
+ * @return array<string, mixed>
+ */
+public function jsonSerialize(): array
+{
+    return [
+        'response_code' => $this->response_code,
+        'message' => $this->message,
+        'count' => $this->count,
+        'service_message' => $this->service_message,
+        'data' => $this->data,
+    ];
+}
 
 }

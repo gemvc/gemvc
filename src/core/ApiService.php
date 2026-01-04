@@ -9,6 +9,7 @@ use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
 use Gemvc\Core\Apm\ApmTracingTrait;
 use Gemvc\Helper\ProjectHelper;
+use Gemvc\Core\Apm\AbstractApm;
 
 
 /**
@@ -312,8 +313,7 @@ class ControllerTracingProxy
             
             // Determine status based on result
             $statusCode = $result->response_code ?? 200;
-            /** @phpstan-ignore-next-line */
-            $status = ApmInterface::determineStatusFromHttpCode($statusCode);
+            $status = ($statusCode >= 400) ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
             
             // Build span attributes
             $spanAttributes = [
@@ -332,8 +332,7 @@ class ControllerTracingProxy
                 
                 // Limit response size to avoid huge traces (using centralized helper)
                 if (is_string($responseData)) {
-                    /** @phpstan-ignore-next-line */
-                    $responseData = ApmInterface::limitStringForTracing($responseData);
+                    $responseData = AbstractApm::limitStringForTracing($responseData);
                 }
                 
                 $spanAttributes['response.message'] = $result->message ?? '';
