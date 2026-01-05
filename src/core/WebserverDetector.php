@@ -79,6 +79,19 @@ class WebserverDetector
         return 'apache';
     }
 
+    public static function isSwoole(): bool
+    {
+        return self::get() === 'swoole';
+    }
+    public static function isNginx(): bool
+    {
+        return self::get() === 'nginx';
+    }
+    public static function isApache(): bool
+    {
+        return self::get() === 'apache';
+    }
+
     /**
      * Get simple performance metrics for detection.
      *
