@@ -282,16 +282,24 @@ abstract class AbstractInit extends Command
     {
         $webserverType = strtolower($this->getWebserverType());
         
+        // Map webserver type to directory name (OpenSwoole -> swoole)
+        $webserverTypeMap = [
+            'openswoole' => 'swoole',
+            'nginx' => 'nginx',
+            'apache' => 'apache'
+        ];
+        $directoryName = $webserverTypeMap[$webserverType] ?? $webserverType;
+        
         // Try webserver-specific startup path first
         $webserverSpecificPaths = [
-            $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType,
+            $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $directoryName,
             // Also try with package name from property
-            dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType
+            dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $directoryName
         ];
         
         foreach ($webserverSpecificPaths as $path) {
             if (is_dir($path)) {
-                $this->info("Found {$webserverType} startup directory: {$path}");
+                $this->info("Found {$directoryName} startup directory: {$path}");
                 return $path;
             }
         }
@@ -311,7 +319,7 @@ abstract class AbstractInit extends Command
             }
         }
         
-        throw new \RuntimeException("Startup directory not found for {$webserverType}. Tried: " . implode(", ", array_merge($webserverSpecificPaths, $fallbackPaths)));
+        throw new \RuntimeException("Startup directory not found for {$directoryName}. Tried: " . implode(", ", array_merge($webserverSpecificPaths, $fallbackPaths)));
     }
     
     /**
@@ -505,7 +513,19 @@ abstract class AbstractInit extends Command
         $startupPath = $this->findStartupPath();
         $exampleEnvPath = $startupPath . DIRECTORY_SEPARATOR . 'example.env';
         
-        // Fallback to main example.env
+        // Fallback: try webserver-specific directory if startupPath is the base startup directory
+        if (!file_exists($exampleEnvPath)) {
+            $webserverType = strtolower($this->getWebserverType());
+            $webserverTypeMap = [
+                'openswoole' => 'swoole',
+                'nginx' => 'nginx',
+                'apache' => 'apache'
+            ];
+            $directoryName = $webserverTypeMap[$webserverType] ?? $webserverType;
+            $exampleEnvPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $directoryName . DIRECTORY_SEPARATOR . 'example.env';
+        }
+        
+        // Final fallback to main example.env (if it exists in base startup directory)
         if (!file_exists($exampleEnvPath)) {
             $exampleEnvPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'example.env';
         }

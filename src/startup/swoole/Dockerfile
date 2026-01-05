@@ -3,7 +3,9 @@ FROM gemvc/swoole:latest AS builder
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
+# Copy composer files (composer.lock is optional)
+COPY composer.json ./
+COPY composer.lock* ./
 
 # Install dependencies with optimizations
 RUN composer install --no-dev \
@@ -32,6 +34,6 @@ RUN composer dump-autoload --optimize --classmap-authoritative
 EXPOSE 9501
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9501/ || exit 1
+    CMD curl -f http://localhost:9501/index/index || exit 1
 
 CMD ["php", "index.php"]
