@@ -8,7 +8,8 @@
         "symfony/dotenv": "^6.4 || ^7.2",
         "gemvc/connection-contracts": "^1.0",
         "gemvc/connection-pdo": "^1.0",
-        "gemvc/apm-contracts": "^1.0"
+        "gemvc/apm-contracts": "^1.0",
+        "gemvc/apm-tracekit": "^1.0"
     },
     "license": "MIT",
     "archive": {
