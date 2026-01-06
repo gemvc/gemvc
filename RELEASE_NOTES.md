@@ -1,6 +1,153 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.0...5.4.1
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.1...5.4.2
 # GEMVC Framework - Release Notes
 
+## Version 5.4.2 - Docker Build Fix
+
+**Release Date**: 2026-06-05  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release fixes a critical Docker build issue that prevented `docker compose up -d --build` from working correctly. The `.dockerignore` file was incorrectly excluding `composer.json` and `composer.lock`, which are required for the Docker build process. All changes are backward compatible and require no code modifications.
+
+---
+
+## 🐛 Bug Fixes
+
+### OpenSwoole Dockerfile Build Failure
+
+- **Fixed `.dockerignore` blocking composer files** - Removed `composer.json` and `composer.lock` from ignore list
+  - Dockerfile requires these files to install dependencies during build
+  - Fixes `docker compose up -d --build` command failures
+  - Docker builds now complete successfully
+  - Location: `src/startup/swoole/.dockerignore`
+
+**Problem:**
+The `.dockerignore` file was preventing `composer.json` and `composer.lock` from being included in the Docker build context, causing the build to fail when trying to copy these files in the Dockerfile.
+
+**Solution:**
+Removed `composer.json` and `composer.lock` from the `.dockerignore` file, allowing them to be properly copied during the Docker build process.
+
+**Before:**
+```
+composer.phar
+/vendor/
+composer.lock          ← Blocked
+app/config.php
+Dockerfile
+docker-compose.yml
+LICENSE
+README.md
+.gitignore
+composer.json          ← Blocked
+```
+
+**After:**
+```
+composer.phar
+/vendor/
+app/config.php
+Dockerfile
+docker-compose.yml
+LICENSE
+README.md
+.gitignore
+```
+
+---
+
+## 🗑️ Removed
+
+### Unnecessary composer.json
+
+- **Removed redundant `composer.json`** - Deleted `src/startup/swoole/composer.json`
+  - File was not needed as the main project `composer.json` is used
+  - Simplifies project structure
+  - Prevents confusion about which composer.json to use
+  - Location: `src/startup/swoole/composer.json`
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+---
+
+## 🚀 Performance
+
+- No performance impact from these changes
+- Docker builds now complete successfully without errors
+- Faster build times due to proper file inclusion
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.4.1 to 5.4.2
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Fixed `.dockerignore` to allow composer files in Docker builds
+- Removed unnecessary `composer.json` from swoole startup directory
+
+**Benefits**:
+- `docker compose up -d --build` now works correctly
+- Cleaner project structure
+- No more Docker build failures
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Rebuild Docker containers to get the fix: `docker compose up -d --build`
+
+**Breaking Changes**:
+- None
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for reporting the Docker build issue.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.0...5.4.1
 ## Version 5.4.1 - Docker Healthcheck Fix and TraceKit Default
 
 **Release Date**: 2026-06-05  

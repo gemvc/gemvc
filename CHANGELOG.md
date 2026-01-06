@@ -5,6 +5,25 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.2] - 2026-06-05
+
+### Fixed
+- **OpenSwoole Dockerfile build failure** - Fixed `.dockerignore` preventing `composer.json` and `composer.lock` from being copied
+  - Removed `composer.json` and `composer.lock` from `.dockerignore` file
+  - Fixes `docker compose up -d --build` command failures
+  - Dockerfile now correctly copies composer files needed for dependency installation
+  - Location: `src/startup/swoole/.dockerignore`
+
+### Removed
+- **Unnecessary composer.json** - Removed redundant `composer.json` from `src/startup/swoole/` directory
+  - File was not needed as the main project `composer.json` is used
+  - Simplifies project structure and prevents confusion
+  - Location: `src/startup/swoole/composer.json`
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.4.1] - 2026-06-05
 
 ### Fixed
