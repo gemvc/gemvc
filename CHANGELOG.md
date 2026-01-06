@@ -5,6 +5,26 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.1] - 2026-06-05
+
+### Fixed
+- **OpenSwoole Dockerfile healthcheck endpoint** - Fixed healthcheck URL from `/index/index` to `/api`
+  - Healthcheck now correctly uses the standard GEMVC API healthcheck endpoint
+  - Fixes Docker healthcheck failures in OpenSwoole containers
+  - Aligns with GEMVC documentation and standard API endpoint structure
+  - Location: `src/startup/swoole/Dockerfile`
+
+### Added
+- **TraceKit as default dependency** - `gemvc/apm-tracekit` is now included as a required dependency in `composer.json`
+  - TraceKit is the default APM provider for GEMVC Framework
+  - No additional `composer require` needed for TraceKit integration
+  - Simplifies APM setup for new projects
+  - Zero-configuration APM setup with TraceKit out of the box
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.4.0] - 2026-01-04
 
 ### Added
