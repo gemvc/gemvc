@@ -58,7 +58,7 @@ class SwooleServerConfig
     {
         $this->config = [
             'worker_num' => is_numeric($_ENV["SWOOLE_WORKERS"] ?? 1) ? (int) ($_ENV["SWOOLE_WORKERS"] ?? 1) : 1,
-            'daemonize' => (bool)($_ENV["SWOOLE_RUN_FOREGROUND"] ?? 0),
+            'daemonize' => !(bool)($_ENV["SWOOLE_RUN_FOREGROUND"] ?? 0), // Inverted: 1 = foreground (daemonize=false), 0 = daemon (daemonize=true)
             'max_request' => is_numeric($_ENV["SWOOLE_MAX_REQUEST"] ?? 5000) ? (int) ($_ENV["SWOOLE_MAX_REQUEST"] ?? 5000) : 5000,
             'max_conn' => is_numeric($_ENV["SWOOLE_MAX_CONN"] ?? 1024) ? (int) ($_ENV["SWOOLE_MAX_CONN"] ?? 1024) : 1024,
             'max_wait_time' => is_numeric($_ENV["SWOOLE_MAX_WAIT_TIME"] ?? 120) ? (int) ($_ENV["SWOOLE_MAX_WAIT_TIME"] ?? 120) : 120,
