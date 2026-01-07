@@ -44,6 +44,14 @@ class AbstractInitTest extends TestCase
         // Use reflection to access protected methods
         $reflection = new ReflectionClass($initSwoole);
         
+        // Initialize packagePath property if needed (via reflection)
+        $packagePathProperty = $reflection->getProperty('packagePath');
+        $packagePathProperty->setAccessible(true);
+        if (!$packagePathProperty->isInitialized($initSwoole)) {
+            // Set a default package path for testing
+            $packagePathProperty->setValue($initSwoole, dirname(__DIR__, 3));
+        }
+        
         // Get the getStartupTemplatePath method
         $getStartupTemplatePathMethod = $reflection->getMethod('getStartupTemplatePath');
         $getStartupTemplatePathMethod->setAccessible(true);

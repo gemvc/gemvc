@@ -35,7 +35,8 @@ class InstallationTest {
             throw new \RuntimeException('AbstractInit class not found');
         }
         
-        if (!method_exists('Gemvc\CLI\AbstractInit', 'copyAppIndexFile')) {
+        $abstractInitReflection = new \ReflectionClass('Gemvc\CLI\AbstractInit');
+        if (!$abstractInitReflection->hasMethod('copyAppIndexFile')) {
             throw new \RuntimeException('copyAppIndexFile() method not found in AbstractInit - centralized appIndex.php copying may not work');
         }
         

@@ -45,6 +45,7 @@ trait ApmTracingTrait
     protected function getApm(): ?ApmInterface
     {
         // Try to use Request APM first (shares traceId)
+        // @phpstan-ignore-next-line - Trait is used by multiple classes, not all have request property
         if (property_exists($this, 'request') && $this->request instanceof Request) {
             if ($this->request->apm !== null) {
                 return $this->request->apm;
