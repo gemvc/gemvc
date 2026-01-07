@@ -104,31 +104,6 @@ class InitNginx extends AbstractInit
     }
     
     /**
-     * Get the startup template path for Nginx
-     * 
-     * @return string
-     */
-    protected function getStartupTemplatePath(): string
-    {
-        $webserverType = strtolower($this->getWebserverType());
-        
-        // Try webserver-specific path first
-        $webserverPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType;
-        if (is_dir($webserverPath)) {
-            return $webserverPath;
-        }
-        
-        // Try Composer package path with package name from property
-        $composerWebserverPath = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType;
-        if (is_dir($composerWebserverPath)) {
-            return $composerWebserverPath;
-        }
-        
-        // Fallback to default startup path (current structure)
-        return $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup';
-    }
-    
-    /**
      * Get Nginx-specific file mappings
      * 
      * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()

@@ -38,6 +38,84 @@ class InstallationTest {
         if (!method_exists('Gemvc\CLI\AbstractInit', 'copyAppIndexFile')) {
             throw new \RuntimeException('copyAppIndexFile() method not found in AbstractInit - centralized appIndex.php copying may not work');
         }
+        
+        // Verify refactored AbstractInit methods (shared functionality)
+        $abstractInitReflection = new \ReflectionClass('Gemvc\CLI\AbstractInit');
+        
+        // Verify getStartupTemplatePath() is not abstract (has default implementation)
+        if (!$abstractInitReflection->hasMethod('getStartupTemplatePath')) {
+            throw new \RuntimeException('getStartupTemplatePath() method not found in AbstractInit');
+        }
+        $getStartupMethod = $abstractInitReflection->getMethod('getStartupTemplatePath');
+        if ($getStartupMethod->isAbstract()) {
+            throw new \RuntimeException('getStartupTemplatePath() should not be abstract - it should have a default implementation');
+        }
+        if (!$getStartupMethod->isProtected()) {
+            throw new \RuntimeException('getStartupTemplatePath() should be protected');
+        }
+        
+        // Verify isPackageInstalled() exists in AbstractInit
+        if (!$abstractInitReflection->hasMethod('isPackageInstalled')) {
+            throw new \RuntimeException('isPackageInstalled() method not found in AbstractInit - shared package checking may not work');
+        }
+        $isPackageMethod = $abstractInitReflection->getMethod('isPackageInstalled');
+        if (!$isPackageMethod->isProtected()) {
+            throw new \RuntimeException('isPackageInstalled() should be protected');
+        }
+        
+        // Verify installPackage() exists in AbstractInit
+        if (!$abstractInitReflection->hasMethod('installPackage')) {
+            throw new \RuntimeException('installPackage() method not found in AbstractInit - shared package installation may not work');
+        }
+        $installMethod = $abstractInitReflection->getMethod('installPackage');
+        if (!$installMethod->isProtected()) {
+            throw new \RuntimeException('installPackage() should be protected');
+        }
+        
+        // Verify webserver init classes properly inherit methods (no duplicates)
+        $webserverClasses = [
+            'Gemvc\CLI\Commands\InitSwoole',
+            'Gemvc\CLI\Commands\InitApache',
+            'Gemvc\CLI\Commands\InitNginx',
+        ];
+        
+        foreach ($webserverClasses as $webserverClass) {
+            if (!class_exists($webserverClass)) {
+                continue; // Already checked above
+            }
+            
+            $webserverReflection = new \ReflectionClass($webserverClass);
+            
+            // Verify getStartupTemplatePath() is inherited (not overridden unless necessary)
+            if ($webserverReflection->hasMethod('getStartupTemplatePath')) {
+                $method = $webserverReflection->getMethod('getStartupTemplatePath');
+                $declaringClass = $method->getDeclaringClass()->getName();
+                if ($declaringClass !== 'Gemvc\CLI\AbstractInit') {
+                    // If overridden, it should still be protected
+                    if (!$method->isProtected()) {
+                        throw new \RuntimeException("getStartupTemplatePath() in {$webserverClass} should be protected");
+                    }
+                }
+            }
+            
+            // Verify isPackageInstalled() is inherited (should not be overridden)
+            if ($webserverReflection->hasMethod('isPackageInstalled')) {
+                $method = $webserverReflection->getMethod('isPackageInstalled');
+                $declaringClass = $method->getDeclaringClass()->getName();
+                if ($declaringClass !== 'Gemvc\CLI\AbstractInit') {
+                    throw new \RuntimeException("isPackageInstalled() should not be overridden in {$webserverClass} - it should be inherited from AbstractInit");
+                }
+            }
+            
+            // Verify installPackage() is inherited (should not be overridden)
+            if ($webserverReflection->hasMethod('installPackage')) {
+                $method = $webserverReflection->getMethod('installPackage');
+                $declaringClass = $method->getDeclaringClass()->getName();
+                if ($declaringClass !== 'Gemvc\CLI\AbstractInit') {
+                    throw new \RuntimeException("installPackage() should not be overridden in {$webserverClass} - it should be inherited from AbstractInit");
+                }
+            }
+        }
 
         // Verify startup files structure
         $packagePath = dirname(dirname(__DIR__));
