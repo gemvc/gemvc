@@ -19,6 +19,8 @@ class DockerComposeInit extends Command
     private bool $developmentMode = true;
     private string $webserverType = 'openswoole';
     private int $webserverPort = 9501;
+    private int $cpuLimit = 2;
+    private string $memoryLimit = '2g';
     
     // Available services configuration
     private const AVAILABLE_SERVICES = [
@@ -90,6 +92,7 @@ class DockerComposeInit extends Command
         
         $this->displayDockerServicesPrompt();
         $this->getUserServiceSelection();
+        $this->askForResourceLimits();
         $this->createDockerComposeFile();
     }
     
@@ -203,6 +206,66 @@ class DockerComposeInit extends Command
         } else {
             $this->developmentMode = true;
             $this->info("Selected: Development Mode (clean logs)");
+        }
+    }
+    
+    /**
+     * Ask user for resource limits (CPU and RAM)
+     */
+    private function askForResourceLimits(): void
+    {
+        if ($this->nonInteractive) {
+            $this->info("Using default resource limits: {$this->cpuLimit} CPUs, {$this->memoryLimit} RAM (non-interactive mode)");
+            return;
+        }
+        
+        echo "\n\033[1;36mResource Limits Configuration:\033[0m\n";
+        echo "Configure CPU and RAM limits for the application service\n";
+        echo "\n\033[1;94mHow many CPUs do you want to dedicate for this service?\033[0m\n";
+        echo "Enter number of CPUs [{$this->cpuLimit}]: ";
+        
+        $handle = fopen("php://stdin", "r");
+        if ($handle === false) {
+            $this->info("Using default CPU limit: {$this->cpuLimit} (stdin error)");
+        } else {
+            $cpuInput = fgets($handle);
+            fclose($handle);
+            $cpuInput = $cpuInput !== false ? trim($cpuInput) : '';
+            
+            if (!empty($cpuInput) && is_numeric($cpuInput)) {
+                $cpuValue = (int)$cpuInput;
+                if ($cpuValue > 0) {
+                    $this->cpuLimit = $cpuValue;
+                    $this->info("Selected: {$this->cpuLimit} CPUs");
+                } else {
+                    $this->warning("Invalid CPU value, using default: {$this->cpuLimit}");
+                }
+            } else {
+                $this->info("Using default CPU limit: {$this->cpuLimit}");
+            }
+        }
+        
+        echo "\n\033[1;94mHow much RAM do you want to allocate for this service?\033[0m\n";
+        echo "Enter RAM amount (e.g., 2g, 512m, 4g) [{$this->memoryLimit}]: ";
+        
+        $handle = fopen("php://stdin", "r");
+        if ($handle === false) {
+            $this->info("Using default RAM limit: {$this->memoryLimit} (stdin error)");
+        } else {
+            $ramInput = fgets($handle);
+            fclose($handle);
+            $ramInput = $ramInput !== false ? trim($ramInput) : '';
+            
+            if (!empty($ramInput) && preg_match('/^\d+[kmgKMG]?$/', $ramInput)) {
+                $this->memoryLimit = strtolower($ramInput);
+                // Ensure it ends with a unit
+                if (preg_match('/^\d+$/', $this->memoryLimit)) {
+                    $this->memoryLimit .= 'g';
+                }
+                $this->info("Selected: {$this->memoryLimit} RAM");
+            } else {
+                $this->info("Using default RAM limit: {$this->memoryLimit}");
+            }
         }
     }
     
@@ -371,6 +434,11 @@ class DockerComposeInit extends Command
         // Port mapping based on webserver type
         $portMapping = $this->webserverType === 'openswoole' ? "{$port}:{$port}" : "{$port}:80";
         
+        // Resource limits (using same format as MySQL service for consistency)
+        $resourcesStr = "\n    cpus: {$this->cpuLimit}\n" .
+            "    mem_limit: {$this->memoryLimit}\n" .
+            "    mem_reservation: {$this->memoryLimit}";
+        
         return <<<EOT
   {$serviceName}:
     build:
@@ -380,7 +448,7 @@ class DockerComposeInit extends Command
       - "{$portMapping}"
     volumes:
       - ./:/var/www/html:delegated
-    restart: unless-stopped
+    restart: unless-stopped{$resourcesStr}
     networks:
       - backend-network{$dependsOnStr}{$envStr}
 
