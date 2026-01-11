@@ -1,6 +1,298 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.3.0...5.4.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.1...5.4.2
 # GEMVC Framework - Release Notes
 
+## Version 5.4.2 - Docker Build Fix
+
+**Release Date**: 2026-06-05  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release fixes a critical Docker build issue that prevented `docker compose up -d --build` from working correctly. The `.dockerignore` file was incorrectly excluding `composer.json` and `composer.lock`, which are required for the Docker build process. All changes are backward compatible and require no code modifications.
+
+---
+
+## 🐛 Bug Fixes
+
+### OpenSwoole Dockerfile Build Failure
+
+- **Fixed `.dockerignore` blocking composer files** - Removed `composer.json` and `composer.lock` from ignore list
+  - Dockerfile requires these files to install dependencies during build
+  - Fixes `docker compose up -d --build` command failures
+  - Docker builds now complete successfully
+  - Location: `src/startup/swoole/.dockerignore`
+
+**Problem:**
+The `.dockerignore` file was preventing `composer.json` and `composer.lock` from being included in the Docker build context, causing the build to fail when trying to copy these files in the Dockerfile.
+
+**Solution:**
+Removed `composer.json` and `composer.lock` from the `.dockerignore` file, allowing them to be properly copied during the Docker build process.
+
+**Before:**
+```
+composer.phar
+/vendor/
+composer.lock          ← Blocked
+app/config.php
+Dockerfile
+docker-compose.yml
+LICENSE
+README.md
+.gitignore
+composer.json          ← Blocked
+```
+
+**After:**
+```
+composer.phar
+/vendor/
+app/config.php
+Dockerfile
+docker-compose.yml
+LICENSE
+README.md
+.gitignore
+```
+
+---
+
+## 🗑️ Removed
+
+### Unnecessary composer.json
+
+- **Removed redundant `composer.json`** - Deleted `src/startup/swoole/composer.json`
+  - File was not needed as the main project `composer.json` is used
+  - Simplifies project structure
+  - Prevents confusion about which composer.json to use
+  - Location: `src/startup/swoole/composer.json`
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+---
+
+## 🚀 Performance
+
+- No performance impact from these changes
+- Docker builds now complete successfully without errors
+- Faster build times due to proper file inclusion
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.4.1 to 5.4.2
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Fixed `.dockerignore` to allow composer files in Docker builds
+- Removed unnecessary `composer.json` from swoole startup directory
+
+**Benefits**:
+- `docker compose up -d --build` now works correctly
+- Cleaner project structure
+- No more Docker build failures
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Rebuild Docker containers to get the fix: `docker compose up -d --build`
+
+**Breaking Changes**:
+- None
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for reporting the Docker build issue.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.0...5.4.1
+## Version 5.4.1 - Docker Healthcheck Fix and TraceKit Default
+
+**Release Date**: 2026-06-05  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release fixes the OpenSwoole Dockerfile healthcheck endpoint and officially includes TraceKit as a default dependency in the GEMVC package. All changes are backward compatible and require no code modifications.
+
+---
+
+## 🐛 Bug Fixes
+
+### OpenSwoole Dockerfile Healthcheck
+
+- **Fixed healthcheck endpoint URL** - Changed from `/index/index` to `/api`
+  - Healthcheck now correctly uses the standard GEMVC API healthcheck endpoint
+  - Fixes Docker healthcheck failures in OpenSwoole containers
+  - Aligns with GEMVC documentation and standard API endpoint structure
+  - Location: `src/startup/swoole/Dockerfile`
+
+**Before:**
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9501/api || exit 1
+```
+
+**After:**
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9501/index/index || exit 1
+```
+
+---
+
+## ✨ Added
+
+### TraceKit as Default Dependency
+
+- **TraceKit APM Provider** - Now included as a default dependency in `composer.json`
+  - `gemvc/apm-tracekit` is now a required dependency (not optional)
+  - TraceKit is the default APM provider for GEMVC Framework
+  - No additional `composer require` needed for TraceKit integration
+  - Simplifies APM setup for new projects
+
+**Benefits:**
+- Zero-configuration APM setup with TraceKit
+- Automatic APM tracing out of the box
+- Consistent APM experience across all GEMVC projects
+- Reduced setup steps for developers
+
+**Note:** TraceKit was previously available but required manual installation. It is now included by default in the GEMVC package.
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+**For TraceKit Users:**
+- TraceKit is now automatically installed with GEMVC
+- Configure TraceKit in your `.env` file as before:
+  ```env
+  APM_NAME=TraceKit
+  TRACEKIT_API_KEY=your-api-key
+  TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+  ```
+
+---
+
+## 🚀 Performance
+
+- No performance impact from these changes
+- Healthcheck fix improves Docker container reliability
+- TraceKit inclusion has no runtime overhead when not configured
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.4.0 to 5.4.1
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- OpenSwoole Dockerfile healthcheck endpoint fixed
+- TraceKit now included as default dependency
+
+**Benefits**:
+- Docker healthchecks now work correctly
+- Simplified APM setup with TraceKit included by default
+- Better container monitoring and reliability
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- If you manually installed TraceKit, you can remove it from your `composer.json` (it's now included by default)
+- Rebuild Docker containers to get the healthcheck fix
+
+**Breaking Changes**:
+- None
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for reporting the Docker healthcheck issue and providing feedback.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.3.0...5.4.0
 ## Version 5.4.0 - Native APM Integration
 
 **Release Date**: 2026-01-04  

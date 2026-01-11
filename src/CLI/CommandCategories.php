@@ -19,7 +19,9 @@ class CommandCategories
             'db:init' => 'Initialize database based on configuration',
             'db:migrate' => 'Create or update a specific table (db:migrate TableClassName)',
             'db:list' => 'Show list of all tables in the database',
+            'db:describe' => 'Describe table structure in detail (columns, indexes, foreign keys)',
             'db:drop' => 'Drop a specific table (db:drop TableName)',
+            'db:unique' => 'Add unique constraint to table column(s)',
         ],
         'Admin' => [
             'admin:setpassword' => 'Set admin password for accessing system pages in development mode',
@@ -39,7 +41,9 @@ class CommandCategories
             'db:init' => 'DbInit',
             'db:migrate' => 'DbMigrate',
             'db:list' => 'DbList',
+            'db:describe' => 'DbDescribe',
             'db:drop' => 'DbDrop',
+            'db:unique' => 'DbUnique',
             'admin:setpassword' => 'AdminSetpassword',
             'admin:setadmin' => 'SetAdmin',
         ];
@@ -85,7 +89,9 @@ class CommandCategories
             'db:init' => 'vendor/bin/gemvc db:init',
             'db:migrate' => 'vendor/bin/gemvc db:migrate UserTable',
             'db:list' => 'vendor/bin/gemvc db:list',
+            'db:describe' => 'vendor/bin/gemvc db:describe users',
             'db:drop' => 'vendor/bin/gemvc db:drop users',
+            'db:unique' => 'vendor/bin/gemvc db:unique users/email',
             'admin:setpassword' => 'vendor/bin/gemvc admin:setpassword',
             'admin:setadmin' => 'vendor/bin/gemvc admin:setadmin'
         ];

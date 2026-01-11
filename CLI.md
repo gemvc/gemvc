@@ -43,8 +43,11 @@ Command (Base Class)
     ├── DbInit
     ├── DbMigrate
     ├── DbList
+    ├── DbDescribe
     ├── DbDrop
-    └── DbUnique
+    ├── DbUnique
+    ├── AdminSetpassword
+    └── SetAdmin
 ```
 
 ### Core Components
@@ -106,7 +109,29 @@ final public function execute(): bool
     // 5. Setup autoload (same for all)
     $this->setupPsr4Autoload();
     
-    // ... more steps
+    // 6. Create .env file (same for all)
+    $this->createEnvFile();
+    
+    // 7. Create global command wrapper (same for all)
+    $this->createGlobalCommand();
+    
+    // 8. Finalize autoload (same for all)
+    $this->finalizeAutoload();
+    
+    // 9. Offer Docker services (same for all)
+    $this->offerDockerServices();
+    
+    // 10. Display next steps (same for all)
+    $this->displayNextSteps();
+    
+    // 11. Offer optional tools (same for all)
+    $this->offerOptionalTools();
+    
+    // 12. Offer container build (same for all)
+    $this->offerContainerBuild();
+    
+    // 13. Display success graphic (same for all)
+    $this->displaySuccessGraphic();
 }
 ```
 
@@ -123,7 +148,10 @@ final public function execute(): bool
 - `copyTemplatesFolder()` - Copies templates to project root
 - `setupPsr4Autoload()` - Configures composer.json
 - `createEnvFile()` - Creates .env from example
+- `createGlobalCommand()` - Creates local wrapper scripts (`bin/gemvc`, `bin/gemvc.bat`)
+- `finalizeAutoload()` - Runs `composer dump-autoload` to finalize PSR-4 autoloading
 - `offerDockerServices()` - Docker setup wizard
+- `offerContainerBuild()` - Docker container building with pre-flight checks
 - `offerOptionalTools()` - PHPStan, PHPUnit installation
 
 **Result**: Webserver-specific init classes only implement what's different!
@@ -392,6 +420,65 @@ networks:
 
 ---
 
+#### 8. **DockerContainerBuilder.php** - Docker Container Builder
+
+**Purpose**: Handles automatic Docker container building with comprehensive pre-flight checks.
+
+**Features**:
+- ✅ Docker Desktop status verification
+- ✅ Port availability checking (MySQL, phpMyAdmin, application port)
+- ✅ Existing container conflict detection
+- ✅ Automatic port conflict resolution with suggestions
+- ✅ Container name conflict handling
+- ✅ Interactive container building
+
+**Pre-Flight Checks**:
+1. **Docker Desktop Status**: Verifies Docker Desktop is running
+2. **Port Availability**: Checks if required ports are available:
+   - MySQL (3306)
+   - phpMyAdmin (8080)
+   - Application port (80 for Apache/Nginx, 9501 for OpenSwoole)
+3. **Container Conflicts**: Detects existing containers using same ports
+4. **Name Conflicts**: Checks for container name conflicts
+
+**Port Conflict Resolution**:
+- If ports are blocked by Docker containers: Offers to stop/remove conflicting containers
+- If ports are blocked by system processes: Suggests alternative ports
+- Automatically updates `docker-compose.yml` with new ports if user accepts suggestions
+
+**Usage in AbstractInit**:
+```php
+// AbstractInit.php - Line 78
+$this->offerContainerBuild(); // Offer to build Docker containers
+
+// Inside offerContainerBuild():
+$containerBuilder = new DockerContainerBuilder(
+    $this->basePath, 
+    $this->nonInteractive, 
+    $this->getDefaultPort(), 
+    $webserverType
+);
+$containerBuilder->offerContainerBuild();
+```
+
+**Interactive Flow**:
+```
+1. Display build prompt with port information
+2. Get user confirmation
+3. Run pre-flight checks:
+   - Check Docker Desktop
+   - Check port availability
+   - Check container conflicts
+4. Handle conflicts (stop containers, suggest ports)
+5. Build containers with: docker compose up -d --build
+```
+
+**Non-Interactive Mode**: Skipped automatically
+
+**Integration**: Called automatically during `gemvc init` process after Docker services setup!
+
+---
+
 #### 8. **ProjectHelper.php** - Path & Environment Helper
 
 **Purpose**: Provides path resolution and environment loading for CLI commands.
@@ -559,11 +646,12 @@ gemvc <command> [arguments] [flags]
 
 ### Command Categories
 
-GEMVC commands are organized into three categories:
+GEMVC commands are organized into four categories:
 
 1. **Project Management** - Initialize and configure projects
 2. **Code Generation** - Generate Services, Controllers, Models, Tables
 3. **Database** - Database management and migrations
+4. **Admin** - Admin user and password management
 
 ---
 
@@ -912,16 +1000,93 @@ gemvc db:drop users
 
 ### `db:unique` - Add Unique Constraint
 
-Add a unique constraint to a table column.
+Add a unique constraint to a table column or multiple columns.
 
 ```bash
-gemvc db:unique <TableName> <ColumnName>
+gemvc db:unique <TableName>/<ColumnName>[,<ColumnName2>...]
 ```
 
 **Examples**:
 ```bash
-gemvc db:unique users email
+# Single column
+gemvc db:unique users/email
+
+# Multiple columns (composite unique constraint)
+gemvc db:unique users/email,name
 ```
+
+**What It Does**:
+- ✅ Checks for duplicate values in the specified column(s)
+- ✅ If no duplicates, adds a unique constraint
+- ✅ If duplicates exist, aborts and lists the duplicates
+
+**⚠️ Warning**: This command will fail if duplicate values exist in the column(s). Clean up duplicates first.
+
+---
+
+## 👤 Admin Commands
+
+### `admin:setpassword` - Set Admin Password
+
+Set admin password for accessing system pages in development mode.
+
+```bash
+gemvc admin:setpassword
+```
+
+**What It Does**:
+- ✅ Prompts for password (hidden on Unix/Linux, visible on Windows)
+- ✅ Confirms password entry
+- ✅ Updates `ADMIN_PASSWORD` in `.env` file
+- ✅ Stores password in plain text (acceptable for dev-only admin access)
+
+**Example**:
+```bash
+gemvc admin:setpassword
+# Enter admin password: ****
+# Confirm admin password: ****
+# ✓ Admin password set successfully!
+```
+
+**Note**: This password is used for accessing system pages in development mode. The `.env` file should not be committed to version control.
+
+---
+
+### `admin:setadmin` - Create First Admin User
+
+Create the first admin user in the database.
+
+```bash
+gemvc admin:setadmin
+```
+
+**What It Does**:
+- ✅ Checks if database is initialized (offers to initialize if not)
+- ✅ Checks if UserTable is migrated (offers to migrate if not)
+- ✅ Validates that no users exist (security check)
+- ✅ Prompts for admin name, email, and password
+- ✅ Creates admin user with role 'admin'
+- ✅ Automatically handles Docker hostname to localhost conversion for CLI
+
+**Example**:
+```bash
+gemvc admin:setadmin
+# Enter admin name: John Doe
+# Enter admin email: admin@example.com
+# Enter admin password: ****
+# Confirm admin password: ****
+# ✓ Admin user created successfully!
+```
+
+**Security Features**:
+- ⚠️ Can only be used when database is empty (no existing users)
+- ✅ Validates email format
+- ✅ Requires password confirmation
+- ✅ Automatically sets user role to 'admin'
+
+**Prerequisites**:
+- Database must be initialized (`gemvc db:init`)
+- UserTable must be migrated (`gemvc db:migrate UserTable`)
 
 ---
 
@@ -1180,7 +1345,9 @@ gemvc create:crud user_profile
 | `db:list` | List tables | `gemvc db:list` |
 | `db:describe` | Describe table | `gemvc db:describe products` |
 | `db:drop` | Drop table | `gemvc db:drop products` |
-| `db:unique` | Add unique constraint | `gemvc db:unique users email` |
+| `db:unique` | Add unique constraint | `gemvc db:unique users/email` |
+| `admin:setpassword` | Set admin password | `gemvc admin:setpassword` |
+| `admin:setadmin` | Create first admin user | `gemvc admin:setadmin` |
 
 ---
 
@@ -1190,7 +1357,9 @@ GEMVC CLI provides:
 
 - ✅ **Project Management** - Initialize projects with different webservers
 - ✅ **Code Generation** - Generate Services, Controllers, Models, Tables
-- ✅ **Database Management** - Migrate, list, describe, drop tables
+- ✅ **Database Management** - Migrate, list, describe, drop tables, add constraints
+- ✅ **Admin Management** - Set admin password, create first admin user
+- ✅ **Docker Integration** - Automatic container building with pre-flight checks
 - ✅ **Template System** - Customizable code generation templates
 - ✅ **Non-Interactive Mode** - Suitable for CI/CD pipelines
 

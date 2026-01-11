@@ -111,9 +111,13 @@ abstract class AbstractInit extends Command
     
     /**
      * Get the startup template path for this webserver
+     * Default implementation uses findStartupPath() to eliminate duplication
      * @return string Path to startup template directory
      */
-    abstract protected function getStartupTemplatePath(): string;
+    protected function getStartupTemplatePath(): string
+    {
+        return $this->findStartupPath();
+    }
     
     /**
      * Get webserver-specific file mappings (if any)
@@ -537,67 +541,9 @@ abstract class AbstractInit extends Command
         $envContent = $this->fileSystem->getFileContent($exampleEnvPath);
         $this->fileSystem->writeFile($envPath, $envContent, '.env file');
         
-        // Add APP_ENV_SERVER after creating .env file
-        $this->updateEnvFileWithServer();
-        
         $this->info("\033[32m✓\033[0m Environment file created");
     }
-    
-    /**
-     * Update .env file with APP_ENV_SERVER
-     * 
-     * Maps webserver types to lowercase values:
-     * - 'Nginx' -> 'nginx'
-     * - 'Apache' -> 'apache'
-     * - 'OpenSwoole' -> 'swoole'
-     * 
-     * @return void
-     */
-    private function updateEnvFileWithServer(): void
-    {
-        $envPath = $this->basePath . DIRECTORY_SEPARATOR . '.env';
-        $webserverTypeRaw = $this->getWebserverType();
-        
-        // Map webserver types to lowercase .env values
-        $webserverTypeMap = [
-            'Nginx' => 'nginx',
-            'Apache' => 'apache',
-            'OpenSwoole' => 'swoole'
-        ];
-        
-        // Get lowercase value, fallback to lowercase of raw value if not in map
-        $webserverType = isset($webserverTypeMap[$webserverTypeRaw]) 
-            ? $webserverTypeMap[$webserverTypeRaw]
-            : strtolower($webserverTypeRaw);
-        
-        $serverLine = "APP_ENV_SERVER={$webserverType}";
-        
-        if (!file_exists($envPath)) {
-            return;
-        }
-        
-        $content = file_get_contents($envPath);
-        if ($content === false) {
-            return;
-        }
-        
-        // Check if APP_ENV_SERVER already exists
-        if (preg_match('/^APP_ENV_SERVER=.*$/m', $content)) {
-            // Update existing
-            $content = preg_replace('/^APP_ENV_SERVER=.*$/m', $serverLine, $content);
-        } else {
-            // Add new line after APP_ENV if found, otherwise append to end
-            if (preg_match('/^APP_ENV\s*=.*$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
-                $pos = $matches[0][1] + strlen($matches[0][0]);
-                $content = substr_replace($content, "\n{$serverLine}", $pos, 0);
-            } else {
-                $content .= "\n{$serverLine}\n";
-            }
-        }
-        
-        file_put_contents($envPath, $content);
-    }
-    
+       
     /**
      * Create global command wrapper
      * 
@@ -1184,5 +1130,53 @@ EOT;
         $this->fileSystem->copyDirectoryContents($sourcePath, $targetPath);
         
         $this->info("Copied {$dirName} to: {$targetPath}");
+    }
+    
+    /**
+     * Check if a package is installed
+     * 
+     * @param string $packageName
+     * @return bool
+     */
+    protected function isPackageInstalled(string $packageName): bool
+    {
+        $composerLockFile = getcwd() . '/composer.lock';
+        if (!file_exists($composerLockFile)) {
+            return false;
+        }
+        
+        $lockContent = file_get_contents($composerLockFile);
+        if ($lockContent === false) {
+            return false;
+        }
+        
+        return strpos($lockContent, '"name": "' . $packageName . '"') !== false;
+    }
+    
+    /**
+     * Install a package via composer
+     * 
+     * @param string $packageName
+     * @return bool True if installation succeeded, false otherwise
+     */
+    protected function installPackage(string $packageName): bool
+    {
+        $this->info("Installing {$packageName}...");
+        
+        $command = "composer require {$packageName}";
+        $output = [];
+        $returnCode = 0;
+        
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        if ($returnCode === 0) {
+            $this->info("✓ {$packageName} installed successfully!");
+            return true;
+        } else {
+            $this->error("Failed to install {$packageName}:");
+            $this->error(implode("\n", $output));
+            $this->info("Please install manually: composer require {$packageName}");
+            return false;
+        }
     }
 }

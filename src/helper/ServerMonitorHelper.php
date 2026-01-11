@@ -73,7 +73,8 @@ class ServerMonitorHelper
     }
 /**
  * Get Docker RAM metrics based on verified CLI output (cgroup v1)
- * * @return array<string, mixed>
+ * 
+ * @return array<string, mixed>
  */
 public static function getDockerContainerMemoryUsage(): array
 {
@@ -81,8 +82,10 @@ public static function getDockerContainerMemoryUsage(): array
     $limitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes';
 
     // Reading the values from the files you just checked in CLI
-    $usageBytes = file_exists($usagePath) ? (int)trim(file_get_contents($usagePath)) : 0;
-    $limitBytes = file_exists($limitPath) ? (int)trim(file_get_contents($limitPath)) : 0;
+    $usageContent = file_exists($usagePath) ? file_get_contents($usagePath) : false;
+    $limitContent = file_exists($limitPath) ? file_get_contents($limitPath) : false;
+    $usageBytes = ($usageContent !== false) ? (int)trim($usageContent) : 0;
+    $limitBytes = ($limitContent !== false) ? (int)trim($limitContent) : 0;
 
     // Convert to Megabytes
     $usageMb = round($usageBytes / 1024 / 1024, 2);
@@ -299,12 +302,23 @@ private static function getDockerCpuCores(): float
     $periodPath = '/sys/fs/cgroup/cpu/cpu.cfs_period_us'; // v1
 
     if (file_exists($maxPath)) {
-        $data = explode(' ', trim(file_get_contents($maxPath)));
-        if (isset($data[0]) && $data[0] !== 'max') return (int)$data[0] / (int)$data[1];
+        $maxContent = file_get_contents($maxPath);
+        if ($maxContent !== false) {
+            $data = explode(' ', trim($maxContent));
+            if (count($data) >= 2 && $data[0] !== 'max') {
+                return (int)$data[0] / (int)$data[1];
+            }
+        }
     } elseif (file_exists($quotaPath) && file_exists($periodPath)) {
-        $quota = (int)trim(file_get_contents($quotaPath));
-        $period = (int)trim(file_get_contents($periodPath));
-        if ($quota > 0) return $quota / $period;
+        $quotaContent = file_get_contents($quotaPath);
+        $periodContent = file_get_contents($periodPath);
+        if ($quotaContent !== false && $periodContent !== false) {
+            $quota = (int)trim($quotaContent);
+            $period = (int)trim($periodContent);
+            if ($quota > 0 && $period > 0) {
+                return $quota / $period;
+            }
+        }
     }
 
     return 1.0; // Default to 1 core if no limit found

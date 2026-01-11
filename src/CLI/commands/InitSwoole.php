@@ -26,6 +26,18 @@ class InitSwoole extends AbstractInit
     private const SWOOLE_FILE_MAPPINGS = [];
     
     /**
+     * Constructor - set OpenSwoole package name and install dependencies
+     */
+    public function __construct(array $args = [], array $options = [])
+    {
+        parent::__construct($args, $options);
+        $this->setPackageName('swoole');
+        // OpenSwoole dependencies (including gemvc/connection-openswoole) are automatically
+        // installed via installSwooleDependencies() method when OpenSwoole is selected
+        $this->installSwooleDependencies();
+    }
+    
+    /**
      * Get the webserver type identifier
      * 
      * @return string
@@ -87,40 +99,6 @@ class InitSwoole extends AbstractInit
     }
     
     /**
-     * Get the startup template path for OpenSwoole
-     * 
-     * @return string
-     */
-    public function __construct(array $args = [], array $options = [])
-    {
-        parent::__construct($args, $options);
-        $this->setPackageName('swoole');
-        // OpenSwoole dependencies (including gemvc/connection-openswoole) are automatically
-        // installed via installSwooleDependencies() method when OpenSwoole is selected
-        $this->installSwooleDependencies();
-    }
-    
-    protected function getStartupTemplatePath(): string
-    {
-        $webserverType = strtolower($this->getWebserverType());
-        
-        // Try webserver-specific path first
-        $webserverPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType;
-        if (is_dir($webserverPath)) {
-            return $webserverPath;
-        }
-        
-        // Try Composer package path with package name from property
-        $composerWebserverPath = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . $this->packageName . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $webserverType;
-        if (is_dir($composerWebserverPath)) {
-            return $composerWebserverPath;
-        }
-        
-        // Fallback to default startup path (current structure)
-        return $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup';
-    }
-    
-    /**
      * Get OpenSwoole-specific file mappings
      * 
      * Note: appIndex.php is now handled centrally in AbstractInit::copyAppIndexFile()
@@ -176,6 +154,8 @@ class InitSwoole extends AbstractInit
      * Installs gemvc/connection-openswoole which automatically includes all required
      * Hyperf dependencies via its own composer.json require section.
      * 
+     * Uses inherited isPackageInstalled() and installPackage() methods from AbstractInit.
+     * 
      * @return void
      */
     private function installSwooleDependencies(): void
@@ -186,54 +166,12 @@ class InitSwoole extends AbstractInit
         
         if (!$this->isPackageInstalled($requiredPackage)) {
             $this->info("Installing OpenSwoole dependencies (gemvc/connection-openswoole and all required packages)...");
-            $this->installPackage($requiredPackage);
-        }
-    }
-    
-    /**
-     * Check if a package is installed
-     * 
-     * @param string $packageName
-     * @return bool
-     */
-    private function isPackageInstalled(string $packageName): bool
-    {
-        $composerLockFile = getcwd() . '/composer.lock';
-        if (!file_exists($composerLockFile)) {
-            return false;
-        }
-        
-        $lockContent = file_get_contents($composerLockFile);
-        if ($lockContent === false) {
-            return false;
-        }
-        
-        return strpos($lockContent, '"name": "' . $packageName . '"') !== false;
-    }
-    
-    /**
-     * Install a single package via composer
-     * 
-     * @param string $packageName
-     * @return void
-     */
-    private function installPackage(string $packageName): void
-    {
-        $command = "composer require {$packageName}";
-        
-        $this->info("Running: {$command}");
-        
-        $output = [];
-        $returnCode = 0;
-        
-        exec($command . ' 2>&1', $output, $returnCode);
-        
-        if ($returnCode === 0) {
-            $this->info("✅ OpenSwoole dependencies installed successfully!");
-        } else {
-            $this->error("Failed to install OpenSwoole dependencies:");
-            $this->error(implode("\n", $output));
-            $this->info("Please install manually: {$command}");
+            if ($this->installPackage($requiredPackage)) {
+                $this->info("✅ OpenSwoole dependencies installed successfully!");
+            } else {
+                $this->error("Failed to install OpenSwoole dependencies. Please install manually:");
+                $this->info("composer require {$requiredPackage}");
+            }
         }
     }
     
