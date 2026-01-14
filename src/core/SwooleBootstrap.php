@@ -51,10 +51,13 @@ class SwooleBootstrap
     private function initializeApm(): void
     {
         $apmName = ApmFactory::isEnabled();
+        
         if (!$apmName) {
             return;
         }
+        
         $this->apm = ApmFactory::create($this->request);
+        
         // Explicitly set $request->apm to ensure it's available for ApiService, Controller, etc.
         // This ensures trace context propagation even if ApmFactory doesn't set it
         if ($this->apm !== null) {

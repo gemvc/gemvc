@@ -76,6 +76,24 @@ class Bootstrap
             
             // Handle any errors that occurred during API request processing
             if(count($this->errors) > 0) {
+                // Get response code from errors (use first error's HTTP code)
+                $responseCode = !empty($this->errors) ? $this->errors[0]->http_code : 500;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before error response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 GEMVCErrorHandler::handleErrors($this->errors);
             }
             die;
@@ -131,12 +149,66 @@ class Bootstrap
                 $this->errors[] = new GemvcError("API method '$method' must return a JsonResponse instance", 500, __FILE__, __LINE__);
                 GemvcErrorHandler::handleErrors($this->errors);
                 */
+                // Get response code before sending (for APM tracing)
+                $responseCode = $response->response_code ?? 200;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 $response->show();
                 die;
             }
             if ($response instanceof HtmlResponse) {
+                // Get response code before sending (for APM tracing)
+                $responseCode = $response->response_code ?? 200;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 $response->show();
                 die;
+            }
+            
+            // Get response code before sending (for APM tracing)
+            $responseCode = 200; // Default for unknown response types
+            
+            // Store response code on Request object for APM to access
+            $this->request->_http_response_code = $responseCode;
+            
+            // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+            // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+            // The batching system handles time-based sending automatically
+            if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                try {
+                    $this->request->apm->flush();
+                } catch (\Throwable $e) {
+                    // Silently fail - don't let APM break the application
+                    error_log("APM: Error during flush: " . $e->getMessage());
+                }
             }
             
             $response->show();

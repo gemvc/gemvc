@@ -166,11 +166,29 @@ class OpenSwooleServer
                 $bs = new SwooleBootstrap($sr->request);
                 $result = $bs->processRequest();
                 
-                // Send response
+                // Get response code before sending (for APM tracing)
+                $responseCode = 200; // Default
                 if ($result instanceof \Gemvc\Http\JsonResponse) {
+                    $responseCode = $result->response_code ?? 200;
                     $result->showSwoole($response);
                 } elseif ($result instanceof \Gemvc\Http\HtmlResponse) {
+                    $responseCode = $result->response_code ?? 200;
                     $result->showSwoole($response);
+                }
+                
+                // Store response code on Request object for APM to access (Swoole doesn't support http_response_code() after headers sent)
+                $sr->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces after response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($sr->request->apm !== null && $sr->request->apm->isEnabled()) {
+                    try {
+                        $sr->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
                 }
             } catch (\Throwable $e) {
                 $this->handleRequestError($e, $response);

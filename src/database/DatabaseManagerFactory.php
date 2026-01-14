@@ -88,7 +88,7 @@ class DatabaseManagerFactory
             if (self::$instance instanceof PdoConnection) {
                 PdoConnection::resetInstance();
             } elseif (class_exists('Gemvc\Database\Connection\OpenSwoole\SwooleConnection')) {
-                /** @var class-string $swooleClass */
+                /** @var class-string<\Gemvc\Database\Connection\OpenSwoole\SwooleConnection> $swooleClass */
                 $swooleClass = 'Gemvc\Database\Connection\OpenSwoole\SwooleConnection';
                 if (method_exists($swooleClass, 'resetInstance')) {
                     $swooleClass::resetInstance();
