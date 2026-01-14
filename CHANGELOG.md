@@ -5,6 +5,49 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.3] - 2026-01-14
+
+### Added
+- **APM Batch Sending Mechanism** - Time-based batch sending for APM traces
+  - Replaces `AsyncApiCall` with synchronous `ApiCall()` for better reliability
+  - Automatic batch queue management with 5-second intervals
+  - Shutdown handler ensures all traces are sent on application termination
+  - Significantly improved trace delivery reliability
+  - Location: `gemvc/apm-tracekit` package (v2.0+)
+
+### Changed
+- **Bootstrap.php** - Added APM flush before response
+  - `apm->flush()` call before `die()` statement
+  - Captures HTTP response code for APM tracing
+  - Stores response code in `Request::$_http_response_code` property
+  - Added APM flush in error handling path
+  - Location: `src/core/Bootstrap.php`
+
+- **OpenSwooleServer.php** - Added APM flush after response
+  - `apm->flush()` call after response is sent
+  - Captures HTTP response code before sending response (Swoole limitation)
+  - Stores response code in `Request::$_http_response_code` property
+  - Ensures traces are added to batch queue after response
+  - Location: `src/core/OpenSwooleServer.php`
+
+- **Request.php** - Added HTTP response code property
+  - `$_http_response_code` property for APM tracing
+  - Required for Swoole environment where `http_response_code()` is unreliable
+  - Used to pass response code to APM `flush()` method
+  - Location: `src/http/Request.php`
+
+### Fixed
+- **PHPStan Level 9 Compliance** - Resolved all static analysis errors
+  - Removed unnecessary `@phpstan-ignore-next-line` comments
+  - Fixed `DatabaseManagerFactory` PHPDoc type annotation (`class-string` to `class-string<\Gemvc\Database\Connection\OpenSwoole\SwooleConnection>`)
+  - Simplified null checks in `OpenSwooleServer.php`
+  - All files now pass PHPStan Level 9 analysis
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- APM batch sending uses same security mechanisms as before
+
 ## [5.4.2] - 2026-06-05
 
 ### Fixed

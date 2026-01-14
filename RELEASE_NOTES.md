@@ -1,6 +1,176 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.1...5.4.2
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.2...5.4.3
 # GEMVC Framework - Release Notes
 
+## Version 5.4.3 - APM Batch Sending Implementation
+
+**Release Date**: 2026-01-14  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release implements a reliable batch sending mechanism for APM traces, replacing the previous asynchronous API call approach with a time-based batch system. The new implementation uses synchronous `ApiCall()` with automatic batch sending every 5 seconds, significantly improving APM trace delivery reliability. All changes are backward compatible and require no code modifications.
+
+---
+
+## ✨ Added
+
+### APM Batch Sending Mechanism
+
+- **Time-based batch sending** - APM traces are now collected and sent in batches every 5 seconds
+  - Replaces `AsyncApiCall` with synchronous `ApiCall()` for better reliability
+  - Automatic batch queue management
+  - Shutdown handler ensures all traces are sent on application termination
+  - Significantly improved trace delivery reliability
+  - Location: `gemvc/apm-tracekit` package (v2.0+)
+
+**Benefits:**
+- More reliable trace delivery compared to async approach
+- Automatic batching reduces API call overhead
+- Shutdown handler ensures no traces are lost
+- Better error handling and retry mechanisms
+
+---
+
+## 🔄 Changes
+
+### Bootstrap.php
+
+- **APM flush before response** - Added `apm->flush()` call before `die()` statement
+  - Ensures traces are added to batch queue before response is sent
+  - Captures HTTP response code for APM tracing
+  - Stores response code in `Request::$_http_response_code` property
+  - Location: `src/core/Bootstrap.php`
+
+- **Error handling APM flush** - Added APM flush in error handling path
+  - Ensures traces are sent even when errors occur
+  - Maintains trace visibility for debugging
+
+### OpenSwooleServer.php
+
+- **APM flush after response** - Added `apm->flush()` call after response is sent
+  - Captures HTTP response code before sending response (Swoole limitation)
+  - Stores response code in `Request::$_http_response_code` property
+  - Ensures traces are added to batch queue after response
+  - Location: `src/core/OpenSwooleServer.php`
+
+**Technical Note:**
+In Swoole environment, `http_response_code()` cannot be reliably called after headers are sent. The solution captures the response code before sending and stores it in `Request::$_http_response_code` for APM access.
+
+### Request.php
+
+- **HTTP response code property** - Added `$_http_response_code` property
+  - Used to pass response code to APM `flush()` method
+  - Required for Swoole environment where `http_response_code()` is unreliable
+  - Location: `src/http/Request.php`
+
+---
+
+## 🐛 Bug Fixes
+
+### PHPStan Level 9 Compliance
+
+- **Fixed PHPStan errors** - Resolved all static analysis errors
+  - Removed unnecessary `@phpstan-ignore-next-line` comments
+  - Fixed `DatabaseManagerFactory` PHPDoc type annotation
+  - Simplified null checks in `OpenSwooleServer.php`
+  - All files now pass PHPStan Level 9 analysis
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+- APM batch sending uses same security mechanisms as before
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+**For APM Users:**
+- Batch sending is automatic with `gemvc/apm-tracekit` v2.0+
+- No code changes needed
+- Traces are automatically batched and sent every 5 seconds
+- Shutdown handler ensures all traces are sent on application termination
+
+---
+
+## 🚀 Performance
+
+- **Improved APM reliability** - Batch sending reduces failed trace deliveries
+- **Reduced API overhead** - Batching multiple traces in single requests
+- **No performance impact** - Batch sending happens asynchronously after HTTP response
+- **Better error handling** - Improved retry mechanisms for failed batches
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.4.2 to 5.4.3
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- APM trace delivery switched from async to batch sending mechanism
+- Improved trace delivery reliability
+- Better error handling for APM operations
+- PHPStan Level 9 compliance fixes
+
+**Benefits**:
+- More reliable APM trace delivery
+- Better error handling and retry mechanisms
+- Cleaner codebase (PHPStan Level 9 compliant)
+- No traces lost on application shutdown
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Update `gemvc/apm-tracekit` to `^2.0` if not already updated:
+  ```bash
+  composer update gemvc/apm-tracekit
+  ```
+
+**Breaking Changes**:
+- None
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for feedback on APM reliability improvements.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.1...5.4.2
 ## Version 5.4.2 - Docker Build Fix
 
 **Release Date**: 2026-06-05  
