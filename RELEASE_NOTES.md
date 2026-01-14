@@ -1,5 +1,189 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.2...5.4.3
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.3...5.4.4
 # GEMVC Framework - Release Notes
+
+## Version 5.4.4 - Installation Cleanup & Framework Services Refactoring
+
+**Release Date**: 2026-01-15  
+**Type**: Minor Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This release significantly improves the initial project structure by moving framework-specific services from user projects into the core framework. The initial app is now much cleaner, containing only user-facing examples (User service) and thin API wrappers for framework services. All framework implementation details are now properly encapsulated in `src/core/`.
+
+---
+
+## ✨ Added
+
+### Framework Services in Core
+
+- **Apm Service** → `src/core/Apm/`
+  - `ApmController.php` - APM testing and management
+  - `ApmModel.php` - APM business logic
+  - Moved from `init_example/controller/` and `init_example/model/`
+
+- **GemvcAssistant Service** → `src/core/Assistant/`
+  - `GemvcAssistantController.php` - Developer tools orchestration
+  - `GemvcAssistantModel.php` - Assistant business logic
+  - Moved from `init_example/controller/` and `init_example/model/`
+
+- **Developer Service** → `src/core/Developer/`
+  - `DeveloperController.php` - Developer welcome page and tools
+  - `DeveloperModel.php` - Developer data logic
+  - `DeveloperTable.php` - Developer database operations
+  - Moved from `init_example/controller/`, `init_example/model/`, and `init_example/table/`
+
+- **GemvcMonitoring Service** → `src/core/Monitoring/`
+  - `GemvcMonitoringController.php` - Server monitoring orchestration
+  - `GemvcMonitoringModel.php` - Monitoring business logic
+  - Moved from `init_example/controller/` and `init_example/model/`
+
+---
+
+## 🔄 Changes
+
+### Initial Project Structure
+
+**Before (5.4.3):**
+```
+app/
+├── api/
+│   ├── User.php
+│   ├── Apm.php
+│   ├── GemvcAssistant.php
+│   └── GemvcMonitoring.php
+├── controller/
+│   ├── UserController.php
+│   ├── IndexController.php
+│   ├── ApmController.php          # ❌ Framework code in user project
+│   ├── GemvcAssistantController.php  # ❌ Framework code in user project
+│   ├── GemvcMonitoringController.php # ❌ Framework code in user project
+│   └── DeveloperController.php    # ❌ Framework code in user project
+├── model/
+│   ├── UserModel.php
+│   ├── ApmModel.php               # ❌ Framework code in user project
+│   ├── GemvcAssistantModel.php    # ❌ Framework code in user project
+│   ├── GemvcMonitoringModel.php   # ❌ Framework code in user project
+│   └── DeveloperModel.php        # ❌ Framework code in user project
+└── table/
+    ├── UserTable.php
+    └── DeveloperTable.php         # ❌ Framework code in user project
+```
+
+**After (5.4.4):**
+```
+app/
+├── api/
+│   ├── User.php                   # ✅ Full example (CRUD)
+│   ├── Apm.php                    # ✅ Thin wrapper → core
+│   ├── GemvcAssistant.php         # ✅ Thin wrapper → core
+│   └── GemvcMonitoring.php        # ✅ Thin wrapper → core
+├── controller/
+│   ├── UserController.php         # ✅ Full example
+│   └── IndexController.php        # ✅ Index controller
+├── model/
+│   └── UserModel.php              # ✅ Full example
+└── table/
+    └── UserTable.php              # ✅ Full example
+
+src/core/                           # ✅ Framework services
+├── Apm/
+│   ├── ApmController.php
+│   └── ApmModel.php
+├── Assistant/
+│   ├── GemvcAssistantController.php
+│   └── GemvcAssistantModel.php
+├── Developer/
+│   ├── DeveloperController.php
+│   ├── DeveloperModel.php
+│   └── DeveloperTable.php
+└── Monitoring/
+    ├── GemvcMonitoringController.php
+    └── GemvcMonitoringModel.php
+```
+
+### API Wrappers
+
+All framework service API files (`Apm.php`, `GemvcAssistant.php`, `GemvcMonitoring.php`) now delegate to core controllers:
+
+```php
+// Example: app/api/Apm.php
+public function test(): JsonResponse
+{
+    return (new ApmController($this->request))->test();
+}
+```
+
+**Benefits:**
+- ✅ Cleaner initial app - users see only User service as complete example
+- ✅ Framework services hidden - implementation details in core, not copied to user projects
+- ✅ Better separation - framework code in `src/core/`, user examples in `app/`
+- ✅ Easier maintenance - framework services updated in one place
+- ✅ Focused learning - users see one complete example instead of multiple services
+
+---
+
+## 🐛 Bug Fixes
+
+- **No breaking changes** - All API endpoints remain functional
+- Framework services continue to work exactly as before
+- API wrappers maintain backward compatibility
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained
+- Framework services maintain same security standards
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+**For New Projects:**
+- Run `gemvc init` to get the new cleaner structure
+- User service example remains unchanged
+- Framework services work automatically via API wrappers
+
+**For Existing Projects:**
+- No changes needed - existing projects continue to work
+- Framework services can be manually moved to core if desired
+- API endpoints remain unchanged
+
+---
+
+## 📚 Migration Guide
+
+### From 5.4.3 to 5.4.4
+
+**No migration required!** This is a backward-compatible change. Existing projects continue to work without modification.
+
+**Optional Cleanup (for existing projects):**
+If you want to clean up your existing project structure:
+
+1. **Framework services are now in core** - You can delete these from your `app/` directory:
+   - `app/controller/ApmController.php`
+   - `app/controller/GemvcAssistantController.php`
+   - `app/controller/GemvcMonitoringController.php`
+   - `app/controller/DeveloperController.php`
+   - `app/model/ApmModel.php`
+   - `app/model/GemvcAssistantModel.php`
+   - `app/model/GemvcMonitoringModel.php`
+   - `app/model/DeveloperModel.php`
+   - `app/table/DeveloperTable.php`
+
+2. **API wrappers remain** - Keep these files (they delegate to core):
+   - `app/api/Apm.php`
+   - `app/api/GemvcAssistant.php`
+   - `app/api/GemvcMonitoring.php`
+
+3. **Update imports** - API files automatically use core controllers, no changes needed.
+
+---
 
 ## Version 5.4.3 - APM Batch Sending Implementation
 

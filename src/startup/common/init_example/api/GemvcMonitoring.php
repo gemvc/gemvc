@@ -1,7 +1,7 @@
 <?php
 namespace App\Api;
 
-use App\Controller\GemvcMonitoringController;
+use Gemvc\Core\Monitoring\GemvcMonitoringController;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;

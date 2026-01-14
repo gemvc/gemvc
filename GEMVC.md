@@ -471,7 +471,7 @@ gemvc db:migrate UserTable
 - **Security**: See `SECURITY.md`
 - **Database Layer**: See `DATABASE_LAYER.md`
 - **CLI Commands**: See `CLI.md`
-- **Examples**: See `src/startup/user/`
+- **Examples**: See `src/startup/common/init_example/` (User service example)
 
 ---
 

@@ -5,9 +5,9 @@
  * Business logic for developer tools (authentication, data preparation, export/import)
  * This is the Model layer - business logic and data transformations
  */
-namespace App\Model;
+namespace Gemvc\Core\Developer;
 
-use App\Table\DeveloperTable;
+use Gemvc\Core\Developer\DeveloperTable;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\JWTToken;
 use Gemvc\Http\Response;
@@ -501,7 +501,7 @@ class DeveloperModel extends DeveloperTable
         }
         
         try {
-            $basePath = dirname(__DIR__, 2);
+            $basePath = \Gemvc\Helper\ProjectHelper::rootDir();
             $gemvcPath = $basePath . '/vendor/bin/gemvc';
             
             // Build command based on type
@@ -666,9 +666,10 @@ class DeveloperModel extends DeveloperTable
                 }
                 
                 require_once $tableFile;
-                $className = "App\\Table\\{$tableClassName}";
-                if (!class_exists($className)) {
-                    return Response::badRequest("Table class not found: {$className}");
+                // Extract class name from file (namespace-aware) - FIXED: dynamic namespace extraction
+                $className = $this->getClassNameFromFile($tableFile);
+                if (!$className || !class_exists($className)) {
+                    return Response::badRequest("Table class not found: {$tableClassName}");
                 }
                 
                 // Create table instance
@@ -825,5 +826,25 @@ class DeveloperModel extends DeveloperTable
         }
         $url .= '/index/document';
         return $url;
+    }
+
+    /**
+     * Get class name from file path (extracts namespace dynamically)
+     * 
+     * @param string $filePath
+     * @return string|null
+     */
+    private function getClassNameFromFile(string $filePath): ?string
+    {
+        $content = (string)file_get_contents($filePath);
+        
+        $matches = [];
+        if (!preg_match('/namespace\s+(.+?);/s', $content, $matches)) {
+            return null;
+        }
+
+        $namespace = $matches[1];
+        $className = basename($filePath, '.php');
+        return $namespace . '\\' . $className;
     }
 }   

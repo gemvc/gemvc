@@ -5,6 +5,42 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.4] - 2026-01-14
+
+### Added
+- **Framework Services in Core** - Moved framework-specific services to `src/core/`
+  - `ApmController` and `ApmModel` → `src/core/Apm/`
+  - `GemvcAssistantController` and `GemvcAssistantModel` → `src/core/Assistant/`
+  - `DeveloperController`, `DeveloperModel`, `DeveloperTable` → `src/core/Developer/`
+  - `GemvcMonitoringController` and `GemvcMonitoringModel` → `src/core/Monitoring/`
+  - Framework services are now properly encapsulated in core framework
+  - Initial project structure is much cleaner with only user-facing examples
+
+### Changed
+- **Initial Project Structure** - Significantly cleaner `init_example/` directory
+  - Removed framework implementation files from user projects
+  - API files (`Apm.php`, `GemvcAssistant.php`, `GemvcMonitoring.php`) now delegate to core controllers
+  - Users now see only `User` service as complete example (API, Controller, Model, Table)
+  - Framework services work via thin API wrappers that delegate to core
+  - Better separation: framework code in `src/core/`, user examples in `app/`
+
+### Benefits
+- ✅ Cleaner initial app - users see only User service as complete example
+- ✅ Framework services hidden - implementation details in core, not copied to user projects
+- ✅ Better separation - framework code in `src/core/`, user examples in `app/`
+- ✅ Easier maintenance - framework services updated in one place
+- ✅ Focused learning - users see one complete example instead of multiple services
+
+### Fixed
+- No breaking changes - All API endpoints remain functional
+- Framework services continue to work exactly as before
+- API wrappers maintain backward compatibility
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained
+- Framework services maintain same security standards
+
 ## [5.4.3] - 2026-01-14
 
 ### Added

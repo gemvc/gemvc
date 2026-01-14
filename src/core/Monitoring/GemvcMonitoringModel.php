@@ -1,7 +1,7 @@
 <?php
-namespace App\Model;
+namespace Gemvc\Core\Monitoring;
 
-use App\Table\DeveloperTable;
+use Gemvc\Core\Developer\DeveloperTable;
 use Gemvc\Helper\ServerMonitorHelper;
 use Gemvc\Helper\NetworkHelper;
 use Gemvc\Database\DatabaseManagerFactory;

@@ -5,9 +5,10 @@
  * Handles database queries for developer tools (database metadata, table structure, etc.)
  * This is the Table layer - database operations only
  */
-namespace App\Table;
+namespace Gemvc\Core\Developer;
 
 use Gemvc\Database\Table;
+use Gemvc\Helper\ProjectHelper;
 use PDO;
 
 class DeveloperTable extends Table
@@ -358,11 +359,6 @@ class DeveloperTable extends Table
     }
 
     /**
-     * Get PDO connection
-     * 
-     * @return PDO|null
-     */
-    /**
      * Get PDO connection and connection interface for proper release
      * 
      * @return array{0: ?PDO, 1: ?\Gemvc\Database\Connection\Contracts\ConnectionInterface, 2: ?\Gemvc\Database\Connection\Contracts\ConnectionManagerInterface}
@@ -435,7 +431,7 @@ class DeveloperTable extends Table
     public function createDatabase(): bool
     {
         try {
-            \Gemvc\Helper\ProjectHelper::loadEnv();
+            ProjectHelper::loadEnv();
             
             // Get database configuration
             // Use DB_HOST for web API (Docker service name), fallback to DB_HOST_CLI_DEV for CLI
@@ -504,7 +500,7 @@ class DeveloperTable extends Table
     public function getAllServices(): array
     {
         try {
-            $apiPath = dirname(__DIR__, 2) . '/app/api';
+            $apiPath = ProjectHelper::rootDir() . '/app/api';
             if (!is_dir($apiPath)) {
                 return [];
             }
@@ -610,10 +606,6 @@ class DeveloperTable extends Table
     /**
      * Check if service is hidden
      * 
-     * @param \ReflectionClass $reflection
-     * @return bool
-     */
-    /**
      * @param \ReflectionClass<object> $reflection
      */
     private function isServiceHidden(\ReflectionClass $reflection): bool
@@ -628,10 +620,6 @@ class DeveloperTable extends Table
     /**
      * Get all endpoints including hidden ones
      * 
-     * @param \ReflectionClass $reflection
-     * @return array<int, array<string, mixed>>
-     */
-    /**
      * @param \ReflectionClass<object> $reflection
      * @return array<int, array<string, mixed>>
      */
@@ -673,10 +661,6 @@ class DeveloperTable extends Table
      * Get endpoint details from method reflection
      * 
      * @param \ReflectionMethod $method
-     * @param \ReflectionClass $class
-     * @return array<string, mixed>
-     */
-    /**
      * @param \ReflectionClass<object> $class
      * @return array<string, mixed>
      */
@@ -775,10 +759,6 @@ class DeveloperTable extends Table
     /**
      * Get class doc comment
      * 
-     * @param \ReflectionClass $reflection
-     * @return string
-     */
-    /**
      * @param \ReflectionClass<object> $reflection
      */
     private function getClassDocComment(\ReflectionClass $reflection): string
@@ -828,12 +808,9 @@ class DeveloperTable extends Table
     /**
      * Get table name from class using reflection (without instantiating)
      * 
-     * @param \ReflectionClass $reflection
+     * @param \ReflectionClass<object> $reflection
      * @param string $className
      * @return string|null
-     */
-    /**
-     * @param \ReflectionClass<object> $reflection
      */
     private function getTableNameFromClass(\ReflectionClass $reflection, string $className): ?string
     {
@@ -911,7 +888,7 @@ class DeveloperTable extends Table
      */
     public function serviceExists(string $serviceName): bool
     {
-        $apiPath = dirname(__DIR__, 2) . '/app/api';
+        $apiPath = ProjectHelper::rootDir() . '/app/api';
         $serviceFile = $apiPath . '/' . ucfirst($serviceName) . '.php';
         return file_exists($serviceFile);
     }
@@ -924,8 +901,8 @@ class DeveloperTable extends Table
     public function getAllTableClasses(): array
     {
         try {
-            // Get the project root - DeveloperTable is in app/table, so go up 2 levels
-            $projectRoot = dirname(__DIR__, 2);
+            // Get the project root using ProjectHelper
+            $projectRoot = ProjectHelper::rootDir();
             $tablePath = $projectRoot . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'table';
             
             if (!is_dir($tablePath)) {
@@ -966,8 +943,8 @@ class DeveloperTable extends Table
                             continue;
                         }
                         
-                        // Skip DeveloperTable itself (check before requiring)
-                        if ($className === 'App\Table\DeveloperTable') {
+                        // Skip DeveloperTable itself (check before requiring) - FIXED: use static::class
+                        if ($className === static::class) {
                             continue;
                         }
                         
@@ -1145,4 +1122,3 @@ class DeveloperTable extends Table
         }
     }
 }
-

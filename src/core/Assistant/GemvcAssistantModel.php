@@ -1,7 +1,7 @@
 <?php
-namespace App\Model;
+namespace Gemvc\Core\Assistant;
 
-use App\Model\DeveloperModel;
+use Gemvc\Core\Developer\DeveloperModel;
 use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\WebserverDetector;
 use Gemvc\Http\JsonResponse;

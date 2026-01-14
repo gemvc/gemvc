@@ -1,5 +1,5 @@
 <?php
-namespace App\Model;
+namespace Gemvc\Core\Apm;
 
 use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
@@ -240,6 +240,124 @@ class ApmModel
     }
 
     /**
+     * Debug APM Payload - Shows what payload would be sent
+     * 
+     * @return JsonResponse
+     */
+    public function debugPayload(): JsonResponse
+    {
+        $apm = ApmFactory::create(null);
+        
+        if ($apm === null || !$apm->isEnabled()) {
+            return Response::success([
+                'error' => 'APM not enabled or not available',
+            ], 1, 'APM debug payload');
+        }
+
+        // Create a test trace to see the payload structure
+        $rootSpan = $apm->startSpan('debug-test', [
+            'test' => 'debug',
+        ], ApmInterface::SPAN_KIND_INTERNAL);
+        
+        if (empty($rootSpan)) {
+            return Response::success([
+                'error' => 'Failed to create test span (sampling or error)',
+            ], 1, 'APM debug payload');
+        }
+
+        $apm->endSpan($rootSpan, [], ApmInterface::STATUS_OK);
+        
+        // Use reflection to inspect payload structure (provider-agnostic)
+        $payload = null;
+        $serviceName = null;
+        $providerClass = get_class($apm);
+        
+        try {
+            $reflection = new \ReflectionClass($apm);
+            
+            // Try to get service name from common property names (provider-agnostic)
+            // PHP 8.1+ allows direct access to private/protected members without setAccessible()
+            $serviceNamePropertyNames = ['serviceName', 'service_name', 'service'];
+            foreach ($serviceNamePropertyNames as $propName) {
+                if ($reflection->hasProperty($propName)) {
+                    try {
+                        $prop = $reflection->getProperty($propName);
+                        // Direct access works in PHP 8.1+ without setAccessible()
+                        $value = $prop->getValue($apm);
+                        if (is_string($value) && !empty($value)) {
+                            $serviceName = $value;
+                            break;
+                        }
+                    } catch (\Throwable $e) {
+                        // Property access failed, continue to next
+                        continue;
+                    }
+                }
+            }
+            
+            // Try to get payload using common method names (provider-agnostic)
+            // PHP 8.1+ allows direct invocation of private/protected methods without setAccessible()
+            $payloadMethodNames = ['buildTracePayload', 'buildBatchPayload', 'getPayload'];
+            foreach ($payloadMethodNames as $methodName) {
+                if ($reflection->hasMethod($methodName)) {
+                    try {
+                        $method = $reflection->getMethod($methodName);
+                        // Direct invocation works in PHP 8.1+ without setAccessible()
+                        $result = $method->invoke($apm);
+                        if (!empty($result)) {
+                            $payload = $result;
+                            break;
+                        }
+                    } catch (\Throwable $e) {
+                        // Method invocation failed, continue to next
+                        continue;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Reflection failed, but continue with what we have
+        }
+        
+        // Extract service name from payload to verify (provider-agnostic)
+        $payloadServiceName = null;
+        if ($payload !== null) {
+            // Try common payload structures (OTLP format, etc.)
+            if (isset($payload['resourceSpans'][0]['resource']['attributes'])) {
+                foreach ($payload['resourceSpans'][0]['resource']['attributes'] as $attr) {
+                    if (isset($attr['key']) && $attr['key'] === 'service.name') {
+                        $payloadServiceName = $attr['value']['stringValue'] ?? $attr['value'] ?? null;
+                        break;
+                    }
+                }
+            }
+            // Try alternative payload structures
+            if ($payloadServiceName === null && isset($payload['service_name'])) {
+                $payloadServiceName = $payload['service_name'];
+            }
+            if ($payloadServiceName === null && isset($payload['serviceName'])) {
+                $payloadServiceName = $payload['serviceName'];
+            }
+        }
+        
+        // Get service name from environment (check common env var patterns)
+        $envServiceName = $_ENV['APM_SERVICE_NAME'] 
+            ?? $_ENV['TRACEKIT_SERVICE_NAME'] 
+            ?? $_ENV['DATADOG_SERVICE_NAME'] 
+            ?? 'not set';
+        
+        return Response::success([
+            'provider_class' => $providerClass,
+            'service_name_from_property' => $serviceName,
+            'service_name_from_env' => $envServiceName,
+            'service_name_from_payload' => $payloadServiceName,
+            'payload_structure' => $payload,
+            'payload_json' => $payload !== null ? json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            'trace_id' => $apm->getTraceId(),
+            'note' => 'This shows the payload structure. The service.name should match your configured service name.',
+        ], 1, 'APM debug payload');
+    }
+
+    /**
      * Get APM Status
      * 
      * @return JsonResponse
@@ -259,14 +377,31 @@ class ApmModel
         $apm = ApmFactory::create(null);
         $isEnabled = $apm !== null && $apm->isEnabled();
         
-        return Response::success([
+        // Get diagnostic information
+        $diagnostics = [
             'enabled' => $isEnabled,
             'provider' => $apmName,
             'package_installed' => $apm !== null,
-            'message' => $isEnabled 
-                ? "APM provider '{$apmName}' is enabled and configured."
-                : "APM provider '{$apmName}' package not installed. Install with: composer require gemvc/apm-{$apmName}",
-        ], 1, 'APM status');
+        ];
+        
+        // Add TraceKit-specific diagnostics
+        if ($apmName === 'TraceKit' && $apm !== null) {
+            $diagnostics['tracekit'] = [
+                'api_key_set' => !empty($_ENV['TRACEKIT_API_KEY'] ?? $_ENV['APM_API_KEY'] ?? null),
+                'api_key_length' => strlen($_ENV['TRACEKIT_API_KEY'] ?? $_ENV['APM_API_KEY'] ?? ''),
+                'service_name_env' => $_ENV['TRACEKIT_SERVICE_NAME'] ?? 'not set',
+                'service_name_loaded' => $_ENV['TRACEKIT_SERVICE_NAME'] ?? null,
+                'endpoint' => $_ENV['TRACEKIT_ENDPOINT'] ?? 'https://app.tracekit.dev/v1/traces (default)',
+                'sample_rate' => $_ENV['APM_SAMPLE_RATE'] ?? $_ENV['TRACEKIT_SAMPLE_RATE'] ?? '1.0',
+                'send_interval' => $_ENV['APM_SEND_INTERVAL'] ?? '5 (default)',
+            ];
+        }
+        
+        $diagnostics['message'] = $isEnabled 
+            ? "APM provider '{$apmName}' is enabled and configured."
+            : "APM provider '{$apmName}' package not installed. Install with: composer require gemvc/apm-{$apmName}";
+        
+        return Response::success($diagnostics, 1, 'APM status');
     }
 
     /**

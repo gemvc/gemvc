@@ -1,7 +1,6 @@
 <?php
-namespace App\Controller;
+namespace Gemvc\Core\Apm;
 
-use App\Model\ApmModel;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
@@ -45,6 +44,17 @@ class ApmController extends Controller
     {
         $model = new ApmModel();
         return $model->getStatus();
+    }
+
+    /**
+     * Debug APM Payload
+     * 
+     * @return JsonResponse
+     */
+    public function debugPayload(): JsonResponse
+    {
+        $model = new ApmModel();
+        return $model->debugPayload();
     }
 
     /**
@@ -183,4 +193,3 @@ class ApmController extends Controller
         return $model->createWebhook($name, $url, $eventsArray, $enabled);
     }
 }
-

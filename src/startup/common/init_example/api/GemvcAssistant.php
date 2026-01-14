@@ -1,7 +1,8 @@
 <?php
 namespace App\Api;
 
-use App\Controller\GemvcAssistantController;
+use Gemvc\Core\Assistant\GemvcAssistantController;
+use Gemvc\Core\Developer\DeveloperController;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
@@ -34,7 +35,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new \App\Controller\DeveloperController($this->request))->welcome();
+        return (new DeveloperController($this->request))->welcome();
     }
 
     /**
@@ -50,7 +51,7 @@ class GemvcAssistant extends ApiService
     {
         // Authentication check
         if (!$this->request->auth(['developer','admin'])) {
-            return (new \App\Controller\DeveloperController($this->request))->app();
+            return (new DeveloperController($this->request))->app();
         }
         
         // Validate POST schema

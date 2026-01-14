@@ -7,7 +7,7 @@ use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
 use Gemvc\Http\HtmlResponse;
 use Gemvc\Core\Documentation;
-use App\Controller\DeveloperController;
+use Gemvc\Core\Developer\DeveloperController;
 use Gemvc\Helper\ProjectHelper;
 
 class IndexController extends Controller

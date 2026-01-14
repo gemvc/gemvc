@@ -107,14 +107,20 @@ my-gemvc-api/
 ├── index.php              # Entry point
 ├── app/
 │   ├── api/               # Your API endpoints go here
+│   │   ├── Index.php      # Framework API (documentation, SPA)
+│   │   ├── User.php       # Example User service (CRUD)
+│   │   ├── Apm.php        # APM service (delegates to core)
+│   │   ├── GemvcAssistant.php    # Developer tools (delegates to core)
+│   │   └── GemvcMonitoring.php    # Server monitoring (delegates to core)
 │   ├── controller/        # Your controllers go here
+│   │   ├── IndexController.php   # Framework controller
+│   │   └── UserController.php    # Example User controller
 │   ├── model/             # Your models go here
+│   │   └── UserModel.php  # Example User model
 │   └── table/             # Your tables go here
+│       └── UserTable.php  # Example User table
 ├── vendor/
-│   └── gemvc/             # GEMVC framework
-└── src/
-    └── startup/
-        └── user/          # Example User service
+│   └── gemvc/             # GEMVC framework (includes core services)
 ```
 
 ---

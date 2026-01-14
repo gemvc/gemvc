@@ -5,9 +5,9 @@
  * Orchestrates business logic for developer tools
  * This is the Controller layer - business logic orchestration
  */
-namespace App\Controller;
+namespace Gemvc\Core\Developer;
 
-use App\Model\DeveloperModel;
+use Gemvc\Core\Developer\DeveloperModel;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\HtmlResponse;
@@ -25,7 +25,7 @@ class DeveloperController extends Controller
         parent::__construct($request);
         
         // Get template directory path
-        $this->templateDir = dirname(__DIR__, 2) . '/vendor/gemvc/library/src/startup/common/system_pages';
+        $this->templateDir = \Gemvc\Helper\ProjectHelper::rootDir() . '/vendor/gemvc/library/src/startup/common/system_pages';
         
         // Start output buffering early to prevent "headers already sent" warnings
         if (ob_get_level() === 0) {
