@@ -580,7 +580,9 @@ class AsyncApiCall
         }
 
         // Sync user agent
-        $this->internalClient->setUserAgent($this->userAgent);
+        if (method_exists($this->internalClient, 'setUserAgent')) {
+            $this->internalClient->setUserAgent($this->userAgent);
+        }
     }
 
     /**
