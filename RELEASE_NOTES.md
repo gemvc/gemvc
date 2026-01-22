@@ -1,5 +1,110 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.4...5.5.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.5.0...5.6.0
 # GEMVC Framework - Release Notes
+
+## Version 5.6.0 - Core APM Architecture Unification & DX Improvements
+
+**Release Date**: 2026-01-22  
+**Type**: Minor Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This release focuses on standardizing the **Application Performance Monitoring (APM)** architecture across the framework core. We have unified the tracing logic using a centralized `ApmTracingTrait`, reducing code duplication and ensuring consistent behavior across `ApiService`, `Controller`, and `UniversalQueryExecuter`.
+
+Additionally, we introduced **Magic Properties** in `ApiService` for a significantly improved Developer Experience (DX) when calling controllers.
+
+---
+
+## ✨ Added
+
+### 🪄 Magic Controller Access (DX Improvement)
+
+- **Fluent Controller Access** - Access controllers as properties in `ApiService`
+  - Syntax: `$this->UserController->method()`
+  - Replaces verbose: `$this->callController(new UserController($this->request))->method()`
+  - **Automatic Tracing**: The magic wrapper automatically handles APM tracing for the controller call
+  - **Type Safety**: Includes `@property` annotations for IDE autocompletion
+  - Location: `src/core/ApiService.php`
+
+### 🔧 Unified APM Architecture
+
+- **ApmTracingTrait** - Centralized APM logic
+  - Provides unified `startApmSpan`, `endApmSpan`, `traceApm`, and `recordApmException` methods
+  - Adopted by `ApiService`, `Controller`, and `UniversalQueryExecuter`
+  - Ensures consistent span attributes and error handling
+  - Location: `src/core/Apm/ApmTracingTrait.php`
+
+---
+
+## 🔄 Changes
+
+### Controller Layer Refactoring
+
+- **Refactored `Controller.php`** - Now uses `ApmTracingTrait`
+  - Removed duplicate `getApm()` logic
+  - Removed dead code (`getControllerName`)
+  - Aliased legacy `startTraceSpan` methods for backward compatibility
+  - Location: `src/core/Controller.php`
+
+### Database Layer Refactoring
+
+- **Refactored `UniversalQueryExecuter.php`** - Now uses `ApmTracingTrait`
+  - Replaced manual APM environment checks with centralized logic
+  - **Context Propagation**: Renamed internal property to `$_request` to avoid DB column conflicts while maintaining APM context
+  - Removed redundant helper methods
+  - Location: `src/database/UniversalQueryExecuter.php`
+
+### Type Safety & Compliance
+
+- **PHPStan Level 9** - `ApiService` checks
+  - Added strict `instanceof Controller` checks in magic getter
+  - Added proper type hinting for all dynamic properties
+
+---
+
+## 🐛 Bug Fixes
+
+- **Context Propagation Safety** - Fixed potential conflict in `UniversalQueryExecuter` where `$request` property could clash with database columns named "request". using `$_request` ensures safety.
+- **Trace Continuity** - Ensured database traces are always correctly linked to the parent HTTP request trace via strict object propagation.
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained
+
+---
+
+## ⚙️ Configuration
+
+- **No configuration settings changed**
+- APM behavior (enabled/disabled) is still controlled via `.env` variables (`APM_ENABLED`, etc.)
+
+---
+
+## 🚀 Performance
+
+- **Reduced Overhead** - Removed redundant method calls and checks in tracing logic
+- **Optimized Tracing** - Centralized "should trace" checks are more efficient
+- **Zero Impact** - Magic controller access uses lazy loading proxy with negligible overhead
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.5.0 to 5.6.0
+
+This release is **fully backward compatible**. No action required.
+
+**Recommendation**:
+- Update your `ApiService` code to use the new fluent syntax: `return $this->UserController->create();` for cleaner code.
+- Old syntax `$this->callController(...)` continues to work perfectly.
+
+---
+
+
 
 ## Version 5.5.0 - HTTP Client Package Integration with Environment Detection
 

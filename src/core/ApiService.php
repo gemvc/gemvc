@@ -12,39 +12,90 @@ use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\Apm\AbstractApm;
 
 
+
 /**
  * Base class for all API services
  * 
- * @function auth(string $role = null):bool
  * @property Request $request
+ * @property-read mixed $errors
+ * 
+ * Magic Properties for Controllers:
+ * @property-read \Gemvc\Core\ControllerTracingProxy $UserController  Access App\Controller\UserController
+ * @property-read \Gemvc\Core\ControllerTracingProxy $ProfileController Access App\Controller\ProfileController
+ * @property-read \Gemvc\Core\ControllerTracingProxy $AnyController   Access App\Controller\AnyController
+ * 
  * public service is suitable for all service without need of Authentication, like Login , Register etc...
  */
 class ApiService
 {
     use ApmTracingTrait;
     protected Request $request;
-    
+
+    /**
+     * Magic getter for easy Controller access with APM tracing
+     * 
+     * Allows accessing controllers as properties:
+     * $this->UserController->method()
+     * $this->User->method() (resolves to UserController)
+     * 
+     * @param string $name
+     * @return mixed|ControllerTracingProxy
+     */
+    public function __get(string $name)
+    {
+        // 1. Try resolving as full Controller name (e.g., $this->UserController)
+        if (str_ends_with($name, 'Controller')) {
+            $class = 'App\\Controller\\' . $name;
+            if (class_exists($class)) {
+                $instance = new $class($this->request);
+                if ($instance instanceof Controller) {
+                    return $this->callController($instance);
+                }
+            }
+        }
+
+        // 2. Try resolving as short name (e.g., $this->User -> UserController)
+        $shortClass = 'App\\Controller\\' . ucfirst($name) . 'Controller';
+        if (class_exists($shortClass)) {
+            $instance = new $shortClass($this->request);
+            if ($instance instanceof Controller) {
+                return $this->callController($instance);
+            }
+        }
+
+        // 3. Trigger standard PHP undefined property error
+        $trace = debug_backtrace();
+        trigger_error(
+            'Undefined property: ' . static::class . '::$' . $name .
+            ' in ' . $trace[0]['file'] .
+            ' on line ' . $trace[0]['line'],
+            E_USER_NOTICE
+        );
+        return null;
+    }
+
+
     /**
      * @deprecated Use $errors array and GemvcError instead
      * Kept for backward compatibility - will be removed in future version
      */
     public ?string $error;
-    
+
     /**
      * @var array<GemvcError>
      */
     protected array $errors = [];
-    
+
     public function __construct(Request $request)
     {
         //$this->error = null;
         $this->errors = [];
         $this->request = $request;
-        
+
         // APM is now initialized in Bootstrap/SwooleBootstrap, available via $request->apm
         // No need to initialize here - this ensures APM captures the full request lifecycle
     }
-    
+
     /**
      * Call a controller method with automatic APM span creation
      * 
@@ -62,7 +113,7 @@ class ApiService
     {
         return new ControllerTracingProxy($controller, $this->request->apm);
     }
-    
+
     /**
      * Call a controller method with automatic APM span creation
      * 
@@ -75,7 +126,7 @@ class ApiService
     {
         return $this->callController($controller);
     }
-    
+
     /**
      * Add an error to the errors array
      * 
@@ -89,7 +140,7 @@ class ApiService
         // Keep backward compatibility - set string error to first error message
         //$this->error = $this->error ?? $message;
     }
-    
+
     /**
      * Get all errors as GemvcError array
      * 
@@ -99,7 +150,7 @@ class ApiService
     {
         return $this->errors;
     }
-    
+
     /**
      * Check if there are any errors
      * 
@@ -109,7 +160,7 @@ class ApiService
     {
         return !empty($this->errors);
     }
-    
+
     /**
      * Clear all errors
      * 
@@ -198,11 +249,11 @@ class ApiService
     public function parseJsonPostData(): void
     {
         if (empty($this->request->post)) {
-            $contentType = $this->request->getHeader('content-type') 
-                        ?? $_SERVER['CONTENT_TYPE'] 
-                        ?? $_SERVER['HTTP_CONTENT_TYPE'] 
-                        ?? '';
-            
+            $contentType = $this->request->getHeader('content-type')
+                ?? $_SERVER['CONTENT_TYPE']
+                ?? $_SERVER['HTTP_CONTENT_TYPE']
+                ?? '';
+
             $contentTypeStr = is_string($contentType) ? $contentType : '';
             if ($contentTypeStr !== '' && strpos(strtolower($contentTypeStr), 'application/json') !== false) {
                 $rawInput = file_get_contents('php://input');
@@ -246,13 +297,13 @@ class ControllerTracingProxy
 {
     private Controller $controller;
     private ?ApmInterface $apm;
-    
+
     public function __construct(Controller $controller, ?ApmInterface $apm)
     {
         $this->controller = $controller;
         $this->apm = $apm;
     }
-    
+
     /**
      * Intercept method calls and create APM spans
      * 
@@ -275,7 +326,7 @@ class ControllerTracingProxy
             $result = call_user_func_array($callable, $args);
             return $result;
         }
-        
+
         // If APM is not available, just call the method directly
         if ($this->apm === null) {
             /** @var callable $callable */
@@ -284,43 +335,37 @@ class ControllerTracingProxy
             $result = call_user_func_array($callable, $args);
             return $result;
         }
-        
-        if (!$this->apm->isEnabled()) {
-            /** @var callable $callable */
-            $callable = [$this->controller, $methodName];
-            /** @var JsonResponse $result */
-            $result = call_user_func_array($callable, $args);
-            return $result;
-        }
-        
+
+
+
         // Extract controller name
         $controllerName = get_class($this->controller);
         $parts = explode('\\', $controllerName);
         $controllerName = $parts[count($parts) - 1] ?? 'Unknown';
-        
+
         // Start controller operation span
         $controllerSpan = $this->apm->startSpan('controller-operation', [
             'controller.name' => $controllerName,
             'controller.method' => $methodName,
         ], ApmInterface::SPAN_KIND_INTERNAL);
-        
+
         try {
             // Call the actual controller method
             /** @var callable $callable */
             $callable = [$this->controller, $methodName];
             /** @var JsonResponse $result */
             $result = call_user_func_array($callable, $args);
-            
+
             // Determine status based on result
             $statusCode = $result->response_code ?? 200;
             $status = ($statusCode >= 400) ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
-            
+
             // Build span attributes
             $spanAttributes = [
                 'controller.result' => 'success',
                 'http.status_code' => $statusCode,
             ];
-            
+
             // Optionally include response data if enabled
             if ($this->apm->shouldTraceResponse()) {
                 // Get the full JSON response
@@ -329,21 +374,21 @@ class ControllerTracingProxy
                     // Fallback: encode the response object
                     $responseData = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
-                
+
                 // Limit response size to avoid huge traces (using centralized helper)
                 if (is_string($responseData)) {
                     $responseData = AbstractApm::limitStringForTracing($responseData);
                 }
-                
+
                 $spanAttributes['response.message'] = $result->message ?? '';
                 $spanAttributes['response.service_message'] = $result->service_message ?? '';
                 $spanAttributes['response.data'] = $responseData;
-                $spanAttributes['response.count'] = $result->count !== null ? (string)$result->count : 'null';
+                $spanAttributes['response.count'] = $result->count !== null ? (string) $result->count : 'null';
             }
-            
+
             // Update span with response details
             $this->apm->endSpan($controllerSpan, $spanAttributes, $status);
-            
+
             return $result;
         } catch (\Throwable $e) {
             // Record exception and end span with error
@@ -354,11 +399,11 @@ class ControllerTracingProxy
                     'error.message' => $e->getMessage(),
                 ], ApmInterface::STATUS_ERROR);
             }
-            
+
             throw $e;
         }
     }
-    
+
     /**
      * Check if controller tracing is enabled via environment variable
      * 

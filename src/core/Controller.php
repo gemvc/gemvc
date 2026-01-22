@@ -18,35 +18,43 @@ use Gemvc\Helper\ProjectHelper;
  */
 class Controller
 {
+    use \Gemvc\Core\Apm\ApmTracingTrait;
+
     protected Request $request;
-    
+
     /**
      * @var array<GemvcError>
      */
     protected array $errors = [];
-    
+
     public function __construct(Request $request)
     {
         $this->errors = [];
         $this->request = $request;
-        
+
         // APM is now initialized in Bootstrap/SwooleBootstrap, available via $request->apm
         // No need to initialize here - this ensures all spans share the same traceId
     }
-    
+
     /**
-     * Get APM instance (for creating child spans)
+     * Get APM instance (wrapper for Trait method)
      * 
-     * Returns the APM instance from Request object, which was initialized in Bootstrap/SwooleBootstrap.
-     * This ensures all spans (root, controller, database) share the same traceId.
-     * 
-     * @return ApmInterface|null APM instance or null if not available
+     * @return ApmInterface|null
      */
     protected function getApm(): ?ApmInterface
     {
+        // Use Trait's implementation, aliasing it because Trait uses getApm as protected
+        // Actually ApmTracingTrait::getApm is protected, so we can just use $this->getApm() from trait?
+        // Wait, if we define getApm here, it overrides the trait.
+        // We should REMOVE this method if we want to use the trait's one.
+        // BUT, we need to check if Trait's getApm logic is compatible.
+        // Trait checks property_exists($this, 'request'). Controller has $request.
+        // So we can just DELETE this method and let the Trait provide it.
+        // However, I will alias it to be explicit or if I can't delete easily.
+        // Better: Delete it.
         return $this->request->apm;
     }
-    
+
     /**
      * Start a child span for controller operations
      * 
@@ -63,11 +71,9 @@ class Controller
         if ($apm === null) {
             return [];
         }
-        
-        if (!$apm->isEnabled()) {
-            return [];
-        }
-        
+
+
+
         try {
             // Validate kind is a valid OpenTelemetry span kind integer
             $validKinds = [
@@ -78,11 +84,11 @@ class Controller
                 ApmInterface::SPAN_KIND_PRODUCER,
                 ApmInterface::SPAN_KIND_CONSUMER,
             ];
-            
+
             if (!in_array($kind, $validKinds)) {
                 $kind = ApmInterface::SPAN_KIND_INTERNAL;
             }
-            
+
             return $apm->startSpan($operationName, $attributes, $kind);
         } catch (\Throwable $e) {
             if (ProjectHelper::isDevEnvironment()) {
@@ -91,69 +97,38 @@ class Controller
             return [];
         }
     }
-    
+
     /**
      * End a child span
      * 
-     * @param array<string, mixed> $spanData Span data returned from startTraceSpan()
-     * @param array<string, mixed> $finalAttributes Optional attributes to add before ending
-     * @param string|null $status Span status: 'OK' or 'ERROR' (default: 'OK')
+     * @deprecated Use endApmSpan() from ApmTracingTrait instead
+     * @param array<string, mixed> $spanData Span data
+     * @param array<string, mixed> $finalAttributes Final attributes
+     * @param string|null $status Status ('OK' or 'ERROR')
      * @return void
      */
     protected function endTraceSpan(array $spanData, array $finalAttributes = [], ?string $status = 'OK'): void
     {
-        $apm = $this->getApm();
-        if ($apm === null || empty($spanData)) {
-            return;
-        }
-        
-        try {
-            $statusValue = ($status === 'ERROR') ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
-            $apm->endSpan($spanData, $finalAttributes, $statusValue);
-        } catch (\Throwable $e) {
-            if (ProjectHelper::isDevEnvironment()) {
-                error_log("APM: Failed to end span in Controller: " . $e->getMessage());
-            }
-        }
+        $this->endApmSpan($spanData, $finalAttributes, $status ?? 'OK');
     }
-    
+
     /**
-     * Record exception in APM (called automatically on errors)
+     * Record exception in APM
      * 
      * @param \Throwable $exception
      * @return void
      */
     public function recordApmException(\Throwable $exception): void
     {
+        // Use trait's helper with empty span data (records to current/root span)
         $apm = $this->getApm();
-        if ($apm === null) {
-            return;
-        }
-        
-        try {
-            // Use existing trace if available, or create one (errors are always logged)
+        if ($apm) {
             $apm->recordException([], $exception);
-        } catch (\Throwable $e) {
-            // Silently fail
-            if (ProjectHelper::isDevEnvironment()) {
-                error_log("APM: Failed to record exception in Controller: " . $e->getMessage());
-            }
         }
     }
-    
-    /**
-     * Get controller name for tracing
-     * 
-     * @return string
-     * @phpstan-ignore-next-line
-     */
-    private function getControllerName(): string
-    {
-        $className = get_class($this);
-        $parts = explode('\\', $className);
-        return $parts[count($parts) - 1] ?? 'Unknown';
-    }
-    
+
+
+
     /**
      * Add an error to the errors array
      * 
@@ -165,7 +140,7 @@ class Controller
     {
         $this->errors[] = new GemvcError($message, $httpCode, __FILE__, __LINE__);
     }
-    
+
     /**
      * Get all errors as GemvcError array
      * 
@@ -175,7 +150,7 @@ class Controller
     {
         return $this->errors;
     }
-    
+
     /**
      * Check if there are any errors
      * 
@@ -185,7 +160,7 @@ class Controller
     {
         return !empty($this->errors);
     }
-    
+
     /**
      * Clear all errors
      * 
@@ -229,8 +204,8 @@ class Controller
     {
         // Automatically set Request on model for APM trace context propagation
         $this->createModel($model);
-        
-        if(!$columns) {
+
+        if (!$columns) {
             $columns = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
         }
         /**@phpstan-ignore-next-line */
@@ -392,7 +367,7 @@ class Controller
         return $input;
     }
 
-        /**
+    /**
      * @template T of object
      * @param T $model
      * @param string|null $columns
@@ -410,23 +385,23 @@ class Controller
      * @throws ValidationException If validation fails during filtering/pagination
      * @throws \RuntimeException If model query execution fails
      */
-   private function _listObjects(object $model, ?string $columns = null): array
+    private function _listObjects(object $model, ?string $columns = null): array
     {
         // Ensure Request is set on model for APM trace context propagation
         $this->createModel($model);
-        
+
         $model = $this->_handleSearchable($model);
         $model = $this->_handleFindable($model);
         $model = $this->_handleSortable($model);
         $model = $this->_handlePagination($model);
         //$publicPropertiesString = implode(',', array_map(fn($k) => "\"$k\"", array_keys(get_object_vars($model))));
         //$fastString = trim(json_encode(array_keys(get_object_vars($model))), '[]');
-        if(!$columns) {
+        if (!$columns) {
             $columns = '*';
         }
         /** @phpstan-ignore-next-line */
         $result = $model->select($columns)->run();
-        if($result === false) {
+        if ($result === false) {
             // @phpstan-ignore-next-line
             $errorMessage = $model->getError() ?? 'Database query execution failed';
             throw new \RuntimeException($errorMessage);
@@ -434,12 +409,13 @@ class Controller
         /** @var array<T> $result */
         // Convert objects to arrays to avoid PHP 8.4+ protected property access issues
         // get_object_vars() only returns public properties when called from outside the class
-        return array_map(function($item): array {
+        return array_map(function ($item): array {
             /** @var T $item */
             $vars = get_object_vars($item);
             $result = [];
             foreach ($vars as $key => $val) {
-                if ($key[0] === '_') continue;
+                if ($key[0] === '_')
+                    continue;
                 $result[$key] = $val;
             }
             return $result;

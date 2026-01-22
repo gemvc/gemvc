@@ -49,6 +49,8 @@ class UniversalQueryExecuter
     /** @var Request|null Request object for APM trace context propagation */
     private ?Request $_request = null;
 
+    use \Gemvc\Core\Apm\ApmTracingTrait;
+
     /**
      * Constructor - automatically detects environment and uses appropriate manager
      * 
@@ -59,6 +61,21 @@ class UniversalQueryExecuter
         $this->startExecutionTime = microtime(true);
         $this->dbManager = DatabaseManagerFactory::getManager();
         $this->_request = $request;
+    }
+
+    /**
+     * Get APM instance (overrides Trait method to use $_request)
+     * 
+     * @return ApmInterface|null
+     */
+    protected function getApm(): ?ApmInterface
+    {
+        if ($this->_request !== null && $this->_request->apm !== null) {
+            return $this->_request->apm;
+        }
+
+        // Fallback: create standalone APM (for CLI/background jobs)
+        return ApmFactory::create(null);
     }
 
     /**
@@ -126,7 +143,7 @@ class UniversalQueryExecuter
             $this->error = null;
             return;
         }
-        
+
         // Add context information to error message
         if (!empty($context)) {
             $contextStr = ' [Context: ' . json_encode($context) . ']';
@@ -150,29 +167,29 @@ class UniversalQueryExecuter
         $sqlState = $e->getCode();
         $errorInfo = $e->errorInfo ?? [];
         $errorMessage = $e->getMessage();
-        
+
         // Check for duplicate key/unique constraint violations
         // MySQL: SQLSTATE 23000, Error code 1062
         // PostgreSQL: SQLSTATE 23505 (unique_violation)
         // SQLite: SQLSTATE 23000, Error code 19 or 1555
         $isDuplicate = (
-            $sqlState === '23000' || 
-            $sqlState === '23505' || 
+            $sqlState === '23000' ||
+            $sqlState === '23505' ||
             (isset($errorInfo[1]) && ($errorInfo[1] === 1062 || $errorInfo[1] === 19 || $errorInfo[1] === 1555)) ||
             stripos($errorMessage, 'duplicate') !== false ||
             stripos($errorMessage, 'unique') !== false ||
             stripos($errorMessage, 'already exists') !== false
         );
-        
+
         if (!$isDuplicate) {
             return null;
         }
-        
+
         // Determine operation type from query
         $queryUpper = strtoupper(ltrim($this->query));
         $isInsert = ($queryUpper[0] ?? '') === 'I' && str_starts_with($queryUpper, 'INSERT');
         $isUpdate = ($queryUpper[0] ?? '') === 'U' && str_starts_with($queryUpper, 'UPDATE');
-        
+
         // Set appropriate error message based on operation type
         if ($isInsert) {
             $duplicateError = 'This record cannot be created because a record with the same unique information already exists. Please use different values.';
@@ -182,7 +199,7 @@ class UniversalQueryExecuter
             // Generic duplicate entry error for other operations
             $duplicateError = 'This operation cannot be completed because a record with the same unique information already exists. Please use different values.';
         }
-        
+
         $this->setError($duplicateError);
         return $duplicateError;
     }
@@ -260,19 +277,7 @@ class UniversalQueryExecuter
         }
     }
 
-    /**
-     * Check if database query tracing is enabled via environment variable
-     * 
-     * NO static cache - env vars are fast enough, and static cache causes issues in OpenSwoole
-     * 
-     * @return bool True if APM_TRACE_DB_QUERY is set to '1' or 'true'
-     */
-    private static function shouldTraceDbQuery(): bool
-    {
-        $value = $_ENV['APM_TRACE_DB_QUERY'] ?? null;
-        // $_ENV always returns strings, so only check strings
-        return ($value === '1' || $value === 'true');
-    }
+
 
     /**
      * Executes the prepared statement
@@ -298,24 +303,16 @@ class UniversalQueryExecuter
         // APM tracing for database queries
         $dbSpan = [];
         $shouldTrace = false;
-        $apm = null;
-        
-        // Try to use Request APM first (shares traceId)
-        if ($this->_request !== null && $this->_request->apm !== null) {
-            $apm = $this->_request->apm;
-        } elseif (ApmFactory::isEnabled() !== null) {
-            // Fallback: standalone APM for CLI/background jobs
-            $apm = ApmFactory::create(null);
-        }
-        
+        $apm = $this->getApm();
+
         // Check if tracing is enabled (no static cache - see Fix 1 in review)
-        if ($apm !== null && $apm->isEnabled() && self::shouldTraceDbQuery()) {
+        if ($apm !== null && $apm->isEnabled() && $apm->shouldTraceDbQuery()) {
             $shouldTrace = true;
-            
+
             // Optimize query type detection (only check first 10 chars)
             $queryStart = substr($this->query, 0, 10);
             $queryUpper = strtoupper(ltrim($queryStart));
-            $queryType = match(true) {
+            $queryType = match (true) {
                 str_starts_with($queryUpper, 'SELECT') => 'SELECT',
                 str_starts_with($queryUpper, 'INSERT') => 'INSERT',
                 str_starts_with($queryUpper, 'UPDATE') => 'UPDATE',
@@ -325,17 +322,17 @@ class UniversalQueryExecuter
                 str_starts_with($queryUpper, 'DROP') => 'DROP',
                 default => 'UNKNOWN'
             };
-            
+
             // Detect database system from connection (default to mysql)
             $dbSystem = 'mysql'; // TODO: Detect from connection if needed
-            
+
             // Start database query span with error handling
             try {
                 $dbSpan = $apm->startSpan('database-query', [
                     'db.system' => $dbSystem,
                     'db.operation' => $queryType,
                     'db.statement' => $this->query,
-                    'db.parameter_count' => (string)count($this->bindings),  // Performance: count only, not json_encode
+                    'db.parameter_count' => (string) count($this->bindings),  // Performance: count only, not json_encode
                     'db.in_transaction' => $this->inTransaction ? 'true' : 'false',
                 ], ApmInterface::SPAN_KIND_CLIENT);
             } catch (\Throwable $e) {
@@ -351,34 +348,27 @@ class UniversalQueryExecuter
         try {
             $this->statement->execute();
             $this->affectedRows = $this->statement->rowCount();
-            
+
             // PERFORMANCE: Cache trimmed query and check first char instead of stripos
             $queryUpper = strtoupper(ltrim($this->query));
             $isInsert = ($queryUpper[0] ?? '') === 'I' && str_starts_with($queryUpper, 'INSERT');
             $isSelect = ($queryUpper[0] ?? '') === 'S' && str_starts_with($queryUpper, 'SELECT');
-            
+
             if ($isInsert && $this->db !== null) {
                 $this->lastInsertedId = $this->db->lastInsertId();
             }
             $this->endExecutionTime = microtime(true);
-            
+
             // APM: End span with success details (BEFORE connection release)
-            if ($shouldTrace && !empty($dbSpan) && $apm !== null) {
-                try {
-                    $executionTime = $this->getExecutionTime();
-                    $apm->endSpan($dbSpan, [
-                        'db.rows_affected' => (string)$this->affectedRows,
-                        'db.execution_time_ms' => (string)$executionTime,
-                        'db.last_insert_id' => $this->lastInsertedId !== false ? (string)$this->lastInsertedId : 'none',
-                    ], ApmInterface::STATUS_OK);
-                } catch (\Throwable $e) {
-                    // Graceful degradation
-                    if (ProjectHelper::isDevEnvironment()) {
-                        error_log("APM endSpan error: " . $e->getMessage());
-                    }
-                }
+            if ($shouldTrace) {
+                $executionTime = $this->getExecutionTime();
+                $this->endApmSpan($dbSpan, [
+                    'db.rows_affected' => (string) $this->affectedRows,
+                    'db.execution_time_ms' => (string) $executionTime,
+                    'db.last_insert_id' => $this->lastInsertedId !== false ? (string) $this->lastInsertedId : 'none',
+                ], 'OK');
             }
-            
+
             // PERFORMANCE: Release connection immediately after INSERT/UPDATE/DELETE
             // Don't wait for destructor - release as soon as we're done
             // SELECT queries need to keep connection open for fetching
@@ -386,23 +376,16 @@ class UniversalQueryExecuter
                 $this->statement->closeCursor();
                 $this->releaseConnection();
             }
-            
+
             return true;
         } catch (\PDOException $e) {
             // APM: Record exception and end span with error
-            if ($shouldTrace && !empty($dbSpan) && $apm !== null) {
-                try {
-                    $apm->recordException($dbSpan, $e);
-                    $executionTime = $this->getExecutionTime();
-                    $apm->endSpan($dbSpan, [
-                        'db.execution_time_ms' => (string)$executionTime,
-                    ], ApmInterface::STATUS_ERROR);
-                } catch (\Throwable $apmError) {
-                    // Graceful degradation
-                    if (ProjectHelper::isDevEnvironment()) {
-                        error_log("APM error handling failed: " . $apmError->getMessage());
-                    }
-                }
+            if ($shouldTrace) {
+                $this->recordApmException($dbSpan, $e);
+                $executionTime = $this->getExecutionTime();
+                $this->endApmSpan($dbSpan, [
+                    'db.execution_time_ms' => (string) $executionTime,
+                ], 'ERROR');
             }
             $context = [
                 'query' => $this->query,
@@ -411,13 +394,13 @@ class UniversalQueryExecuter
                 'in_transaction' => $this->inTransaction,
                 'error_code' => $e->getCode()
             ];
-            
+
             // PERFORMANCE: Log errors only in dev mode
             if (($_ENV['APP_ENV'] ?? '') === 'dev') {
                 $errorDetails = json_encode(['message' => $e->getMessage(), 'code' => $e->getCode(), 'query' => $this->query, 'bindings' => $this->bindings]);
                 error_log("UniversalQueryExecuter::execute() - PDO Exception: " . $errorDetails);
             }
-            
+
             // Detect duplicate entry/unique constraint violations at the root level
             // This ensures all classes that use UniversalQueryExecuter get proper error messages
             $errorMessage = $this->detectAndSetDuplicateEntryError($e);
@@ -425,7 +408,7 @@ class UniversalQueryExecuter
                 // Not a duplicate entry error, use the original exception message
                 $this->setError($e->getMessage(), $context);
             }
-            
+
             $this->endExecutionTime = microtime(true);
             // Release potentially broken connection
             $this->releaseConnection(true);
@@ -456,16 +439,19 @@ class UniversalQueryExecuter
      */
     public function fetchAllObjects(): array|false
     {
-        if (!$this->statement) { $this->setError('No statement executed.'); return false; }
+        if (!$this->statement) {
+            $this->setError('No statement executed.');
+            return false;
+        }
         try {
             $result = $this->statement->fetchAll(PDO::FETCH_OBJ);
             $this->statement->closeCursor();
-            
+
             // Auto-release connection if not in transaction
             if (!$this->inTransaction) {
                 $this->releaseConnection();
             }
-            
+
             return $result;
         } catch (\PDOException $e) {
             $this->setError('Error fetching objects: ' . $e->getMessage());
@@ -481,16 +467,19 @@ class UniversalQueryExecuter
      */
     public function fetchAll(): array|false
     {
-        if (!$this->statement) { $this->setError('No statement executed.'); return false; }
+        if (!$this->statement) {
+            $this->setError('No statement executed.');
+            return false;
+        }
         try {
             $result = $this->statement->fetchAll(PDO::FETCH_ASSOC);
             $this->statement->closeCursor();
-            
+
             // Auto-release connection if not in transaction
             if (!$this->inTransaction) {
                 $this->releaseConnection();
             }
-            
+
             return $result;
         } catch (\PDOException $e) {
             $this->setError('Error fetching results: ' . $e->getMessage());
@@ -503,16 +492,19 @@ class UniversalQueryExecuter
 
     public function fetchColumn(): mixed
     {
-        if (!$this->statement) { $this->setError('No statement executed.'); return false; }
+        if (!$this->statement) {
+            $this->setError('No statement executed.');
+            return false;
+        }
         try {
             $result = $this->statement->fetchColumn();
             $this->statement->closeCursor();
-            
+
             // Auto-release connection if not in transaction
             if (!$this->inTransaction) {
                 $this->releaseConnection();
             }
-            
+
             return $result;
         } catch (\PDOException $e) {
             $this->setError('Error fetching column: ' . $e->getMessage());
@@ -530,16 +522,19 @@ class UniversalQueryExecuter
      */
     public function fetchOne(): array|false
     {
-        if (!$this->statement) { $this->setError('No statement executed.'); return false; }
+        if (!$this->statement) {
+            $this->setError('No statement executed.');
+            return false;
+        }
         try {
             $result = $this->statement->fetch(PDO::FETCH_ASSOC);
             $this->statement->closeCursor();
-            
+
             // Auto-release connection if not in transaction
             if (!$this->inTransaction) {
                 $this->releaseConnection();
             }
-            
+
             if ($result === false) {
                 return false;
             }
@@ -556,8 +551,14 @@ class UniversalQueryExecuter
 
     public function beginTransaction(): bool
     {
-        if ($this->inTransaction) { $this->setError('Already in transaction'); return false; }
-        if ($this->db) { $this->setError('Cannot start transaction, a connection is already active'); return false; }
+        if ($this->inTransaction) {
+            $this->setError('Already in transaction');
+            return false;
+        }
+        if ($this->db) {
+            $this->setError('Cannot start transaction, a connection is already active');
+            return false;
+        }
 
         try {
             $this->db = $this->getConnection();
@@ -577,7 +578,10 @@ class UniversalQueryExecuter
 
     public function commit(): bool
     {
-        if (!$this->inTransaction || !$this->db) { $this->setError('No active transaction to commit'); return false; }
+        if (!$this->inTransaction || !$this->db) {
+            $this->setError('No active transaction to commit');
+            return false;
+        }
         try {
             $this->db->commit();
             $this->inTransaction = false;
@@ -592,7 +596,10 @@ class UniversalQueryExecuter
 
     public function rollback(): bool
     {
-        if (!$this->inTransaction || !$this->db) { $this->setError('No active transaction to rollback'); return false; }
+        if (!$this->inTransaction || !$this->db) {
+            $this->setError('No active transaction to rollback');
+            return false;
+        }
         try {
             $this->db->rollBack();
             $this->inTransaction = false;
