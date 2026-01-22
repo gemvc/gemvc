@@ -1,6 +1,10 @@
 <?php
 namespace Gemvc\Http;
 
+use Gemvc\Core\WebserverDetector;
+use Gemvc\Http\Client\AsyncHttpClient;
+use Gemvc\Http\Client\SwooleHttpClient;
+
 /**
  * High-Performance Async API Call Class for PHP 8.4
  * 
@@ -176,18 +180,11 @@ namespace Gemvc\Http;
 class AsyncApiCall
 {
     /**
-     * Pending requests queue
+     * Internal HTTP client instance (lazy-loaded with environment detection)
      * 
-     * @var array<int, array{id: string, url: string, method: string, data: array<mixed>, headers: array<string>, options: array<string, mixed>}>
+     * @var AsyncHttpClient|SwooleHttpClient|null
      */
-    private array $requestQueue = [];
-
-    /**
-     * Request metadata for tracking
-     * 
-     * @var array<int, array{id: string, url: string, method: string, startTime: float}>
-     */
-    private array $requestMetadata = [];
+    private AsyncHttpClient|SwooleHttpClient|null $internalClient = null;
 
     /**
      * Maximum concurrent requests (0 = unlimited)
@@ -331,19 +328,8 @@ class AsyncApiCall
      */
     public function addGet(string $requestId, string $url, array $queryParams = [], array $headers = []): self
     {
-        if (!empty($queryParams)) {
-            $url .= '?' . http_build_query($queryParams);
-        }
-
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'GET',
-            'data' => [],
-            'headers' => $headers,
-            'options' => []
-        ];
-
+        $client = $this->getInternalClient();
+        $client->addGet($requestId, $url, $queryParams, $headers);
         return $this;
     }
 
@@ -358,15 +344,8 @@ class AsyncApiCall
      */
     public function addPost(string $requestId, string $url, array $postData = [], array $headers = []): self
     {
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'POST',
-            'data' => $postData,
-            'headers' => $headers,
-            'options' => []
-        ];
-
+        $client = $this->getInternalClient();
+        $client->addPost($requestId, $url, $postData, $headers);
         return $this;
     }
 
@@ -381,15 +360,8 @@ class AsyncApiCall
      */
     public function addPut(string $requestId, string $url, array $putData = [], array $headers = []): self
     {
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'PUT',
-            'data' => $putData,
-            'headers' => $headers,
-            'options' => []
-        ];
-
+        $client = $this->getInternalClient();
+        $client->addPut($requestId, $url, $putData, $headers);
         return $this;
     }
 
@@ -404,16 +376,14 @@ class AsyncApiCall
      */
     public function addPostForm(string $requestId, string $url, array $formFields = [], array $headers = []): self
     {
-        $headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'POST',
-            'data' => $formFields,
-            'headers' => $headers,
-            'options' => ['form' => true]
-        ];
-
+        $client = $this->getInternalClient();
+        if (method_exists($client, 'addPostForm')) {
+            $client->addPostForm($requestId, $url, $formFields, $headers);
+        } else {
+            // SwooleHttpClient doesn't have addPostForm, use addRequest with options
+            $headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            $client->addRequest($requestId, $url, 'POST', $formFields, $headers, ['form' => true]);
+        }
         return $this;
     }
 
@@ -429,15 +399,13 @@ class AsyncApiCall
      */
     public function addPostMultipart(string $requestId, string $url, array $formFields = [], array $files = [], array $headers = []): self
     {
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'POST',
-            'data' => $formFields,
-            'headers' => $headers,
-            'options' => ['multipart' => true, 'files' => $files]
-        ];
-
+        $client = $this->getInternalClient();
+        if (method_exists($client, 'addPostMultipart')) {
+            $client->addPostMultipart($requestId, $url, $formFields, $files, $headers);
+        } else {
+            // SwooleHttpClient doesn't have addPostMultipart, use addRequest with options
+            $client->addRequest($requestId, $url, 'POST', $formFields, $headers, ['multipart' => true, 'files' => $files]);
+        }
         return $this;
     }
 
@@ -453,16 +421,14 @@ class AsyncApiCall
      */
     public function addPostRaw(string $requestId, string $url, string $rawBody, string $contentType, array $headers = []): self
     {
-        $headers['Content-Type'] = $contentType;
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => 'POST',
-            'data' => [],
-            'headers' => $headers,
-            'options' => ['raw' => $rawBody]
-        ];
-
+        $client = $this->getInternalClient();
+        if (method_exists($client, 'addPostRaw')) {
+            $client->addPostRaw($requestId, $url, $rawBody, $contentType, $headers);
+        } else {
+            // SwooleHttpClient doesn't have addPostRaw, use addRequest with options
+            $headers['Content-Type'] = $contentType;
+            $client->addRequest($requestId, $url, 'POST', [], $headers, ['raw' => $rawBody]);
+        }
         return $this;
     }
 
@@ -479,15 +445,8 @@ class AsyncApiCall
      */
     public function addRequest(string $requestId, string $url, string $method = 'GET', array $data = [], array $headers = [], array $options = []): self
     {
-        $this->requestQueue[] = [
-            'id' => $requestId,
-            'url' => $url,
-            'method' => strtoupper($method),
-            'data' => $data,
-            'headers' => $headers,
-            'options' => $options
-        ];
-
+        $client = $this->getInternalClient();
+        $client->addRequest($requestId, $url, $method, $data, $headers, $options);
         return $this;
     }
 
@@ -500,7 +459,8 @@ class AsyncApiCall
      */
     public function onResponse(string $requestId, callable $callback): self
     {
-        $this->responseCallbacks[$requestId] = $callback;
+        $client = $this->getInternalClient();
+        $client->onResponse($requestId, $callback);
         return $this;
     }
 
@@ -513,80 +473,11 @@ class AsyncApiCall
      */
     public function executeAll(): array
     {
-        if (empty($this->requestQueue)) {
-            return [];
-        }
-
-        $results = [];
-        $multiHandle = curl_multi_init();
-
-        $handleMap = []; // Map curl handle resource ID to request ID
-        $queueIndex = 0;
-        $activeRequests = 0;
-
-        // Process requests in batches based on maxConcurrency
-        while ($queueIndex < count($this->requestQueue) || $activeRequests > 0) {
-            // Add new requests up to maxConcurrency limit
-            while ($activeRequests < $this->maxConcurrency && $queueIndex < count($this->requestQueue)) {
-                $request = $this->requestQueue[$queueIndex];
-                $ch = $this->createCurlHandle($request);
-                
-                if ($ch !== false) {
-                    $handleId = (int)$ch;
-                    $handleMap[$handleId] = $request['id'];
-                    $this->requestMetadata[$handleId] = [
-                        'id' => $request['id'],
-                        'url' => $request['url'],
-                        'method' => $request['method'],
-                        'startTime' => microtime(true)
-                    ];
-
-                    curl_multi_add_handle($multiHandle, $ch);
-                    $activeRequests++;
-                }
-
-                $queueIndex++;
-            }
-
-            // Execute active requests
-            if ($activeRequests > 0) {
-                $stillRunning = 0;
-                curl_multi_exec($multiHandle, $stillRunning);
-
-                // Process completed requests
-                while ($info = curl_multi_info_read($multiHandle)) {
-                    if ($info['msg'] === CURLMSG_DONE) {
-                        $ch = $info['handle'];
-                        $handleId = (int)$ch;
-                        $requestId = $handleMap[$handleId] ?? 'unknown';
-
-                        $result = $this->processResponse($ch, $requestId, $handleId);
-                        $results[$requestId] = $result;
-
-                        // Execute callback if set
-                        if (isset($this->responseCallbacks[$requestId])) {
-                            ($this->responseCallbacks[$requestId])($result, $requestId);
-                        }
-
-                        curl_multi_remove_handle($multiHandle, $ch);
-                        unset($this->requestMetadata[$handleId]);
-                        unset($handleMap[$handleId]);
-                        $activeRequests--;
-                    }
-                }
-
-                // Small delay to prevent CPU spinning
-                if ($stillRunning > 0) {
-                    curl_multi_select($multiHandle, 0.01);
-                }
-            }
-        }
-
-        curl_multi_close($multiHandle);
-        $this->requestQueue = [];
-        $this->responseCallbacks = [];
-
-        return $results;
+        $client = $this->getInternalClient();
+        $results = $client->executeAll();
+        
+        // Normalize results to match expected format (package may return more detailed format)
+        return $this->normalizeResults($results);
     }
 
     /**
@@ -606,64 +497,14 @@ class AsyncApiCall
      * background tasks. It will NOT block your main application response.
      * 
      * For Apache/Nginx: Uses fastcgi_finish_request() to send response first
-     * For OpenSwoole: Executes in background task
+     * For OpenSwoole: Executes in background using native coroutines
      * 
      * @return bool True if background execution was initiated
      */
     public function fireAndForget(): bool
     {
-        if (empty($this->requestQueue)) {
-            return false;
-        }
-
-        // For Apache/Nginx with PHP-FPM: finish request first, then execute
-        // Note: fastcgi_finish_request() may have already been called in shutdown function
-        // If it was already called, this will do nothing (safe to call multiple times)
-        if (function_exists('fastcgi_finish_request')) {
-            // Try to send response to client immediately (if not already sent)
-            // This is safe to call even if response was already sent
-            @fastcgi_finish_request();
-            
-            // Now execute requests in background (client already got or getting response)
-            $this->executeAll();
-            return true;
-        }
-
-        // For OpenSwoole: Use task worker (if available)
-        if (function_exists('swoole_async_write') || class_exists('\Swoole\Server')) {
-            // Execute in background using Swoole task
-            $this->executeInBackground();
-            return true;
-        }
-
-        // Fallback: Execute with very short timeout and minimal blocking
-        // Set aggressive timeouts to minimize blocking
-        $originalTimeout = $this->timeout;
-        $originalConnectTimeout = $this->connect_timeout;
-        
-        $this->timeout = 1; // 1 second max
-        $this->connect_timeout = 1; // 1 second max
-        
-        // Execute but don't wait for all results
-        $this->executeAll();
-        
-        // Restore original timeouts
-        $this->timeout = $originalTimeout;
-        $this->connect_timeout = $originalConnectTimeout;
-        
-        return true;
-    }
-
-    /**
-     * Execute requests in background using Swoole task (if available)
-     * 
-     * @return void
-     */
-    private function executeInBackground(): void
-    {
-        // This would require access to Swoole server instance
-        // For now, execute with minimal blocking
-        $this->executeAll();
+        $client = $this->getInternalClient();
+        return $client->fireAndForget();
     }
 
     /**
@@ -673,8 +514,8 @@ class AsyncApiCall
      */
     public function clearQueue(): self
     {
-        $this->requestQueue = [];
-        $this->responseCallbacks = [];
+        $client = $this->getInternalClient();
+        $client->clearQueue();
         return $this;
     }
 
@@ -683,127 +524,83 @@ class AsyncApiCall
      */
     public function getQueueSize(): int
     {
-        return count($this->requestQueue);
+        $client = $this->getInternalClient();
+        return $client->getQueueSize();
     }
 
-    // ---------------- Private Helper Methods ----------------
+    // ---------------- Internal Client Management ----------------
 
     /**
-     * Create a curl handle for a request
+     * Get or create internal HTTP client instance with environment detection
      * 
-     * @param array{id: string, url: string, method: string, data: array<mixed>, headers: array<string>, options: array<string, mixed>} $request Request configuration
-     * @return \CurlHandle|false
+     * @return AsyncHttpClient|SwooleHttpClient
      */
-    private function createCurlHandle(array $request): \CurlHandle|false
+    private function getInternalClient(): AsyncHttpClient|SwooleHttpClient
     {
-        $ch = curl_init($request['url']);
-        if ($ch === false) {
-            return false;
-        }
-
-        // Basic options
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        if ($this->userAgent !== '') {
-            curl_setopt($ch, CURLOPT_USERAGENT, $this->userAgent);
-        }
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->connect_timeout);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-
-        // SSL options
-        if ($this->ssl_cert) {
-            curl_setopt($ch, CURLOPT_SSLCERT, $this->ssl_cert);
-        }
-        if ($this->ssl_key) {
-            curl_setopt($ch, CURLOPT_SSLKEY, $this->ssl_key);
-        }
-        if ($this->ssl_ca) {
-            curl_setopt($ch, CURLOPT_CAINFO, $this->ssl_ca);
-        }
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->ssl_verify_peer);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->ssl_verify_host ? 2 : 0);
-
-        // Headers
-        $headers = ['Content-Type: application/json'];
-        foreach ($request['headers'] as $key => $value) {
-            $headers[] = "$key: $value";
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-        // Method and data
-        $this->setMethodAndData($ch, $request);
-
-        return $ch;
-    }
-
-    /**
-     * Set HTTP method and request data
-     * 
-     * @param \CurlHandle $ch
-     * @param array{id: string, url: string, method: string, data: array<mixed>, headers: array<string>, options: array<string, mixed>} $request
-     */
-    private function setMethodAndData(\CurlHandle $ch, array $request): void
-    {
-        $method = $request['method'];
-        $data = $request['data'];
-        $options = $request['options'];
-
-        if ($method === 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-        } elseif ($method === 'PUT') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-        } elseif ($method !== 'GET' && $method !== '') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        }
-
-        // Set request body
-        if (isset($options['raw']) && is_string($options['raw'])) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $options['raw']);
-        } elseif (isset($options['multipart']) && $options['multipart'] === true) {
-            $postFields = $data;
-            if (isset($options['files']) && is_array($options['files'])) {
-                foreach ($options['files'] as $key => $filePath) {
-                    if (is_string($filePath) && is_file($filePath)) {
-                        $postFields[$key] = new \CURLFile($filePath);
-                    }
-                }
+        if ($this->internalClient === null) {
+            // Use WebserverDetector to choose implementation
+            if (WebserverDetector::isSwoole()) {
+                $this->internalClient = new SwooleHttpClient();
+            } else {
+                $this->internalClient = new AsyncHttpClient();
             }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-        } elseif (isset($options['form']) && $options['form'] === true) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        } elseif ($method === 'POST' || $method === 'PUT') {
-            $jsonData = json_encode($data);
-            if (is_string($jsonData)) {
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-            }
+            
+            // Copy configuration
+            $this->syncConfigurationToInternal();
         }
+        return $this->internalClient;
     }
 
     /**
-     * Process response from curl handle
-     * 
-     * @param \CurlHandle $ch
-     * @param string $requestId
-     * @param int $handleId
-     * @return array{success: bool, body: string|false, http_code: int, error: string, duration: float}
+     * Sync configuration from this instance to internal client
      */
-    private function processResponse(\CurlHandle $ch, string $requestId, int $handleId): array
+    private function syncConfigurationToInternal(): void
     {
-        $body = curl_exec($ch);
-        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        $metadata = $this->requestMetadata[$handleId] ?? null;
-        $duration = $metadata ? microtime(true) - $metadata['startTime'] : 0.0;
+        if ($this->internalClient === null) {
+            return;
+        }
 
-        $success = is_string($body) && $error === '' && $httpCode >= 200 && $httpCode < 400;
+        // Sync timeouts
+        $this->internalClient->setTimeouts($this->connect_timeout, $this->timeout);
 
-        $responseBody = is_string($body) ? $body : false;
-        
-        return [
-            'success' => $success,
-            'body' => $responseBody,
-            'http_code' => $httpCode,
-            'error' => $error,
-            'duration' => $duration
-        ];
+        // Sync SSL
+        if ($this->ssl_cert || $this->ssl_key || $this->ssl_ca) {
+            $this->internalClient->setSsl(
+                $this->ssl_cert,
+                $this->ssl_key,
+                $this->ssl_ca,
+                $this->ssl_verify_peer,
+                $this->ssl_verify_host
+            );
+        }
+
+        // Sync max concurrency
+        if (method_exists($this->internalClient, 'setMaxConcurrency')) {
+            $this->internalClient->setMaxConcurrency($this->maxConcurrency);
+        }
+
+        // Sync user agent
+        $this->internalClient->setUserAgent($this->userAgent);
+    }
+
+    /**
+     * Normalize results from package to match expected format
+     * 
+     * @param array<string, array{success: bool, body: string|false, http_code: int, error: string, duration: float, exception?: mixed, exception_type?: string|null}> $packageResults
+     * @return array<string, array{success: bool, body: string|false, http_code: int, error: string, duration: float}>
+     */
+    private function normalizeResults(array $packageResults): array
+    {
+        $normalized = [];
+        foreach ($packageResults as $requestId => $result) {
+            $normalized[$requestId] = [
+                'success' => $result['success'],
+                'body' => $result['body'],
+                'http_code' => $result['http_code'],
+                'error' => $result['error'],
+                'duration' => $result['duration']
+            ];
+        }
+        return $normalized;
     }
 }

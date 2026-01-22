@@ -1,6 +1,8 @@
 <?php
 namespace Gemvc\Http;
 
+use Gemvc\Http\Client\HttpClient;
+
 /**
  * Create request and send it to remote API.
  *
@@ -15,9 +17,17 @@ namespace Gemvc\Http;
  * - No custom timeouts/retries unless explicitly set
  * - No SSL client options unless explicitly set
  * - Legacy header behavior is preserved (including overwrite logic in setAuthorization)
+ * 
+ * @internal Uses Gemvc\Http\Client\HttpClient internally for all HTTP operations
  */
 class ApiCall
 {
+    /**
+     * Internal HTTP client instance (lazy-loaded)
+     * 
+     * @var HttpClient|null
+     */
+    private ?HttpClient $internalClient = null;
     /**
      * Last cURL error message (empty string if none).
      * Defaults to 'call not initialized' until call() runs.
@@ -206,8 +216,7 @@ class ApiCall
 
     /**
      * POST with application/x-www-form-urlencoded body (opt-in).
-     */
-    /**
+     * 
      * @param array<string, mixed> $fields
      */
     public function postForm(string $remoteApiUrl, array $fields = []): string|false
@@ -215,17 +224,22 @@ class ApiCall
         $this->method = 'POST';
         $this->formFields = $fields;
         $this->rawBody = null;
-        return $this->call($remoteApiUrl);
+        
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->postForm($remoteApiUrl, $fields);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
     /**
      * POST multipart/form-data with files (opt-in).
      *
-     * @param array<string,string> $files Map of field => filePath
-     */
-    /**
      * @param array<string, mixed> $fields
-     * @param array<string, string> $files
+     * @param array<string, string> $files Map of field => filePath
      */
     public function postMultipart(string $remoteApiUrl, array $fields = [], array $files = []): string|false
     {
@@ -233,7 +247,15 @@ class ApiCall
         $this->formFields = $fields;
         $this->files = $files;
         $this->rawBody = null;
-        return $this->call($remoteApiUrl);
+        
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->postMultipart($remoteApiUrl, $fields, $files);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
     /**
@@ -245,7 +267,15 @@ class ApiCall
         $this->rawBody = $rawBody;
         $this->formFields = null;
         $this->header['Content-Type'] = $contentType;
-        return $this->call($remoteApiUrl);
+        
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->postRaw($remoteApiUrl, $rawBody, $contentType);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
     // ---------------- Existing public API (unchanged behavior) ----------------
@@ -263,11 +293,14 @@ class ApiCall
         $this->rawBody = null;
         $this->formFields = null;
 
-        if (!empty($queryParams)) {
-            $remoteApiUrl .= '?' . http_build_query($queryParams);
-        }
-
-        return $this->call($remoteApiUrl);
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->get($remoteApiUrl, $queryParams);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
     /**
@@ -282,7 +315,15 @@ class ApiCall
         $this->data = $postData;
         $this->rawBody = null;
         $this->formFields = null;
-        return $this->call($remoteApiUrl);
+        
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->post($remoteApiUrl, $postData);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
     /**
@@ -297,194 +338,98 @@ class ApiCall
         $this->data = $putData;
         $this->rawBody = null;
         $this->formFields = null;
-        return $this->call($remoteApiUrl);
+        
+        $client = $this->getInternalClient();
+        $this->syncHeadersToInternal();
+        
+        $result = $client->put($remoteApiUrl, $putData);
+        
+        $this->syncResponseFromInternal();
+        
+        return $result;
     }
 
-    // ---------------- Core call logic (enhanced; defaults preserve legacy) ----------------
+    // ---------------- Internal Client Management ---------------- 
 
     /**
-     * Perform the API call.
-     * Applies optional timeouts/SSL/retries if configured; otherwise preserves legacy behavior.
+     * Get or create internal HTTP client instance
+     * 
+     * @return HttpClient
      */
-    private function call(string $remoteApiUrl): string|false
+    private function getInternalClient(): HttpClient
     {
-        // Reset per call
-        $this->responseBody = false;
-        $this->http_response_code = 0;
-        $this->error = '';
-
-        $attempts = $this->max_retries + 1;
-
-        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
-            $ch = curl_init($remoteApiUrl);
-            if ($ch === false) {
-                $this->http_response_code = 500;
-                $this->error = "remote api $remoteApiUrl is not responding";
-                return false;
-            }
-
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'gemserver');
-
-            // Optional timeouts (0 keeps legacy)
-            if ($this->connect_timeout > 0) {
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->connect_timeout);
-            }
-            if ($this->timeout > 0) {
-                curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-            }
-
-            // Optional SSL client/cert configuration
-            if ($this->ssl_cert) {
-                curl_setopt($ch, CURLOPT_SSLCERT, $this->ssl_cert);
-            }
-            if ($this->ssl_key) {
-                curl_setopt($ch, CURLOPT_SSLKEY, $this->ssl_key);
-            }
-            if ($this->ssl_ca) {
-                curl_setopt($ch, CURLOPT_CAINFO, $this->ssl_ca);
-            }
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->ssl_verify_peer);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->ssl_verify_host ? 2 : 0);
-
-            $this->setMethod($ch);
-            $this->setHeaders($ch);
-            $this->setAuthorization($ch);
-            $this->setData($ch);
-            $this->setFiles($ch);
-
-            $this->responseBody = curl_exec($ch);
-            $this->http_response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $this->error = curl_error($ch);
-
-            curl_close($ch);
-
-            // Retry policy (opt-in)
-            $shouldRetry =
-                ($this->retry_on_network_error && $this->error !== '') ||
-                in_array($this->http_response_code, $this->retry_on_http_codes, true);
-
-            if ($shouldRetry && $attempt < $attempts) {
-                usleep($this->retry_delay_ms * 1000);
-                continue;
-            }
-
-            if (!is_string($this->responseBody)) {
-                return false;
-            }
-            return $this->responseBody;
+        if ($this->internalClient === null) {
+            $this->internalClient = new HttpClient();
+            $this->syncConfigurationToInternal();
         }
-
-        return false;
+        return $this->internalClient;
     }
 
     /**
-     * Set the HTTP method for the request (legacy behavior preserved).
-     *
-     * @param \CurlHandle $ch
+     * Sync configuration from this instance to internal client
      */
-    private function setMethod($ch): void
+    private function syncConfigurationToInternal(): void
     {
-        if ($this->method === 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-        } elseif ($this->method === 'PUT') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-        } elseif ($this->method !== 'GET' && $this->method !== '') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->method);
-        }
-    }
-
-    /**
-     * Set the headers for the request (legacy default JSON header preserved).
-     *
-     * @param \CurlHandle $ch
-     */
-    private function setHeaders(\CurlHandle $ch): void
-    {
-        // Legacy default Content-Type
-        $headers = ['Content-Type: application/json'];
-        foreach ($this->header as $key => $value) {
-            $headers[] = "$key: $value";
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    }
-
-    /**
-     * Set the authorization header if present (legacy overwrite behavior preserved).
-     *
-     * @param \CurlHandle $ch
-     */
-    private function setAuthorization(\CurlHandle $ch): void
-    {
-        // Preserve legacy overwrite behavior if string is provided
-        if (is_string($this->authorizationHeader)) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: ' . $this->authorizationHeader]);
-        }
-    }
-
-    /**
-     * Set the data for the request.
-     * Priority (opt-in first):
-     *  - Raw body (postRaw)
-     *  - Form/multipart (postForm/postMultipart)
-     *  - Legacy JSON using $this->data (for POST/PUT)
-     *
-     * @param \CurlHandle $ch
-     * @throws \Exception when JSON encoding fails in legacy flow
-     */
-    private function setData(\CurlHandle $ch): void
-    {
-        // Raw body path (opt-in)
-        if ($this->rawBody !== null && ($this->method === 'POST' || $this->method === 'PUT' || $this->method === 'PATCH' || $this->method === 'DELETE')) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->rawBody);
+        if ($this->internalClient === null) {
             return;
         }
 
-        // Form or multipart (opt-in)
-        if (($this->method === 'POST' || $this->method === 'PUT') && ($this->formFields !== null || !empty($this->files))) {
-            $postFields = $this->formFields ?? [];
-            if (!empty($this->files)) {
-                foreach ($this->files as $key => $value) {
-                    if (is_string($value) && is_file($value)) {
-                        $postFields[$key] = new \CURLFile($value);
-                    }
-                }
-            }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-            return;
+        // Sync timeouts
+        if ($this->connect_timeout > 0 || $this->timeout > 0) {
+            $this->internalClient->setTimeouts($this->connect_timeout, $this->timeout);
         }
 
-        // Legacy JSON path for POST/PUT
-        if ($this->method === 'POST' || $this->method === 'PUT') {
-            $data_to_send = json_encode($this->data);
-            if (!is_string($data_to_send)) {
-                throw new \Exception('process stopped becase data failed to encod to json format');
-            }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_to_send);
+        // Sync SSL
+        if ($this->ssl_cert || $this->ssl_key || $this->ssl_ca) {
+            $this->internalClient->setSsl(
+                $this->ssl_cert,
+                $this->ssl_key,
+                $this->ssl_ca,
+                $this->ssl_verify_peer,
+                $this->ssl_verify_host
+            );
         }
+
+        // Sync retries
+        if ($this->max_retries > 0) {
+            $this->internalClient->setRetries(
+                $this->max_retries,
+                $this->retry_delay_ms,
+                $this->retry_on_http_codes
+            );
+            $this->internalClient->retryOnNetworkError($this->retry_on_network_error);
+        }
+
+        // Disable exceptions (maintain legacy behavior)
+        $this->internalClient->throwExceptions(false);
     }
 
     /**
-     * Set the files for the request if any (legacy multipart path).
-     * Preserved for backward compatibility when only $files is provided.
-     *
-     * @param \CurlHandle $ch
+     * Sync headers from this instance to internal client
      */
-    private function setFiles(\CurlHandle $ch): bool
+    private function syncHeadersToInternal(): void
     {
-        if (!empty($this->files) && ($this->formFields === null)) {
-            $postFields = $this->data;
-            foreach ($this->files as $key => $value) {
-                if (is_string($value)) {
-                    $postFields[$key] = new \CURLFile($value);
-                    $step_one = curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-                    $step_two = curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
-                    if ($step_one && $step_two) {
-                        return true;
-                    }
-                }
+        $client = $this->getInternalClient();
+        $client->header = $this->header;
+        $client->authorizationHeader = $this->authorizationHeader;
+    }
+
+    /**
+     * Sync response from internal client back to this instance
+     */
+    private function syncResponseFromInternal(): void
+    {
+        $client = $this->getInternalClient();
+        $this->responseBody = $client->responseBody;
+        $this->http_response_code = $client->http_response_code;
+        $this->error = $client->error ?? '';
+
+        // Sync errors if any (convert HttpClientException to legacy error format)
+        if ($client->hasErrors()) {
+            $lastError = $client->getLastError();
+            if ($lastError !== null && empty($this->error)) {
+                $this->error = $lastError->getMessage();
             }
         }
-        return false;
     }
 }

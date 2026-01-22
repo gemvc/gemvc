@@ -1,5 +1,188 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.3...5.4.4
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.4.4...5.5.0
 # GEMVC Framework - Release Notes
+
+## Version 5.5.0 - HTTP Client Package Integration with Environment Detection
+
+**Release Date**: 2026-01-22  
+**Type**: Minor Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This release integrates the `gemvc/http-client` package into the framework core, providing automatic environment detection to select the optimal HTTP client implementation. `ApiCall` and `AsyncApiCall` classes now use the new package internally while maintaining 100% backward compatibility. The integration provides better error handling, improved performance in Swoole environments, and a cleaner codebase architecture.
+
+---
+
+## ✨ Added
+
+### HTTP Client Package Integration
+
+- **gemvc/http-client Package** - Now included as a required dependency
+  - Provides `HttpClient` for synchronous requests (Apache/Nginx)
+  - Provides `AsyncHttpClient` for asynchronous requests (Apache/Nginx)
+  - Provides `SwooleHttpClient` for native Swoole coroutines (optimized)
+  - Automatic environment detection via `WebserverDetector`
+  - Enhanced error handling with exception classification
+  - Better retry mechanisms and SSL support
+
+### Automatic Environment Detection
+
+- **AsyncApiCall Environment Detection** - Automatically selects optimal client
+  - Uses `SwooleHttpClient` (native coroutines) when running in Swoole
+  - Uses `AsyncHttpClient` (curl_multi) when running in Apache/Nginx
+  - Zero configuration required - detection happens automatically
+  - Performance optimized for each environment
+
+---
+
+## 🔄 Changes
+
+### ApiCall Class Refactoring
+
+- **Internal Implementation** - Now uses `Gemvc\Http\Client\HttpClient` internally
+  - All public methods delegate to internal client
+  - Configuration automatically synced between wrapper and internal client
+  - Response data automatically synced back to wrapper
+  - All existing public properties and methods remain unchanged
+  - Location: `src/http/ApiCall.php`
+
+**Benefits:**
+- ✅ Better error handling from package
+- ✅ Improved retry mechanisms
+- ✅ Cleaner codebase (delegation pattern)
+- ✅ Future-proof (package can be updated independently)
+- ✅ 100% backward compatible
+
+### AsyncApiCall Class Refactoring
+
+- **Internal Implementation** - Uses `AsyncHttpClient` or `SwooleHttpClient` based on environment
+  - Automatic environment detection via `WebserverDetector::isSwoole()`
+  - Swoole: Uses native coroutines for optimal performance
+  - Apache/Nginx: Uses curl_multi for concurrent execution
+  - All public methods delegate to internal client
+  - Configuration automatically synced
+  - Location: `src/http/AsyncApiCall.php`
+
+**Benefits:**
+- ✅ Automatic environment detection
+- ✅ Optimized Swoole performance (native coroutines)
+- ✅ Better error handling from package
+- ✅ Cleaner codebase (delegation pattern)
+- ✅ 100% backward compatible
+
+### Dependencies
+
+- **composer.json** - Added `gemvc/http-client` as required dependency
+  - Version constraint: `^1.2`
+  - Automatically installed with framework
+  - No additional installation steps required
+
+---
+
+## 🐛 Bug Fixes
+
+- **No breaking changes** - All existing code continues to work without modification
+- All 41 ApiCall tests passing
+- All 149 AsyncApiCall tests passing
+- No linting errors introduced
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+- HTTP client package uses same security mechanisms
+- SSL/TLS support maintained and enhanced
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+**For Users:**
+- No code changes needed - existing `ApiCall` and `AsyncApiCall` usage continues to work
+- Environment detection happens automatically
+- Swoole users automatically get optimized native coroutines
+- Apache/Nginx users continue using curl_multi
+
+**For Developers:**
+- Package integration is transparent
+- All existing APIs remain unchanged
+- Can still use `ApiCall` and `AsyncApiCall` as before
+- Internal implementation uses optimized package
+
+---
+
+## 🚀 Performance
+
+- **Swoole Optimization** - Native coroutines provide better performance in Swoole environment
+- **No Performance Impact** - Backward compatible, same performance characteristics
+- **Better Error Handling** - Improved retry mechanisms reduce failed requests
+- **Cleaner Architecture** - Delegation pattern improves maintainability
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.4.4 to 5.5.0
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- `ApiCall` now uses `HttpClient` internally (transparent to users)
+- `AsyncApiCall` now uses `AsyncHttpClient` or `SwooleHttpClient` with automatic detection
+- `gemvc/http-client` package added as dependency
+
+**Benefits**:
+- Automatic environment detection for optimal performance
+- Better error handling and retry mechanisms
+- Cleaner codebase architecture
+- Future-proof design (package updates independently)
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Run `composer update gemvc/library` to get the new version
+- All existing code continues to work without modification
+
+**Breaking Changes**:
+- None - 100% backward compatible
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for testing and feedback on the http-client package integration.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
 
 ## Version 5.4.4 - Installation Cleanup & Framework Services Refactoring
 
