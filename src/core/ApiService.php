@@ -65,12 +65,8 @@ class ApiService
 
         // 3. Trigger standard PHP undefined property error
         $trace = debug_backtrace();
-        trigger_error(
-            'Undefined property: ' . static::class . '::$' . $name .
-            ' in ' . $trace[0]['file'] .
-            ' on line ' . $trace[0]['line'],
-            E_USER_NOTICE
-        );
+        /*@phpstan-ignore-next-line */
+        trigger_error('Undefined property: ' . static::class . '::$' . $name .' in ' . $trace[0]['file'] .' on line ' . $trace[0]['line'],            E_USER_NOTICE);
         return null;
     }
 

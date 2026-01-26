@@ -115,15 +115,36 @@ class Controller
     /**
      * Record exception in APM
      * 
-     * @param \Throwable $exception
+     * Supports both:
+     * - recordApmException($exception) - records to root span
+     * - recordApmException($spanData, $exception) - records to specific span (from trait)
+     * 
+     * @param array<string, mixed>|\Throwable $spanDataOrException Span data (if array) or exception (if Throwable)
+     * @param \Throwable|null $exception Exception (if first param is span data)
      * @return void
      */
-    public function recordApmException(\Throwable $exception): void
+    public function recordApmException(array|\Throwable $spanDataOrException, ?\Throwable $exception = null): void
     {
-        // Use trait's helper with empty span data (records to current/root span)
+        $spanData = [];
+        $ex = null;
+        
+        if ($exception !== null) {
+            // Two-parameter call: recordApmException($spanData, $exception)
+            $spanData = is_array($spanDataOrException) ? $spanDataOrException : [];
+            $ex = $exception;
+        } elseif ($spanDataOrException instanceof \Throwable) {
+            // Single-parameter call: recordApmException($exception)
+            $ex = $spanDataOrException;
+        }
+        
+        if ($ex === null) {
+            return;
+        }
+        
+        // Use APM to record exception with span data (empty array for root span if not provided)
         $apm = $this->getApm();
         if ($apm) {
-            $apm->recordException([], $exception);
+            $apm->recordException($spanData, $ex);
         }
     }
 

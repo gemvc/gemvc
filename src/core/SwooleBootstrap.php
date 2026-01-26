@@ -85,7 +85,7 @@ class SwooleBootstrap
         if ($isRootUrl) {
             // Load environment to check APP_ENV
             try {
-                \Gemvc\Helper\ProjectHelper::loadEnv();
+                ProjectHelper::loadEnv();
                 if (ProjectHelper::isDevEnvironment()) {
                     // Route root URL to Developer/app (SPA shell) in dev mode
                     $this->request->setServiceName("Developer");

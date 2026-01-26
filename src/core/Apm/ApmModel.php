@@ -39,8 +39,10 @@ class ApmModel
         
         try {
             /** @var ApmToolkitInterface */
-            return new $toolkitClassName();
+            $instance = new $toolkitClassName();
+            return $instance;
         } catch (\Throwable $e) {
+            // Constructor can throw (e.g., if class doesn't implement interface properly or constructor fails)
             return null;
         }
     }
@@ -320,21 +322,28 @@ class ApmModel
         
         // Extract service name from payload to verify (provider-agnostic)
         $payloadServiceName = null;
-        if ($payload !== null) {
+        if ($payload !== null && is_array($payload)) {
             // Try common payload structures (OTLP format, etc.)
-            if (isset($payload['resourceSpans'][0]['resource']['attributes'])) {
+            if (isset($payload['resourceSpans']) && is_array($payload['resourceSpans']) 
+                && isset($payload['resourceSpans'][0]) && is_array($payload['resourceSpans'][0])
+                && isset($payload['resourceSpans'][0]['resource']) && is_array($payload['resourceSpans'][0]['resource'])
+                && isset($payload['resourceSpans'][0]['resource']['attributes']) && is_array($payload['resourceSpans'][0]['resource']['attributes'])) {
                 foreach ($payload['resourceSpans'][0]['resource']['attributes'] as $attr) {
-                    if (isset($attr['key']) && $attr['key'] === 'service.name') {
-                        $payloadServiceName = $attr['value']['stringValue'] ?? $attr['value'] ?? null;
+                    if (is_array($attr) && isset($attr['key']) && $attr['key'] === 'service.name') {
+                        if (isset($attr['value']) && is_array($attr['value']) && isset($attr['value']['stringValue'])) {
+                            $payloadServiceName = $attr['value']['stringValue'];
+                        } elseif (isset($attr['value']) && is_string($attr['value'])) {
+                            $payloadServiceName = $attr['value'];
+                        }
                         break;
                     }
                 }
             }
             // Try alternative payload structures
-            if ($payloadServiceName === null && isset($payload['service_name'])) {
+            if ($payloadServiceName === null && isset($payload['service_name']) && is_string($payload['service_name'])) {
                 $payloadServiceName = $payload['service_name'];
             }
-            if ($payloadServiceName === null && isset($payload['serviceName'])) {
+            if ($payloadServiceName === null && isset($payload['serviceName']) && is_string($payload['serviceName'])) {
                 $payloadServiceName = $payload['serviceName'];
             }
         }
@@ -386,9 +395,11 @@ class ApmModel
         
         // Add TraceKit-specific diagnostics
         if ($apmName === 'TraceKit' && $apm !== null) {
+            $apiKey = $_ENV['TRACEKIT_API_KEY'] ?? $_ENV['APM_API_KEY'] ?? '';
+            $apiKeyString = is_string($apiKey) ? $apiKey : '';
             $diagnostics['tracekit'] = [
-                'api_key_set' => !empty($_ENV['TRACEKIT_API_KEY'] ?? $_ENV['APM_API_KEY'] ?? null),
-                'api_key_length' => strlen($_ENV['TRACEKIT_API_KEY'] ?? $_ENV['APM_API_KEY'] ?? ''),
+                'api_key_set' => !empty($apiKeyString),
+                'api_key_length' => strlen($apiKeyString),
                 'service_name_env' => $_ENV['TRACEKIT_SERVICE_NAME'] ?? 'not set',
                 'service_name_loaded' => $_ENV['TRACEKIT_SERVICE_NAME'] ?? null,
                 'endpoint' => $_ENV['TRACEKIT_ENDPOINT'] ?? 'https://app.tracekit.dev/v1/traces (default)',

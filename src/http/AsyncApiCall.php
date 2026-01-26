@@ -236,13 +236,6 @@ class AsyncApiCall
     private string $userAgent = 'gemserver-async';
 
     /**
-     * Response callbacks: ['requestId' => callable]
-     * 
-     * @var array<string, callable>
-     */
-    private array $responseCallbacks = [];
-
-    /**
      * Constructor
      */
     public function __construct()
@@ -548,7 +541,11 @@ class AsyncApiCall
             // Copy configuration
             $this->syncConfigurationToInternal();
         }
-        return $this->internalClient;
+        
+        // PHPStan: internalClient is guaranteed to be non-null after initialization above
+        /** @var AsyncHttpClient|SwooleHttpClient $client */
+        $client = $this->internalClient;
+        return $client;
     }
 
     /**
@@ -575,14 +572,10 @@ class AsyncApiCall
         }
 
         // Sync max concurrency
-        if (method_exists($this->internalClient, 'setMaxConcurrency')) {
-            $this->internalClient->setMaxConcurrency($this->maxConcurrency);
-        }
+        $this->internalClient->setMaxConcurrency($this->maxConcurrency);
 
         // Sync user agent
-        if (method_exists($this->internalClient, 'setUserAgent')) {
-            $this->internalClient->setUserAgent($this->userAgent);
-        }
+        $this->internalClient->setUserAgent($this->userAgent);
     }
 
     /**

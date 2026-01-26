@@ -368,6 +368,10 @@ class UniversalQueryExecuter
                     'db.last_insert_id' => $this->lastInsertedId !== false ? (string) $this->lastInsertedId : 'none',
                 ], 'OK');
             }
+            if(!$this->statement) {
+                $this->setError('No statement prepared to execute');
+                return false;
+            }
 
             // PERFORMANCE: Release connection immediately after INSERT/UPDATE/DELETE
             // Don't wait for destructor - release as soon as we're done

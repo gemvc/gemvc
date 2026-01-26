@@ -139,18 +139,6 @@ class ApiCall
      */
     private bool $retry_on_network_error = true;
 
-    /**
-     * Raw request body (when using postRaw()).
-     */
-    private ?string $rawBody = null;
-
-    /**
-     * Form fields (application/x-www-form-urlencoded or multipart/form-data).
-     *
-     * @var array<string,mixed>|null
-     */
-    private ?array $formFields = null;
-
     public function __construct()
     {
         $this->error = 'call not initialized';
@@ -222,8 +210,6 @@ class ApiCall
     public function postForm(string $remoteApiUrl, array $fields = []): string|false
     {
         $this->method = 'POST';
-        $this->formFields = $fields;
-        $this->rawBody = null;
         
         $client = $this->getInternalClient();
         $this->syncHeadersToInternal();
@@ -244,9 +230,7 @@ class ApiCall
     public function postMultipart(string $remoteApiUrl, array $fields = [], array $files = []): string|false
     {
         $this->method = 'POST';
-        $this->formFields = $fields;
         $this->files = $files;
-        $this->rawBody = null;
         
         $client = $this->getInternalClient();
         $this->syncHeadersToInternal();
@@ -264,8 +248,6 @@ class ApiCall
     public function postRaw(string $remoteApiUrl, string $rawBody, string $contentType): string|false
     {
         $this->method = 'POST';
-        $this->rawBody = $rawBody;
-        $this->formFields = null;
         $this->header['Content-Type'] = $contentType;
         
         $client = $this->getInternalClient();
@@ -290,8 +272,6 @@ class ApiCall
     {
         $this->method = 'GET';
         $this->data = $queryParams;
-        $this->rawBody = null;
-        $this->formFields = null;
 
         $client = $this->getInternalClient();
         $this->syncHeadersToInternal();
@@ -313,8 +293,6 @@ class ApiCall
     {
         $this->method = 'POST';
         $this->data = $postData;
-        $this->rawBody = null;
-        $this->formFields = null;
         
         $client = $this->getInternalClient();
         $this->syncHeadersToInternal();
@@ -336,8 +314,6 @@ class ApiCall
     {
         $this->method = 'PUT';
         $this->data = $putData;
-        $this->rawBody = null;
-        $this->formFields = null;
         
         $client = $this->getInternalClient();
         $this->syncHeadersToInternal();
@@ -362,7 +338,11 @@ class ApiCall
             $this->internalClient = new HttpClient();
             $this->syncConfigurationToInternal();
         }
-        return $this->internalClient;
+        
+        // PHPStan: internalClient is guaranteed to be non-null after initialization above
+        /** @var HttpClient $client */
+        $client = $this->internalClient;
+        return $client;
     }
 
     /**
