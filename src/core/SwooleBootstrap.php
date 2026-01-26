@@ -34,10 +34,9 @@ class SwooleBootstrap
     {
         $this->request = $request;
         
+        $this->extractRouteInfo();
         // Initialize APM early to capture full request lifecycle
         $this->initializeApm();
-        
-        $this->extractRouteInfo();
     }
     
     /**
