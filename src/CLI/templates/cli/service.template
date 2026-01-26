@@ -34,7 +34,7 @@ class {$serviceName} extends ApiService
         ])) {
             return $this->request->returnResponse();
         }
-        return (new {$serviceName}Controller($this->request))->create();
+        return $this->callController(new {$serviceName}Controller($this->request))->create();
     }
 
     /**
@@ -60,7 +60,7 @@ class {$serviceName} extends ApiService
         
         //manually set the id to the post request
         $this->request->post['id'] = $id;
-        return (new {$serviceName}Controller($this->request))->read();
+        return  $this->callController(new {$serviceName}Controller($this->request))->read();
     }
 
     /**
@@ -80,7 +80,7 @@ class {$serviceName} extends ApiService
         ])) {
             return $this->request->returnResponse();
         }
-        return (new {$serviceName}Controller($this->request))->update();
+        return  $this->callController(new {$serviceName}Controller($this->request))->update();
     }
 
     /**
@@ -98,7 +98,7 @@ class {$serviceName} extends ApiService
         ])) {
             return $this->request->returnResponse();
         }
-        return (new {$serviceName}Controller($this->request))->delete();
+        return  $this->callController(new {$serviceName}Controller($this->request))->delete();
     }
 
     /**
@@ -124,7 +124,7 @@ class {$serviceName} extends ApiService
             'description'
         ]);
         
-        return (new {$serviceName}Controller($this->request))->list();
+        return  $this->callController(new {$serviceName}Controller($this->request))->list();
     }
 
     /**

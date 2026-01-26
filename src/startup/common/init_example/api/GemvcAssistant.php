@@ -35,7 +35,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new DeveloperController($this->request))->welcome();
+        return new DeveloperController($this->request)->welcome();
     }
 
     /**
@@ -51,7 +51,7 @@ class GemvcAssistant extends ApiService
     {
         // Authentication check
         if (!$this->request->auth(['developer','admin'])) {
-            return (new DeveloperController($this->request))->app();
+            return new DeveloperController($this->request)->app();
         }
         
         // Validate POST schema
@@ -62,7 +62,7 @@ class GemvcAssistant extends ApiService
             return new HtmlResponse('Invalid request', 400);
         }
         
-        return (new GemvcAssistantController($this->request))->export();
+        return new GemvcAssistantController($this->request)->export();
     }
 
     /**
@@ -81,7 +81,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcAssistantController($this->request))->import();
+        return new GemvcAssistantController($this->request)->import();
     }
 
     /**
@@ -100,7 +100,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcAssistantController($this->request))->database();
+        return new GemvcAssistantController($this->request)->database();
     }
 
     /**
@@ -114,7 +114,7 @@ class GemvcAssistant extends ApiService
      */
     public function config(): JsonResponse
     {
-        return (new GemvcAssistantController($this->request))->config();
+        return new GemvcAssistantController($this->request)->config();
     }
 
     /**
@@ -128,7 +128,7 @@ class GemvcAssistant extends ApiService
      */
     public function isDbReady(): JsonResponse
     {
-        return (new GemvcAssistantController($this->request))->isDbReady();
+        return new GemvcAssistantController($this->request)->isDbReady();
     }
 
     /**
@@ -147,7 +147,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcAssistantController($this->request))->initDatabase();
+        return new GemvcAssistantController($this->request)->initDatabase();
     }
 
     /**
@@ -166,7 +166,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcAssistantController($this->request))->services();
+        return new GemvcAssistantController($this->request)->services();
     }
 
     /**
@@ -193,7 +193,7 @@ class GemvcAssistant extends ApiService
             return $this->request->returnResponse();
         }
         
-        return (new GemvcAssistantController($this->request))->createService();
+        return new GemvcAssistantController($this->request)->createService();
     }
 
     /**
@@ -212,7 +212,7 @@ class GemvcAssistant extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcAssistantController($this->request))->tables();
+        return new GemvcAssistantController($this->request)->tables();
     }
 
     /**
@@ -238,7 +238,7 @@ class GemvcAssistant extends ApiService
             return $this->request->returnResponse();
         }
         
-        return (new GemvcAssistantController($this->request))->migrateTable();
+        return new GemvcAssistantController($this->request)->migrateTable();
     }
 }
 

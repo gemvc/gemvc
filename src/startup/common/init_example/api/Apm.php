@@ -42,7 +42,7 @@ class Apm extends ApiService
      */
     public function testError(): JsonResponse
     {
-        return (new ApmController($this->request))->testError();
+        return new ApmController($this->request)->testError();
     }
 
     /**
