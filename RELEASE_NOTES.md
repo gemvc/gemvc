@@ -1,6 +1,135 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.5.0...5.6.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.0...5.6.1
 # GEMVC Framework - Release Notes
 
+## Version 5.6.1 - PHPStan Level 9 Compliance Fixes
+
+**Release Date**: 2026-01-26  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release focuses on resolving all PHPStan Level 9 static analysis errors across the framework. We've fixed type safety issues, removed unused properties, and improved method signatures to ensure full compliance with the highest static analysis level. All changes are backward compatible and require no code modifications.
+
+---
+
+## 🐛 Bug Fixes
+
+### PHPStan Level 9 Compliance
+
+#### AsyncApiCall.php
+- **Removed unused property** - Deleted `$responseCallbacks` property that was never read
+- **Fixed return type** - Updated `getInternalClient()` to properly exclude null from return type
+- **Removed unnecessary checks** - Eliminated redundant `method_exists()` calls for methods guaranteed to exist
+
+#### ApiCall.php
+- **Removed unused properties** - Deleted `$rawBody` and `$formFields` properties that were never read
+- **Fixed return type** - Enhanced `getInternalClient()` with proper PHPStan type assertion
+
+#### Controller.php
+- **Fixed method signature conflict** - Updated `recordApmException()` to support both:
+  - Single-parameter call: `recordApmException($exception)` (backward compatible)
+  - Two-parameter call: `recordApmException($spanData, $exception)` (for trait usage)
+- **Resolves PHPStan error** - "Method invoked with 2 parameters, 1 required"
+
+#### ApmModel.php
+- **Fixed mixed type access** - Added proper type checks (`is_array()`, `is_string()`) before array offset access
+- **Fixed strlen() with mixed** - Ensured string type before calling `strlen()`
+- **Added PHPStan ignore** - Valid dead catch warning (constructor can throw even after `class_exists()` check)
+
+---
+
+## 🔄 Changes
+
+### Type Safety Improvements
+- Enhanced null handling in lazy-loaded client instances
+- Improved type assertions for PHPStan Level 9 compliance
+- Cleaner codebase with removed unused properties
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+---
+
+## 🚀 Performance
+
+- No performance impact from these changes
+- Code cleanup may provide minor memory savings (removed unused properties)
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.0 to 5.6.1
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- PHPStan Level 9 compliance fixes
+- Removed unused properties
+- Fixed method signature conflicts
+- Enhanced type safety
+
+**Benefits**:
+- Full PHPStan Level 9 compliance
+- Cleaner codebase
+- Better type safety
+- No breaking changes
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Run `composer update gemvc/library` to get the new version
+- All existing code continues to work without modification
+
+**Breaking Changes**:
+- None - 100% backward compatible
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for maintaining high code quality standards with PHPStan Level 9.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.5.0...5.6.0
 ## Version 5.6.0 - Core APM Architecture Unification & DX Improvements
 
 **Release Date**: 2026-01-22  

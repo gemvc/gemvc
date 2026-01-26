@@ -5,6 +5,36 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.1] - 2026-01-26
+
+### Fixed
+- **PHPStan Level 9 Compliance** - Resolved all static analysis errors across multiple files
+  - **AsyncApiCall.php** - Fixed return type issues and removed unused properties
+    - Removed unused `$responseCallbacks` property (never read, only written)
+    - Fixed `getInternalClient()` return type to exclude null (guaranteed non-null after initialization)
+    - Removed unnecessary `method_exists()` checks for `setMaxConcurrency()` and `setUserAgent()` (both clients implement these methods)
+  - **ApiCall.php** - Fixed return type and removed unused properties
+    - Removed unused `$rawBody` property (never read, only written)
+    - Removed unused `$formFields` property (never read, only written)
+    - Fixed `getInternalClient()` return type with proper PHPStan type assertion
+  - **Controller.php** - Fixed method signature conflict with trait
+    - Updated `recordApmException()` to support both single-parameter (backward compatible) and two-parameter (trait usage) calls
+    - Resolves PHPStan error: "Method invoked with 2 parameters, 1 required"
+  - **ApmModel.php** - Fixed mixed type access and dead catch warnings
+    - Added proper type checks for payload array access (is_array, is_string)
+    - Fixed `strlen()` call with mixed type by ensuring string type before usage
+    - Added PHPStan ignore comment for valid dead catch (constructor can throw even after class_exists check)
+
+### Changed
+- **Type Safety Improvements** - Enhanced type safety across HTTP client classes
+  - Better null handling in lazy-loaded client instances
+  - Improved type assertions for PHPStan Level 9 compliance
+  - Cleaner code with removed unused properties
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.5.0] - 2026-01-22
 
 ### Added
