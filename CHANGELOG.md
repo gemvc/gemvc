@@ -5,6 +5,38 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.2] - 2026-01-27
+
+### Added
+- **Request::setApm() Method** - New helper method for cleaner APM assignment
+  - Provides a more precise and type-safe way to set APM instance on Request object
+  - Method signature: `setApm(\Gemvc\Core\Apm\ApmInterface $apm): void`
+  - Centralizes APM assignment logic with proper type checking
+  - Location: `src/http/Request.php`
+
+### Changed
+- **Bootstrap.php** - Updated to use `Request::setApm()` method
+  - `initializeApm()` now uses `$this->request->setApm($this->apm)` instead of direct assignment
+  - `recordExceptionInApm()` fallback code also uses `setApm()` method
+  - Provides cleaner, more maintainable code
+  - Location: `src/core/Bootstrap.php`
+
+- **SwooleBootstrap.php** - Updated to use `Request::setApm()` method
+  - `initializeApm()` now uses `$this->request->setApm($this->apm)` instead of direct assignment
+  - Consistent with Bootstrap.php implementation
+  - Location: `src/core/SwooleBootstrap.php`
+
+### Benefits
+- ✅ Cleaner API for APM assignment
+- ✅ Better type safety with explicit method signature
+- ✅ Centralized logic for APM assignment
+- ✅ More maintainable codebase
+- ✅ Consistent pattern across Bootstrap classes
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.6.1] - 2026-01-26
 
 ### Fixed

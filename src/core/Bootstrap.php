@@ -36,10 +36,10 @@ class Bootstrap
     {
         $this->request = $request;
         
-        // Initialize APM early to capture full request lifecycle
-        $this->initializeApm();
         
         $this->setRequestedService();
+        // Initialize APM early to capture full request lifecycle
+        $this->initializeApm();
         $this->runApp();
     }
     
@@ -61,7 +61,7 @@ class Bootstrap
         // Explicitly set $request->apm to ensure it's available for ApiService, Controller, etc.
         // This ensures trace context propagation even if ApmFactory doesn't set it
         if ($this->apm !== null) {
-            $this->request->apm = $this->apm;
+            $this->request->setApm($this->apm);
         }
     }
 
@@ -458,7 +458,7 @@ class Bootstrap
                 $apm = ApmFactory::create($this->request);
                 // Explicitly set $request->apm to ensure it's available for subsequent operations
                 if ($apm !== null) {
-                    $this->request->apm = $apm;
+                    $this->request->setApm($apm);
                 }
             }
         }

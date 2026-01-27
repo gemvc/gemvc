@@ -150,6 +150,12 @@ class Request
 
     }
 
+    
+    public function setApm(\Gemvc\Core\Apm\ApmInterface $apm): void
+    {
+        $this->apm = $apm;
+    }
+
     public function returnResponse(): JsonResponse
     {
         if(!$this->response)

@@ -1,6 +1,159 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.0...5.6.1
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.1...5.6.2
 # GEMVC Framework - Release Notes
 
+## Version 5.6.2 - APM Assignment API Improvement
+
+**Release Date**: 2026-01-27  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release introduces a cleaner, more precise API for setting APM instances on the Request object. We've added a dedicated `setApm()` method to the Request class and updated both Bootstrap classes to use this new method instead of direct property assignment. This improvement provides better type safety, cleaner code, and a more maintainable codebase.
+
+---
+
+## ✨ Added
+
+### Request::setApm() Method
+
+- **New Helper Method** - `setApm(\Gemvc\Core\Apm\ApmInterface $apm): void`
+  - Provides a type-safe, explicit way to set APM instance on Request object
+  - Replaces direct property assignment (`$request->apm = $apm`) with method call
+  - Centralizes APM assignment logic in one place
+  - Better for developers who want to set APM in other classes
+  - Location: `src/http/Request.php`
+
+**Usage Example:**
+```php
+// Before (still works, but less precise)
+$request->apm = $apmInstance;
+
+// Now (recommended, cleaner and more precise)
+$request->setApm($apmInstance);
+```
+
+---
+
+## 🔄 Changes
+
+### Bootstrap Classes Refactoring
+
+#### Bootstrap.php
+- **Updated `initializeApm()`** - Now uses `Request::setApm()` method
+  - Changed from: `$this->request->apm = $this->apm;`
+  - Changed to: `$this->request->setApm($this->apm);`
+- **Updated `recordExceptionInApm()`** - Fallback code also uses `setApm()`
+  - Changed from: `$this->request->apm = $apm;`
+  - Changed to: `$this->request->setApm($apm);`
+- Location: `src/core/Bootstrap.php`
+
+#### SwooleBootstrap.php
+- **Updated `initializeApm()`** - Now uses `Request::setApm()` method
+  - Changed from: `$this->request->apm = $this->apm;`
+  - Changed to: `$this->request->setApm($this->apm);`
+- Location: `src/core/SwooleBootstrap.php`
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Cleaner API** - Explicit method call instead of property assignment
+- ✅ **Better Type Safety** - Method signature enforces `ApmInterface` type
+- ✅ **Centralized Logic** - All APM assignment goes through one method
+- ✅ **More Maintainable** - Easier to modify APM assignment behavior in the future
+- ✅ **Consistent Pattern** - Both Bootstrap classes use the same approach
+- ✅ **Developer-Friendly** - More precise and better for use in other classes
+
+---
+
+## 🔒 Security
+
+- **No security vulnerabilities** reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## ⚙️ Configuration
+
+No configuration changes required. All improvements are automatic and backward compatible.
+
+**For Developers:**
+- You can now use `$request->setApm($apm)` instead of `$request->apm = $apm`
+- Direct property assignment (`$request->apm = $apm`) still works for backward compatibility
+- The new method is recommended for cleaner, more type-safe code
+
+---
+
+## 🚀 Performance
+
+- No performance impact from these changes
+- Method call overhead is negligible
+- Same functionality with cleaner code
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.1 to 5.6.2
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Added `Request::setApm()` method for cleaner APM assignment
+- Updated Bootstrap and SwooleBootstrap to use the new method
+- Direct property assignment still works (backward compatible)
+
+**Benefits**:
+- Cleaner API for APM assignment
+- Better type safety
+- More maintainable codebase
+- Consistent pattern across framework
+
+**Action Required**:
+- **None** - automatic upgrade recommended
+- Optional: Update custom code to use `$request->setApm($apm)` instead of direct assignment
+- Direct property assignment continues to work for backward compatibility
+
+**Breaking Changes**:
+- None - 100% backward compatible
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to the community for maintaining high code quality standards.
+
+---
+
+## 📝 Full Changelog
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🔗 Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.0...5.6.1
 ## Version 5.6.1 - PHPStan Level 9 Compliance Fixes
 
 **Release Date**: 2026-01-26  
