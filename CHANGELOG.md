@@ -5,6 +5,26 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.3] - 2026-01-29
+
+### Changed
+- **Apache entrypoint (index.php)** - Dotenv: `load()` → `overload()` for Docker compatibility
+  - File copied to application root; `.env` can now override container-set environment variables when needed
+  - Location: `src/startup/apache/index.php`
+- **ProjectHelper::loadEnv()** - Dotenv: `load()` → `overload()` for root and app `.env`
+  - Root `.env`: `$dotenv->overload($rootEnvFile)`
+  - App `.env`: `$dotenv->overload($appEnvFile)`
+  - Location: `src/helper/ProjectHelper.php` (lines 41–52)
+
+### Benefits
+- ✅ Docker compatibility: `.env` can override container-provided environment variables
+- ✅ Consistent behavior between Apache entrypoint and ProjectHelper
+- ✅ Backward compatible for apps without pre-set env vars
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
 ## [5.6.2] - 2026-01-27
 
 ### Added

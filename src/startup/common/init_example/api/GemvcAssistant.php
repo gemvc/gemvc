@@ -8,7 +8,10 @@ use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
 use Gemvc\Http\HtmlResponse;
-
+/**
+ * this @hidden is used to hide the API from the public documentation
+ * @hidden
+ */
 class GemvcAssistant extends ApiService
 {
     /**

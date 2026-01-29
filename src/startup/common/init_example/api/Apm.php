@@ -6,7 +6,10 @@ use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-
+/**
+ * this @hidden is used to hide the API from the public documentation
+ * @hidden
+ */
 class Apm extends ApiService
 {
     /**

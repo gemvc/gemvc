@@ -40,14 +40,14 @@ class ProjectHelper
         // Try root directory first
         $rootEnvFile = self::rootDir() . DIRECTORY_SEPARATOR . '.env';
         if (file_exists($rootEnvFile)) {
-            $dotenv->load($rootEnvFile);
+            $dotenv->overload($rootEnvFile);
             return;
         }
         
         // Try app directory
         $appEnvFile = self::appDir() . DIRECTORY_SEPARATOR . '.env';
         if (file_exists($appEnvFile)) {
-            $dotenv->load($appEnvFile);
+            $dotenv->overload($appEnvFile);
             return;
         }
         

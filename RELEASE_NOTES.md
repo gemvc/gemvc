@@ -1,5 +1,64 @@
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.1...5.6.2
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.2...5.6.3
 # GEMVC Framework - Release Notes
+
+## Version 5.6.3 - Dotenv Overload for Docker Compatibility
+
+**Release Date**: 2026-01-29  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release fixes environment variable loading so that applications work correctly in Dockerized environments. We changed `Dotenv::load()` to `Dotenv::overload()` in the Apache entrypoint and in `ProjectHelper::loadEnv()`, so that `.env` values can override existing environment variables (e.g. set by the container). This ensures consistent behavior when the same code runs in Docker and on a host.
+
+---
+
+## 🔄 Changes
+
+### Apache Entrypoint (index.php)
+
+- **Updated Dotenv usage** - `$dotenv->load()` → `$dotenv->overload()`
+  - File copied to application root; now uses `overload()` for Docker compatibility
+  - Location: `src/startup/apache/index.php`
+
+### ProjectHelper::loadEnv()
+
+- **Updated Dotenv usage** - `$dotenv->load()` → `$dotenv->overload()` for both root and app `.env`
+  - Root `.env`: `$dotenv->overload($rootEnvFile)`
+  - App `.env`: `$dotenv->overload($appEnvFile)`
+  - Location: `src/helper/ProjectHelper.php` (lines 41–52)
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Docker compatibility** - `.env` can override container-provided environment variables when needed
+- ✅ **Consistent behavior** - Same loading semantics in Apache entrypoint and `ProjectHelper`
+- ✅ **No breaking change** - Existing apps without pre-set env vars behave as before
+
+---
+
+## 🔒 Security
+
+- No security vulnerabilities reported in this release
+- All existing security features maintained (90% automatic security)
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.2 to 5.6.3
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Apache `index.php` and `ProjectHelper::loadEnv()` now use `Dotenv::overload()` instead of `load()`
+- Improves behavior in Dockerized deployments
+
+**Breaking Changes**: None
+
+---
 
 ## Version 5.6.2 - APM Assignment API Improvement
 
