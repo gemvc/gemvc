@@ -1,5 +1,5 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.2...5.6.3
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.2...5.6.4
 # GEMVC Framework - Release Notes
 
 ## Version 5.6.3 - Dotenv Overload for Docker Compatibility
