@@ -113,7 +113,7 @@ APM traces sent (fire-and-forget, non-blocking)
 - `SecurityManager.php` - Path access protection
 - `WebserverDetector.php` - Environment detection (cached)
 - `OpenSwooleServer.php` - OpenSwoole server lifecycle
-- `HotReloadManager.php` - Development hot reload
+- `HotReloadManager.php` - Development hot reload (watches app dir only via ProjectHelper; dev-only; 5s interval)
 - `RedisManager.php` - Redis connection singleton
 - `ApiDocGenerator.php` - Auto-generate API documentation
 
@@ -174,7 +174,7 @@ APM traces sent (fire-and-forget, non-blocking)
 
 ### **helper/** - Utility Classes
 - `TypeChecker.php` - Runtime type validation (advanced options)
-- `ProjectHelper.php` - Path resolution (finds composer.lock), APM detection
+- `ProjectHelper.php` - Path resolution (finds composer.lock), env/base URL/system paths, APM detection, `disableOpcacheIfDev()` for dev
 - `FileHelper.php` - File operations + encryption
 - `ImageHelper.php` - Image processing + signature detection
 - `CryptHelper.php` - Password hashing (Argon2I) + AES-256-CBC encryption

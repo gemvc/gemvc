@@ -1,6 +1,86 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.2...5.6.4
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.4...5.6.5
 # GEMVC Framework - Release Notes
+
+## Version 5.6.5 - Hot Reload & ProjectHelper Refactor (Core DRY)
+
+**Release Date**: 2026-02-09  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release centralizes paths and environment handling via `ProjectHelper` across the library core (DRY), improves hot reload so it watches only the app directory and runs with a 5-second interval in dev, and disables OPcache in development so file changes take effect without restart (Apache/Nginx and OpenSwoole). Documentation is updated to match.
+
+---
+
+## 🔄 Changes
+
+### Core – ProjectHelper (DRY)
+
+- **Paths** – Bootstrap, SwooleBootstrap, DeveloperController, DeveloperModel, DeveloperTable, ApmModel now use:
+  - `ProjectHelper::appDir()` for API service path, web 404 path, app/api, app/table
+  - `ProjectHelper::getLibrarySystemPagesPath()` for system pages (e.g. developer UI templates)
+- **Environment** – SwooleServerConfig, GemvcErrorHandler, DeveloperController, DeveloperModel, GemvcAssistantModel, ApmModel now use:
+  - `ProjectHelper::isDevEnvironment()` for dev checks
+  - `ProjectHelper::getAppEnv()` for `APP_ENV` (e.g. developer info, APM)
+  - `ProjectHelper::getBaseUrl()` / `getApiBaseUrl()` for base URL and API base URL
+- **ApmModel** – Single constant `APM_NOT_ENABLED_MESSAGE` for the “APM not enabled…” message (DRY).
+
+### HotReloadManager
+
+- **Scope** – Watches **app directory only** via `ProjectHelper::appDir()` (no longer watches `vendor/gemvc/library/src`).
+- **When** – Starts only when `ProjectHelper::isDevEnvironment()` is true.
+- **Interval** – Check interval reduced from 15 seconds to **5 seconds**.
+
+### ProjectHelper – OPcache in dev
+
+- **New method** – `ProjectHelper::disableOpcacheIfDev()`:
+  - No-op when not in dev.
+  - In dev: calls `opcache_reset()` and `opcache_disable()` when available (with `@` to avoid notices if OPcache is not loaded).
+- **Bootstrap** – `Bootstrap::__construct()` calls `disableOpcacheIfDev()` early so each request in dev runs without OPcache.
+- **OpenSwoole** – In `workerStart`, when in dev, each worker calls `disableOpcacheIfDev()` so file changes are picked up without restart.
+
+---
+
+## 📚 Documentation
+
+- **CHANGELOG.md** – Added [5.6.5] entry for core DRY, hot reload, and OPcache changes.
+- **ARCHITECTURE.md** – Updated `HotReloadManager` and `ProjectHelper` descriptions to reflect app-only watch, 5s interval, and `disableOpcacheIfDev()`.
+- **CLI.md** – In ProjectHelper section, added “Also used by Core” and listed: `isDevEnvironment()`, `getAppEnv()`, `getBaseUrl()`, `getApiBaseUrl()`, `getLibrarySystemPagesPath()`, `disableOpcacheIfDev()`.
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Single source of truth** – Paths and env in core come from `ProjectHelper` only.
+- ✅ **Faster dev cycle** – Hot reload watches app code only; 5s interval.
+- ✅ **No restart in dev** – OPcache disabled in dev (Bootstrap + OpenSwoole workers) so edits take effect immediately.
+- ✅ **Backward compatible** – No API or behavior change for existing apps.
+
+---
+
+## 🔒 Security
+
+- No security vulnerabilities reported in this release.
+- All existing security features maintained (90% automatic security).
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.4 to 5.6.5
+
+This release is **fully backward compatible**. No action required.
+
+**What changed**:
+- Core uses `ProjectHelper` for paths and env; hot reload is app-only with 5s interval; OPcache is disabled in dev.
+- Docs (CHANGELOG, ARCHITECTURE, CLI) updated to match.
+
+**Breaking changes**: None
+
+---
 
 ## Version 5.6.3 - Dotenv Overload for Docker Compatibility
 

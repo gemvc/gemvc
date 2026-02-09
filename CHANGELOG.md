@@ -5,6 +5,21 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.5] - 2026-02-09
+
+### Changed
+- **Core** - Centralized paths and environment via `ProjectHelper` (DRY) across Bootstrap, SwooleBootstrap, SwooleServerConfig, GemvcErrorHandler, DeveloperController, DeveloperModel, DeveloperTable, ApmModel
+  - Paths: `appDir()`, `getLibrarySystemPagesPath()` for API service, web 404, system pages, app/api, app/table
+  - Environment: `isDevEnvironment()`, `getAppEnv()`, `getBaseUrl()`, `getApiBaseUrl()`
+- **HotReloadManager** - Watches app directory only (via `ProjectHelper::appDir()`); runs in dev only; check interval 15s → 5s
+- **ProjectHelper** - Added `disableOpcacheIfDev()`; called from `Bootstrap::__construct()` and OpenSwoole `workerStart` so file changes take effect in dev without restart
+- **Documentation** - CHANGELOG, ARCHITECTURE.md, CLI.md updated for 5.6.5 (see RELEASE_NOTES.md)
+
+### Benefits
+- ✅ Single source of truth for paths and env in core
+- ✅ Hot reload scoped to app code; faster cycle (5s)
+- ✅ OPcache disabled in dev so edits are picked up (Apache/Nginx and OpenSwoole)
+
 ## [5.6.4] - 2026-01-29
 
 ### Changed

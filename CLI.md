@@ -503,6 +503,8 @@ ProjectHelper::appDir();  // Returns: /path/to/project/app
 ProjectHelper::loadEnv();  // Loads environment variables
 ```
 
+**Also used by Core** (paths, env, dev): `isDevEnvironment()`, `getAppEnv()`, `getBaseUrl()`, `getApiBaseUrl()`, `getLibrarySystemPagesPath()`, `disableOpcacheIfDev()`.
+
 **Used By**:
 - Database commands (`DbInit`, `DbMigrate`, etc.)
 - Code generation commands
