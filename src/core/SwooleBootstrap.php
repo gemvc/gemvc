@@ -120,7 +120,8 @@ class SwooleBootstrap
     public function processRequest(): ?ResponseInterface
     {
         $serviceName = $this->request->getServiceName();
-        if (!file_exists('./app/api/' . $serviceName . '.php')) {
+        $apiServicePath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $serviceName . '.php';
+        if (!file_exists($apiServicePath)) {
             return Response::notFound("The service path for '$serviceName' does not exist, check your service name if properly typed");
         }
 

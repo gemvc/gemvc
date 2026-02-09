@@ -115,20 +115,8 @@ class GemvcAssistantModel
     {
         ProjectHelper::loadEnv();
         $apiBaseUrl = ProjectHelper::getApiBaseUrl();
+        $baseUrl = ProjectHelper::getBaseUrl();
         $webserverType = WebserverDetector::get();
-        
-        // Get base URL (without API sub-path) for general use
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
-            ? $_SERVER['HTTP_HOST']
-            : 'localhost';
-        $host = preg_replace('/:\d+$/', '', $host);
-        
-        $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-        $port = is_numeric($portEnv) ? (int) $portEnv : 80;
-        $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
-        $baseUrl = $protocol . '://' . $host . $portDisplay;
-        
         $webserverName = match($webserverType) {
             'swoole' => 'OpenSwoole',
             'apache' => 'Apache',

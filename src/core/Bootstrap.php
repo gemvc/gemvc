@@ -35,8 +35,9 @@ class Bootstrap
     public function __construct(Request $request)
     {
         $this->request = $request;
-        
-        
+
+        ProjectHelper::disableOpcacheIfDev();
+
         $this->setRequestedService();
         // Initialize APM early to capture full request lifecycle
         $this->initializeApm();
@@ -103,7 +104,8 @@ class Bootstrap
     private function handleApiRequest(): void
     {
         $serviceName = $this->request->getServiceName();
-        if (!file_exists('./app/api/'.$serviceName.'.php')) {
+        $apiServicePath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $serviceName . '.php';
+        if (!file_exists($apiServicePath)) {
             $this->errors[] = new GemvcError("The API service '$serviceName' does not exist", 404, __FILE__, __LINE__);
             return;
         }
@@ -367,11 +369,10 @@ class Bootstrap
     private function showWebNotFound(): void
     {
         header('HTTP/1.0 404 Not Found');
-        
-        // Check if a custom 404 page exists
-        if (file_exists('./app/web/Error/404.php')) {
+        $custom404Path = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'web' . DIRECTORY_SEPARATOR . 'Error' . DIRECTORY_SEPARATOR . '404.php';
+        if (file_exists($custom404Path)) {
             // @phpstan-ignore-next-line
-            include './app/web/Error/404.php';
+            include $custom404Path;
         } else {
             $this->show404Error();
         }
@@ -409,35 +410,13 @@ class Bootstrap
     
     /**
      * Get template path from startup/common/system_pages directory
-     * Uses similar path resolution logic as AbstractInit::findStartupPath()
-     * 
+     *
      * @param string $templateName Template filename (e.g., 'error-404.php')
      * @return string Full path to template file
      */
     private function getTemplatePath(string $templateName): string
     {
-        // From core directory, go up one level to src, then to startup/common/system_pages
-        // __DIR__ = vendor/gemvc/library/src/core
-        // dirname(__DIR__) = vendor/gemvc/library/src
-        $basePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'system_pages';
-        $templatePath = $basePath . DIRECTORY_SEPARATOR . $templateName;
-        
-        // If not found, try alternative paths (for different installation structures)
-        if (!file_exists($templatePath)) {
-            $alternativePaths = [
-                // Standard Composer vendor path
-                dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . 'library' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'system_pages',
-            ];
-            
-            foreach ($alternativePaths as $altPath) {
-                $altTemplatePath = $altPath . DIRECTORY_SEPARATOR . $templateName;
-                if (file_exists($altTemplatePath)) {
-                    return $altTemplatePath;
-                }
-            }
-        }
-        
-        return $templatePath;
+        return ProjectHelper::getLibrarySystemPagesPath() . DIRECTORY_SEPARATOR . $templateName;
     }
 
     /**

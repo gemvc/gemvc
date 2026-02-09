@@ -500,7 +500,7 @@ class DeveloperTable extends Table
     public function getAllServices(): array
     {
         try {
-            $apiPath = ProjectHelper::rootDir() . '/app/api';
+            $apiPath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api';
             if (!is_dir($apiPath)) {
                 return [];
             }
@@ -888,8 +888,8 @@ class DeveloperTable extends Table
      */
     public function serviceExists(string $serviceName): bool
     {
-        $apiPath = ProjectHelper::rootDir() . '/app/api';
-        $serviceFile = $apiPath . '/' . ucfirst($serviceName) . '.php';
+        $apiPath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api';
+        $serviceFile = $apiPath . DIRECTORY_SEPARATOR . ucfirst($serviceName) . '.php';
         return file_exists($serviceFile);
     }
 
@@ -901,12 +901,9 @@ class DeveloperTable extends Table
     public function getAllTableClasses(): array
     {
         try {
-            // Get the project root using ProjectHelper
-            $projectRoot = ProjectHelper::rootDir();
-            $tablePath = $projectRoot . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'table';
-            
+            $tablePath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'table';
             if (!is_dir($tablePath)) {
-                $this->setError("Table directory not found: {$tablePath} (project root: {$projectRoot})");
+                $this->setError("Table directory not found: {$tablePath} (project root: " . ProjectHelper::rootDir() . ')');
                 return [];
             }
 

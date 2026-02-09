@@ -141,6 +141,9 @@ class OpenSwooleServer
     private function setupWorkerStartHandler(): void
     {
         $this->server->on("workerStart", function ($server, $workerId) {
+            if ($this->config->isDev()) {
+                ProjectHelper::disableOpcacheIfDev();
+            }
             if ($workerId === 0 && $this->config->isDev()) {
                 $this->hotReload->startHotReload($server);
             }

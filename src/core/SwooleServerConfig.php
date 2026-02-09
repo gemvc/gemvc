@@ -2,6 +2,8 @@
 
 namespace Gemvc\Core;
 
+use Gemvc\Helper\ProjectHelper;
+
 /**
  * Server Configuration Manager
  * 
@@ -48,7 +50,7 @@ class SwooleServerConfig
      */
     public function isDev(): bool
     {
-        return ($_ENV["APP_ENV"] ?? '') === "dev";
+        return ProjectHelper::isDevEnvironment();
     }
 
     /**

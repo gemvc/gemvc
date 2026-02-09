@@ -33,6 +33,18 @@ class ProjectHelper
         return $appDir;
     }
 
+    /**
+     * Path to the library's startup/common/system_pages directory (templates, assets).
+     * Resolved relative to the library source, so it works regardless of vendor/package name.
+     *
+     * @return string Absolute path to system_pages directory
+     */
+    public static function getLibrarySystemPagesPath(): string
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'startup'
+            . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'system_pages';
+    }
+
     public static function loadEnv(): void
     {
         $dotenv = new Dotenv();
@@ -55,59 +67,72 @@ class ProjectHelper
     }
 
     /**
+     * Base URL (protocol + host + port only, no API sub-path).
+     * Uses APP_ENV_PUBLIC_SERVER_PORT and HTTP_HOST when available.
+     *
+     * @return string e.g. 'http://localhost:9550' or 'http://localhost'
+     */
+    public static function getBaseUrl(): string
+    {
+        return self::buildBaseUrlParts()['url'];
+    }
+
+    /**
      * Construct API base URL using environment variables
-     * 
-     * Uses:
-     * - APP_ENV_PUBLIC_SERVER_PORT: Port number (80/443 don't need :port, others do)
-     * - APP_ENV_API_DEFAULT_SUB_URL: Sub-path for API (e.g., 'apiv2' or '')
-     *   If empty, endpoints are directly on base URL (no /api prefix)
-     *   If set, endpoints are on base URL + sub URL (e.g., /apiv2)
-     * 
+     *
+     * Uses getBaseUrl() plus APP_ENV_API_DEFAULT_SUB_URL when set.
+     *
      * @return string API base URL (e.g., 'http://localhost/apiv2' or 'http://localhost:9550' or 'http://localhost')
      */
     public static function getApiBaseUrl(): string
     {
-        // Ensure env is loaded
         if (!isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT'])) {
             self::loadEnv();
         }
 
-        // Get protocol
+        $baseUrl = self::buildBaseUrlParts()['url'];
+
+        $apiSubUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL'])
+            ? trim(trim($_ENV['APP_ENV_API_DEFAULT_SUB_URL'], '\'"'), '/')
+            : '';
+        $apiSubUrl = $apiSubUrl !== '' ? '/' . $apiSubUrl : '';
+
+        return rtrim($baseUrl . $apiSubUrl, '/');
+    }
+
+    /**
+     * Build protocol, host, port and full base URL (no sub-path).
+     *
+     * @return array{url: string, protocol: string, host: string, port: int, portDisplay: string}
+     */
+    private static function buildBaseUrlParts(): array
+    {
+        if (!isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT'])) {
+            self::loadEnv();
+        }
+
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        
-        // Get host and port
         $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
             ? $_SERVER['HTTP_HOST']
             : 'localhost';
-        
-        // Extract port from HTTP_HOST if it exists (e.g., localhost:82)
+
         $detectedPort = null;
         if (preg_match('/:(\d+)$/', $host, $matches)) {
             $detectedPort = (int) $matches[1];
             $host = preg_replace('/:\d+$/', '', $host);
         }
-        
-        // Use detected port from HTTP_HOST if available, otherwise use env variable
+
         if ($detectedPort !== null) {
             $port = $detectedPort;
         } else {
             $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
             $port = is_numeric($portEnv) ? (int) $portEnv : 80;
         }
-        
-        // Add port only if not 80 (http) or 443 (https)
+
         $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
-        
-        // Get API sub URL (remove quotes and trim)
-        $apiSubUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL'])
-            ? trim(trim($_ENV['APP_ENV_API_DEFAULT_SUB_URL'], '\'"'), '/')
-            : '';
-        $apiSubUrl = $apiSubUrl !== '' ? '/' . $apiSubUrl : '';
-        
-        // Construct base URL: protocol + host + port + subUrl
-        $baseUrl = $protocol . '://' . $host . $portDisplay . $apiSubUrl;
-        
-        return rtrim($baseUrl, '/');
+        $url = $protocol . '://' . $host . $portDisplay;
+
+        return ['url' => $url, 'protocol' => $protocol, 'host' => $host, 'port' => $port, 'portDisplay' => $portDisplay];
     }
 
     /**
@@ -174,7 +199,34 @@ class ProjectHelper
      */
     public static function isDevEnvironment(): bool
     {
-        return $_ENV['APP_ENV'] === 'dev';
+        return ($_ENV['APP_ENV'] ?? '') === 'dev';
+    }
+
+    /**
+     * Current application environment (safe access, no undefined index).
+     *
+     * @return string e.g. 'dev', 'production' (default when APP_ENV is not set)
+     */
+    public static function getAppEnv(): string
+    {
+        return $_ENV['APP_ENV'] ?? 'production';
+    }
+
+    /**
+     * Disable OPcache when in dev so hot reload and file changes take effect.
+     * Call early: from Bootstrap (Apache/Nginx) or from workerStart (OpenSwoole).
+     */
+    public static function disableOpcacheIfDev(): void
+    {
+        if (!self::isDevEnvironment()) {
+            return;
+        }
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+        if (function_exists('opcache_disable')) {
+            @opcache_disable();
+        }
     }
 
     /**

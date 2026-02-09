@@ -16,6 +16,8 @@ use Gemvc\Http\Response;
  */
 class ApmModel
 {
+    private const APM_NOT_ENABLED_MESSAGE = 'APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.';
+
     /**
      * Get APM Toolkit instance for the configured provider
      * 
@@ -60,7 +62,7 @@ class ApmModel
             return Response::success([
                 'apm_enabled' => false,
                 'message' => $apmName === null 
-                    ? 'APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.'
+                    ? self::APM_NOT_ENABLED_MESSAGE
                     : "APM provider '{$apmName}' package not installed. Install with: composer require gemvc/apm-{$apmName}",
                 'trace_id' => null,
             ], 1, 'APM test - not enabled');
@@ -155,7 +157,7 @@ class ApmModel
             return Response::success([
                 'apm_enabled' => false,
                 'message' => $apmName === null 
-                    ? 'APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.'
+                    ? self::APM_NOT_ENABLED_MESSAGE
                     : "APM provider '{$apmName}' package not installed. Install with: composer require gemvc/apm-{$apmName}",
                 'trace_id' => null,
             ], 1, 'APM error test - not enabled');
@@ -379,7 +381,7 @@ class ApmModel
             return Response::success([
                 'enabled' => false,
                 'provider' => null,
-                'message' => 'APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.',
+                'message' => self::APM_NOT_ENABLED_MESSAGE,
             ], 1, 'APM status');
         }
         
@@ -429,14 +431,14 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
         
         $sourceMetadata = [
             'version' => $_ENV['APP_VERSION'] ?? '5.2.0',
-            'environment' => $_ENV['APP_ENV'] ?? 'development',
+            'environment' => \Gemvc\Helper\ProjectHelper::getAppEnv(),
         ];
 
         return $toolkit->registerService($email, $organizationName, $source, $sourceMetadata);
@@ -455,7 +457,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -476,7 +478,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -512,7 +514,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -536,7 +538,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -556,7 +558,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -575,7 +577,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -594,7 +596,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -613,7 +615,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }
@@ -636,7 +638,7 @@ class ApmModel
         if ($toolkit === null) {
             $providerName = ApmFactory::isEnabled();
             if ($providerName === null) {
-                return Response::notFound('APM is not enabled. Set APM_NAME and APM_ENABLED in .env file.');
+                return Response::notFound(self::APM_NOT_ENABLED_MESSAGE);
             }
             return Response::notFound("APM provider '{$providerName}' toolkit not available. Install with: composer require gemvc/apm-{$providerName}");
         }

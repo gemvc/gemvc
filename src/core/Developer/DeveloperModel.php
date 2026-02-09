@@ -660,7 +660,7 @@ class DeveloperModel extends DeveloperTable
                 }
                 
                 // Load table class
-                $tableFile = \Gemvc\Helper\ProjectHelper::rootDir() . '/app/table/' . $tableClassName . '.php';
+                $tableFile = \Gemvc\Helper\ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'table' . DIRECTORY_SEPARATOR . $tableClassName . '.php';
                 if (!file_exists($tableFile)) {
                     return Response::badRequest("Table file not found: {$tableClassName}.php");
                 }
@@ -800,32 +800,12 @@ class DeveloperModel extends DeveloperTable
 
     public function getDevAssistantUrl(): string
     {
-        $port = isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) && is_string($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) ? $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] : '80';
-        $subUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) ? $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] : '';
-        $url = 'http://localhost';
-        if($port !== '80') {
-            $url = 'http://localhost:' . $port;
-        }
-        if($subUrl !== '') {
-            $url .= '/' . $subUrl;
-        }
-        $url .= '/index/developer';
-        return $url;
+        return \Gemvc\Helper\ProjectHelper::getApiBaseUrl() . '/index/developer';
     }
 
     public function getDocumentationUrl(): string
     {
-        $port = isset($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) && is_string($_ENV['APP_ENV_PUBLIC_SERVER_PORT']) ? $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] : '80';
-        $subUrl = isset($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) && is_string($_ENV['APP_ENV_API_DEFAULT_SUB_URL']) ? $_ENV['APP_ENV_API_DEFAULT_SUB_URL'] : '';
-        $url = 'http://localhost';
-        if($port !== '80') {
-            $url = 'http://localhost:' . $port;
-        }
-        if($subUrl !== '') {
-            $url .= '/' . $subUrl;
-        }
-        $url .= '/index/document';
-        return $url;
+        return \Gemvc\Helper\ProjectHelper::getApiBaseUrl() . '/index/document';
     }
 
     /**

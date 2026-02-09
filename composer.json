@@ -10,7 +10,8 @@
         "gemvc/connection-pdo": "^1.0",
         "gemvc/apm-contracts": "^1.5",
         "gemvc/apm-tracekit": "^2.0",
-        "gemvc/http-client": "^1.2"
+        "gemvc/http-client": "^1.2",
+        "gemvc/connection-openswoole": "^1.1"
     },
     "license": "MIT",
     "archive": {
