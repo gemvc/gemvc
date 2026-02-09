@@ -86,12 +86,12 @@ Response::internalError($error)             // 500
 ### Database Query Builder
 ```php
 // Fluent interface
-$this->select(['id', 'name'])
+$this->select('id,name')
     ->where('active', true)
-    ->whereIn('id', [1, 2, 3])
-    ->orderBy('name', 'ASC')
+    ->whereEqual('id', $id)
+    ->orderBy('name', true)  // true = ASC, false = DESC
     ->limit(10)
-    ->run();  // Returns array of objects
+    ->run();  // Returns array of objects (?array on error)
 
 // CRUD
 $this->insertSingleQuery()   // Insert

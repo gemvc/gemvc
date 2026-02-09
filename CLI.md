@@ -33,11 +33,12 @@ Command (Base Class)
 │   └── InitNginx (Nginx-specific - coming soon)
 │
 ├── AbstractBaseGenerator (Code Generation Base)
-│   ├── CreateService
-│   ├── CreateController
-│   ├── CreateModel
-│   ├── CreateTable
-│   └── CreateCrud
+│   └── AbstractBaseCrudGenerator
+│       ├── CreateService
+│       ├── CreateController
+│       ├── CreateModel
+│       ├── CreateTable
+│       └── CreateCrud
 │
 └── Direct Commands
     ├── DbInit

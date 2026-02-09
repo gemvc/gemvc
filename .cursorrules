@@ -128,16 +128,13 @@ class UserTable extends Table {
 }
 
 // Fluent Query Builder
-$this->select(['id', 'name'])              // SELECT specific columns
+$this->select('id,name')                    // SELECT specific columns (string)
     ->where('active', true)                  // WHERE clause
-    ->where('id', $id)                       // Multiple WHERE (AND)
-    ->whereIn('id', [1, 2, 3])              // WHERE IN
+    ->whereEqual('id', $id)                 // WHERE equality (preferred)
     ->whereLike('name', '%test%')            // WHERE LIKE
-    ->whereOr('status', ['active', 'pending'])  // WHERE OR
-    ->orderBy('name', 'ASC')                 // ORDER BY
+    ->orderBy('name', true)                  // ORDER BY (true = ASC, false = DESC)
     ->limit(10)                              // LIMIT
-    ->offset(20)                             // OFFSET
-    ->run();                                 // Execute query
+    ->run();                                 // Execute query (?array)
 
 // CRUD Operations
 $this->insertSingleQuery()                  // Insert single record
@@ -410,7 +407,7 @@ Schema::index(['name', 'is_active'])
 Schema::check('age >= 18')->name('valid_age')
 
 // Fulltext Search
-Schema::fulltext(['name', 'description'])
+Schema::fullText(['name', 'description'])
 ```
 
 ## Microservice Best Practices

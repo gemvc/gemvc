@@ -41,7 +41,7 @@ intValueGet(string $key): int|false
 intValuePost(string $key): int|false
 floatValueGet(string $key): float|false
 floatValuePost(string $key): float|false
-stringValueGet(string $key): ?string
+// String values: use $this->request->get[$key] or $this->request->post[$key] (already sanitized)
 
 // Filtering & Sorting
 findable(array $fields): bool      // Enable LIKE search
@@ -56,7 +56,7 @@ getPerPage(): int
 auth(?array $roles = null): bool
 
 // Mapping
-mapPostToObject(object $object, ?array $mapping = null): object|false
+mapPostToObject(object $object, ?array $mapping = null): object|null
 mapPutToObject(object $object, ?array $mapping = null): object|false
 
 // Response
@@ -99,26 +99,23 @@ protected array $_joins = [];     // JOIN clauses
 __construct(): void
 
 // Query Builder
-select(?array $columns = null): self
-from(string $table): self
+select(?string $columns = null): self   // e.g. "id,name,email" or null for *
 where(string $column, mixed $value): self
-whereIn(string $column, array $values): self
+whereEqual(string $column, mixed $value): self  // Preferred for equality
 whereLike(string $column, string $pattern): self
-whereOr(string $column, array $values): self
-whereIsNull(string $column): self
-whereIsNotNull(string $column): self
+whereOr(string $column, mixed $value): self
+whereNull(string $column): self
+whereNotNull(string $column): self
 join(string $table, string $condition, string $type = 'INNER'): self
-orderBy(string|null $column = null, bool|null $ascending = null): self  // Default: 'id' DESC
+orderBy(string|null $column = null, bool|null $ascending = null): self  // Default: primary key DESC
 limit(int $limit): self
-offset(int $offset): self
-groupBy(string $column): self
-run(): array  // Returns array of objects
+run(): ?array  // Returns array of objects, null on error
 
 // CRUD Operations
 insertSingleQuery(): ?static     // Returns self with ID on success
-updateSingleQuery(): ?static      // Returns self on success
-deleteByIdQuery(int $id): ?int    // Returns deleted ID on success
-selectById(int $id): null|static  // Custom method pattern
+updateSingleQuery(): ?static    // Returns self on success
+deleteByIdQuery(int|string $id): int|string|null  // Returns deleted ID on success (supports UUID PKs)
+selectById(int|string $id): null|static  // Custom method pattern
 
 // Helper Methods
 getError(): ?string
@@ -137,7 +134,7 @@ defineSchema(): array  // Return schema constraints
 **Methods**:
 ```php
 __construct(Request $request): void
-createList(Table $model): JsonResponse  // Auto pagination/filtering
+createList(object $model, ?string $columns = null): JsonResponse  // Auto pagination/filtering
 protected function createModel(object $model): object  // Sets Request on model for APM tracing
 protected function getApm(): ?ApmInterface  // Returns $this->request->apm
 ```
@@ -164,13 +161,13 @@ protected function callController(Controller $controller): ControllerTracingProx
 Schema::primary(string|array $columns)
 Schema::autoIncrement(string $column)
 Schema::unique(string|array $columns): self
-Schema::foreignKey(string $column, string $reference): ForeignKeyBuilder
-Schema::index(string|array $columns): self
-Schema::check(string $condition): CheckBuilder
-Schema::fulltext(string|array $columns)
+Schema::foreignKey(string $column, string $reference): ForeignKeyConstraint
+Schema::index(string|array $columns): IndexConstraint
+Schema::check(string $condition): CheckConstraint
+Schema::fullText(string|array $columns): FulltextConstraint
 ```
 
-**ForeignKeyBuilder Methods**:
+**ForeignKeyConstraint methods** (e.g. onDeleteCascade):
 ```php
 ->name(string $name): self
 ->onDeleteCascade(): self

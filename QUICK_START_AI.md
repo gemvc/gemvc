@@ -97,7 +97,6 @@ Response::forbidden($message)                     // 403
 // Query Builder (Fluent Interface)
 $result = $this->select()
     ->where('active', true)
-    ->whereIn('id', [1, 2, 3])
     ->whereLike('name', '%test%')
     ->orderBy('name', true)  // true = ASC, false/null = DESC
     ->limit(10)
