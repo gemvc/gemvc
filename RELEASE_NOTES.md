@@ -1,6 +1,68 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.4...5.6.5
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.5...5.6.6
 # GEMVC Framework - Release Notes
+
+## Version 5.6.6 - Security Hardening & Path Normalization
+
+**Release Date**: 2026-02-18  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release hardens the framework's security by implementing strict path normalization in `SecurityManager` to prevent access rule bypasses. It also improves input sanitization and request body handling in `ApacheRequest` (fixing empty body issues with PUT/PATCH) and sanitizes request URIs in `SwooleRequest`.
+
+---
+
+## 🔒 Security & Changes
+
+### SecurityManager – Path Normalization
+- **Path access rules enforcement**: 
+  - Normalizes request paths before checking blocked paths/extensions.
+  - Collapses multiple slashes (e.g. `//app` → `/app`).
+  - Decodes URL-encoded segments once (e.g. `%2fapp`, `%2e%2e`) before comparison.
+  - Resolves `.` and `..` segments to prevent path traversal (e.g. `/api/../app` → `/app`).
+  - **Benefit**: Prevents bypassing security rules via obfuscated paths.
+  - Location: `src/core/SecurityManager.php`
+
+### ApacheRequest – Input Hardening
+- **Stream Handling**: Reads `php://input` once per request and reuses it for JSON POST, PUT, and PATCH.
+  - Fixes issues where PUT/PATCH streams could be empty if read multiple times.
+- **Sanitization**:
+  - `sanitizeInput()` returns empty string instead of `false` when filter fails.
+  - `sanitizeRequestURI()` uses the filtered URL result when valid.
+  - `sanitizeQueryString()` uses empty string of `false` on failure.
+  - **Recursive Sanitization**: deeply nested array values in POST, GET, PUT, PATCH are fully sanitized.
+  - Location: `src/http/ApacheRequest.php`
+
+### SwooleRequest – URI Sanitization
+- **Sanitization**: `sanitizeRequestURI()` returns the filtered URL when valid instead of the original URI.
+- Location: `src/http/SwooleRequest.php`
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Stronger Security**: Path normalization prevents common bypass techniques (double slashes, encoding, traversal).
+- ✅ **Reliability**: PUT/PATCH bodies are correctly parsed on Apache.
+- ✅ **Safety**: Fail-safe defaults (empty strings) when sanitization filters fail.
+- ✅ **XSS Prevention**: Deep recursive sanitization for all input arrays.
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.5 to 5.6.6
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- Security hardening in `SecurityManager`, `ApacheRequest`, and `SwooleRequest`.
+
+**Breaking Changes**: None
+
+---
 
 ## Version 5.6.5 - Hot Reload & ProjectHelper Refactor (Core DRY)
 
