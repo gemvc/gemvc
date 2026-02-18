@@ -371,7 +371,6 @@ class Bootstrap
         header('HTTP/1.0 404 Not Found');
         $custom404Path = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'web' . DIRECTORY_SEPARATOR . 'Error' . DIRECTORY_SEPARATOR . '404.php';
         if (file_exists($custom404Path)) {
-            // @phpstan-ignore-next-line
             include $custom404Path;
         } else {
             $this->show404Error();

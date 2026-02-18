@@ -5,6 +5,34 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.6] - 2026-02-18
+
+### Security
+
+- **SecurityManager** – Path normalization to prevent bypass of path access rules
+  - Normalize request path before checking blocked paths/extensions
+  - Collapse multiple slashes (e.g. `//app` → `/app`) so double-slash cannot bypass
+  - Decode URL-encoded segments once (e.g. `%2fapp`, `%2e%2e`) before comparison
+  - Resolve `.` and `..` segments to prevent path traversal (e.g. `/api/../app` → `/app`)
+  - Location: `src/core/SecurityManager.php`
+- **ApacheRequest** – Input and body handling hardening
+  - Read `php://input` once per request and reuse for JSON POST, PUT, and PATCH (stream is single-read; previously PUT/PATCH could receive empty body)
+  - `sanitizeInput()`: when `filter_var(..., FILTER_SANITIZE_FULL_SPECIAL_CHARS)` returns `false`, return empty string instead of passing unsanitized value
+  - `sanitizeRequestURI()`: use the filtered URL result when valid instead of the original string
+  - `sanitizeQueryString()`: do not assign `false` to `$_SERVER['QUERY_STRING']` when filter fails; use empty string
+  - Recursive sanitization for POST, GET, PUT, PATCH so deeply nested array values are sanitized (XSS prevention)
+  - Location: `src/http/ApacheRequest.php`
+- **SwooleRequest** – Request URI sanitization
+  - `sanitizeRequestURI()`: return the filtered URL when `filter_var(..., FILTER_SANITIZE_URL)` succeeds instead of the original URI
+  - Location: `src/http/SwooleRequest.php`
+
+### Benefits
+
+- Path access security (OpenSwoole) cannot be bypassed via `//app`, `/%2e%2e/app`, or `/api/../app`
+- PUT/PATCH request bodies are correctly parsed on Apache when body is read for validation
+- No unsanitized string or URI is returned when sanitization fails; safe defaults are used
+- Nested JSON/form arrays are fully sanitized against XSS
+
 ## [5.6.5] - 2026-02-09
 
 ### Changed

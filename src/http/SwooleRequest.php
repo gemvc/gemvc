@@ -520,10 +520,8 @@ class SwooleRequest
      */
     private function sanitizeRequestURI(string $uri): string
     {
-        $sanitizedURI = trim($uri);
-        if (!filter_var($sanitizedURI, FILTER_SANITIZE_URL)) {
-            return '';
-        }
-        return $sanitizedURI;
+        $trimmed = trim($uri);
+        $filtered = filter_var($trimmed, FILTER_SANITIZE_URL);
+        return $filtered !== false ? $filtered : '';
     }
 }

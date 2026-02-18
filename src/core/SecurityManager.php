@@ -24,29 +24,60 @@ class SecurityManager
      */
     public function isRequestAllowed(string $requestUri): bool
     {
-        // Remove query parameters and normalize path
+        // Remove query parameters and normalize path (security: prevent bypass via // or encoded segments)
         $path = strtok($requestUri, '?');
-        $path = $path !== false ? rtrim($path, '/') : '';
-        
+        $path = $path !== false ? $path : '';
+        $path = $this->normalizePath($path);
+
         // Allow root path
         if ($path === '' || $path === '/') {
             return true;
         }
-        
+
         // Check blocked paths
         if ($this->isBlockedPath($path)) {
             error_log("Security: Blocked direct access to: $path");
             return false;
         }
-        
+
         // Check blocked file extensions
         if ($this->isBlockedFile($path)) {
             error_log("Security: Blocked file access: $path");
             return false;
         }
-        
+
         // Allow all other requests (API endpoints, routes)
         return true;
+    }
+
+    /**
+     * Normalize path to prevent security bypass via double slashes, encoded segments, or traversal.
+     * e.g. //app -> /app, /%2e%2e/app -> /app, /api/../app -> /app
+     */
+    private function normalizePath(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return '';
+        }
+        // Decode once so that %2f, %5c etc. are normalized before comparison
+        $decoded = rawurldecode($path);
+        // Collapse multiple slashes to one (prevents //app bypass)
+        $normalized = (string) preg_replace('#/+#', '/', $decoded);
+        // Resolve . and .. segments to prevent path traversal bypass (e.g. /api/../app)
+        $segments = array_filter(explode('/', $normalized), fn (string $s): bool => $s !== '');
+        $resolved = [];
+        foreach ($segments as $segment) {
+            if ($segment === '..') {
+                array_pop($resolved);
+                continue;
+            }
+            if ($segment !== '.') {
+                $resolved[] = $segment;
+            }
+        }
+        $joined = '/' . implode('/', $resolved);
+        return rtrim($joined, '/') ?: '/';
     }
 
     /**
