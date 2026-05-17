@@ -469,11 +469,14 @@ class DeveloperTable extends Table
                 $dbCharset
             );
             
+            $mysqlInitCmdAttr = \PHP_VERSION_ID >= 80500 && \class_exists('Pdo\\Mysql')
+                ? \Pdo\Mysql::ATTR_INIT_COMMAND
+                : \PDO::MYSQL_ATTR_INIT_COMMAND;
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_TIMEOUT => 5,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$dbCharset}"
+                $mysqlInitCmdAttr => "SET NAMES {$dbCharset}"
             ];
             
             $pdo = new PDO($dsn, $dbUser, $dbPass, $options);
