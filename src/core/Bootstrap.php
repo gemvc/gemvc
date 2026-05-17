@@ -35,11 +35,12 @@ class Bootstrap
     public function __construct(Request $request)
     {
         $this->request = $request;
-        
+
+        ProjectHelper::disableOpcacheIfDev();
+
+        $this->setRequestedService();
         // Initialize APM early to capture full request lifecycle
         $this->initializeApm();
-        
-        $this->setRequestedService();
         $this->runApp();
     }
     
@@ -61,7 +62,7 @@ class Bootstrap
         // Explicitly set $request->apm to ensure it's available for ApiService, Controller, etc.
         // This ensures trace context propagation even if ApmFactory doesn't set it
         if ($this->apm !== null) {
-            $this->request->apm = $this->apm;
+            $this->request->setApm($this->apm);
         }
     }
 
@@ -76,6 +77,24 @@ class Bootstrap
             
             // Handle any errors that occurred during API request processing
             if(count($this->errors) > 0) {
+                // Get response code from errors (use first error's HTTP code)
+                $responseCode = !empty($this->errors) ? $this->errors[0]->http_code : 500;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before error response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 GEMVCErrorHandler::handleErrors($this->errors);
             }
             die;
@@ -85,7 +104,8 @@ class Bootstrap
     private function handleApiRequest(): void
     {
         $serviceName = $this->request->getServiceName();
-        if (!file_exists('./app/api/'.$serviceName.'.php')) {
+        $apiServicePath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $serviceName . '.php';
+        if (!file_exists($apiServicePath)) {
             $this->errors[] = new GemvcError("The API service '$serviceName' does not exist", 404, __FILE__, __LINE__);
             return;
         }
@@ -131,12 +151,66 @@ class Bootstrap
                 $this->errors[] = new GemvcError("API method '$method' must return a JsonResponse instance", 500, __FILE__, __LINE__);
                 GemvcErrorHandler::handleErrors($this->errors);
                 */
+                // Get response code before sending (for APM tracing)
+                $responseCode = $response->response_code ?? 200;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 $response->show();
                 die;
             }
             if ($response instanceof HtmlResponse) {
+                // Get response code before sending (for APM tracing)
+                $responseCode = $response->response_code ?? 200;
+                
+                // Store response code on Request object for APM to access
+                $this->request->_http_response_code = $responseCode;
+                
+                // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+                // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+                // The batching system handles time-based sending automatically
+                if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                    try {
+                        $this->request->apm->flush();
+                    } catch (\Throwable $e) {
+                        // Silently fail - don't let APM break the application
+                        error_log("APM: Error during flush: " . $e->getMessage());
+                    }
+                }
+                
                 $response->show();
                 die;
+            }
+            
+            // Get response code before sending (for APM tracing)
+            $responseCode = 200; // Default for unknown response types
+            
+            // Store response code on Request object for APM to access
+            $this->request->_http_response_code = $responseCode;
+            
+            // Flush APM traces before response is sent (adds to batch, sends if interval elapsed)
+            // Note: Shutdown handler will also call flush() + forceSendBatch() as a safety net
+            // The batching system handles time-based sending automatically
+            if ($this->request->apm !== null && $this->request->apm->isEnabled()) {
+                try {
+                    $this->request->apm->flush();
+                } catch (\Throwable $e) {
+                    // Silently fail - don't let APM break the application
+                    error_log("APM: Error during flush: " . $e->getMessage());
+                }
             }
             
             $response->show();
@@ -295,11 +369,9 @@ class Bootstrap
     private function showWebNotFound(): void
     {
         header('HTTP/1.0 404 Not Found');
-        
-        // Check if a custom 404 page exists
-        if (file_exists('./app/web/Error/404.php')) {
-            // @phpstan-ignore-next-line
-            include './app/web/Error/404.php';
+        $custom404Path = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'web' . DIRECTORY_SEPARATOR . 'Error' . DIRECTORY_SEPARATOR . '404.php';
+        if (file_exists($custom404Path)) {
+            include $custom404Path;
         } else {
             $this->show404Error();
         }
@@ -337,35 +409,13 @@ class Bootstrap
     
     /**
      * Get template path from startup/common/system_pages directory
-     * Uses similar path resolution logic as AbstractInit::findStartupPath()
-     * 
+     *
      * @param string $templateName Template filename (e.g., 'error-404.php')
      * @return string Full path to template file
      */
     private function getTemplatePath(string $templateName): string
     {
-        // From core directory, go up one level to src, then to startup/common/system_pages
-        // __DIR__ = vendor/gemvc/library/src/core
-        // dirname(__DIR__) = vendor/gemvc/library/src
-        $basePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'system_pages';
-        $templatePath = $basePath . DIRECTORY_SEPARATOR . $templateName;
-        
-        // If not found, try alternative paths (for different installation structures)
-        if (!file_exists($templatePath)) {
-            $alternativePaths = [
-                // Standard Composer vendor path
-                dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'gemvc' . DIRECTORY_SEPARATOR . 'library' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'system_pages',
-            ];
-            
-            foreach ($alternativePaths as $altPath) {
-                $altTemplatePath = $altPath . DIRECTORY_SEPARATOR . $templateName;
-                if (file_exists($altTemplatePath)) {
-                    return $altTemplatePath;
-                }
-            }
-        }
-        
-        return $templatePath;
+        return ProjectHelper::getLibrarySystemPagesPath() . DIRECTORY_SEPARATOR . $templateName;
     }
 
     /**
@@ -386,7 +436,7 @@ class Bootstrap
                 $apm = ApmFactory::create($this->request);
                 // Explicitly set $request->apm to ensure it's available for subsequent operations
                 if ($apm !== null) {
-                    $this->request->apm = $apm;
+                    $this->request->setApm($apm);
                 }
             }
         }

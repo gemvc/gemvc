@@ -197,7 +197,7 @@ Schema::check('salary > 0')
 #### 7. **Fulltext Search**
 
 ```php
-Schema::fulltext(['name', 'description'])
+Schema::fullText(['name', 'description'])
 ```
 
 ### Complete Example
@@ -230,7 +230,7 @@ public function defineSchema(): array
         Schema::check('salary > 0'),
         
         // Full-text search
-        Schema::fulltext(['name', 'description'])
+        Schema::fullText(['name', 'description'])
     ];
 }
 ```
@@ -499,10 +499,10 @@ Schema::check("status IN ('active', 'inactive', 'pending')")
 
 ```php
 // Single column
-Schema::fulltext('description')
+Schema::fullText('description')
 
 // Multiple columns
-Schema::fulltext(['name', 'description'])
+Schema::fullText(['name', 'description'])
 ```
 
 ---

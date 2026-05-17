@@ -39,7 +39,7 @@ class User extends ApiService
         ])) {
             return $this->request->returnResponse();
         }
-        return (new UserController($this->request))->create();
+        return $this->callController(new UserController($this->request))->create();
     }
 
     /**
@@ -69,9 +69,16 @@ class User extends ApiService
         
         //manually set the id to the post request
         $this->request->post['id'] = $id;
-        return (new UserController($this->request))->read();
-    }
+        // Automatic Tracing with callController()
+        return $this->callController(new UserController($this->request))->read();
+        // or simply call the controller method without using callController() when you do not need APM tracing
+        //return (new UserController($this->request))->read();
 
+        //or use magic property to access the controller (with Tracing enabled)
+        //return $this->UserController->read();
+        
+    }
+//deprecated method
     /**
      * Update User
      * 
@@ -104,7 +111,7 @@ class User extends ApiService
                 $this->request->post['password'] = CryptHelper::hashPassword($password);
             }
         }
-        return (new UserController($this->request))->update();
+        return $this->callController(new UserController($this->request))->update();
     }
     public function delete(): JsonResponse
     {
@@ -116,7 +123,7 @@ class User extends ApiService
         ])) {
             return $this->request->returnResponse();
         }
-        return (new UserController($this->request))->delete();
+        return $this->callController(new UserController($this->request))->delete();
     }
 
     /**
@@ -142,10 +149,10 @@ class User extends ApiService
             'description'
         ]);
         
-        return (new UserController($this->request))->list();
+        return $this->callController(new UserController($this->request))->list();
     }
 
-        /**
+    /**
      * User Login
      * 
      * @return JsonResponse
@@ -162,7 +169,7 @@ class User extends ApiService
         }
         //return Response::success($this->request->post, 1,"Token is valid");
         //echo "hi".$this->request->post['email'];
-        return (new UserController($this->request))->loginByEmailPassword();
+        return $this->callController(new UserController($this->request))->loginByEmailPassword();
     }
 
     /**
@@ -190,7 +197,7 @@ class User extends ApiService
         if(!$this->request->auth()){
             return Response::unauthorized("Invalid or missing token");
         }
-        return (new UserController($this->request))->renewToken();
+        return $this->callController(new UserController($this->request))->renewToken();
     }
 
     /**

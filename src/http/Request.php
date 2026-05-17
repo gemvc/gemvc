@@ -74,6 +74,14 @@ class Request
      */
     public ?object $tracekit = null;
     
+    /**
+     * HTTP response code (set by OpenSwooleServer for APM tracing)
+     * Used to pass response code to APM flush() since http_response_code() doesn't work in Swoole after headers are sent
+     * 
+     * @var int|null
+     */
+    public ?int $_http_response_code = null;
+    
     private string $id;
     private string $time;
     private float $start_exec;
@@ -140,6 +148,12 @@ class Request
         $this->patch = [];
         $this->files = [];
 
+    }
+
+    
+    public function setApm(\Gemvc\Core\Apm\ApmInterface $apm): void
+    {
+        $this->apm = $apm;
     }
 
     public function returnResponse(): JsonResponse

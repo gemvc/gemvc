@@ -1,12 +1,15 @@
 <?php
 namespace App\Api;
 
-use App\Controller\ApmController;
+use Gemvc\Core\Apm\ApmController;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-
+/**
+ * this @hidden is used to hide the API from the public documentation
+ * @hidden
+ */
 class Apm extends ApiService
 {
     /**
@@ -42,7 +45,7 @@ class Apm extends ApiService
      */
     public function testError(): JsonResponse
     {
-        return (new ApmController($this->request))->testError();
+        return new ApmController($this->request)->testError();
     }
 
     /**
@@ -56,6 +59,19 @@ class Apm extends ApiService
     public function status(): JsonResponse
     {
         return (new ApmController($this->request))->status();
+    }
+
+    /**
+     * Debug APM Payload - Shows what payload would be sent
+     * 
+     * @return JsonResponse
+     * @http GET
+     * @description Debug endpoint to inspect APM trace payload structure
+     * @example /api/Apm/debugPayload
+     */
+    public function debugPayload(): JsonResponse
+    {
+        return (new ApmController($this->request))->debugPayload();
     }
 
     /**

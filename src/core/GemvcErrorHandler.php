@@ -3,6 +3,8 @@ namespace Gemvc\Core;
 
 use Gemvc\Core\GemvcError;
 use Gemvc\Http\JsonResponse;
+use Gemvc\Helper\ProjectHelper;
+
 class GEMVCErrorHandler {
 
     /**
@@ -67,12 +69,10 @@ class GEMVCErrorHandler {
      * @return string Formatted error message (dev includes file/line, prod is message only)
      */
     public static function handleErrorMessage(GemvcError $error) {
-        if($_ENV['APP_ENV'] === 'dev') {
+        if (ProjectHelper::isDevEnvironment()) {
             return self::handleDevErrorMessage($error);
         }
-        else {
-            return self::handleProductionErrorMessage($error);
-        }
+        return self::handleProductionErrorMessage($error);
     }
 
     /**

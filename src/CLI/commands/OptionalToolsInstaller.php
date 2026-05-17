@@ -181,7 +181,13 @@ class OptionalToolsInstaller extends Command
             throw new \RuntimeException("composer.json not found. Please run 'composer init' first.");
         }
         
-        $this->info("Running: composer {$command}");
+        // Add flags to prevent issues:
+        // --no-interaction: Don't ask questions
+        // --no-scripts: Don't run scripts (prevents binary file locking issues)
+        // --prefer-stable: Prefer stable versions (helps with alpha version conflicts)
+        $enhancedCommand = $command . ' --no-interaction --no-scripts --prefer-stable';
+        
+        $this->info("Running: composer {$enhancedCommand}");
         $output = [];
         $returnCode = 0;
         
@@ -193,7 +199,7 @@ class OptionalToolsInstaller extends Command
             throw new \RuntimeException("Could not change to directory: {$this->basePath}");
         }
         
-        exec("composer {$command} 2>&1", $output, $returnCode);
+        exec("composer {$enhancedCommand} 2>&1", $output, $returnCode);
         
         if (chdir($currentDir) === false) {
             throw new \RuntimeException("Could not restore directory: {$currentDir}");
@@ -204,6 +210,37 @@ class OptionalToolsInstaller extends Command
             foreach ($output as $line) {
                 $this->write("  {$line}\n", 'red');
             }
+            
+            // Check for specific errors and provide helpful suggestions
+            $errorText = implode("\n", $output);
+            
+            // Extract package name from command (e.g., "require --dev phpstan/phpstan" -> "phpstan/phpstan")
+            $packageName = '';
+            if (preg_match('/require\s+--dev\s+([^\s]+)/', $command, $matches)) {
+                $packageName = $matches[1];
+            }
+            
+            if (strpos($errorText, 'Permission denied') !== false || strpos($errorText, 'Failed to open stream') !== false) {
+                $this->info("\nPermission Issue Detected:");
+                $this->info("   The vendor/bin/gemvc file might be locked or in use.");
+                $this->info("   Solutions:");
+                $this->info("   1. Close any terminals/processes using the gemvc command");
+                $this->info("   2. Run this terminal as Administrator");
+                if ($packageName) {
+                    $this->info("   3. Manually install: composer require --dev {$packageName}");
+                }
+            }
+            
+            if (strpos($errorText, 'Downgrading') !== false || strpos($errorText, 'version conflict') !== false) {
+                $this->info("\nVersion Conflict Detected:");
+                $this->info("   There's a version conflict with gemvc/library.");
+                $this->info("   Solutions:");
+                $this->info("   1. Update gemvc/library first: composer update gemvc/library");
+                if ($packageName) {
+                    $this->info("   2. Or manually install: composer require --dev {$packageName} --with-all-dependencies");
+                }
+            }
+            
             throw new \RuntimeException("Composer command failed");
         }
     }
@@ -213,7 +250,7 @@ class OptionalToolsInstaller extends Command
      */
     private function copyPhpstanConfig(): void
     {
-        $sourceConfig = $this->packagePath . '/src/startup/phpstan.neon';
+        $sourceConfig = $this->packagePath . '/src/startup/common/phpstan.neon';
         $targetConfig = $this->basePath . '/phpstan.neon';
         
         if (!file_exists($sourceConfig)) {

@@ -1,7 +1,8 @@
 <?php
-namespace App\Controller;
+namespace Gemvc\Core\Assistant;
 
-use App\Model\GemvcAssistantModel;
+use Gemvc\Core\Assistant\GemvcAssistantModel;
+use Gemvc\Core\Developer\DeveloperController;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
@@ -61,7 +62,7 @@ class GemvcAssistantController extends Controller
     public function database(): JsonResponse
     {
         // Use DeveloperController for template rendering
-        $developerController = new \App\Controller\DeveloperController($this->request);
+        $developerController = new DeveloperController($this->request);
         return $developerController->database();
     }
 
@@ -106,7 +107,7 @@ class GemvcAssistantController extends Controller
     public function services(): JsonResponse
     {
         // Use DeveloperController for template rendering
-        $developerController = new \App\Controller\DeveloperController($this->request);
+        $developerController = new DeveloperController($this->request);
         return $developerController->services();
     }
 
@@ -131,7 +132,7 @@ class GemvcAssistantController extends Controller
     public function tables(): JsonResponse
     {
         // Use DeveloperController for template rendering
-        $developerController = new \App\Controller\DeveloperController($this->request);
+        $developerController = new DeveloperController($this->request);
         return $developerController->tables();
     }
 

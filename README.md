@@ -172,9 +172,11 @@ APM_TRACE_DB_QUERY=1
 public function create(): JsonResponse
 {
     // Automatic controller tracing (if APM_TRACE_CONTROLLER=1)
-    return $this->callController(new UserController($this->request))->create();
+    return $this->UserController->create();
 }
 ```
+
+*Note: You can still use `$this->callController(new UserController($this->request))` if you prefer, but the magic property syntax is recommended.*
 
 **4. Use `createModel()` in Controllers:**
 ```php

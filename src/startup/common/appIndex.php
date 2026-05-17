@@ -4,7 +4,6 @@ namespace App\Api;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Http\Response;
 use Gemvc\Http\HtmlResponse;
 use App\Controller\IndexController;
 
@@ -54,23 +53,6 @@ class Index extends ApiService
     public function developer(): HtmlResponse
     {
         return new IndexController($this->request)->developer();
-    }
-
-    /** 
-    *  Developer Welcome Page Data (JSON for SPA)
-    * @return JsonResponse
-    * @http GET
-    * @description GEMVC Framework Developer Welcome Page Data
-    * @hidden
-    */
-    public function welcome(): JsonResponse
-    {
-        // Authentication check
-        if (!$this->request->auth(['developer','admin'])) {
-            return Response::unauthorized('Authentication required');
-        }
-        
-        return new IndexController($this->request)->welcome();
     }
 
     /**

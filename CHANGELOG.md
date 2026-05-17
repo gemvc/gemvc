@@ -5,6 +5,268 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.6] - 2026-02-18
+
+### Security
+
+- **SecurityManager** – Path normalization to prevent bypass of path access rules
+  - Normalize request path before checking blocked paths/extensions
+  - Collapse multiple slashes (e.g. `//app` → `/app`) so double-slash cannot bypass
+  - Decode URL-encoded segments once (e.g. `%2fapp`, `%2e%2e`) before comparison
+  - Resolve `.` and `..` segments to prevent path traversal (e.g. `/api/../app` → `/app`)
+  - Location: `src/core/SecurityManager.php`
+- **ApacheRequest** – Input and body handling hardening
+  - Read `php://input` once per request and reuse for JSON POST, PUT, and PATCH (stream is single-read; previously PUT/PATCH could receive empty body)
+  - `sanitizeInput()`: when `filter_var(..., FILTER_SANITIZE_FULL_SPECIAL_CHARS)` returns `false`, return empty string instead of passing unsanitized value
+  - `sanitizeRequestURI()`: use the filtered URL result when valid instead of the original string
+  - `sanitizeQueryString()`: do not assign `false` to `$_SERVER['QUERY_STRING']` when filter fails; use empty string
+  - Recursive sanitization for POST, GET, PUT, PATCH so deeply nested array values are sanitized (XSS prevention)
+  - Location: `src/http/ApacheRequest.php`
+- **SwooleRequest** – Request URI sanitization
+  - `sanitizeRequestURI()`: return the filtered URL when `filter_var(..., FILTER_SANITIZE_URL)` succeeds instead of the original URI
+  - Location: `src/http/SwooleRequest.php`
+
+### Benefits
+
+- Path access security (OpenSwoole) cannot be bypassed via `//app`, `/%2e%2e/app`, or `/api/../app`
+- PUT/PATCH request bodies are correctly parsed on Apache when body is read for validation
+- No unsanitized string or URI is returned when sanitization fails; safe defaults are used
+- Nested JSON/form arrays are fully sanitized against XSS
+
+## [5.6.5] - 2026-02-09
+
+### Changed
+- **Core** - Centralized paths and environment via `ProjectHelper` (DRY) across Bootstrap, SwooleBootstrap, SwooleServerConfig, GemvcErrorHandler, DeveloperController, DeveloperModel, DeveloperTable, ApmModel
+  - Paths: `appDir()`, `getLibrarySystemPagesPath()` for API service, web 404, system pages, app/api, app/table
+  - Environment: `isDevEnvironment()`, `getAppEnv()`, `getBaseUrl()`, `getApiBaseUrl()`
+- **HotReloadManager** - Watches app directory only (via `ProjectHelper::appDir()`); runs in dev only; check interval 15s → 5s
+- **ProjectHelper** - Added `disableOpcacheIfDev()`; called from `Bootstrap::__construct()` and OpenSwoole `workerStart` so file changes take effect in dev without restart
+- **Documentation** - CHANGELOG, ARCHITECTURE.md, CLI.md updated for 5.6.5 (see RELEASE_NOTES.md)
+
+### Benefits
+- ✅ Single source of truth for paths and env in core
+- ✅ Hot reload scoped to app code; faster cycle (5s)
+- ✅ OPcache disabled in dev so edits are picked up (Apache/Nginx and OpenSwoole)
+
+## [5.6.4] - 2026-01-29
+
+### Changed
+- **Apache entrypoint (index.php)** - Dotenv: `load()` → `overload()` for Docker compatibility
+  - File copied to application root; `.env` can now override container-set environment variables when needed
+  - Location: `src/startup/apache/index.php`
+- **ProjectHelper::loadEnv()** - Dotenv: `load()` → `overload()` for root and app `.env`
+  - Root `.env`: `$dotenv->overload($rootEnvFile)`
+  - App `.env`: `$dotenv->overload($appEnvFile)`
+  - Location: `src/helper/ProjectHelper.php` (lines 41–52)
+
+### Benefits
+- ✅ Docker compatibility: `.env` can override container-provided environment variables
+- ✅ Consistent behavior between Apache entrypoint and ProjectHelper
+- ✅ Backward compatible for apps without pre-set env vars
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
+## [5.6.2] - 2026-01-27
+
+### Added
+- **Request::setApm() Method** - New helper method for cleaner APM assignment
+  - Provides a more precise and type-safe way to set APM instance on Request object
+  - Method signature: `setApm(\Gemvc\Core\Apm\ApmInterface $apm): void`
+  - Centralizes APM assignment logic with proper type checking
+  - Location: `src/http/Request.php`
+
+### Changed
+- **Bootstrap.php** - Updated to use `Request::setApm()` method
+  - `initializeApm()` now uses `$this->request->setApm($this->apm)` instead of direct assignment
+  - `recordExceptionInApm()` fallback code also uses `setApm()` method
+  - Provides cleaner, more maintainable code
+  - Location: `src/core/Bootstrap.php`
+
+- **SwooleBootstrap.php** - Updated to use `Request::setApm()` method
+  - `initializeApm()` now uses `$this->request->setApm($this->apm)` instead of direct assignment
+  - Consistent with Bootstrap.php implementation
+  - Location: `src/core/SwooleBootstrap.php`
+
+### Benefits
+- ✅ Cleaner API for APM assignment
+- ✅ Better type safety with explicit method signature
+- ✅ Centralized logic for APM assignment
+- ✅ More maintainable codebase
+- ✅ Consistent pattern across Bootstrap classes
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
+## [5.6.1] - 2026-01-26
+
+### Fixed
+- **PHPStan Level 9 Compliance** - Resolved all static analysis errors across multiple files
+  - **AsyncApiCall.php** - Fixed return type issues and removed unused properties
+    - Removed unused `$responseCallbacks` property (never read, only written)
+    - Fixed `getInternalClient()` return type to exclude null (guaranteed non-null after initialization)
+    - Removed unnecessary `method_exists()` checks for `setMaxConcurrency()` and `setUserAgent()` (both clients implement these methods)
+  - **ApiCall.php** - Fixed return type and removed unused properties
+    - Removed unused `$rawBody` property (never read, only written)
+    - Removed unused `$formFields` property (never read, only written)
+    - Fixed `getInternalClient()` return type with proper PHPStan type assertion
+  - **Controller.php** - Fixed method signature conflict with trait
+    - Updated `recordApmException()` to support both single-parameter (backward compatible) and two-parameter (trait usage) calls
+    - Resolves PHPStan error: "Method invoked with 2 parameters, 1 required"
+  - **ApmModel.php** - Fixed mixed type access and dead catch warnings
+    - Added proper type checks for payload array access (is_array, is_string)
+    - Fixed `strlen()` call with mixed type by ensuring string type before usage
+    - Added PHPStan ignore comment for valid dead catch (constructor can throw even after class_exists check)
+
+### Changed
+- **Type Safety Improvements** - Enhanced type safety across HTTP client classes
+  - Better null handling in lazy-loaded client instances
+  - Improved type assertions for PHPStan Level 9 compliance
+  - Cleaner code with removed unused properties
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+
+## [5.5.0] - 2026-01-22
+
+### Added
+- **gemvc/http-client Package Integration** - HTTP client package now integrated into framework core
+  - `ApiCall` class now uses `Gemvc\Http\Client\HttpClient` internally
+  - `AsyncApiCall` class now uses `AsyncHttpClient` or `SwooleHttpClient` based on environment
+  - Automatic environment detection via `WebserverDetector::isSwoole()`
+  - Enhanced error handling with exception classification
+  - Better retry mechanisms and SSL support
+  - Package version: `^1.2`
+
+- **Automatic Environment Detection** - AsyncApiCall automatically selects optimal client
+  - Uses `SwooleHttpClient` (native coroutines) when running in Swoole environment
+  - Uses `AsyncHttpClient` (curl_multi) when running in Apache/Nginx environment
+  - Zero configuration required - detection happens automatically
+  - Performance optimized for each environment
+
+### Changed
+- **ApiCall Class** - Refactored to use `HttpClient` internally
+  - All public methods delegate to internal client
+  - Configuration automatically synced between wrapper and internal client
+  - Response data automatically synced back to wrapper
+  - All existing public properties and methods remain unchanged
+  - Location: `src/http/ApiCall.php`
+
+- **AsyncApiCall Class** - Refactored to use `AsyncHttpClient` or `SwooleHttpClient`
+  - Automatic environment detection via `WebserverDetector::isSwoole()`
+  - Swoole: Uses native coroutines for optimal performance
+  - Apache/Nginx: Uses curl_multi for concurrent execution
+  - All public methods delegate to internal client
+  - Configuration automatically synced
+  - Handles method differences between clients (e.g., `addPostForm`, `addPostMultipart`, `addPostRaw`)
+  - Location: `src/http/AsyncApiCall.php`
+
+- **composer.json** - Added `gemvc/http-client` as required dependency
+  - Version constraint: `^1.2`
+  - Automatically installed with framework
+
+### Benefits
+- ✅ Automatic environment detection for optimal performance
+- ✅ Optimized Swoole performance (native coroutines)
+- ✅ Better error handling and retry mechanisms
+- ✅ Cleaner codebase architecture (delegation pattern)
+- ✅ Future-proof design (package can be updated independently)
+- ✅ 100% backward compatible - all existing code continues to work
+
+### Fixed
+- No breaking changes - All existing code continues to work without modification
+- All 41 ApiCall tests passing
+- All 149 AsyncApiCall tests passing
+- No linting errors introduced
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- HTTP client package uses same security mechanisms
+- SSL/TLS support maintained and enhanced
+
+## [5.4.4] - 2026-01-14
+
+### Added
+- **Framework Services in Core** - Moved framework-specific services to `src/core/`
+  - `ApmController` and `ApmModel` → `src/core/Apm/`
+  - `GemvcAssistantController` and `GemvcAssistantModel` → `src/core/Assistant/`
+  - `DeveloperController`, `DeveloperModel`, `DeveloperTable` → `src/core/Developer/`
+  - `GemvcMonitoringController` and `GemvcMonitoringModel` → `src/core/Monitoring/`
+  - Framework services are now properly encapsulated in core framework
+  - Initial project structure is much cleaner with only user-facing examples
+
+### Changed
+- **Initial Project Structure** - Significantly cleaner `init_example/` directory
+  - Removed framework implementation files from user projects
+  - API files (`Apm.php`, `GemvcAssistant.php`, `GemvcMonitoring.php`) now delegate to core controllers
+  - Users now see only `User` service as complete example (API, Controller, Model, Table)
+  - Framework services work via thin API wrappers that delegate to core
+  - Better separation: framework code in `src/core/`, user examples in `app/`
+
+### Benefits
+- ✅ Cleaner initial app - users see only User service as complete example
+- ✅ Framework services hidden - implementation details in core, not copied to user projects
+- ✅ Better separation - framework code in `src/core/`, user examples in `app/`
+- ✅ Easier maintenance - framework services updated in one place
+- ✅ Focused learning - users see one complete example instead of multiple services
+
+### Fixed
+- No breaking changes - All API endpoints remain functional
+- Framework services continue to work exactly as before
+- API wrappers maintain backward compatibility
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained
+- Framework services maintain same security standards
+
+## [5.4.3] - 2026-01-14
+
+### Added
+- **APM Batch Sending Mechanism** - Time-based batch sending for APM traces
+  - Replaces `AsyncApiCall` with synchronous `ApiCall()` for better reliability
+  - Automatic batch queue management with 5-second intervals
+  - Shutdown handler ensures all traces are sent on application termination
+  - Significantly improved trace delivery reliability
+  - Location: `gemvc/apm-tracekit` package (v2.0+)
+
+### Changed
+- **Bootstrap.php** - Added APM flush before response
+  - `apm->flush()` call before `die()` statement
+  - Captures HTTP response code for APM tracing
+  - Stores response code in `Request::$_http_response_code` property
+  - Added APM flush in error handling path
+  - Location: `src/core/Bootstrap.php`
+
+- **OpenSwooleServer.php** - Added APM flush after response
+  - `apm->flush()` call after response is sent
+  - Captures HTTP response code before sending response (Swoole limitation)
+  - Stores response code in `Request::$_http_response_code` property
+  - Ensures traces are added to batch queue after response
+  - Location: `src/core/OpenSwooleServer.php`
+
+- **Request.php** - Added HTTP response code property
+  - `$_http_response_code` property for APM tracing
+  - Required for Swoole environment where `http_response_code()` is unreliable
+  - Used to pass response code to APM `flush()` method
+  - Location: `src/http/Request.php`
+
+### Fixed
+- **PHPStan Level 9 Compliance** - Resolved all static analysis errors
+  - Removed unnecessary `@phpstan-ignore-next-line` comments
+  - Fixed `DatabaseManagerFactory` PHPDoc type annotation (`class-string` to `class-string<\Gemvc\Database\Connection\OpenSwoole\SwooleConnection>`)
+  - Simplified null checks in `OpenSwooleServer.php`
+  - All files now pass PHPStan Level 9 analysis
+
+### Security
+- No security vulnerabilities reported
+- All existing security features maintained (90% automatic security)
+- APM batch sending uses same security mechanisms as before
+
 ## [5.4.2] - 2026-06-05
 
 ### Fixed

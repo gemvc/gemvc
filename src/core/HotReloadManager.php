@@ -2,10 +2,14 @@
 
 namespace Gemvc\Core;
 
+use Gemvc\Helper\ProjectHelper;
+
 /**
  * Hot Reload Manager
- * 
- * Handles file change detection and server reloading in development mode
+ *
+ * Handles file change detection and server reloading in development mode.
+ * Watches only the application folder (app/) so reloads trigger on your code changes,
+ * not on vendor or other project files.
  */
 class HotReloadManager
 {
@@ -18,17 +22,21 @@ class HotReloadManager
     {
         $this->lastCheck = time();
         $this->lastFileHash = '';
-        $this->checkInterval = 15000; // 15 seconds
+        $this->checkInterval = 5000; // 5 seconds
         $this->minReloadInterval = 10; // 10 seconds minimum between reloads
     }
 
     /**
-     * Start hot reload monitoring
+     * Start hot reload monitoring (runs only in dev mode)
      */
     public function startHotReload(object $server): void
     {
+        if (!ProjectHelper::isDevEnvironment()) {
+            return;
+        }
+
         $this->lastFileHash = $this->getFileHash();
-        
+
         // @phpstan-ignore-next-line
         $server->tick($this->checkInterval, function () use ($server) {
             $this->checkForChanges($server);
@@ -57,29 +65,33 @@ class HotReloadManager
     }
 
     /**
-     * Get hash of all PHP files in the project
+     * Get hash of all PHP files in the app folder only
      */
     private function getFileHash(): string
     {
         $files = [];
-        $dirs = ['app', 'vendor/gemvc/library/src'];
-        
-        foreach ($dirs as $dir) {
-            if (is_dir($dir)) {
-                $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS)
-                );
-                
-                foreach ($iterator as $file) {
-                    if (is_object($file) && method_exists($file, 'isFile') && method_exists($file, 'getExtension') && 
-                        method_exists($file, 'getPathname') && method_exists($file, 'getMTime') &&
-                        $file->isFile() && $file->getExtension() === 'php') {
-                        $files[] = $file->getPathname() . ':' . $file->getMTime();
-                    }
-                }
+        try {
+            $appDir = ProjectHelper::appDir();
+        } catch (\Throwable $e) {
+            return '';
+        }
+
+        if (!is_dir($appDir)) {
+            return '';
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($appDir, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (is_object($file) && method_exists($file, 'isFile') && method_exists($file, 'getExtension') &&
+                method_exists($file, 'getPathname') && method_exists($file, 'getMTime') &&
+                $file->isFile() && $file->getExtension() === 'php') {
+                $files[] = $file->getPathname() . ':' . $file->getMTime();
             }
         }
-        
+
         return md5(implode('|', $files));
     }
 

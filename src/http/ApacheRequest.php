@@ -11,10 +11,14 @@ use Gemvc\Http\Request;
  */
 class ApacheRequest
 {
-    public  Request $request; 
+    public Request $request;
+
+    /** Raw request body (read once; php://input can only be read once per request) */
+    private string $rawInput = '';
 
     public function __construct()
     {
+        $this->rawInput = (string) file_get_contents('php://input');
         $this->sanitizeAllServerHttpRequestHeaders();
         $this->sanitizeAllHTTPGetRequest();
         $this->sanitizeAllHTTPPostRequest();
@@ -68,30 +72,15 @@ class ApacheRequest
         // Check if Content-Type is JSON and parse it
         $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
         $contentType = is_string($contentType) ? $contentType : '';
-        if (empty($_POST) && strpos($contentType, 'application/json') !== false) {
-            $rawContent = file_get_contents('php://input');
-            if ($rawContent) {
-                $jsonData = json_decode($rawContent, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
-                    $_POST = $jsonData;
-                }
+        if (empty($_POST) && strpos($contentType, 'application/json') !== false && $this->rawInput !== '') {
+            $jsonData = json_decode($this->rawInput, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+                $_POST = $this->sanitizeArrayRecursive($jsonData);
+                return;
             }
         }
-        
-        foreach ($_POST as $key => $value) {
-            if(is_string($value)) {
-                $_POST[$key] = $this->sanitizeInput($value);
-            }
-            if(is_array($_POST[$key])) {
-                foreach($_POST[$key] as $subKey => $subValue)
-                {
-                    if(is_string($subValue)) {
-                        $_POST[$key][$subKey] = $this->sanitizeInput($subValue);
-                    }
-                }
-            }
-           
-        }
+
+        $_POST = $this->sanitizeArrayRecursive($_POST);
     }
 
     /**
@@ -99,51 +88,17 @@ class ApacheRequest
      */
     private function sanitizeAllHTTPPatchRequest(): null|array
     {
-        // Read the raw input stream from the request
-        $input = file_get_contents('php://input');
-        if(!$input) {
-            $input = '';
-        }
-        // Parse the raw input data
-        parse_str($input, $_PATCH);
-        
-        // Check if $_PATCH is not empty
-        if ( empty($_PATCH)) {
+        parse_str($this->rawInput, $_PATCH);
+        if (empty($_PATCH)) {
             return null;
         }
-
-        // Iterate over each key-value pair in $_PATCH
-        foreach ($_PATCH as $key => $value) {
-            // Sanitize the value using your sanitizeInput() function
-            if (is_string($value)) {
-                $_PATCH[$key] = $this->sanitizeInput($value);
-            }
-            // If the value is an array, you may choose to sanitize its elements as well
-            elseif (is_array($value)) {
-                foreach ($value as $subKey => $subValue) {
-                        $_PATCH[$key][$subKey] = $this->sanitizeInput($subValue); /*@phpstan-ignore-line*/
-                }
-            }
-        }
-        return $_PATCH;
+        return $this->sanitizeArrayRecursive($_PATCH);
     }
 
 
-    private function sanitizeAllHTTPGetRequest():void
+    private function sanitizeAllHTTPGetRequest(): void
     {
-        foreach ($_GET as $key => $value) {
-            if (is_string($value)) {
-                $_GET[$key] = $this->sanitizeInput($value);
-            }
-            if (is_array($value)) {
-                foreach ($value as $subKey => $item) {
-                    if (is_string($item)) {
-                        /**@phpstan-ignore-next-line */
-                        $_GET[$key][$subKey] = $this->sanitizeInput($item);
-                    }
-                }
-            }
-        }
+        $_GET = $this->sanitizeArrayRecursive($_GET);
     }
 
     /**
@@ -151,68 +106,68 @@ class ApacheRequest
      */
     private function sanitizeAllHTTPPutRequest(): null|array
     {
-        // Read the raw input stream from the request
-        $input = file_get_contents('php://input');
-        if(!$input) {
-            $input = '';
-        }
-        // Parse the raw input data
-        parse_str($input, $_PUT);
-        
-        // Check if $_PUT is not empty
+        parse_str($this->rawInput, $_PUT);
         if (empty($_PUT)) {
             return null;
         }
-
-        // Iterate over each key-value pair in $_PUT
-        foreach ($_PUT as $key => $value) {
-            // Sanitize the value using your sanitizeInput() function
-            if (is_string($value)) {
-                $_PUT[$key] = $this->sanitizeInput($value);
-            }
-            // If the value is an array, you may choose to sanitize its elements as well
-            elseif (is_array($value)) {
-                foreach ($value as $subKey => $subValue) {
-                    if (is_string($subValue)) {
-                        $_PUT[$key][$subKey] = $this->sanitizeInput($subValue);/*@phpstan-ignore-line*/
-                    }
-                }
-            }
-        }
-        return $_PUT;
+        return $this->sanitizeArrayRecursive($_PUT);
     }
 
 
-    private function sanitizeQueryString():void
+    private function sanitizeQueryString(): void
     {
-        if(isset($_SERVER['QUERY_STRING']) && is_string($_SERVER['QUERY_STRING'])) {
-            $_SERVER['QUERY_STRING'] = trim($_SERVER['QUERY_STRING']);
-            $_SERVER['QUERY_STRING'] = filter_var($_SERVER['QUERY_STRING'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (isset($_SERVER['QUERY_STRING']) && is_string($_SERVER['QUERY_STRING'])) {
+            $trimmed = trim($_SERVER['QUERY_STRING']);
+            $filtered = filter_var($trimmed, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $_SERVER['QUERY_STRING'] = $filtered !== false ? $filtered : '';
         }
     }
 
-    private function sanitizeRequestURI():string
+    private function sanitizeRequestURI(): string
     {
-        if(isset($_SERVER['REQUEST_URI']) && is_string($_SERVER['REQUEST_URI'])) {
-            $sanitizedURI = trim($_SERVER['REQUEST_URI']);
-            if(!filter_var($_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL)) {
-                return '';
+        if (isset($_SERVER['REQUEST_URI']) && is_string($_SERVER['REQUEST_URI'])) {
+            $trimmed = trim($_SERVER['REQUEST_URI']);
+            $filtered = filter_var($trimmed, FILTER_SANITIZE_URL);
+            if ($filtered !== false) {
+                return $filtered;
             }
-            return $sanitizedURI;
+            return '';
         }
         return '';
+    }
+
+    /**
+     * Recursively sanitize array values (strings only) to prevent XSS in nested payloads.
+     *
+     * @param array<mixed, mixed> $data
+     * @return array<mixed, mixed>
+     */
+    private function sanitizeArrayRecursive(array $data): array
+    {
+        $out = [];
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $out[$key] = $this->sanitizeInput($value);
+            } elseif (is_array($value)) {
+                $out[$key] = $this->sanitizeArrayRecursive($value);
+            } else {
+                $out[$key] = $value;
+            }
+        }
+        return $out;
     }
 
     /**
      * @param  mixed $input
      * @return mixed
      */
-    private function sanitizeInput(mixed $input):mixed
+    private function sanitizeInput(mixed $input): mixed
     {
-        if(!is_string($input)) {
+        if (!is_string($input)) {
             return $input;
         }
-        return filter_var(trim($input), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $filtered = filter_var(trim($input), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        return $filtered !== false ? $filtered : '';
     }
 
     private function getUserAgent():string

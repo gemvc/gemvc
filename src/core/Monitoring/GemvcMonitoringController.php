@@ -1,7 +1,7 @@
 <?php
-namespace App\Controller;
+namespace Gemvc\Core\Monitoring;
 
-use App\Model\GemvcMonitoringModel;
+use Gemvc\Core\Monitoring\GemvcMonitoringModel;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
@@ -91,4 +91,3 @@ class GemvcMonitoringController extends Controller
         return $model->getDatabaseLatency();
     }
 }
-

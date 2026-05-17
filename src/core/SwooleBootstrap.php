@@ -34,10 +34,9 @@ class SwooleBootstrap
     {
         $this->request = $request;
         
+        $this->extractRouteInfo();
         // Initialize APM early to capture full request lifecycle
         $this->initializeApm();
-        
-        $this->extractRouteInfo();
     }
     
     /**
@@ -51,14 +50,17 @@ class SwooleBootstrap
     private function initializeApm(): void
     {
         $apmName = ApmFactory::isEnabled();
+        
         if (!$apmName) {
             return;
         }
+        
         $this->apm = ApmFactory::create($this->request);
+        
         // Explicitly set $request->apm to ensure it's available for ApiService, Controller, etc.
         // This ensures trace context propagation even if ApmFactory doesn't set it
         if ($this->apm !== null) {
-            $this->request->apm = $this->apm;
+            $this->request->setApm($this->apm);
         }
     }
 
@@ -83,7 +85,7 @@ class SwooleBootstrap
         if ($isRootUrl) {
             // Load environment to check APP_ENV
             try {
-                \Gemvc\Helper\ProjectHelper::loadEnv();
+                ProjectHelper::loadEnv();
                 if (ProjectHelper::isDevEnvironment()) {
                     // Route root URL to Developer/app (SPA shell) in dev mode
                     $this->request->setServiceName("Developer");
@@ -118,7 +120,8 @@ class SwooleBootstrap
     public function processRequest(): ?ResponseInterface
     {
         $serviceName = $this->request->getServiceName();
-        if (!file_exists('./app/api/' . $serviceName . '.php')) {
+        $apiServicePath = ProjectHelper::appDir() . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . $serviceName . '.php';
+        if (!file_exists($apiServicePath)) {
             return Response::notFound("The service path for '$serviceName' does not exist, check your service name if properly typed");
         }
 
@@ -164,7 +167,7 @@ class SwooleBootstrap
                 $apm = ApmFactory::create($this->request);
                 // Explicitly set $request->apm to ensure it's available for subsequent operations
                 if ($apm !== null) {
-                    $this->request->apm = $apm;
+                    $this->request->setApm($apm);
                 }
             }
         }

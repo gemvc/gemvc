@@ -7,7 +7,7 @@ use Gemvc\Http\NoCors;
 use Symfony\Component\Dotenv\Dotenv;
 
 $dotenv = new Dotenv();
-$dotenv->load(__DIR__.'/.env');
+$dotenv->overload(__DIR__.'/.env');
 // Apply CORS headers using the apache method (same as Apache since Nginx uses PHP-FPM)
 NoCors::apache();
 $webserver = new ApacheRequest();

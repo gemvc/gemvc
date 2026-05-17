@@ -5,9 +5,9 @@
  * Orchestrates business logic for developer tools
  * This is the Controller layer - business logic orchestration
  */
-namespace App\Controller;
+namespace Gemvc\Core\Developer;
 
-use App\Model\DeveloperModel;
+use Gemvc\Core\Developer\DeveloperModel;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\HtmlResponse;
@@ -24,8 +24,8 @@ class DeveloperController extends Controller
     {
         parent::__construct($request);
         
-        // Get template directory path
-        $this->templateDir = dirname(__DIR__, 2) . '/vendor/gemvc/library/src/startup/common/system_pages';
+        // Get template directory path (library's system_pages)
+        $this->templateDir = \Gemvc\Helper\ProjectHelper::getLibrarySystemPagesPath();
         
         // Start output buffering early to prevent "headers already sent" warnings
         if (ob_get_level() === 0) {
@@ -55,7 +55,7 @@ class DeveloperController extends Controller
         $info = new \stdClass();
         $info->server = WebserverDetector::get();
         $info->version = \Gemvc\Helper\ProjectHelper::getVersion();
-        $info->environment = $_ENV['APP_ENV'];
+        $info->environment = \Gemvc\Helper\ProjectHelper::getAppEnv();
         $info->databaseName = $developerModel->getDatabaseName();
         $info->database = $developerModel->isDatabaseReady() ? 'ready' :  $developerModel->getError();
         $info->devAssistantUrl = $developerModel->getDevAssistantUrl();
@@ -436,20 +436,8 @@ class DeveloperController extends Controller
     {
         $webserverType = WebserverDetector::get();
         
-        // Use unified API base URL construction from ProjectHelper
         $apiBaseUrl = \Gemvc\Helper\ProjectHelper::getApiBaseUrl();
-        
-        // Base URL (without API sub-path) for general use
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])
-            ? $_SERVER['HTTP_HOST']
-            : 'localhost';
-        $host = preg_replace('/:\d+$/', '', $host);
-        
-        $portEnv = $_ENV['APP_ENV_PUBLIC_SERVER_PORT'] ?? '80';
-        $port = is_numeric($portEnv) ? (int) $portEnv : 80;
-        $portDisplay = ($port !== 80 && $port !== 443) ? ':' . $port : '';
-        $baseUrl = $protocol . '://' . $host . $portDisplay;
+        $baseUrl = \Gemvc\Helper\ProjectHelper::getBaseUrl();
         $webserverName = match($webserverType) {
             'swoole' => 'OpenSwoole',
             'apache' => 'Apache',

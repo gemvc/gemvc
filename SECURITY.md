@@ -903,8 +903,8 @@ This security policy is regularly updated to reflect:
 - Best practice changes
 - Framework updates
 
-**Last Updated**: 2024
-**Version**: 2.0.0 - Comprehensive Security Documentation
+**Last Updated**: 2026-02-18
+**Version**: 2.1.0 - Security patch 5.6.6 (path normalization, input/URI sanitization fixes, single php://input read, recursive array sanitization)
 
 ---
 

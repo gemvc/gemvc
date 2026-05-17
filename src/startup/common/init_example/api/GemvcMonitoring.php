@@ -1,12 +1,15 @@
 <?php
 namespace App\Api;
 
-use App\Controller\GemvcMonitoringController;
+use Gemvc\Core\Monitoring\GemvcMonitoringController;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Response;
-
+/**
+ * this @hidden is used to hide the API from the public documentation
+ * @hidden
+ */
 class GemvcMonitoring extends ApiService
 {
     /**
@@ -35,7 +38,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->ram();
+        return new GemvcMonitoringController($this->request)->ram();
     }
 
     public function dockerRam(): JsonResponse
@@ -45,7 +48,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->dockerRam();
+        return new GemvcMonitoringController($this->request)->dockerRam();
     }
 
     public function dockerCpu(): JsonResponse
@@ -74,7 +77,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->cpu();
+        return new GemvcMonitoringController($this->request)->cpu();
     }
 
     /**
@@ -93,7 +96,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->network();
+        return new GemvcMonitoringController($this->request)->network();
     }
 
     /**
@@ -112,7 +115,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->databaseConnections();
+        return new GemvcMonitoringController($this->request)->databaseConnections();
     }
 
     /**
@@ -131,7 +134,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->databasePool();
+        return new GemvcMonitoringController($this->request)->databasePool();
     }
 
     /**
@@ -150,7 +153,7 @@ class GemvcMonitoring extends ApiService
             return Response::unauthorized('Authentication required');
         }
         
-        return (new GemvcMonitoringController($this->request))->databaseLatency();
+        return new GemvcMonitoringController($this->request)->databaseLatency();
     }
 }
 

@@ -6,6 +6,7 @@ parameters:
         - src/http/SwooleWebSocketHandler.php
         - vendor/*
         - src/startup/*
+        - tests/*
     stubFiles:
         - src/stubs/OpenSwoole.php
         - src/stubs/Redis.php
