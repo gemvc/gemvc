@@ -58,7 +58,7 @@ class OptionalToolsInstaller extends Command
             "This will install phpstan/phpstan as a dev dependency"
         );
         
-        echo "\n\033[1;36mInstall PHPStan? (y/N):\033[0m ";
+        echo "\n\033[1;34mInstall PHPStan? (y/N):\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             $this->error("Failed to open stdin");
@@ -86,11 +86,11 @@ class OptionalToolsInstaller extends Command
             "Choose between PHPUnit (traditional) or Pest (modern & expressive)"
         );
         
-        echo "\n\033[1;36mChoose testing framework:\033[0m\n";
+        echo "\n\033[1;34mChoose testing framework:\033[0m\n";
         echo "  [\033[32m1\033[0m] \033[1mPHPUnit\033[0m - Traditional PHP testing framework\n";
         echo "  [\033[32m2\033[0m] \033[1mPest\033[0m - Modern, expressive testing framework\n";
         echo "  [\033[32m3\033[0m] \033[1mSkip\033[0m - No testing framework\n";
-        echo "\n\033[1;36mEnter choice (1-3):\033[0m ";
+        echo "\n\033[1;34mEnter choice (1-3):\033[0m ";
         
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {

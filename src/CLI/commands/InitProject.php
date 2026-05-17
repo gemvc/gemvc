@@ -118,7 +118,7 @@ class InitProject extends Command
         
         $boxShow->displayBox($title, $lines);
         
-        $this->write("\n\033[1;36mSelect Your Webserver:\033[0m\n\n", 'white');
+        $this->write("\n\033[1;34mSelect Your Webserver:\033[0m\n\n", 'white');
     }
     
     /**
@@ -205,7 +205,7 @@ class InitProject extends Command
         
         // Get user input
         while (true) {
-            $this->write("\033[1;36mEnter your choice (1-3) [1]:\033[0m ", 'white');
+            $this->write("\033[1;34mEnter your choice (1-3) [1]:\033[0m ", 'white');
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {

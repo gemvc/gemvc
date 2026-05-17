@@ -113,14 +113,14 @@ class DockerComposeInit extends Command
         foreach (self::AVAILABLE_SERVICES as $key => $service) {
             // @phpstan-ignore-next-line
             $default = $service['default'] ? ' (default)' : '';
-            $lines[] = "  \033[1;36m{$service['name']}\033[0m - {$service['description']}{$default}";
+            $lines[] = "  \033[1;34m{$service['name']}\033[0m - {$service['description']}{$default}";
         }
         
         $lines[] = "";
         $lines[] = "\033[1;94mThis will create:\033[0m";
-        $lines[] = "  • \033[1;36mdocker-compose.yml\033[0m - Docker services configuration";
-        $lines[] = "  • \033[1;36mDockerfile\033[0m - OpenSwoole container configuration";
-        $lines[] = "  • \033[1;36mDev environment\033[0m - Ready to use with docker compose up";
+        $lines[] = "  • \033[1;34mdocker-compose.yml\033[0m - Docker services configuration";
+        $lines[] = "  • \033[1;34mDockerfile\033[0m - OpenSwoole container configuration";
+        $lines[] = "  • \033[1;34mDev environment\033[0m - Ready to use with docker compose up";
         
         $boxShow->displayBox("Docker Services Setup", $lines);
     }
@@ -146,7 +146,7 @@ class DockerComposeInit extends Command
         foreach (self::AVAILABLE_SERVICES as $key => $service) {
             // @phpstan-ignore-next-line
             $default = $service['default'] ? ' [Y/n]' : ' [y/N]';
-            echo "  \033[1;36m{$service['name']}\033[0m - {$service['description']}{$default}: ";
+            echo "  \033[1;34m{$service['name']}\033[0m - {$service['description']}{$default}: ";
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
@@ -186,7 +186,7 @@ class DockerComposeInit extends Command
             return;
         }
         
-        echo "\n\033[1;36mMySQL Configuration Mode:\033[0m\n";
+        echo "\n\033[1;34mMySQL Configuration Mode:\033[0m\n";
         echo "  \033[1;32m[1] Development Mode\033[0m - Clean logs, optimized for development\n";
         echo "  \033[1;33m[2] Production Mode\033[0m - Verbose logs, full security warnings\n";
         echo "\nEnter choice (1-2) [1]: ";
@@ -219,7 +219,7 @@ class DockerComposeInit extends Command
             return;
         }
         
-        echo "\n\033[1;36mResource Limits Configuration:\033[0m\n";
+        echo "\n\033[1;34mResource Limits Configuration:\033[0m\n";
         echo "Configure CPU and RAM limits for the application service\n";
         echo "\n\033[1;94mHow many CPUs do you want to dedicate for this service?\033[0m\n";
         echo "Enter number of CPUs [{$this->cpuLimit}]: ";
@@ -296,7 +296,7 @@ class DockerComposeInit extends Command
     private function cleanupDockerVolumes(): void
     {
         if (!$this->nonInteractive) {
-            echo "\n\033[1;36mClean up existing Docker containers and volumes? (y/N):\033[0m ";
+            echo "\n\033[1;34mClean up existing Docker containers and volumes? (y/N):\033[0m ";
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
                 return;
@@ -638,26 +638,26 @@ EOT;
             "\033[1;94mMySQL Configuration:\033[0m {$modeText}",
             "",
             "\033[1;94mTo start your development environment:\033[0m",
-            " \033[1;36m$ \033[1;95mdocker compose up -d\033[0m",
+            " \033[1;34m$ \033[1;95mdocker compose up -d\033[0m",
             "",
             "\033[1;94mTo stop the services:\033[0m",
-            " \033[1;36m$ \033[1;95mdocker compose down\033[0m",
+            " \033[1;34m$ \033[1;95mdocker compose down\033[0m",
             "",
             "\033[1;94mTo view logs:\033[0m",
-            " \033[1;36m$ \033[1;95mdocker compose logs -f\033[0m",
+            " \033[1;34m$ \033[1;95mdocker compose logs -f\033[0m",
             "",
             "\033[1;94mService URLs:\033[0m",
-            " • \033[1;36m" . ucfirst($this->webserverType) . "\033[0m: http://localhost:{$this->webserverPort}"
+            " • \033[1;34m" . ucfirst($this->webserverType) . "\033[0m: http://localhost:{$this->webserverPort}"
         ];
         
         if (in_array('phpmyadmin', $this->selectedServices)) {
-            $lines[] = " • \033[1;36mphpMyAdmin\033[0m: http://localhost:8080";
+            $lines[] = " • \033[1;34mphpMyAdmin\033[0m: http://localhost:8080";
         }
         if (in_array('db', $this->selectedServices)) {
-            $lines[] = " • \033[1;36mMySQL\033[0m: localhost:3306 (root/rootpassword)";
+            $lines[] = " • \033[1;34mMySQL\033[0m: localhost:3306 (root/rootpassword)";
         }
         if (in_array('redis', $this->selectedServices)) {
-            $lines[] = " • \033[1;36mRedis\033[0m: localhost:6379";
+            $lines[] = " • \033[1;34mRedis\033[0m: localhost:6379";
         }
         
         $boxShow->displayBox("Docker Services", $lines);

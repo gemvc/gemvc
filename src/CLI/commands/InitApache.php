@@ -144,12 +144,12 @@ class InitApache extends AbstractInit
     {
         return [
             "\033[1;94mDocument Root:\033[0m",
-            " • All files are served from \033[1;36mpublic/\033[0m directory",
-            " • Place your assets in \033[1;36mpublic/assets/\033[0m",
+            " • All files are served from \033[1;34mpublic/\033[0m directory",
+            " • Place your assets in \033[1;34mpublic/assets/\033[0m",
             "",
             "\033[1;94mURL Rewriting:\033[0m",
             " • .htaccess configured for clean URLs",
-            " • All requests routed through \033[1;36mpublic/index.php\033[0m",
+            " • All requests routed through \033[1;34mpublic/index.php\033[0m",
             "",
             "\033[1;94mApache Configuration:\033[0m",
             " • Enable mod_rewrite: \033[1;95msudo a2enmod rewrite\033[0m",

@@ -41,7 +41,8 @@ abstract class Command
             'green' => "\033[32m",
             'red' => "\033[31m",
             'yellow' => "\033[33m",
-            'blue' => "\033[34m"
+            'blue' => "\033[34m",
+            'cyan' => "\033[34m", // alias: macOS Terminal does not render cyan reliably
         ];
 
         if ($this->supportsAnsiColors()) {

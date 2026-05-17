@@ -119,7 +119,7 @@ class InitProject extends Command
             "  • OpenAPI Documentation",
             "  • Docker Ready",
             "",
-            "\033[1;36mLet's set up your project!\033[0m"
+            "\033[1;34mLet's set up your project!\033[0m"
         ];
         
         foreach ($lines as $line) {
@@ -196,13 +196,13 @@ class InitProject extends Command
                 ? "\033[1;32m[AVAILABLE]\033[0m" 
                 : "\033[1;33m[COMING SOON]\033[0m";
             
-            $this->write("  {$option['icon']} \033[1;36m[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
+            $this->write("  {$option['icon']} \033[1;34m[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
             $this->write("      \033[90m{$option['description']}\033[0m\n\n", 'white');
         }
         
         // Get user input
         while (true) {
-            $this->write("\033[1;36mEnter your choice (1-3) [1]:\033[0m ", 'white');
+            $this->write("\033[1;34mEnter your choice (1-3) [1]:\033[0m ", 'white');
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {

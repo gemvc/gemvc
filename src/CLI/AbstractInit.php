@@ -795,11 +795,11 @@ EOT;
         
         $lines = [
             "\033[1;92m✓ {$webserverType} Project Ready!\033[0m",
-            " \033[1;36m$ \033[1;95mphp bin/gemvc\033[0m",
+            " \033[1;34m$ \033[1;95mphp bin/gemvc\033[0m",
             "   \033[90m# PSR-4 autoload configured and ready to use\033[0m",
             "",
             "\033[1;94mOptional - Development Environment:\033[0m",
-            " \033[1;36m$ \033[1;95mcomposer update\033[0m",
+            " \033[1;34m$ \033[1;95mcomposer update\033[0m",
             "   \033[90m# Only if you want to install additional dev dependencies\033[0m"
         ];
         
@@ -826,12 +826,12 @@ EOT;
         $lines = [
             "\033[1;94m{$webserverType} Specific Instructions:\033[0m",
             "",
-            "\033[1;36mStart {$webserverType} Server:\033[0m",
-            " \033[1;36m$ \033[1;95m{$startCommand}\033[0m",
+            "\033[1;34mStart {$webserverType} Server:\033[0m",
+            " \033[1;34m$ \033[1;95m{$startCommand}\033[0m",
             "   \033[90m# Starts {$webserverType} server on http://localhost:{$port}\033[0m",
             "",
-            "\033[1;36mWith Docker:\033[0m",
-            " \033[1;36m$ \033[1;95mdocker compose up -d --build\033[0m",
+            "\033[1;34mWith Docker:\033[0m",
+            " \033[1;34m$ \033[1;95mdocker compose up -d --build\033[0m",
             "   \033[90m# Builds and runs {$webserverType} in container\033[0m",
         ];
         
@@ -846,8 +846,8 @@ EOT;
         $lines = array_merge($lines, [
             "",
             "\033[1;94mServer Configuration:\033[0m",
-            " • Server runs on port \033[1;36m{$port}\033[0m by default",
-            " • Configure in \033[1;36m.env\033[0m file",
+            " • Server runs on port \033[1;34m{$port}\033[0m by default",
+            " • Configure in \033[1;34m.env\033[0m file",
             "",
             "\033[1;94mUseful Commands:\033[0m",
             " • Check server status: \033[1;95mcurl http://localhost:{$port}\033[0m",
@@ -905,7 +905,7 @@ EOT;
         $lines = [
             "\033[1;32mGEMVC {$webserverType} Project Ready!\033[0m",
             "",
-            "Server: \033[1;36mhttp://localhost:{$serverPort}\033[0m",
+            "Server: \033[1;34mhttp://localhost:{$serverPort}\033[0m",
             ""
         ];
         
@@ -914,19 +914,19 @@ EOT;
             $mysqlPort = $actualPorts['mysql'] ?? 3306;
             $phpmyadminPort = $actualPorts['phpmyadmin'] ?? 8080;
             
-            $lines[] = "Run: \033[1;36mdocker compose up -d --build\033[0m";
+            $lines[] = "Run: \033[1;34mdocker compose up -d --build\033[0m";
             $lines[] = "";
             $lines[] = "\033[1;33mConfigured Server Ports:\033[0m";
-            $lines[] = "   • Application Server: \033[1;36m{$serverPort}\033[0m";
-            $lines[] = "   • MySQL Database: \033[1;36m{$mysqlPort}\033[0m";
-            $lines[] = "   • phpMyAdmin: \033[1;36m{$phpmyadminPort}\033[0m";
+            $lines[] = "   • Application Server: \033[1;34m{$serverPort}\033[0m";
+            $lines[] = "   • MySQL Database: \033[1;34m{$mysqlPort}\033[0m";
+            $lines[] = "   • phpMyAdmin: \033[1;34m{$phpmyadminPort}\033[0m";
         } else {
             // Docker not set up - show only application server port
             $lines[] = "\033[1;33mConfigured Server Port:\033[0m";
-            $lines[] = "   • Application Server: \033[1;36m{$serverPort}\033[0m";
+            $lines[] = "   • Application Server: \033[1;34m{$serverPort}\033[0m";
             $lines[] = "";
             $lines[] = "\033[1;90mNote:\033[0m Docker services not configured.";
-            $lines[] = "   Run \033[1;36mgemvc init\033[0m again to set up Docker services.";
+            $lines[] = "   Run \033[1;34mgemvc init\033[0m again to set up Docker services.";
         }
         
         $boxShow->displaySuccessBox("✓ SUCCESS! ✓", $lines);

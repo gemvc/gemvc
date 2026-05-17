@@ -62,7 +62,7 @@ class DbList extends Command
                 }
                 
                 // Display column information
-                $this->write("  Columns:\n", 'cyan');
+                $this->write("  Columns:\n", 'blue');
                 foreach ($columns as $column) {
                     $type = $column['Type'];
                     $null = $column['Null'] === 'YES' ? 'NULL' : 'NOT NULL';

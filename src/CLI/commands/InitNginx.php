@@ -144,12 +144,12 @@ class InitNginx extends AbstractInit
     {
         return [
             "\033[1;94mDocument Root:\033[0m",
-            " • All files are served from \033[1;36mpublic/\033[0m directory",
-            " • Place your assets in \033[1;36mpublic/assets/\033[0m",
+            " • All files are served from \033[1;34mpublic/\033[0m directory",
+            " • Place your assets in \033[1;34mpublic/assets/\033[0m",
             "",
             "\033[1;94mURL Rewriting:\033[0m",
             " • nginx.conf configured for clean URLs",
-            " • All requests routed through \033[1;36mindex.php\033[0m",
+            " • All requests routed through \033[1;34mindex.php\033[0m",
             "",
             "\033[1;94mNginx Configuration:\033[0m",
             " • Configure nginx.conf for your server",

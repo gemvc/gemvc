@@ -91,7 +91,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2;
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'red');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
             return;
         }
 
@@ -141,7 +141,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2;
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
             return;
         }
 
@@ -208,7 +208,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2;
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
             return;
         }
 
@@ -306,7 +306,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2;
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
         }
     }
 
@@ -358,7 +358,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2;
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
         }
     }
 
@@ -377,7 +377,7 @@ class DbDescribe extends Command
     {
         $totalWidth = 78; // Fixed total width for all borders
         $this->write("\n", 'white');
-        $this->write("╔" . str_repeat("═", $totalWidth) . "╗\n", 'cyan');
+        $this->write("╔" . str_repeat("═", $totalWidth) . "╗\n", 'blue');
         
         $text = "🗄️  TABLE: " . strtoupper($tableName);
         $textWidth = $this->getDisplayWidth($text);
@@ -386,20 +386,20 @@ class DbDescribe extends Command
         $rightPad = $padding - $leftPad;
         
         $this->write("║" . str_repeat(" ", $leftPad) . $text . str_repeat(" ", $rightPad) . "║\n", 'yellow');
-        $this->write("╚" . str_repeat("═", $totalWidth) . "╝\n", 'cyan');
+        $this->write("╚" . str_repeat("═", $totalWidth) . "╝\n", 'blue');
     }
 
     private function displaySectionHeader(string $title): void
     {
         $totalWidth = 78; // Fixed total width for all borders
         $this->write("\n", 'white');
-        $this->write("┌" . str_repeat("─", $totalWidth) . "┐\n", 'cyan');
+        $this->write("┌" . str_repeat("─", $totalWidth) . "┐\n", 'blue');
         
         $titleWidth = $this->getDisplayWidth($title);
         $padding = $totalWidth - $titleWidth - 2; // -2 for the space after │ and before │
         
         $this->write("│ " . $title . str_repeat(" ", $padding) . " │\n", 'green');
-        $this->write("├" . str_repeat("─", $totalWidth) . "┤\n", 'cyan');
+        $this->write("├" . str_repeat("─", $totalWidth) . "┤\n", 'blue');
     }
 
     /**
@@ -414,7 +414,7 @@ class DbDescribe extends Command
             $messageWidth = $this->getDisplayWidth($message);
             $padding = $totalWidth - $messageWidth - 2; // -2 for spaces
             $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
             return;
         }
 
@@ -451,39 +451,39 @@ class DbDescribe extends Command
         }
 
         // Display headers
-        $this->write("│", 'cyan');
+        $this->write("│", 'blue');
         foreach ($headers as $i => $header) {
             $this->write(" " . $this->padString($header, (int) $columnWidths[$i]), 'yellow');
-            $this->write(" │", 'cyan');
+            $this->write(" │", 'blue');
         }
         $this->write("\n");
 
         // Header separator
-        $this->write("├", 'cyan');
+        $this->write("├", 'blue');
         foreach ($columnWidths as $i => $width) {
-            $this->write(str_repeat("─", (int) $width + 2), 'cyan');
+            $this->write(str_repeat("─", (int) $width + 2), 'blue');
             if ($i < count($columnWidths) - 1) {
-                $this->write("┼", 'cyan');
+                $this->write("┼", 'blue');
             }
         }
-        $this->write("┤\n", 'cyan');
+        $this->write("┤\n", 'blue');
 
         // Display data rows
         foreach ($data as $row) {
-            $this->write("│", 'cyan');
+            $this->write("│", 'blue');
             foreach ($row as $i => $cell) {
                 $truncated = $this->getDisplayWidth($cell) > $columnWidths[$i] 
                     ? $this->truncateString($cell, (int) $columnWidths[$i] - 3) . '...'
                     : $cell;
                 $this->write(" " . $this->padString($truncated, (int) $columnWidths[$i]), 'white');
-                $this->write(" │", 'cyan');
+                $this->write(" │", 'blue');
             }
             $this->write("\n");
         }
 
         // Bottom border
         $totalWidth = 78;
-        $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'cyan');
+        $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
     }
 
     private function getDisplayWidth(string $text): int

@@ -72,7 +72,7 @@ class DockerContainerBuilder extends Command
         $this->displayBuildPrompt();
         
         // Get user confirmation
-        echo "\n\033[1;36mBuild Docker containers now? (y/N):\033[0m ";
+        echo "\n\033[1;34mBuild Docker containers now? (y/N):\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             $this->info("Docker container build skipped (stdin error)");
@@ -115,7 +115,7 @@ class DockerContainerBuilder extends Command
             "  • Check Docker Desktop status",
             "  • Verify port availability ({$portListStr})",
             "  • Check for existing containers",
-            "  • Build and start containers with \033[1;36mdocker compose up -d --build\033[0m",
+            "  • Build and start containers with \033[1;34mdocker compose up -d --build\033[0m",
             "",
             "\033[1;33mNote:\033[0m If ports are in use, we'll suggest alternatives."
         ];
@@ -370,10 +370,10 @@ class DockerContainerBuilder extends Command
             $portName = $this->getPortName($port);
             
             if ($container !== null) {
-                $lines[] = "  • Port \033[1;36m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
+                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
                 $containersToStop[] = $container;
             } else {
-                $lines[] = "  • Port \033[1;36m{$port}\033[0m ({$portName}) is in use by system process";
+                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is in use by system process";
             }
             $lines[] = "    Suggested alternative port: \033[1;32m{$suggested}\033[0m";
             $lines[] = "";
@@ -397,7 +397,7 @@ class DockerContainerBuilder extends Command
             $lines[] = "\033[1;94mOption 2: Stop running container\033[0m";
             $lines[] = "  This will stop the following containers:";
             foreach ($uniqueContainers as $container) {
-                $lines[] = "    • \033[1;36m{$container}\033[0m";
+                $lines[] = "    • \033[1;34m{$container}\033[0m";
             }
             $lines[] = "";
         }
@@ -407,7 +407,7 @@ class DockerContainerBuilder extends Command
         
         $boxShow->displayWarningBox("Port Conflicts - Step 1", $lines);
         
-        echo "\n\033[1;36mChoose option (1=Different Name and Port, 2=Stop container) [1]:\033[0m ";
+        echo "\n\033[1;34mChoose option (1=Different Name and Port, 2=Stop container) [1]:\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -472,9 +472,9 @@ class DockerContainerBuilder extends Command
             $portName = $this->getPortName($port);
             
             if ($container !== null) {
-                $lines[] = "  • Port \033[1;36m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
+                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
             } else {
-                $lines[] = "  • Port \033[1;36m{$port}\033[0m ({$portName}) is in use by system process";
+                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is in use by system process";
             }
             $lines[] = "    Suggested alternative port: \033[1;32m{$suggested}\033[0m";
             $lines[] = "";
@@ -488,7 +488,7 @@ class DockerContainerBuilder extends Command
         $lines[] = "  I will automatically update docker-compose.yml with these ports:";
         $lines[] = "";
         foreach ($portMappings as $mapping) {
-            $lines[] = "    • \033[1;36m{$mapping['service']}\033[0m: Port \033[1;32m{$mapping['new']}\033[0m (was {$mapping['old']})";
+            $lines[] = "    • \033[1;34m{$mapping['service']}\033[0m: Port \033[1;32m{$mapping['new']}\033[0m (was {$mapping['old']})";
         }
         $lines[] = "";
         $lines[] = "\033[1;94mOption 2: Continue anyway\033[0m";
@@ -496,7 +496,7 @@ class DockerContainerBuilder extends Command
         
         $boxShow->displayWarningBox("Port Conflicts - Step 2", $lines);
         
-        echo "\n\033[1;36mChoose option (1=Accept suggested ports, 2=Continue anyway, N=Cancel):\033[0m ";
+        echo "\n\033[1;34mChoose option (1=Accept suggested ports, 2=Continue anyway, N=Cancel):\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -853,7 +853,7 @@ class DockerContainerBuilder extends Command
             if (!empty($containerNames)) {
                 $lines[] = "\033[1;33mRunning Containers:\033[0m";
                 foreach ($containerNames as $containerName) {
-                    $lines[] = "  • \033[1;36m{$containerName}\033[0m";
+                    $lines[] = "  • \033[1;34m{$containerName}\033[0m";
                 }
                 $lines[] = "";
             }
@@ -861,7 +861,7 @@ class DockerContainerBuilder extends Command
             if (!empty($imageNames)) {
                 $lines[] = "\033[1;33mExisting Images:\033[0m";
                 foreach ($imageNames as $imageName) {
-                    $lines[] = "  • \033[1;36m{$imageName}\033[0m";
+                    $lines[] = "  • \033[1;34m{$imageName}\033[0m";
                 }
                 $lines[] = "";
             }
@@ -874,7 +874,7 @@ class DockerContainerBuilder extends Command
         }
         
         // Ask for custom project name
-        echo "\n\033[1;36mEnter custom project name for containers [{$defaultProjectName}]:\033[0m ";
+        echo "\n\033[1;34mEnter custom project name for containers [{$defaultProjectName}]:\033[0m ";
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -900,7 +900,7 @@ class DockerContainerBuilder extends Command
         
         // Ask for custom image name (optional, only if images exist)
         if (!empty($imageNames)) {
-            echo "\033[1;36mEnter custom image name for application container [{$defaultProjectName}-app:latest]:\033[0m ";
+            echo "\033[1;34mEnter custom image name for application container [{$defaultProjectName}-app:latest]:\033[0m ";
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
                 throw new \RuntimeException("Failed to read user input");
