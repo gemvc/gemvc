@@ -59,7 +59,7 @@ Command (Base Class)
 
 **Features**:
 - ✅ Argument and option handling (`$args`, `$options`)
-- ✅ Colored output support (ANSI colors, Windows-compatible)
+- ✅ Colored output support (ANSI colors; blue accents for cross-platform terminals including macOS; Windows-compatible)
 - ✅ Standardized messaging (`info()`, `success()`, `error()`, `warning()`)
 - ✅ Abstract `execute()` method (must be implemented)
 
@@ -861,6 +861,8 @@ gemvc create:crud Product
 
 ## 🗄️ Database Commands
 
+> **PHP 8.5+** (since 5.6.7): CLI database connections use `Pdo\Mysql::ATTR_INIT_COMMAND` when available to avoid PDO deprecation warnings. No configuration changes required.
+
 ### `db:init` - Initialize Database
 
 Create the database if it doesn't exist.
@@ -1248,6 +1250,14 @@ ls templates/cli/
    ```bash
    gemvc db:init
    ```
+
+---
+
+### CLI Colors Not Visible (macOS Terminal)
+
+**Symptom**: `db:describe` table borders or init prompts are hard to read or missing on macOS Terminal.
+
+**Solution** (fixed in 5.6.7+): Update to GEMVC 5.6.7 or later. The CLI uses blue ANSI accents instead of cyan for cross-platform compatibility. Ensure your terminal has ANSI colors enabled.
 
 ---
 

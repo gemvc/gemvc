@@ -903,8 +903,8 @@ This security policy is regularly updated to reflect:
 - Best practice changes
 - Framework updates
 
-**Last Updated**: 2026-02-18
-**Version**: 2.1.0 - Security patch 5.6.6 (path normalization, input/URI sanitization fixes, single php://input read, recursive array sanitization)
+**Last Updated**: 2026-05-17  
+**Version**: 2.1.0 - Framework 5.6.7 (security baseline from 5.6.6: path normalization, input/URI sanitization; plus PHP 8.5 PDO compatibility and CLI terminal color fixes in 5.6.7)
 
 ---
 

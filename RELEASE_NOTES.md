@@ -1,6 +1,65 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.5...5.6.6
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.6...5.6.7
 # GEMVC Framework - Release Notes
+
+## Version 5.6.7 - PHP 8.5 Compatibility & CLI Terminal Colors
+
+**Release Date**: 2026-05-17  
+**Type**: Patch Release (Backward Compatible)
+
+---
+
+## 📋 Overview
+
+This patch release removes PHP 8.5 deprecation warnings for MySQL PDO init-command attributes and improves CLI colored output on macOS Terminal by using blue instead of cyan. No API or configuration changes are required.
+
+---
+
+## 🔧 Changes
+
+### PHP 8.5 – PDO MySQL init command attribute
+
+- **Deprecation fix**: Driver-specific `PDO::MYSQL_ATTR_INIT_COMMAND` is deprecated in PHP 8.5 in favor of `Pdo\Mysql::ATTR_INIT_COMMAND`.
+- **Implementation**: Use `Pdo\Mysql::ATTR_INIT_COMMAND` when running on PHP 8.5+ and the class exists; otherwise fall back to `PDO::MYSQL_ATTR_INIT_COMMAND`.
+- **Locations**:
+  - `src/CLI/commands/DbConnect.php` – `connect()`, `connectAsRoot()` (and duplicate under `commands/commands/`)
+  - `src/core/Developer/DeveloperTable.php` – root connection for `CREATE DATABASE`
+
+### CLI – Terminal colors (macOS / cross-platform)
+
+- **Problem**: macOS Terminal does not render cyan ANSI codes reliably; prompts and `db:describe` table borders could appear wrong or invisible.
+- **Solution**: Use blue (`\033[34m` / `\033[1;34m`) instead of cyan across CLI output.
+- **`Command.php`**: `write()` supports `blue`; `cyan` is an alias mapping to the same blue code for backward compatibility.
+- **Updated commands**: Init wizards, Docker setup, `db:describe`, `db:list`, and related duplicate command files.
+
+---
+
+## 🎯 Benefits
+
+- ✅ **PHP 8.5 ready** – No deprecation noise from CLI or Developer database setup
+- ✅ **Better CLI UX on Mac** – Readable colors on macOS Terminal, Windows, and Linux
+- ✅ **Backward compatible** – PHP 8.2–8.4 unchanged; no migration steps
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.6 to 5.6.7
+
+This release is **fully backward compatible**. No action required.
+
+**What Changed**:
+- PDO MySQL connection options in CLI `DbConnect` and `DeveloperTable`
+- CLI ANSI accent color from cyan to blue
+
+**Breaking Changes**: None
+
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+ (8.5 supported)
+
+For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
+
+---
 
 ## Version 5.6.6 - Security Hardening & Path Normalization
 

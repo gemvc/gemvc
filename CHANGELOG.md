@@ -5,6 +5,28 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.7] - 2026-05-17
+
+### Fixed
+
+- **PHP 8.5** – Replace deprecated `PDO::MYSQL_ATTR_INIT_COMMAND` with `Pdo\Mysql::ATTR_INIT_COMMAND` when available (falls back on PHP < 8.5)
+  - `src/CLI/commands/DbConnect.php` and `src/CLI/commands/commands/DbConnect.php` (`connect()`, `connectAsRoot()`)
+  - `src/core/Developer/DeveloperTable.php` (database creation via root PDO connection)
+- **CLI** – Use blue ANSI color instead of cyan for cross-platform terminal output (macOS Terminal, Windows, Linux)
+  - `Command::write()` color map: `blue` for accents; `cyan` kept as alias to blue
+  - Replaced `\033[1;36m` (bold cyan) with `\033[1;34m` (bold blue) in init, Docker, and database CLI commands
+  - Affects: `DbDescribe`, `DbList`, `InitProject`, `InitApache`, `InitNginx`, `InitSwoole`, `OptionalToolsInstaller`, `AbstractInit`, `DockerComposeInit`, `DockerContainerBuilder` (and duplicates under `commands/commands/`)
+
+### Benefits
+
+- No PHP 8.5 deprecation warnings when using CLI database commands or Developer database setup
+- CLI prompts and table output render correctly on macOS Terminal (cyan is unreliable there)
+- Fully backward compatible on PHP 8.2–8.4
+
+### Documentation
+
+- **CHANGELOG.md**, **RELEASE_NOTES.md**, **SECURITY.md**, **CLI.md** updated for 5.6.7
+
 ## [5.6.6] - 2026-02-18
 
 ### Security

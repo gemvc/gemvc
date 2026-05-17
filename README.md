@@ -1134,7 +1134,8 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 
 ### 📑 Additional Documentation
 
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and notable changes
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and notable changes (latest: **5.6.7**, 2026-05-17)
+- **[RELEASE_NOTES.md](RELEASE_NOTES.md)** - Release overviews and migration guides
 - **[SECURITY.md](SECURITY.md)** - Detailed security features and best practices
 - **[LICENSE](LICENSE)** - License information
 

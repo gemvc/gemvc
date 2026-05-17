@@ -9,7 +9,7 @@
 Before installing GEMVC, ensure you have:
 
 ### Required:
-- **PHP 8.1+** (PHP 8.2+ recommended)
+- **PHP 8.2+** (PHP 8.4+ recommended; PHP 8.5 supported since GEMVC 5.6.7)
 - **Composer** (latest version)
 - **MySQL 8.0+** or **MariaDB 10.6+**
 
@@ -21,7 +21,7 @@ Before installing GEMVC, ensure you have:
 ### Check Your PHP Version:
 ```bash
 php -v
-# Should show: PHP 8.1.0 or higher
+# Should show: PHP 8.2.0 or higher
 
 composer --version
 # Should show: Composer version 2.x
