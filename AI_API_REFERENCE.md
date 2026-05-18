@@ -491,6 +491,29 @@ public function update(): JsonResponse {
 }
 ```
 
+## CLI foundation (`gemvc/cli-base`)
+
+Shared by all CLI commands. Namespace: `Gemvc\CLI\`. Full guide: **`vendor/gemvc/cli-base/AI-Assistant.md`**.
+
+| Class | Purpose |
+|-------|---------|
+| `Command` | Abstract base: `execute()`, `write()`, `info()`, `success()`, `error()`, `warning()` |
+| `CliColor` | Enum for ANSI colors passed to `write()` |
+| `CliLine` | Box border / row strings (no echo) |
+| `Commands\CliBoxShow` | Full terminal boxes (uses `CliLine`) |
+| `FileSystemManager` | Dirs, copy, templates folder |
+| `Commands\AbstractBaseGenerator` | Template resolution + variable replacement |
+| `Commands\AbstractBaseCrudGenerator` | Multi-file CRUD scaffolding |
+| `InstallControl` | Verify cli-base / library install paths (package tests) |
+
+```php
+// write() — CliColor enum only (not string color names)
+$this->write("Label: ", CliColor::Blue);
+$this->info('Saved.');  // blue prefix via Command::info()
+```
+
+Framework-specific commands (`init`, `db:*`, Docker) remain in **`gemvc/library`** → `src/CLI/`. See **[CLI.md](CLI.md)**.
+
 ## Available CLI Commands
 
 ```bash

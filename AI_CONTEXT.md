@@ -426,12 +426,25 @@ app/
 ├── model/        # Data logic, validations
 └── table/        # Database operations
 
-src/
+src/              # gemvc/library (in vendor when consumed)
 ├── core/         # Bootstrap, ApiService, Security
 ├── http/         # Request, Response, JWT
 ├── database/     # Table, QueryBuilder
+├── CLI/          # Framework CLI commands (init, db:*, create:*)
 └── helper/       # CryptHelper, FileHelper, etc.
+
+vendor/gemvc/cli-base/   # CLI foundation (Composer dependency)
+├── src/          # Command, CliColor, CliLine, FileSystemManager, …
+└── AI-Assistant.md   # Normative CLI-base guide for AI assistants
 ```
+
+### CLI quick rules
+
+- Extend **`Gemvc\CLI\Command`** (from **cli-base**), not a copy in the library.
+- Use **`CliColor`** for `write()`: `$this->write('text', CliColor::Blue)` — not `'cyan'` / `'green'` strings.
+- Framework commands live in **`Gemvc\CLI\Commands\`** under `src/CLI/commands/` in the library.
+- Custom app commands: **`App\CLI\Commands\`** in `app/CLI/commands/` (project autoload).
+- See **[CLI.md](CLI.md)** and **`vendor/gemvc/cli-base/AI-Assistant.md`** for full detail.
 
 ---
 
@@ -471,6 +484,8 @@ Response::internalError($this->getError())
 **For more details, see:**
 - `.cursorrules` - Detailed AI assistant rules
 - `AI_API_REFERENCE.md` - Complete API reference
+- `CLI.md` - Framework CLI commands
+- `vendor/gemvc/cli-base/AI-Assistant.md` - CLI foundation package (Command, CliColor, generators)
 - `GEMVC_APM_INTEGRATION.md` - Complete APM integration guide
 - `gemvc-api-reference.jsonc` - Structured API data
 - Source files in `src/startup/common/init_example/` - Example implementation

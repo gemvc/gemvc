@@ -20,69 +20,68 @@ Complete reference guide for all GEMVC command-line interface commands.
 
 ## 🏗️ CLI Architecture
 
-### Command Class Hierarchy
+### Two packages: `gemvc/cli-base` + `gemvc/library`
 
-All GEMVC CLI commands follow a structured inheritance pattern:
+CLI functionality is split so the foundation can be versioned and tested independently:
+
+| Package | Namespace / path | Responsibility |
+|---------|------------------|----------------|
+| **[`gemvc/cli-base`](https://github.com/gemvc/cli-base)** | `vendor/gemvc/cli-base/src/` → `Gemvc\CLI\` | `Command`, `CliColor`, `CliLine`, `FileSystemManager`, `Commands\CliBoxShow`, `AbstractBaseGenerator`, `AbstractBaseCrudGenerator`, `InstallControl` |
+| **`gemvc/library`** | `vendor/gemvc/library/src/CLI/` | `AbstractInit`, Docker helpers, `CommandCategories`, concrete commands, `templates/cli/`, `InstallationTest` |
+
+**AI / maintainer docs for cli-base:** `vendor/gemvc/cli-base/AI-Assistant.md` (shipped with the package; not in application repos’ `tests/` after 1.0.1).
+
+**End users:** Still run `php vendor/bin/gemvc …` — no change to command names.
+
+### Command class hierarchy
 
 ```
-Command (Base Class)
+Gemvc\CLI\Command                    ← gemvc/cli-base
     ↓
-├── AbstractInit (Template Method Pattern)
-│   ├── InitApache (Apache-specific)
-│   ├── InitSwoole (OpenSwoole-specific)
-│   └── InitNginx (Nginx-specific - coming soon)
-│
-├── AbstractBaseGenerator (Code Generation Base)
+├── Gemvc\CLI\Commands\AbstractBaseGenerator
 │   └── AbstractBaseCrudGenerator
-│       ├── CreateService
-│       ├── CreateController
-│       ├── CreateModel
-│       ├── CreateTable
-│       └── CreateCrud
+│       └── Gemvc\CLI\Commands\Create*   ← gemvc/library (concrete generators)
 │
-└── Direct Commands
-    ├── DbInit
-    ├── DbMigrate
-    ├── DbList
-    ├── DbDescribe
-    ├── DbDrop
-    ├── DbUnique
-    ├── AdminSetpassword
-    └── SetAdmin
+├── Gemvc\CLI\AbstractInit             ← gemvc/library (Template Method)
+│   ├── InitApache
+│   ├── InitSwoole
+│   └── InitNginx
+│
+└── Gemvc\CLI\Commands\*               ← gemvc/library (db:*, admin, …)
 ```
 
-### Core Components
+### Core components
 
-#### 1. **Command.php** - Base Class for All Commands
+#### 1. **`Gemvc\CLI\Command`** (`gemvc/cli-base`)
 
-**Purpose**: Provides common functionality for all CLI commands.
+**Purpose**: Base class for every CLI command (framework and custom).
 
 **Features**:
-- ✅ Argument and option handling (`$args`, `$options`)
-- ✅ Colored output support (ANSI colors; blue accents for cross-platform terminals including macOS; Windows-compatible)
-- ✅ Standardized messaging (`info()`, `success()`, `error()`, `warning()`)
-- ✅ Abstract `execute()` method (must be implemented)
+- Argument / option handling (`$args`, `$options`)
+- **`CliColor` enum** for `write()` — use `CliColor::Blue`, not string names like `'green'`
+- `info()`, `success()`, `error()`, `warning()` with cross-platform ANSI (blue accents; macOS-safe)
+- Abstract `execute(): bool`
 
 **Usage**:
 ```php
-abstract class Command
+use Gemvc\CLI\CliColor;
+use Gemvc\CLI\Command;
+
+class MyCommand extends Command
 {
-    protected array $args;
-    protected array $options;
-    
-    abstract public function execute(): bool;
-    
-    protected function info(string $message): void { }
-    protected function success(string $message): void { }
-    protected function error(string $message): void { }
-    protected function warning(string $message): void { }
+    public function execute(): bool
+    {
+        $this->write("Prompt: ", CliColor::Blue);
+        $this->info('Done.');
+        return true;
+    }
 }
 ```
 
-**All commands extend this**:
+**Typical extensions**:
 ```php
-class CreateService extends AbstractBaseGenerator  // Which extends Command
-class DbInit extends Command  // Directly extends Command
+class CreateService extends AbstractBaseGenerator  // cli-base → Command
+class DbInit extends Command                      // library, extends cli-base Command
 ```
 
 ---
@@ -288,9 +287,9 @@ $examples = CommandCategories::getExamples();
 
 ---
 
-#### 6. **FileSystemManager.php** - Utility Class
+#### 6. **`Gemvc\CLI\FileSystemManager`** (`gemvc/cli-base`)
 
-**Purpose**: Centralized file and directory operations for all CLI commands.
+**Purpose**: Centralized file and directory operations for all CLI commands (used heavily by `AbstractInit` and generators).
 
 **Features**:
 - ✅ Directory creation (`createDirectories()`)
@@ -1612,15 +1611,10 @@ CreateCrud::execute()
 
 ### Summary
 
-**CLI Architecture**:
-- ✅ **Command** - Base class for all commands
-- ✅ **AbstractInit** - Template Method for project initialization
-- ✅ **InitProject** - Orchestrator for webserver selection
-- ✅ **InitApache/InitSwoole** - Strategy implementations
-- ✅ **CommandCategories** - Command registry and mapping
-- ✅ **FileSystemManager** - Centralized file operations
-- ✅ **DockerComposeInit** - Docker services setup wizard
-- ✅ **ProjectHelper** - Path resolution and environment loading
+**CLI architecture**:
+- ✅ **`gemvc/cli-base`:** `Command`, `CliColor`, `CliLine`, `CliBoxShow`, `FileSystemManager`, generator abstracts, `InstallControl`
+- ✅ **`gemvc/library`:** `AbstractInit`, `InitProject`, webserver inits, `CommandCategories`, `db:*` / `create:*`, Docker wizards, `templates/cli/`, `InstallationTest`
+- ✅ **Docs:** [CLI.md](CLI.md) (this file) + `vendor/gemvc/cli-base/AI-Assistant.md`
 
 **Design Patterns**:
 - Template Method (AbstractInit)

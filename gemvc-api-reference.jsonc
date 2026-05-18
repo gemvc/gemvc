@@ -4,7 +4,10 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "2.0",
+    "version": "5.7.0-alpha1",
+    "library_package": "gemvc/library",
+    "cli_base_package": "gemvc/cli-base",
+    "cli_base_doc": "vendor/gemvc/cli-base/AI-Assistant.md",
     "target_platforms": ["OpenSwoole", "Apache", "Nginx"],
     "platform_status": "All platforms fully supported and production-ready",
     "architecture": {
@@ -19,9 +22,43 @@
       "Server-agnostic code",
       "90% automatic security",
       "PHPStan Level 9 compliance",
-      "Code generation CLI",
+      "Code generation CLI (foundation: gemvc/cli-base)",
       "Auto-generated API documentation"
     ]
+  },
+  "cli_base": {
+    "package": "gemvc/cli-base",
+    "namespace": "Gemvc\\CLI\\",
+    "version_constraint": "^1.0.1",
+    "documentation": "vendor/gemvc/cli-base/AI-Assistant.md",
+    "classes": {
+      "Command": {
+        "methods": {
+          "execute": "execute(): bool",
+          "write": "write(string $message, CliColor $color = CliColor::White): void",
+          "info": "info(string $message): void",
+          "success": "success(string $message, bool $shouldExit = true): void",
+          "error": "error(string $message): void",
+          "warning": "warning(string $message): void"
+        }
+      },
+      "CliColor": "enum — use CliColor::Blue, ::Green, ::Red, ::Yellow, ::White (not string names)",
+      "CliLine": "static box helpers — returns strings",
+      "CliBoxShow": "Gemvc\\CLI\\Commands\\CliBoxShow — displayBox(), displayInfoBox()",
+      "FileSystemManager": "directory/file/template operations for CLI",
+      "AbstractBaseGenerator": "Gemvc\\CLI\\Commands\\AbstractBaseGenerator — template path + replaceTemplateVariables",
+      "AbstractBaseCrudGenerator": "extends AbstractBaseGenerator — CRUD scaffolding"
+    },
+    "rules": [
+      "cli-base must NOT require gemvc/library",
+      "Custom commands extend Gemvc\\CLI\\Command",
+      "Use CliColor enum in write(), never 'green' or 'cyan' strings",
+      "Stock bin/gemvc dispatches Gemvc\\CLI\\Commands\\ and App\\CLI\\Commands\\ only"
+    ]
+  },
+  "phpstan": {
+    "library_repo": "composer phpstan (src/ only, phpstan.neon)",
+    "note": "phpstan-tests.neon removed from gemvc/library; test suite not analyzed by default"
   },
   "request_class": {
     "namespace": "Gemvc\\Http\\Request",

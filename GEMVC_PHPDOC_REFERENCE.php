@@ -648,3 +648,26 @@ interface HelperClasses {
     public static function ApmFactory_isEnabled(): bool;
 }
 
+/**
+ * CLI foundation (Composer package gemvc/cli-base, namespace Gemvc\CLI)
+ *
+ * @see vendor/gemvc/cli-base/AI-Assistant.md
+ * @see CLI.md Framework commands in gemvc/library
+ */
+interface CliBaseReference {
+    /**
+     * Colored terminal output — second argument MUST be CliColor enum (not strings).
+     *
+     * @param string $message Text to print
+     * @param \Gemvc\CLI\CliColor $color e.g. CliColor::Blue for prompts
+     */
+    public function Command_write(string $message, \Gemvc\CLI\CliColor $color): void;
+
+    /**
+     * All gemvc CLI commands implement execute().
+     *
+     * @return bool Success
+     */
+    public function Command_execute(): bool;
+}
+

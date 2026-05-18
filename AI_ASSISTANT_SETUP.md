@@ -57,6 +57,11 @@ This directory contains comprehensive documentation for AI assistants (Cursor, G
   - Programmatic access
   - Framework metadata
 
+- **`vendor/gemvc/cli-base/AI-Assistant.md`** (after `composer install`)
+  - Normative guide for **`gemvc/cli-base`**: `Command`, `CliColor`, `CliLine`, `FileSystemManager`, codegen abstracts
+  - Read when editing CLI commands or building compatible CLI packages
+  - Also published at [github.com/gemvc/cli-base](https://github.com/gemvc/cli-base)
+
 - **`GEMVC_DOCUMENTATION_DIRECTIVES.md`** - Documentation generator guide
   - PHPDoc directives reference
   - Auto-documentation system
@@ -102,8 +107,12 @@ project-root/
 ├── GEMVC_PHPDOC_REFERENCE.php      ← AI type hints
 ├── AI_CONTEXT.md                   ← Quick reference
 ├── AI_API_REFERENCE.md             ← Complete API docs
+├── CLI.md                          ← Framework CLI commands
 ├── GEMVC_DOCUMENTATION_DIRECTIVES.md ← Documentation guide
 └── gemvc-api-reference.jsonc       ← Structured data
+
+vendor/gemvc/cli-base/
+└── AI-Assistant.md                 ← CLI-base package (Composer)
 ```
 
 ### What Each File Contains
@@ -184,6 +193,8 @@ project-root/
 | `AI_CONTEXT.md` | ✅ Reference | ✅ Reference | ✅ Reference | Quick reference |
 | `AI_API_REFERENCE.md` | ✅ Reference | ✅ Reference | ✅ Reference | API docs |
 | `gemvc-api-reference.jsonc` | ⚠️ May parse | ⚠️ May parse | ⚠️ May parse | Structured data |
+| `CLI.md` | ✅ Reference | ✅ Reference | ✅ Reference | Framework CLI commands |
+| `cli-base/AI-Assistant.md` | ✅ CLI edits | ✅ CLI edits | ✅ CLI edits | CLI foundation package |
 
 ## 🛠️ Usage Instructions
 

@@ -1,8 +1,92 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.6...5.6.7
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.7...5.7.0
 # GEMVC Framework - Release Notes
 
+## Version 5.7.0 - CLI foundation extracted to `gemvc/cli-base`
+
+**Release Date**: 18.05.2026  
+**Type**: Minor Release (Backward Compatible)  
+**Tag**: `5.7.0`
+
+---
+
+## 📋 Overview
+
+This release moves shared CLI infrastructure into the Composer package **[`gemvc/cli-base`](https://github.com/gemvc/cli-base)** (^1.0.1). The framework library keeps framework-specific commands (`init`, `db:*`, Docker wizards, templates) while terminal I/O, filesystem helpers, and codegen abstract bases live in the dedicated package.
+
+**Install / upgrade:**
+
+```bash
+composer require gemvc/library:^5.7 --with-all-dependencies
+```
+
+---
+
+## 🔧 Changes
+
+### New dependency: `gemvc/cli-base`
+
+| In **cli-base** (`Gemvc\CLI\`) | Stays in **library** (`src/CLI/`) |
+|-------------------------------|-----------------------------------|
+| `Command`, `CliColor`, `CliLine` | `AbstractInit`, `InitProject`, `InitApache`, `InitSwoole`, … |
+| `FileSystemManager` | `DockerComposeInit`, `DockerContainerBuilder` |
+| `Commands\CliBoxShow` | All concrete `db:*`, `create:*`, admin commands |
+| `Commands\AbstractBaseGenerator`, `AbstractBaseCrudGenerator` | `InstallationTest` (framework install smoke checks) |
+| `InstallControl` (package install verification) | `templates/cli/`, `CommandCategories` |
+
+### CLI output
+
+- Colored output uses the **`CliColor` enum** (`write($message, CliColor::Blue)`), not string color names.
+- **`CliBoxShow`** / **`CliLine`** used for boxed output (e.g. `db:describe`, init wizards).
+- Blue accents instead of cyan for reliable rendering on macOS Terminal.
+
+### PHPStan (library repo)
+
+- Removed `phpstan-tests.neon`; analysis targets **`src/`** only via `phpstan.neon`.
+- Added Composer script: **`composer phpstan`**.
+
+### Packaging (`cli-base` 1.0.1)
+
+- **`.gitattributes` `export-ignore`** — `tests/` and dev files are no longer shipped in Composer installs of `gemvc/cli-base`.
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Smaller, clearer CLI layer** in the main library
+- ✅ **Reusable CLI foundation** for future GEMVC packages
+- ✅ **Dedicated tests and docs** in `gemvc/cli-base` (`AI-Assistant.md`, PHPUnit)
+- ✅ **Same `gemvc` binary and commands** for end users
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.6.7 to 5.7.0
+
+This release is **backward compatible** for application code (`app/api`, `app/controller`, etc.).
+
+**What changed:**
+- Shared CLI classes now come from **`gemvc/cli-base`** (Composer dependency).
+- Duplicate copies removed from `src/CLI/` in the library.
+- CLI colors use **`CliColor` enum** in `write()` (not string color names).
+
+**What you should do:**
+- Run `composer update` to pull `gemvc/library` 5.7.0 and `gemvc/cli-base` ^1.0.1.
+- **Custom CLI commands:** extend `Gemvc\CLI\Command`; use `CliColor`, not `'green'` / `'cyan'` strings.
+- **AI assistants:** `vendor/gemvc/cli-base/AI-Assistant.md` + [CLI.md](CLI.md).
+
+**Breaking Changes**: None for `app/` code. Internal library CLI duplicates removed (provided by vendor).
+
+**Requires:** `gemvc/cli-base` ^1.0.1
+
+**Minimum PHP Version**: 8.2+
+
+---
+
 ## Version 5.6.7 - PHP 8.5 Compatibility & CLI Terminal Colors
+
+**Full Changelog (5.6.6…5.6.7)**: https://github.com/gemvc/gemvc/compare/5.6.6...5.6.7
 
 **Release Date**: 2026-05-17  
 **Type**: Patch Release (Backward Compatible)

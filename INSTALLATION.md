@@ -120,7 +120,9 @@ my-gemvc-api/
 │   └── table/             # Your tables go here
 │       └── UserTable.php  # Example User table
 ├── vendor/
-│   └── gemvc/             # GEMVC framework (includes core services)
+│   └── gemvc/
+│       ├── library/       # GEMVC framework (HTTP, DB, CLI commands, bin/gemvc)
+│       └── cli-base/      # CLI foundation (Command, CliColor, FileSystemManager, generators)
 ```
 
 ---
@@ -440,8 +442,11 @@ ls app/table/
 
 ### 5. Run PHPStan (if installed)
 ```bash
+# Generated projects (after gemvc init copies phpstan.neon):
 vendor/bin/phpstan analyse
-# Should show: No errors
+
+# In gemvc/library development repo:
+composer phpstan
 ```
 
 ### 6. Test User Endpoints
@@ -683,6 +688,7 @@ After successful installation:
    ```bash
    vendor/bin/phpstan analyse
    ```
+   CLI foundation is documented in `vendor/gemvc/cli-base/AI-Assistant.md`; framework commands in [CLI.md](CLI.md).
 
 5. **Customize Templates** (optional)
    - Copy templates from `vendor/gemvc/swoole/templates/` to `templates/`

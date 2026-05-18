@@ -76,6 +76,7 @@ Switch to **OpenSwoole**, and your exact same code automatically runs as **Async
 - `AI_API_REFERENCE.md` - All method signatures
 - `AI_CONTEXT.md` - Quick examples
 - `GEMVC_GUIDE.md` - Code generation patterns
+- `vendor/gemvc/cli-base/AI-Assistant.md` - CLI foundation (`Command`, `CliColor`, generators) when editing CLI or codegen
 
 **Do NOT skip layers or use Laravel patterns. Follow GEMVC conventions only!**
 ---
@@ -90,7 +91,7 @@ GEMVC is a **multi-platform PHP REST API framework** that works identically on:
 **Key Features**:
 - 🔒 **90% Security Automatic** - Input sanitization, SQL injection prevention, path protection
 - 🌐 **Webserver-Agnostic** - Same code works on all platforms
-- 🛠️ **CLI Code Generation** - Generate Services, Controllers, Models, Tables
+- 🛠️ **CLI Code Generation** - Generate Services, Controllers, Models, Tables (shared foundation in [`gemvc/cli-base`](https://github.com/gemvc/cli-base))
 - 📝 **Simple API** - Clean, straightforward code structure
 - ⚡ **High Performance** - Connection pooling, async capabilities
 - ✅ **PHPStan Level 9** - Write type-safe, bug-free code with the highest static analysis level
@@ -873,7 +874,8 @@ php vendor/bin/gemvc create:crud Product
 
 **7. Run PHPStan:**
 ```bash
-vendor/bin/phpstan analyse
+composer phpstan
+# or: vendor/bin/phpstan analyse -c phpstan.neon
 ```
 
 **✅ For detailed step-by-step instructions, see [INSTALLATION.md](INSTALLATION.md)**
@@ -1078,12 +1080,12 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 #### 🛠️ [CLI.md](CLI.md) - CLI Commands Reference
 **Learn**: All command-line tools, code generation, project management
 - Complete CLI command reference
-- Command architecture and class hierarchy
-- How commands extend `Command` base class
-- How `AbstractInit` uses Template Method pattern
+- **Two-package CLI architecture**: [`gemvc/cli-base`](https://github.com/gemvc/cli-base) (foundation) + `gemvc/library` (framework commands)
+- How commands extend `Gemvc\CLI\Command` and use `CliColor` / `CliBoxShow`
+- How `AbstractInit` uses Template Method pattern (library)
 - How `DockerComposeInit` manages Docker services
-- How `ProjectHelper` resolves paths
 - Step-by-step examples and troubleshooting
+- **CLI-base API for AIs:** `vendor/gemvc/cli-base/AI-Assistant.md`
 
 #### 🗄️ [DATABASE_LAYER.md](DATABASE_LAYER.md) - Database Layer Guide
 **Learn**: Table layer, schema definition, type mapping, migrations
@@ -1134,8 +1136,8 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 
 ### 📑 Additional Documentation
 
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and notable changes (latest: **5.6.7**, 2026-05-17)
-- **[RELEASE_NOTES.md](RELEASE_NOTES.md)** - Release overviews and migration guides
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and notable changes
+- **[RELEASE_NOTES.md](RELEASE_NOTES.md)** - Release overviews and migration guides (latest pre-release: **5.7.0-alpha1**; stable: **5.6.7**)
 - **[SECURITY.md](SECURITY.md)** - Detailed security features and best practices
 - **[LICENSE](LICENSE)** - License information
 
@@ -1154,9 +1156,9 @@ GEMVC has extensive documentation to help you understand every aspect of the fra
 3. Study `src/startup/common/init_example/` for code examples
 
 **To understand CLI commands:**
-1. Read [CLI.md](CLI.md) for complete command reference
-2. Check how commands extend `Command` base class
-3. Understand Template Method pattern in `AbstractInit`
+1. Read [CLI.md](CLI.md) for framework commands (`init`, `create:*`, `db:*`)
+2. Read `vendor/gemvc/cli-base/AI-Assistant.md` for `Command`, `CliColor`, `FileSystemManager`, generators
+3. Understand Template Method pattern in `AbstractInit` (library)
 
 **To understand database layer:**
 1. Read [DATABASE_LAYER.md](DATABASE_LAYER.md) for Table layer guide
@@ -1222,12 +1224,14 @@ composer require --dev phpstan/phpstan
 ### Run PHPStan Analysis
 
 ```bash
-# Run analysis
-vendor/bin/phpstan analyse
-
-# Or use composer script
+# Recommended (library: analyzes src/ only)
 composer phpstan
+
+# Equivalent
+vendor/bin/phpstan analyse -c phpstan.neon
 ```
+
+In a **generated project** after `gemvc init`, use `vendor/bin/phpstan analyse` with the copied `phpstan.neon` (typically `src/` or `app/` paths as configured).
 
 ### Example: PHPStan Catches Bugs
 
@@ -1265,7 +1269,8 @@ GEMVC includes:
 - ✅ Level 9 configuration (highest level)
 - ✅ OpenSwoole stubs for proper type checking
 - ✅ Redis stubs for connection type safety
-- ✅ Pre-configured `phpstan.neon` file
+- ✅ Pre-configured `phpstan.neon` file (`src/` in the library repo; `tests/` excluded)
+- ✅ `composer phpstan` script in `gemvc/library`
 
 **Use PHPStan Level 9** - Write clean, type-safe, bug-free code! 🎯
 

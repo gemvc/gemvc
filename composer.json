@@ -12,7 +12,7 @@
         "gemvc/apm-tracekit": "^2.0",
         "gemvc/http-client": "^1.2",
         "gemvc/connection-openswoole": "^1.1",
-        "gemvc/cli-base": "^1.0"
+        "gemvc/cli-base": "^1.0.1"
     },
     "license": "MIT",
     "archive": {
