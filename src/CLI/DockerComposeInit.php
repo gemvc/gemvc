@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 
@@ -107,20 +108,20 @@ class DockerComposeInit extends Command
             "Would you like to set up Docker services for development?",
             "This will create a docker-compose.yml with optional services:",
             "",
-            "\033[1;94mAvailable Services:\033[0m"
+            "Available Services:"
         ];
         
         foreach (self::AVAILABLE_SERVICES as $key => $service) {
             // @phpstan-ignore-next-line
             $default = $service['default'] ? ' (default)' : '';
-            $lines[] = "  \033[1;34m{$service['name']}\033[0m - {$service['description']}{$default}";
+            $lines[] = "  {$service['name']} - {$service['description']}{$default}";
         }
         
         $lines[] = "";
-        $lines[] = "\033[1;94mThis will create:\033[0m";
-        $lines[] = "  • \033[1;34mdocker-compose.yml\033[0m - Docker services configuration";
-        $lines[] = "  • \033[1;34mDockerfile\033[0m - OpenSwoole container configuration";
-        $lines[] = "  • \033[1;34mDev environment\033[0m - Ready to use with docker compose up";
+        $lines[] = "This will create:";
+        $lines[] = "  • docker-compose.yml - Docker services configuration";
+        $lines[] = "  • Dockerfile - OpenSwoole container configuration";
+        $lines[] = "  • Dev environment - Ready to use with docker compose up";
         
         $boxShow->displayBox("Docker Services Setup", $lines);
     }
@@ -146,7 +147,7 @@ class DockerComposeInit extends Command
         foreach (self::AVAILABLE_SERVICES as $key => $service) {
             // @phpstan-ignore-next-line
             $default = $service['default'] ? ' [Y/n]' : ' [y/N]';
-            echo "  \033[1;34m{$service['name']}\033[0m - {$service['description']}{$default}: ";
+            $this->write("  {$service['name']} - {$service['description']}{$default}: ", CliColor::White);
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
@@ -186,10 +187,10 @@ class DockerComposeInit extends Command
             return;
         }
         
-        echo "\n\033[1;34mMySQL Configuration Mode:\033[0m\n";
-        echo "  \033[1;32m[1] Development Mode\033[0m - Clean logs, optimized for development\n";
-        echo "  \033[1;33m[2] Production Mode\033[0m - Verbose logs, full security warnings\n";
-        echo "\nEnter choice (1-2) [1]: ";
+        $this->write("\nMySQL Configuration Mode:\n", CliColor::Blue);
+        $this->write("  [1] Development Mode - Clean logs, optimized for development\n", CliColor::White);
+        $this->write("  [2] Production Mode - Verbose logs, full security warnings\n", CliColor::White);
+        $this->write("\nEnter choice (1-2) [1]: ", CliColor::Blue);
         
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
@@ -219,10 +220,10 @@ class DockerComposeInit extends Command
             return;
         }
         
-        echo "\n\033[1;34mResource Limits Configuration:\033[0m\n";
-        echo "Configure CPU and RAM limits for the application service\n";
-        echo "\n\033[1;94mHow many CPUs do you want to dedicate for this service?\033[0m\n";
-        echo "Enter number of CPUs [{$this->cpuLimit}]: ";
+        $this->write("\nResource Limits Configuration:\n", CliColor::Blue);
+        $this->write("Configure CPU and RAM limits for the application service\n", CliColor::White);
+        $this->write("\nHow many CPUs do you want to dedicate for this service?\n", CliColor::White);
+        $this->write("Enter number of CPUs [{$this->cpuLimit}]: ", CliColor::Blue);
         
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
@@ -245,8 +246,8 @@ class DockerComposeInit extends Command
             }
         }
         
-        echo "\n\033[1;94mHow much RAM do you want to allocate for this service?\033[0m\n";
-        echo "Enter RAM amount (e.g., 2g, 512m, 4g) [{$this->memoryLimit}]: ";
+        $this->write("\nHow much RAM do you want to allocate for this service?\n", CliColor::White);
+        $this->write("Enter RAM amount (e.g., 2g, 512m, 4g) [{$this->memoryLimit}]: ", CliColor::Blue);
         
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
@@ -296,7 +297,7 @@ class DockerComposeInit extends Command
     private function cleanupDockerVolumes(): void
     {
         if (!$this->nonInteractive) {
-            echo "\n\033[1;34mClean up existing Docker containers and volumes? (y/N):\033[0m ";
+            $this->write("\nClean up existing Docker containers and volumes? (y/N): ", CliColor::Blue);
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
                 return;
@@ -343,7 +344,7 @@ class DockerComposeInit extends Command
         if ($returnCode !== 0) {
             $this->warning("Failed to run: {$command}");
             foreach ($output as $line) {
-                $this->write("  {$line}\n", 'red');
+                $this->write("  {$line}\n", CliColor::Red);
             }
             return false;
         }
@@ -629,35 +630,35 @@ EOT;
         $boxShow = new \Gemvc\CLI\Commands\CliBoxShow();
         
         $modeText = $this->developmentMode ? 
-            "\033[1;32mDevelopment Mode\033[0m (clean logs)" : 
-            "\033[1;33mProduction Mode\033[0m (verbose logs)";
+            "Development Mode (clean logs)" : 
+            "Production Mode (verbose logs)";
             
         $lines = [
-            "\033[1;92m✓ Docker Services Ready!\033[0m",
+            "✓ Docker Services Ready!",
             "",
-            "\033[1;94mMySQL Configuration:\033[0m {$modeText}",
+            "MySQL Configuration: {$modeText}",
             "",
-            "\033[1;94mTo start your development environment:\033[0m",
-            " \033[1;34m$ \033[1;95mdocker compose up -d\033[0m",
+            "To start your development environment:",
+            " $ docker compose up -d",
             "",
-            "\033[1;94mTo stop the services:\033[0m",
-            " \033[1;34m$ \033[1;95mdocker compose down\033[0m",
+            "To stop the services:",
+            " $ docker compose down",
             "",
-            "\033[1;94mTo view logs:\033[0m",
-            " \033[1;34m$ \033[1;95mdocker compose logs -f\033[0m",
+            "To view logs:",
+            " $ docker compose logs -f",
             "",
-            "\033[1;94mService URLs:\033[0m",
-            " • \033[1;34m" . ucfirst($this->webserverType) . "\033[0m: http://localhost:{$this->webserverPort}"
+            "Service URLs:",
+            " • " . ucfirst($this->webserverType) . ": http://localhost:{$this->webserverPort}"
         ];
         
         if (in_array('phpmyadmin', $this->selectedServices)) {
-            $lines[] = " • \033[1;34mphpMyAdmin\033[0m: http://localhost:8080";
+            $lines[] = " • phpMyAdmin: http://localhost:8080";
         }
         if (in_array('db', $this->selectedServices)) {
-            $lines[] = " • \033[1;34mMySQL\033[0m: localhost:3306 (root/rootpassword)";
+            $lines[] = " • MySQL: localhost:3306 (root/rootpassword)";
         }
         if (in_array('redis', $this->selectedServices)) {
-            $lines[] = " • \033[1;34mRedis\033[0m: localhost:6379";
+            $lines[] = " • Redis: localhost:6379";
         }
         
         $boxShow->displayBox("Docker Services", $lines);

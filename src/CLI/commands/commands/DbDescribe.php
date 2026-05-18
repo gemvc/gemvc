@@ -1,13 +1,18 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
+use Gemvc\CLI\CliLine;
 use Gemvc\CLI\Command;
+use Gemvc\CLI\Commands\CliBoxShow;
 use Gemvc\CLI\Commands\DbConnect;
 use Gemvc\Helper\ProjectHelper;
 
 class DbDescribe extends Command
 {
+    private const TABLE_BOX_WIDTH = 78;
+
     protected string $description = "Describe a specific database table structure in detail. Shows columns, indexes, foreign keys, and table statistics.";
 
     public function execute(): bool
@@ -86,12 +91,8 @@ class DbDescribe extends Command
         $columns = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (empty($columns)) {
-            $totalWidth = 78;
-            $message = "No columns found";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2;
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'red');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No columns found');
+            $this->echoBoxClose();
             return;
         }
 
@@ -136,12 +137,8 @@ class DbDescribe extends Command
         $indexes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (empty($indexes)) {
-            $totalWidth = 78;
-            $message = "No indexes found";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2;
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No indexes found');
+            $this->echoBoxClose();
             return;
         }
 
@@ -203,12 +200,8 @@ class DbDescribe extends Command
         $foreignKeys = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (empty($foreignKeys)) {
-            $totalWidth = 78;
-            $message = "No foreign keys found";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2;
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No foreign keys found');
+            $this->echoBoxClose();
             return;
         }
 
@@ -301,12 +294,8 @@ class DbDescribe extends Command
 
             $this->displayTable(['Metric', 'Value'], $tableData);
         } else {
-            $totalWidth = 78;
-            $message = "No statistics available";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2;
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No statistics available');
+            $this->echoBoxClose();
         }
     }
 
@@ -353,12 +342,8 @@ class DbDescribe extends Command
 
             $this->displayTable(['Option', 'Value'], $tableData);
         } else {
-            $totalWidth = 78;
-            $message = "No table options available";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2;
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No table options available');
+            $this->echoBoxClose();
         }
     }
 
@@ -375,31 +360,20 @@ class DbDescribe extends Command
 
     private function displayTableHeader(string $tableName): void
     {
-        $totalWidth = 78; // Fixed total width for all borders
-        $this->write("\n", 'white');
-        $this->write("╔" . str_repeat("═", $totalWidth) . "╗\n", 'blue');
-        
-        $text = "🗄️  TABLE: " . strtoupper($tableName);
-        $textWidth = $this->getDisplayWidth($text);
-        $padding = $totalWidth - $textWidth;
-        $leftPad = intval($padding / 2);
-        $rightPad = $padding - $leftPad;
-        
-        $this->write("║" . str_repeat(" ", $leftPad) . $text . str_repeat(" ", $rightPad) . "║\n", 'yellow');
-        $this->write("╚" . str_repeat("═", $totalWidth) . "╝\n", 'blue');
+        $boxShow = new CliBoxShow();
+        $boxShow->displayInfoBox('TABLE: ' . strtoupper($tableName), []);
     }
 
     private function displaySectionHeader(string $title): void
     {
-        $totalWidth = 78; // Fixed total width for all borders
-        $this->write("\n", 'white');
-        $this->write("┌" . str_repeat("─", $totalWidth) . "┐\n", 'blue');
-        
+        $this->write("\n", CliColor::White);
+        $this->write('┌' . str_repeat('─', self::TABLE_BOX_WIDTH) . "┐\n", CliColor::Blue);
+
         $titleWidth = $this->getDisplayWidth($title);
-        $padding = $totalWidth - $titleWidth - 2; // -2 for the space after │ and before │
+        $padding = self::TABLE_BOX_WIDTH - $titleWidth - 2;
         
-        $this->write("│ " . $title . str_repeat(" ", $padding) . " │\n", 'green');
-        $this->write("├" . str_repeat("─", $totalWidth) . "┤\n", 'blue');
+        $this->write("│ " . $title . str_repeat(" ", $padding) . " │\n", CliColor::Green);
+        $this->write('├' . str_repeat('─', self::TABLE_BOX_WIDTH) . "┤\n", CliColor::Blue);
     }
 
     /**
@@ -409,19 +383,15 @@ class DbDescribe extends Command
     private function displayTable(array $headers, array $data): void
     {
         if (empty($data)) {
-            $totalWidth = 78;
-            $message = "No data available";
-            $messageWidth = $this->getDisplayWidth($message);
-            $padding = $totalWidth - $messageWidth - 2; // -2 for spaces
-            $this->write("│ " . $message . str_repeat(" ", $padding) . " │\n", 'yellow');
-            $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+            $this->echoBoxRow('No data available');
+            $this->echoBoxClose();
             return;
         }
 
         // Calculate column widths more accurately
         $columnWidths = [];
         $numColumns = count($headers);
-        $totalOuterWidth = 78; // Fixed total width
+        $totalOuterWidth = self::TABLE_BOX_WIDTH;
         $totalBorderWidth = 1 + ($numColumns * 3) + 1; // │ + (numColumns * " │ ") + │
         $availableWidth = $totalOuterWidth - $totalBorderWidth;
         
@@ -451,46 +421,52 @@ class DbDescribe extends Command
         }
 
         // Display headers
-        $this->write("│", 'blue');
+        $this->write("│", CliColor::Blue);
         foreach ($headers as $i => $header) {
-            $this->write(" " . $this->padString($header, (int) $columnWidths[$i]), 'yellow');
-            $this->write(" │", 'blue');
+            $this->write(" " . $this->padString($header, (int) $columnWidths[$i]), CliColor::Yellow);
+            $this->write(" │", CliColor::Blue);
         }
         $this->write("\n");
 
         // Header separator
-        $this->write("├", 'blue');
+        $this->write("├", CliColor::Blue);
         foreach ($columnWidths as $i => $width) {
-            $this->write(str_repeat("─", (int) $width + 2), 'blue');
+            $this->write(str_repeat("─", (int) $width + 2), CliColor::Blue);
             if ($i < count($columnWidths) - 1) {
-                $this->write("┼", 'blue');
+                $this->write("┼", CliColor::Blue);
             }
         }
-        $this->write("┤\n", 'blue');
+        $this->write("┤\n", CliColor::Blue);
 
         // Display data rows
         foreach ($data as $row) {
-            $this->write("│", 'blue');
+            $this->write("│", CliColor::Blue);
             foreach ($row as $i => $cell) {
                 $truncated = $this->getDisplayWidth($cell) > $columnWidths[$i] 
                     ? $this->truncateString($cell, (int) $columnWidths[$i] - 3) . '...'
                     : $cell;
-                $this->write(" " . $this->padString($truncated, (int) $columnWidths[$i]), 'white');
-                $this->write(" │", 'blue');
+                $this->write(" " . $this->padString($truncated, (int) $columnWidths[$i]), CliColor::White);
+                $this->write(" │", CliColor::Blue);
             }
             $this->write("\n");
         }
 
-        // Bottom border
-        $totalWidth = 78;
-        $this->write("└" . str_repeat("─", $totalWidth) . "┘\n", 'blue');
+        $this->echoBoxClose();
+    }
+
+    private function echoBoxRow(string $content): void
+    {
+        echo CliLine::boxRow($content, self::TABLE_BOX_WIDTH, CliColor::Blue);
+    }
+
+    private function echoBoxClose(): void
+    {
+        $this->write('└' . str_repeat('─', self::TABLE_BOX_WIDTH) . "┘\n", CliColor::Blue);
     }
 
     private function getDisplayWidth(string $text): int
     {
-        // Remove ANSI escape sequences and handle unicode/emoji properly
-        $clean = preg_replace('/\x1b\[[0-9;]*m/', '', $text) ?? '';
-        return mb_strwidth($clean);
+        return CliLine::displayWidth($text);
     }
 
     private function padString(string $text, int $width): string

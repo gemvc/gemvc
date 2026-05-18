@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\CliBoxShow;
@@ -72,7 +73,7 @@ class DockerContainerBuilder extends Command
         $this->displayBuildPrompt();
         
         // Get user confirmation
-        echo "\n\033[1;34mBuild Docker containers now? (y/N):\033[0m ";
+        $this->write("\nBuild Docker containers now? (y/N): ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             $this->info("Docker container build skipped (stdin error)");
@@ -111,13 +112,13 @@ class DockerContainerBuilder extends Command
         $lines = [
             "Would you like to build and start your Docker containers now?",
             "",
-            "\033[1;94mThis will:\033[0m",
+            "This will:",
             "  • Check Docker Desktop status",
             "  • Verify port availability ({$portListStr})",
             "  • Check for existing containers",
-            "  • Build and start containers with \033[1;34mdocker compose up -d --build\033[0m",
+            "  • Build and start containers with docker compose up -d --build",
             "",
-            "\033[1;33mNote:\033[0m If ports are in use, we'll suggest alternatives."
+            "Note: If ports are in use, we'll suggest alternatives."
         ];
         
         $boxShow->displayBox("Docker Container Build", $lines);
@@ -357,7 +358,7 @@ class DockerContainerBuilder extends Command
         $boxShow = new CliBoxShow();
         
         $lines = [
-            "\033[1;33mPort Conflicts Detected:\033[0m",
+            "Port Conflicts Detected:",
             ""
         ];
         
@@ -370,23 +371,23 @@ class DockerContainerBuilder extends Command
             $portName = $this->getPortName($port);
             
             if ($container !== null) {
-                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
+                $lines[] = "  • Port {$port} ({$portName}) is used by: {$container}";
                 $containersToStop[] = $container;
             } else {
-                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is in use by system process";
+                $lines[] = "  • Port {$port} ({$portName}) is in use by system process";
             }
-            $lines[] = "    Suggested alternative port: \033[1;32m{$suggested}\033[0m";
+            $lines[] = "    Suggested alternative port: {$suggested}";
             $lines[] = "";
         }
         
-        $lines[] = "\033[1;33mStep 1: Handle Container Conflicts\033[0m";
+        $lines[] = "Step 1: Handle Container Conflicts";
         $lines[] = "";
         $lines[] = "First, let's resolve container conflicts. Choose an option:";
         $lines[] = "";
         
         // Option 1: Use different project/container name (swapped to be option 1)
         $defaultProjectName = strtolower(str_replace([' ', '_'], ['', '-'], basename($this->basePath)));
-        $lines[] = "\033[1;94mOption 1: Choose Different Name and Port\033[0m";
+        $lines[] = "Option 1: Choose Different Name and Port";
         $lines[] = "  This will create containers with a different name prefix";
         $lines[] = "  Example: Instead of '{$defaultProjectName}-*', use 'myproject-*'";
         $lines[] = "";
@@ -394,20 +395,20 @@ class DockerContainerBuilder extends Command
         // Option 2: Stop conflicting containers (swapped to be option 2)
         if (!empty($containersToStop)) {
             $uniqueContainers = array_unique($containersToStop);
-            $lines[] = "\033[1;94mOption 2: Stop running container\033[0m";
+            $lines[] = "Option 2: Stop running container";
             $lines[] = "  This will stop the following containers:";
             foreach ($uniqueContainers as $container) {
-                $lines[] = "    • \033[1;34m{$container}\033[0m";
+                $lines[] = "    • {$container}";
             }
             $lines[] = "";
         }
         
-        $lines[] = "\033[1;90mNote:\033[0m After resolving container conflicts, we'll check ports again";
+        $lines[] = "Note: After resolving container conflicts, we'll check ports again";
         $lines[] = "      and suggest new ports if they're still in use.";
         
         $boxShow->displayWarningBox("Port Conflicts - Step 1", $lines);
         
-        echo "\n\033[1;34mChoose option (1=Different Name and Port, 2=Stop container) [1]:\033[0m ";
+        $this->write("\nChoose option (1=Different Name and Port, 2=Stop container) [1]: ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -448,7 +449,7 @@ class DockerContainerBuilder extends Command
         $boxShow = new CliBoxShow();
         
         $lines = [
-            "\033[1;33mPort Conflicts Still Detected:\033[0m",
+            "Port Conflicts Still Detected:",
             ""
         ];
         
@@ -472,31 +473,31 @@ class DockerContainerBuilder extends Command
             $portName = $this->getPortName($port);
             
             if ($container !== null) {
-                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is used by: \033[1;31m{$container}\033[0m";
+                $lines[] = "  • Port {$port} ({$portName}) is used by: {$container}";
             } else {
-                $lines[] = "  • Port \033[1;34m{$port}\033[0m ({$portName}) is in use by system process";
+                $lines[] = "  • Port {$port} ({$portName}) is in use by system process";
             }
-            $lines[] = "    Suggested alternative port: \033[1;32m{$suggested}\033[0m";
+            $lines[] = "    Suggested alternative port: {$suggested}";
             $lines[] = "";
         }
         
-        $lines[] = "\033[1;33mStep 2: Use Different Ports\033[0m";
+        $lines[] = "Step 2: Use Different Ports";
         $lines[] = "";
         $lines[] = "Ports are still in use. Choose an option:";
         $lines[] = "";
-        $lines[] = "\033[1;94mOption 1: Accept suggested alternative ports\033[0m";
+        $lines[] = "Option 1: Accept suggested alternative ports";
         $lines[] = "  I will automatically update docker-compose.yml with these ports:";
         $lines[] = "";
         foreach ($portMappings as $mapping) {
-            $lines[] = "    • \033[1;34m{$mapping['service']}\033[0m: Port \033[1;32m{$mapping['new']}\033[0m (was {$mapping['old']})";
+            $lines[] = "    • {$mapping['service']}: Port {$mapping['new']} (was {$mapping['old']})";
         }
         $lines[] = "";
-        $lines[] = "\033[1;94mOption 2: Continue anyway\033[0m";
+        $lines[] = "Option 2: Continue anyway";
         $lines[] = "  Build may fail if ports are still in use";
         
         $boxShow->displayWarningBox("Port Conflicts - Step 2", $lines);
         
-        echo "\n\033[1;34mChoose option (1=Accept suggested ports, 2=Continue anyway, N=Cancel):\033[0m ";
+        $this->write("\nChoose option (1=Accept suggested ports, 2=Continue anyway, N=Cancel): ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -834,47 +835,47 @@ class DockerContainerBuilder extends Command
         if ($this->forceNameSelection && empty($containerNames) && empty($imageNames)) {
             // User chose option 2 but no conflicts found - just ask for custom name
             $lines = [
-                "\033[1;33mCustom Container Name Selection\033[0m",
+                "Custom Container Name Selection",
                 "",
                 "You chose to use a different container/project name.",
                 "",
-                "\033[1;33mCurrent Project Name:\033[0m {$defaultProjectName}",
+                "Current Project Name: {$defaultProjectName}",
                 "",
-                "\033[1;94mPlease provide a custom project name:\033[0m"
+                "Please provide a custom project name:"
             ];
             $boxShow->displayBox("Container Name Selection", $lines);
         } else {
             // Normal conflict detection
             $lines = [
-                "\033[1;33mConflicts Detected:\033[0m",
+                "Conflicts Detected:",
                 ""
             ];
             
             if (!empty($containerNames)) {
-                $lines[] = "\033[1;33mRunning Containers:\033[0m";
+                $lines[] = "Running Containers:";
                 foreach ($containerNames as $containerName) {
-                    $lines[] = "  • \033[1;34m{$containerName}\033[0m";
+                    $lines[] = "  • {$containerName}";
                 }
                 $lines[] = "";
             }
             
             if (!empty($imageNames)) {
-                $lines[] = "\033[1;33mExisting Images:\033[0m";
+                $lines[] = "Existing Images:";
                 foreach ($imageNames as $imageName) {
-                    $lines[] = "  • \033[1;34m{$imageName}\033[0m";
+                    $lines[] = "  • {$imageName}";
                 }
                 $lines[] = "";
             }
             
-            $lines[] = "\033[1;33mCurrent Project Name:\033[0m {$defaultProjectName}";
+            $lines[] = "Current Project Name: {$defaultProjectName}";
             $lines[] = "";
-            $lines[] = "\033[1;94mPlease provide custom names to avoid conflicts:\033[0m";
+            $lines[] = "Please provide custom names to avoid conflicts:";
             
             $boxShow->displayWarningBox("Container & Image Conflicts", $lines);
         }
         
         // Ask for custom project name
-        echo "\n\033[1;34mEnter custom project name for containers [{$defaultProjectName}]:\033[0m ";
+        $this->write("\nEnter custom project name for containers [{$defaultProjectName}]: ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             throw new \RuntimeException("Failed to read user input");
@@ -900,7 +901,7 @@ class DockerContainerBuilder extends Command
         
         // Ask for custom image name (optional, only if images exist)
         if (!empty($imageNames)) {
-            echo "\033[1;34mEnter custom image name for application container [{$defaultProjectName}-app:latest]:\033[0m ";
+            $this->write("Enter custom image name for application container [{$defaultProjectName}-app:latest]: ", CliColor::Blue);
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
                 throw new \RuntimeException("Failed to read user input");
@@ -1240,11 +1241,11 @@ class DockerContainerBuilder extends Command
         chdir($originalDir);
         
         if ($returnCode === 0 && !empty($output)) {
-            $this->write("\n", 'white');
+            $this->write("\n", CliColor::White);
             foreach ($output as $line) {
-                $this->write($line . "\n", 'white');
+                $this->write($line . "\n", CliColor::White);
             }
-            $this->write("\n", 'white');
+            $this->write("\n", CliColor::White);
         }
     }
 }

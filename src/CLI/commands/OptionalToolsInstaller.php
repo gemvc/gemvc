@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 
@@ -58,7 +59,7 @@ class OptionalToolsInstaller extends Command
             "This will install phpstan/phpstan as a dev dependency"
         );
         
-        echo "\n\033[1;34mInstall PHPStan? (y/N):\033[0m ";
+        $this->write("\nInstall PHPStan? (y/N): ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             $this->error("Failed to open stdin");
@@ -86,11 +87,11 @@ class OptionalToolsInstaller extends Command
             "Choose between PHPUnit (traditional) or Pest (modern & expressive)"
         );
         
-        echo "\n\033[1;34mChoose testing framework:\033[0m\n";
-        echo "  [\033[32m1\033[0m] \033[1mPHPUnit\033[0m - Traditional PHP testing framework\n";
-        echo "  [\033[32m2\033[0m] \033[1mPest\033[0m - Modern, expressive testing framework\n";
-        echo "  [\033[32m3\033[0m] \033[1mSkip\033[0m - No testing framework\n";
-        echo "\n\033[1;34mEnter choice (1-3):\033[0m ";
+        $this->write("\nChoose testing framework:\n", CliColor::Blue);
+        $this->write("  [1] PHPUnit - Traditional PHP testing framework\n", CliColor::White);
+        $this->write("  [2] Pest - Modern, expressive testing framework\n", CliColor::White);
+        $this->write("  [3] Skip - No testing framework\n", CliColor::White);
+        $this->write("\nEnter choice (1-3): ", CliColor::Blue);
         
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
@@ -208,7 +209,7 @@ class OptionalToolsInstaller extends Command
         if ($returnCode !== 0) {
             $this->warning("Failed to run composer command. Error output:");
             foreach ($output as $line) {
-                $this->write("  {$line}\n", 'red');
+                $this->write("  {$line}\n", CliColor::Red);
             }
             
             // Check for specific errors and provide helpful suggestions
@@ -340,7 +341,7 @@ class OptionalToolsInstaller extends Command
         if ($returnCode !== 0) {
             $this->warning("Failed to initialize Pest. Error output:");
             foreach ($output as $line) {
-                $this->write("  {$line}\n", 'red');
+                $this->write("  {$line}\n", CliColor::Red);
             }
             throw new \RuntimeException("Pest initialization failed");
         }

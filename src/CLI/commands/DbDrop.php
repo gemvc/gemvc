@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\Helper\ProjectHelper;
@@ -32,7 +33,7 @@ class DbDrop extends Command
                 $this->error("\nWARNING: This will permanently delete the table '{$tableName}' and all its data!");
                 $this->error("This action cannot be undone.");
 
-                $this->write("\nAre you sure you want to drop this table? (yes/no): ", 'yellow');
+                $this->write("\nAre you sure you want to drop this table? (yes/no): ", CliColor::Yellow);
                 $handle = fopen("php://stdin", "r");
                 if ($handle === false) {
                     $this->error("Failed to open stdin");

@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\InitSwoole;
@@ -104,21 +105,10 @@ class InitProject extends Command
     private function displayWelcomeBanner(): void
     {
         $boxShow = new CliBoxShow();
-        
-        $title = "Welcome";
-        $initText = "GEMVC Framework initialization";
-        $subtitle = "PHP Framework built for Microservices";
-        
-        // Use CliBoxShow to create properly aligned box with yellow borders
-        // Title goes in the border, content lines go inside the box
-        $lines = [
-            "\033[1;32m💎 {$initText}\033[0m",  // Green gem emoji + Green, bold text
-            "\033[37m{$subtitle}\033[0m"        // White
-        ];
-        
-        $boxShow->displayBox($title, $lines);
-        
-        $this->write("\n\033[1;34mSelect Your Webserver:\033[0m\n\n", 'white');
+        $boxShow->displayBox('Welcome', [
+            '💎 GEMVC Framework initialization',
+            'PHP Framework built for Microservices',
+        ]);
     }
     
     /**
@@ -178,34 +168,20 @@ class InitProject extends Command
      */
     private function displayWebserverMenu(): string
     {
+        $boxShow = new CliBoxShow();
+        $boxShow->displayInfoBox('Select Your Webserver', []);
+        $this->write("\n", CliColor::White);
+
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
-            // Only show status badge if not available (e.g., "coming_soon")
-            $statusBadge = '';
-            
-            // Get color code based on webserver
-            $colorCode = '';
-            // @phpstan-ignore-next-line impossibleType - All webserver options have 'color' key
-            if (isset($option['color'])) {
-                switch ($option['color']) {
-                    case 'blue':
-                        $colorCode = "\033[1;34m";
-                        break;
-                    case 'red':
-                        $colorCode = "\033[1;31m";
-                        break;
-                    case 'green':
-                        $colorCode = "\033[1;32m";
-                        break;
-                }
-            }
-            
-            $this->write("  {$option['icon']} {$colorCode}[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m{$statusBadge}\n", 'white');
-            $this->write("      \033[90m{$option['description']}\033[0m\n\n", 'white');
+            $this->write(
+                "  {$option['icon']} [{$key}] {$option['name']}\n",
+                CliColor::White
+            );
+            $this->write("      {$option['description']}\n\n", CliColor::White);
         }
-        
-        // Get user input
+
         while (true) {
-            $this->write("\033[1;34mEnter your choice (1-3) [1]:\033[0m ", 'white');
+            $this->write('Enter your choice (1-3) [1]: ', CliColor::Blue);
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
@@ -242,7 +218,7 @@ class InitProject extends Command
      */
     private function executeWebserverInit(array $webserver): bool
     {
-        $this->write("\n", 'white');
+        $this->write("\n", CliColor::White);
         
         // Validate webserver name
         $webserverName = isset($webserver['name']) && is_string($webserver['name']) 
@@ -261,7 +237,7 @@ class InitProject extends Command
             }
         }
         
-        $this->write("\n", 'white');
+        $this->write("\n", CliColor::White);
         
         // Get the class name
         $className = $webserver['class'];

@@ -143,18 +143,18 @@ class InitNginx extends AbstractInit
     protected function getAdditionalInstructions(): array
     {
         return [
-            "\033[1;94mDocument Root:\033[0m",
-            " • All files are served from \033[1;34mpublic/\033[0m directory",
-            " • Place your assets in \033[1;34mpublic/assets/\033[0m",
+            "Document Root:",
+            " • All files are served from public/ directory",
+            " • Place your assets in public/assets/",
             "",
-            "\033[1;94mURL Rewriting:\033[0m",
+            "URL Rewriting:",
             " • nginx.conf configured for clean URLs",
-            " • All requests routed through \033[1;34mindex.php\033[0m",
+            " • All requests routed through index.php",
             "",
-            "\033[1;94mNginx Configuration:\033[0m",
+            "Nginx Configuration:",
             " • Configure nginx.conf for your server",
-            " • For production: \033[1;95msudo nginx -t\033[0m (test config)",
-            " • For production: \033[1;95msudo nginx -s reload\033[0m (reload config)"
+            " • For production: sudo nginx -t (test config)",
+            " • For production: sudo nginx -s reload (reload config)"
         ];
     }
 }

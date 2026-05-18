@@ -138,13 +138,13 @@ class InitSwoole extends AbstractInit
     protected function getAdditionalInstructions(): array
     {
         return [
-            "\033[1;34mHot Reload (Development):\033[0m",
-            " \033[1;34m$ \033[1;95mphp index.php --hot-reload\033[0m",
-            "   \033[90m# Auto-restart server on file changes\033[0m",
+            "Hot Reload (Development):",
+            " $ php index.php --hot-reload",
+            "   # Auto-restart server on file changes",
             "",
-            "\033[1;94mWebSocket Support:\033[0m",
+            "WebSocket Support:",
             " • WebSocket support available via OpenSwooleServer class",
-            " • View logs: \033[1;95mtail -f swoole.log\033[0m"
+            " • View logs: tail -f swoole.log"
         ];
     }
     

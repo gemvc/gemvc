@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\DbConnect;
@@ -44,9 +45,9 @@ class DbList extends Command
             }
             
             // Display tables and their columns
-            $this->write("\nTables in database '{$dbName}':\n", 'yellow');
+            $this->write("\nTables in database '{$dbName}':\n", CliColor::Yellow);
             foreach ($tables as $table) {
-                $this->write("\nTable: {$table}\n", 'green');
+                $this->write("\nTable: {$table}\n", CliColor::Green);
                 
                 // Get columns for this table
                 $stmt = $pdo->query("SHOW COLUMNS FROM `{$table}`");
@@ -57,12 +58,12 @@ class DbList extends Command
                 $columns = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 
                 if (empty($columns)) {
-                    $this->write("  No columns found\n", 'red');
+                    $this->write("  No columns found\n", CliColor::Red);
                     return false;
                 }
                 
                 // Display column information
-                $this->write("  Columns:\n", 'blue');
+                $this->write("  Columns:\n", CliColor::Blue);
                 foreach ($columns as $column) {
                     $type = $column['Type'];
                     $null = $column['Null'] === 'YES' ? 'NULL' : 'NOT NULL';
@@ -79,7 +80,7 @@ class DbList extends Command
                         $default,
                         $extra
                     );
-                    $this->write(trim($columnInfo) . "\n", 'white');
+                    $this->write(trim($columnInfo) . "\n", CliColor::White);
                 }
             }
             $this->write("\n");

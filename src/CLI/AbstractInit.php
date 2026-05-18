@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\FileSystemManager;
@@ -196,7 +197,7 @@ abstract class AbstractInit extends Command
         $this->createDirectories();
         $this->copyTemplatesFolder();
         $this->copyReadmeToRoot();
-        $this->info("\033[32m✓\033[0m Project structure created");
+        $this->info("✓ Project structure created");
     }
     
     /**
@@ -236,7 +237,7 @@ abstract class AbstractInit extends Command
         // This file is identical across all webservers, so it's centralized here
         $this->copyAppIndexFile();
         
-        $this->info("\033[32m✓\033[0m Common files copied");
+        $this->info("✓ Common files copied");
     }
     
     /**
@@ -419,7 +420,7 @@ abstract class AbstractInit extends Command
             // Copy all contents from source folder to target folder
             $this->fileSystem->copyDirectoryContents($sourceFolderPath, $targetFolderPath);
             
-            $this->info("\033[32m✓\033[0m Copied init example folder: {$folder}");
+            $this->info("✓ Copied init example folder: {$folder}");
         }
     }
     
@@ -499,7 +500,7 @@ abstract class AbstractInit extends Command
             throw new \RuntimeException("Failed to update composer.json with PSR-4 autoload");
         }
         
-        $this->info("\033[32m✓\033[0m PSR-4 autoload configured");
+        $this->info("✓ PSR-4 autoload configured");
     }
     
     /**
@@ -541,7 +542,7 @@ abstract class AbstractInit extends Command
         $envContent = $this->fileSystem->getFileContent($exampleEnvPath);
         $this->fileSystem->writeFile($envPath, $envContent, '.env file');
         
-        $this->info("\033[32m✓\033[0m Environment file created");
+        $this->info("✓ Environment file created");
     }
        
     /**
@@ -556,7 +557,7 @@ abstract class AbstractInit extends Command
         $this->createLocalWrapper();
         $this->createWindowsBatch();
         $this->offerGlobalInstallation();
-        $this->info("\033[32m✓\033[0m CLI commands ready");
+        $this->info("✓ CLI commands ready");
     }
     
     /**
@@ -624,9 +625,9 @@ EOT;
      */
     protected function displayWindowsInstructions(): void
     {
-        $this->write("\nFor global access on Windows:\n", 'blue');
-        $this->write("  1. Add this directory to your PATH: " . realpath($this->basePath . '/bin') . "\n", 'white');
-        $this->write("  2. Then you can run 'gemvc' from any location\n\n", 'white');
+        $this->write("\nFor global access on Windows:\n", CliColor::Blue);
+        $this->write("  1. Add this directory to your PATH: " . realpath($this->basePath . '/bin') . "\n", CliColor::White);
+        $this->write("  2. Then you can run 'gemvc' from any location\n\n", CliColor::White);
     }
     
     /**
@@ -636,7 +637,7 @@ EOT;
      */
     protected function askForGlobalInstallation(): void
     {
-        echo "Would you like to create a global 'gemvc' command? (y/N): ";
+        $this->write("Would you like to create a global 'gemvc' command? (y/N): ", CliColor::Blue);
         $handle = fopen("php://stdin", "r");
         if ($handle === false) {
             $this->info("Skipping global installation (stdin error)");
@@ -661,10 +662,10 @@ EOT;
     protected function displayAlternativeUsage(): void
     {
         $this->info("Skipped global command setup");
-        $this->write("\nYou can still use the command with:\n", 'blue');
-        $this->write("  php vendor/bin/gemvc [command]\n", 'white');
-        $this->write("  OR\n", 'white');
-        $this->write("  php bin/gemvc [command]\n\n", 'white');
+        $this->write("\nYou can still use the command with:\n", CliColor::Blue);
+        $this->write("  php vendor/bin/gemvc [command]\n", CliColor::White);
+        $this->write("  OR\n", CliColor::White);
+        $this->write("  php bin/gemvc [command]\n\n", CliColor::White);
     }
     
     /**
@@ -716,9 +717,9 @@ EOT;
     protected function displayManualInstallationInstructions(string $wrapperPath): void
     {
         $this->warning("Could not create global command. You may need root privileges.");
-        $this->write("\nManual setup: \n", 'blue');
-        $this->write("  1. Run: sudo ln -s " . realpath($wrapperPath) . " /usr/local/bin/gemvc\n", 'white');
-        $this->write("  2. Make it executable: sudo chmod +x /usr/local/bin/gemvc\n\n", 'white');
+        $this->write("\nManual setup: \n", CliColor::Blue);
+        $this->write("  1. Run: sudo ln -s " . realpath($wrapperPath) . " /usr/local/bin/gemvc\n", CliColor::White);
+        $this->write("  2. Make it executable: sudo chmod +x /usr/local/bin/gemvc\n\n", CliColor::White);
     }
     
     /**
@@ -745,12 +746,12 @@ EOT;
         
         if ($returnCode !== 0) {
             $this->warning("Failed to run composer dump-autoload. You may need to run it manually:");
-            $this->write("  composer dump-autoload\n", 'yellow');
+            $this->write("  composer dump-autoload\n", CliColor::Yellow);
             foreach ($output as $line) {
-                $this->write("  {$line}\n", 'red');
+                $this->write("  {$line}\n", CliColor::Red);
             }
         } else {
-            $this->info("\033[32m✓\033[0m Autoload finalized");
+            $this->info("✓ Autoload finalized");
         }
     }
     
@@ -794,13 +795,13 @@ EOT;
         $webserverType = ucfirst($this->getWebserverType());
         
         $lines = [
-            "\033[1;92m✓ {$webserverType} Project Ready!\033[0m",
-            " \033[1;34m$ \033[1;95mphp bin/gemvc\033[0m",
-            "   \033[90m# PSR-4 autoload configured and ready to use\033[0m",
+            "✓ {$webserverType} Project Ready!",
+            " $ php bin/gemvc",
+            "   # PSR-4 autoload configured and ready to use",
             "",
-            "\033[1;94mOptional - Development Environment:\033[0m",
-            " \033[1;34m$ \033[1;95mcomposer update\033[0m",
-            "   \033[90m# Only if you want to install additional dev dependencies\033[0m"
+            "Optional - Development Environment:",
+            " $ composer update",
+            "   # Only if you want to install additional dev dependencies"
         ];
         
         $boxShow->displayBox("Next Steps", $lines);
@@ -824,15 +825,15 @@ EOT;
         $startCommand = $this->getStartCommand();
         
         $lines = [
-            "\033[1;94m{$webserverType} Specific Instructions:\033[0m",
+            "{$webserverType} Specific Instructions:",
             "",
-            "\033[1;34mStart {$webserverType} Server:\033[0m",
-            " \033[1;34m$ \033[1;95m{$startCommand}\033[0m",
-            "   \033[90m# Starts {$webserverType} server on http://localhost:{$port}\033[0m",
+            "Start {$webserverType} Server:",
+            " $ {$startCommand}",
+            "   # Starts {$webserverType} server on http://localhost:{$port}",
             "",
-            "\033[1;34mWith Docker:\033[0m",
-            " \033[1;34m$ \033[1;95mdocker compose up -d --build\033[0m",
-            "   \033[90m# Builds and runs {$webserverType} in container\033[0m",
+            "With Docker:",
+            " $ docker compose up -d --build",
+            "   # Builds and runs {$webserverType} in container",
         ];
         
         // Add webserver-specific additional instructions
@@ -845,13 +846,13 @@ EOT;
         // Add common instructions
         $lines = array_merge($lines, [
             "",
-            "\033[1;94mServer Configuration:\033[0m",
-            " • Server runs on port \033[1;34m{$port}\033[0m by default",
-            " • Configure in \033[1;34m.env\033[0m file",
+            "Server Configuration:",
+            " • Server runs on port {$port} by default",
+            " • Configure in .env file",
             "",
-            "\033[1;94mUseful Commands:\033[0m",
-            " • Check server status: \033[1;95mcurl http://localhost:{$port}\033[0m",
-            " • Stop server: \033[1;95mCtrl+C\033[0m"
+            "Useful Commands:",
+            " • Check server status: curl http://localhost:{$port}",
+            " • Stop server: Ctrl+C"
         ]);
         
         $boxShow->displayBox("{$webserverType} Instructions", $lines);
@@ -903,9 +904,9 @@ EOT;
         $boxShow = new CliBoxShow();
         
         $lines = [
-            "\033[1;32mGEMVC {$webserverType} Project Ready!\033[0m",
+            "GEMVC {$webserverType} Project Ready!",
             "",
-            "Server: \033[1;34mhttp://localhost:{$serverPort}\033[0m",
+            "Server: http://localhost:{$serverPort}",
             ""
         ];
         
@@ -914,23 +915,23 @@ EOT;
             $mysqlPort = $actualPorts['mysql'] ?? 3306;
             $phpmyadminPort = $actualPorts['phpmyadmin'] ?? 8080;
             
-            $lines[] = "Run: \033[1;34mdocker compose up -d --build\033[0m";
+            $lines[] = "Run: docker compose up -d --build";
             $lines[] = "";
-            $lines[] = "\033[1;33mConfigured Server Ports:\033[0m";
-            $lines[] = "   • Application Server: \033[1;34m{$serverPort}\033[0m";
-            $lines[] = "   • MySQL Database: \033[1;34m{$mysqlPort}\033[0m";
-            $lines[] = "   • phpMyAdmin: \033[1;34m{$phpmyadminPort}\033[0m";
+            $lines[] = "Configured Server Ports:";
+            $lines[] = "   • Application Server: {$serverPort}";
+            $lines[] = "   • MySQL Database: {$mysqlPort}";
+            $lines[] = "   • phpMyAdmin: {$phpmyadminPort}";
         } else {
             // Docker not set up - show only application server port
-            $lines[] = "\033[1;33mConfigured Server Port:\033[0m";
-            $lines[] = "   • Application Server: \033[1;34m{$serverPort}\033[0m";
+            $lines[] = "Configured Server Port:";
+            $lines[] = "   • Application Server: {$serverPort}";
             $lines[] = "";
-            $lines[] = "\033[1;90mNote:\033[0m Docker services not configured.";
-            $lines[] = "   Run \033[1;34mgemvc init\033[0m again to set up Docker services.";
+            $lines[] = "Note: Docker services not configured.";
+            $lines[] = "   Run gemvc init again to set up Docker services.";
         }
         
         $boxShow->displaySuccessBox("✓ SUCCESS! ✓", $lines);
-        $this->write("\n", 'white');
+        $this->write("\n", CliColor::White);
     }
     
     /**

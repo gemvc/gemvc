@@ -1,6 +1,7 @@
 <?php
 
 namespace Gemvc\CLI\Commands;
+use Gemvc\CLI\CliColor;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\InitSwoole;
@@ -101,32 +102,21 @@ class InitProject extends Command
     private function displayWelcomeBanner(): void
     {
         $boxShow = new CliBoxShow();
-        
-        $lines = [
-            "\033[1;96m╔═══════════════════════════════════════════════════════╗\033[0m",
-            "\033[1;96m║\033[0m           \033[1;92mWelcome to GEMVC Framework\033[0m              \033[1;96m║\033[0m",
-            "\033[1;96m╚═══════════════════════════════════════════════════════╝\033[0m",
-            "",
-            "\033[1;94mGEMVC\033[0m is a high-performance PHP framework built for",
-            "modern web applications with first-class support for",
-            "OpenSwoole, Apache, and Nginx.",
-            "",
-            "\033[1;93m⚡ Features:\033[0m",
-            "  • PSR-4 Autoloading",
-            "  • Database Migrations & ORM",
-            "  • JWT Authentication",
-            "  • RESTful API Support",
-            "  • OpenAPI Documentation",
-            "  • Docker Ready",
-            "",
-            "\033[1;34mLet's set up your project!\033[0m"
-        ];
-        
-        foreach ($lines as $line) {
-            $this->write($line . "\n", 'white');
-        }
-        
-        $this->write("\n");
+        $boxShow->displayBox('Welcome to GEMVC', [
+            'GEMVC is a high-performance PHP framework built for',
+            'modern web applications with first-class support for',
+            'OpenSwoole, Apache, and Nginx.',
+            '',
+            '⚡ Features:',
+            '  • PSR-4 Autoloading',
+            '  • Database Migrations & ORM',
+            '  • JWT Authentication',
+            '  • RESTful API Support',
+            '  • OpenAPI Documentation',
+            '  • Docker Ready',
+            '',
+            "Let's set up your project!",
+        ]);
     }
     
     /**
@@ -186,23 +176,25 @@ class InitProject extends Command
      */
     private function displayWebserverMenu(): string
     {
-        $this->write("\n\033[1;94m┌─────────────────────────────────────────────────────────────┐\033[0m\n", 'white');
-        $this->write("\033[1;94m│\033[0m              \033[1;96mSelect Your Webserver\033[0m                      \033[1;94m│\033[0m\n", 'white');
-        $this->write("\033[1;94m└─────────────────────────────────────────────────────────────┘\033[0m\n\n", 'white');
-        
+        $boxShow = new CliBoxShow();
+        $boxShow->displayInfoBox('Select Your Webserver', []);
+        $this->write("\n", CliColor::White);
+
         foreach (self::WEBSERVER_OPTIONS as $key => $option) {
             // @phpstan-ignore-next-line identical.alwaysTrue - Defensive code for future webservers
-            $statusBadge = $option['status'] === 'available' 
-                ? "\033[1;32m[AVAILABLE]\033[0m" 
-                : "\033[1;33m[COMING SOON]\033[0m";
-            
-            $this->write("  {$option['icon']} \033[1;34m[{$key}]\033[0m \033[1;97m{$option['name']}\033[0m {$statusBadge}\n", 'white');
-            $this->write("      \033[90m{$option['description']}\033[0m\n\n", 'white');
+            $statusBadge = $option['status'] === 'available'
+                ? ' [AVAILABLE]'
+                : ' [COMING SOON]';
+
+            $this->write(
+                "  {$option['icon']} [{$key}] {$option['name']}{$statusBadge}\n",
+                CliColor::White
+            );
+            $this->write("      {$option['description']}\n\n", CliColor::White);
         }
-        
-        // Get user input
+
         while (true) {
-            $this->write("\033[1;34mEnter your choice (1-3) [1]:\033[0m ", 'white');
+            $this->write('Enter your choice (1-3) [1]: ', CliColor::Blue);
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
@@ -239,7 +231,7 @@ class InitProject extends Command
      */
     private function executeWebserverInit(array $webserver): bool
     {
-        $this->write("\n", 'white');
+        $this->write("\n", CliColor::White);
         
         // Validate webserver name
         $webserverName = isset($webserver['name']) && is_string($webserver['name']) 
@@ -258,7 +250,7 @@ class InitProject extends Command
             }
         }
         
-        $this->write("\n", 'white');
+        $this->write("\n", CliColor::White);
         
         // Get the class name
         $className = $webserver['class'];

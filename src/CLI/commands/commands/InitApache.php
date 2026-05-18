@@ -168,17 +168,17 @@ class InitApache extends AbstractInit
     protected function getAdditionalInstructions(): array
     {
         return [
-            "\033[1;94m📁 Document Root:\033[0m",
-            " • All files are served from \033[1;34mpublic/\033[0m directory",
-            " • Place your assets in \033[1;34mpublic/assets/\033[0m",
+            "📁 Document Root:",
+            " • All files are served from public/ directory",
+            " • Place your assets in public/assets/",
             "",
-            "\033[1;94m🔧 URL Rewriting:\033[0m",
+            "🔧 URL Rewriting:",
             " • .htaccess configured for clean URLs",
-            " • All requests routed through \033[1;34mpublic/index.php\033[0m",
+            " • All requests routed through public/index.php",
             "",
-            "\033[1;94m⚙️ Apache Configuration:\033[0m",
-            " • Enable mod_rewrite: \033[1;95msudo a2enmod rewrite\033[0m",
-            " • Restart Apache: \033[1;95msudo service apache2 restart\033[0m"
+            "⚙️ Apache Configuration:",
+            " • Enable mod_rewrite: sudo a2enmod rewrite",
+            " • Restart Apache: sudo service apache2 restart"
         ];
     }
 }
