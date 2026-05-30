@@ -1,6 +1,52 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.6.7...5.7.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.7.0...5.7.1
 # GEMVC Framework - Release Notes
+
+## Version 5.7.1 - TableGenerator type mapping accuracy improvements
+
+**Release Date**: 30.mai.2026  
+**Type**: Patch Release (Backward Compatible)  
+**Tag**: `5.7.1`
+
+---
+
+## 📋 Overview
+
+This patch release improves SQL type generation accuracy in `TableGenerator` by correctly handling nullable mapped PHP types and by preventing unintended `_id` coercion for non-integer IDs.
+
+---
+
+## 🔧 Changes
+
+### `TableGenerator::mapTypeToSqlType()`
+
+- Nullable mapped types now normalize before matching (e.g., `?string` -> `string`, `?int` -> `int`).
+- `_id` suffix columns are forced to `INT(11)` **only** when the PHP/base type is `int` or `integer`.
+- Non-integer `_id` fields (e.g., UUID/external identifiers) preserve their declared string mapping.
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Correct schema mapping for nullable types** (`?string` no longer falls back to `TEXT`)
+- ✅ **Safer data integrity for non-integer IDs** (no unintended cast to `INT`)
+- ✅ **Backward-compatible behavior for classic integer foreign keys**
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.7.0 to 5.7.1
+
+This release is **fully backward compatible**.
+
+**What you should do:**
+- Run `composer update` to pull `gemvc/library` 5.7.1.
+- Re-run table generation/migrations if you rely on nullable mapped types or string-based `_id` columns.
+
+**Breaking Changes**: None
+
+---
 
 ## Version 5.7.0 - CLI foundation extracted to `gemvc/cli-base`
 

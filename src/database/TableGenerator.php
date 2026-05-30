@@ -198,7 +198,7 @@ class TableGenerator {
      * 
      * @param string $propertyName The name of the property
      * @param string $columnProperties SQL properties to add to the column definition
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function setColumnProperties(string $propertyName, string $columnProperties): self {
         $this->columnProperties[$propertyName] = $columnProperties;
@@ -209,7 +209,7 @@ class TableGenerator {
      * Set a column as NOT NULL
      * 
      * @param string $propertyName The name of the property
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function setNotNull(string $propertyName): self {
         $properties = $this->columnProperties[$propertyName] ?? '';
@@ -226,7 +226,7 @@ class TableGenerator {
      * 
      * @param string $propertyName The name of the property
      * @param mixed $defaultValue The default value
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function setDefault(string $propertyName, mixed $defaultValue): self {
         $properties = $this->columnProperties[$propertyName] ?? '';
@@ -270,7 +270,7 @@ class TableGenerator {
      * 
      * @param string $propertyName The name of the property
      * @param string $checkExpression The SQL expression for the check constraint
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function addCheck(string $propertyName, string $checkExpression): self {
         $properties = $this->columnProperties[$propertyName] ?? '';
@@ -299,7 +299,7 @@ class TableGenerator {
      * 
      * @param string $propertyName The name of the property to index
      * @param bool $unique Whether the index should be unique
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function addIndex(string $propertyName, bool $unique = false): self {
         if ($unique) {
@@ -314,7 +314,7 @@ class TableGenerator {
      * Remove indexing from a property
      * 
      * @param string $propertyName The name of the property to remove indexing from
-     * @return $this For method chaining
+     * @return self For method chaining
      */
     public function removeIndex(string $propertyName): self {
         $this->indexedProperties = array_filter($this->indexedProperties, function($prop) use ($propertyName) {
@@ -843,12 +843,17 @@ class TableGenerator {
      * @return string The SQL column type
      */
     private function mapTypeToSqlType(string $phpType, string $propertyName): string {
-        $type = match(strtolower($phpType)) {
+        // Strip nullable prefix ('?string' → 'string', '?int' → 'int') before matching.
+        // Without this, '?string' returned from $_type_map hits the default branch
+        // and becomes TEXT instead of VARCHAR(255) / INT(11).
+        $baseType = str_starts_with($phpType, '?') ? substr($phpType, 1) : $phpType;
+
+        $type = match(strtolower($baseType)) {
             'int', 'integer' => 'INT(11)',
             'float', 'double' => 'DOUBLE',
             'bool', 'boolean' => 'TINYINT(1)',
             'string' => 'VARCHAR(255)',
-            'text' => 'TEXT',     
+            'text' => 'TEXT',
             'longtext' => 'LONGTEXT',
             'datetime' => 'DATETIME',
             'array' => 'JSON',
@@ -859,11 +864,14 @@ class TableGenerator {
         // Special handling for common field names
         if (strtolower($propertyName) === 'id') {
             $type .= ' AUTO_INCREMENT PRIMARY KEY';
-        } elseif (str_ends_with(strtolower($propertyName), '_id')) {
-            // Foreign key column - make it INT
+        } elseif (str_ends_with(strtolower($propertyName), '_id')
+                  && in_array(strtolower($baseType), ['int', 'integer'], true)) {
+            // Only force INT for _id columns whose PHP type is actually int/integer.
+            // This prevents non-FK string columns that happen to end in '_id' from
+            // being silently cast to INT and truncating values like "1.234567890".
             $type = 'INT(11)';
         } elseif (str_ends_with(strtolower($propertyName), 'email')) {
-            // Email columns - make them VARCHAR(320) which is the max length of an email
+            // Email columns — VARCHAR(320) is the RFC maximum
             $type = 'VARCHAR(320)';
         }
 
