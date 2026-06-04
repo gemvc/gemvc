@@ -4,7 +4,7 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "5.7.0-alpha1",
+    "version": "5.8.0",
     "library_package": "gemvc/library",
     "cli_base_package": "gemvc/cli-base",
     "cli_base_doc": "vendor/gemvc/cli-base/AI-Assistant.md",
