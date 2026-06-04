@@ -554,6 +554,83 @@ abstract class Table
     }
 
     /**
+     * Adds a WHERE column IN (value1, value2, ...) condition with bound parameters.
+     *
+     * Mirrors Gemvc\Database\Query\WhereTrait::whereIn() so Table fluent selects
+     * and QueryBuilder share the same capability.
+     *
+     * @param string $column Column name
+     * @param array<int|string|float|bool> $values Values for the IN list (empty array = no clause added)
+     * @return self For method chaining
+     */
+    public function whereIn(string $column, array $values): self
+    {
+        if (empty($column)) {
+            $this->setError("Column name cannot be empty in WHERE IN clause");
+            return $this;
+        }
+
+        if (count($values) === 0) {
+            return $this;
+        }
+
+        $columnBase = str_replace('.', '_', $column);
+        $placeholders = [];
+        $suffix = count($this->_arr_where);
+
+        foreach (array_values($values) as $index => $value) {
+            $paramName = $columnBase . '_in_' . $suffix . '_' . $index;
+            $placeholders[] = ':' . $paramName;
+            $this->_binds[':' . $paramName] = $value;
+        }
+
+        $inClause = "{$column} IN (" . implode(', ', $placeholders) . ")";
+        $this->_arr_where[] = count($this->_arr_where)
+            ? " AND {$inClause} "
+            : " WHERE {$inClause} ";
+
+        return $this;
+    }
+
+    /**
+     * Adds a WHERE column NOT IN (value1, value2, ...) condition with bound parameters.
+     *
+     * Mirrors Gemvc\Database\Query\WhereTrait::whereNotIn().
+     *
+     * @param string $column Column name
+     * @param array<int|string|float|bool> $values Values for the NOT IN list (empty array = no clause added)
+     * @return self For method chaining
+     */
+    public function whereNotIn(string $column, array $values): self
+    {
+        if (empty($column)) {
+            $this->setError("Column name cannot be empty in WHERE NOT IN clause");
+            return $this;
+        }
+
+        if (count($values) === 0) {
+            return $this;
+        }
+
+        $columnBase = str_replace('.', '_', $column);
+        $placeholders = [];
+        $suffix = count($this->_arr_where);
+
+        foreach (array_values($values) as $index => $value) {
+            $paramName = $columnBase . '_not_in_' . $suffix . '_' . $index;
+            $placeholders[] = ':' . $paramName;
+            $this->_binds[':' . $paramName] = $value;
+        }
+
+        $notInClause = "{$column} NOT IN (" . implode(', ', $placeholders) . ")";
+        $this->_arr_where[] = count($this->_arr_where)
+            ? " AND {$notInClause} "
+            : " WHERE {$notInClause} ";
+
+        return $this;
+    }
+
+    /**
      * Adds a WHERE condition using OR operator (if not the first condition)
      * 
      * Note: If this is the first condition in the query, it behaves like a regular WHERE

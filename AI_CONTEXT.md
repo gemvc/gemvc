@@ -89,6 +89,8 @@ Response::internalError($error)             // 500
 $this->select('id,name')
     ->where('active', true)
     ->whereEqual('id', $id)
+    ->whereIn('status', ['active', 'pending'])
+    ->whereNotIn('id', [10, 20])
     ->orderBy('name', true)  // true = ASC, false = DESC
     ->limit(10)
     ->run();  // Returns array of objects (?array on error)

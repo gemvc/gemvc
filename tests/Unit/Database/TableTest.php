@@ -245,8 +245,72 @@ class TableTest extends TestCase
         $this->assertSame($table, $result);
     }
     
-    // whereIn doesn't exist - removed test
-    
+    public function testWhereIn(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereIn('id', [1, 2, 3]);
+        $this->assertSame($table, $result);
+
+        $binds = $table->getBind();
+        $this->assertArrayHasKey(':id_in_0_0', $binds);
+        $this->assertArrayHasKey(':id_in_0_2', $binds);
+        $this->assertEquals(1, $binds[':id_in_0_0']);
+        $this->assertEquals(3, $binds[':id_in_0_2']);
+    }
+
+    public function testWhereInWithDottedColumn(): void
+    {
+        $table = new TestTable();
+        $table->select()->whereIn('users.role_id', [1, 2]);
+
+        $binds = $table->getBind();
+        $this->assertArrayHasKey(':users_role_id_in_0_0', $binds);
+        $this->assertArrayHasKey(':users_role_id_in_0_1', $binds);
+    }
+
+    public function testWhereInWithEmptyArray(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereIn('id', []);
+        $this->assertSame($table, $result);
+        $this->assertSame([], $table->getBind());
+    }
+
+    public function testWhereInWithEmptyColumn(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereIn('', [1, 2, 3]);
+        $this->assertSame($table, $result);
+        $this->assertNotNull($table->getError());
+    }
+
+    public function testWhereNotIn(): void
+    {
+        $table = new TestTable();
+        $result = $table->select()->whereNotIn('status', ['deleted', 'banned']);
+        $this->assertSame($table, $result);
+
+        $binds = $table->getBind();
+        $this->assertArrayHasKey(':status_not_in_0_0', $binds);
+        $this->assertArrayHasKey(':status_not_in_0_1', $binds);
+        $this->assertEquals('deleted', $binds[':status_not_in_0_0']);
+        $this->assertEquals('banned', $binds[':status_not_in_0_1']);
+    }
+
+    public function testWhereInChainedWithWhereEqual(): void
+    {
+        $table = new TestTable();
+        $table->select()
+            ->whereIn('id', [1, 2])
+            ->whereEqual('status', 'active');
+
+        $binds = $table->getBind();
+        $this->assertArrayHasKey(':id_in_0_0', $binds);
+        $this->assertArrayHasKey(':id_in_0_1', $binds);
+        $this->assertArrayHasKey(':status', $binds);
+        $this->assertEquals('active', $binds[':status']);
+    }
+
     public function testWhereOr(): void
     {
         $table = new TestTable();

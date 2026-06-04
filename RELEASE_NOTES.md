@@ -1,6 +1,62 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.7.0...5.7.1
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.7.1...5.8.0
 # GEMVC Framework - Release Notes
+
+## Version 5.8.0 - Table fluent API: `whereIn` and `whereNotIn`
+
+**Release Date**: 04.juni.2026  
+**Type**: Minor Release (Backward Compatible)  
+**Tag**: `5.8.0`
+
+---
+
+## 📋 Overview
+
+This release adds **`whereIn()`** and **`whereNotIn()`** to the `Table` fluent query builder, matching capabilities already available on `Gemvc\Database\Query\WhereTrait` (Select/Update/Delete query objects).
+
+---
+
+## 🔧 Changes
+
+### `Gemvc\Database\Table`
+
+- **`whereIn(string $column, array $values): self`** — bound `IN (...)` clause; empty `$values` adds no condition.
+- **`whereNotIn(string $column, array $values): self`** — bound `NOT IN (...)` clause; same empty-array behavior.
+- Parameter names use `str_replace('.', '_', $column)` for qualified columns (e.g. `users.role_id`).
+- Suffix from `_arr_where` count avoids bind collisions when chaining multiple IN/NOT IN clauses.
+
+### Documentation
+
+- Updated `AI_API_REFERENCE.md`, `AI_CONTEXT.md`, `GEMVC_PHPDOC_REFERENCE.php`, and `gemvc-api-reference.jsonc`.
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Parity** between `Table` fluent selects and standalone QueryBuilder
+- ✅ **Prepared statements** for all IN list values (no string concatenation of user data)
+- ✅ **Predictable chaining** with existing `whereEqual`, `whereLike`, joins, etc.
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.7.1 to 5.8.0
+
+This release is **fully backward compatible**.
+
+**Example:**
+
+```php
+$rows = $this->select()
+    ->whereIn('status', ['active', 'pending'])
+    ->whereNotIn('id', [10, 20, 30])
+    ->run();
+```
+
+**Breaking Changes**: None
+
+---
 
 ## Version 5.7.1 - TableGenerator type mapping accuracy improvements
 

@@ -262,6 +262,15 @@ interface TableReference {
      * @return self
      */
     public function whereIn(string $column, array $values): self;
+
+    /**
+     * Add WHERE NOT IN clause (bound parameters)
+     *
+     * @param string $column Column name
+     * @param array<int|string|float|bool> $values Values to exclude
+     * @return self
+     */
+    public function whereNotIn(string $column, array $values): self;
     
     /**
      * Add WHERE LIKE clause

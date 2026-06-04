@@ -106,6 +106,8 @@ whereLike(string $column, string $pattern): self
 whereOr(string $column, mixed $value): self
 whereNull(string $column): self
 whereNotNull(string $column): self
+whereIn(string $column, array $values): self      // Bound IN list; empty array adds no clause
+whereNotIn(string $column, array $values): self  // Bound NOT IN list; empty array adds no clause
 join(string $table, string $condition, string $type = 'INNER'): self
 orderBy(string|null $column = null, bool|null $ascending = null): self  // Default: primary key DESC
 limit(int $limit): self
