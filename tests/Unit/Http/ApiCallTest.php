@@ -6,6 +6,7 @@ namespace Tests\Unit\Http;
 
 use PHPUnit\Framework\TestCase;
 use Gemvc\Http\ApiCall;
+use Gemvc\Http\Client\HttpClient;
 
 class ApiCallTest extends TestCase
 {
@@ -162,13 +163,9 @@ class ApiCallTest extends TestCase
         $apiCall = new ApiCall();
         $apiCall->postRaw('https://example.com/api', 'raw body', 'text/plain');
         $apiCall->post('https://example.com/api', ['data' => 'value']);
-        
+
         $this->assertEquals('POST', $apiCall->method);
-        // rawBody should be cleared
-        $reflection = new \ReflectionClass($apiCall);
-        $rawBodyProperty = $reflection->getProperty('rawBody');
-        $rawBodyProperty->setAccessible(true);
-        $this->assertNull($rawBodyProperty->getValue($apiCall));
+        $this->assertNull($this->getHttpClientProperty($apiCall, 'rawBody'));
     }
     
     public function testPutMethod(): void
@@ -190,13 +187,9 @@ class ApiCallTest extends TestCase
         // Don't actually make HTTP request, just test method configuration
         $apiCall->method = 'GET'; // Reset to verify it changes
         $apiCall->postForm('https://example.com/api', ['field1' => 'value1']);
-        
+
         $this->assertEquals('POST', $apiCall->method);
-        // Verify formFields is set
-        $reflection = new \ReflectionClass($apiCall);
-        $formFieldsProperty = $reflection->getProperty('formFields');
-        $formFieldsProperty->setAccessible(true);
-        $this->assertEquals(['field1' => 'value1'], $formFieldsProperty->getValue($apiCall));
+        $this->assertEquals(['field1' => 'value1'], $this->getHttpClientProperty($apiCall, 'formFields'));
     }
     
     public function testPostFormWithEmptyFields(): void
@@ -239,11 +232,8 @@ class ApiCallTest extends TestCase
         $apiCall = new ApiCall();
         $apiCall->postForm('https://example.com/api', ['field' => 'value']);
         $apiCall->postRaw('https://example.com/api', 'raw', 'text/plain');
-        
-        $reflection = new \ReflectionClass($apiCall);
-        $formFieldsProperty = $reflection->getProperty('formFields');
-        $formFieldsProperty->setAccessible(true);
-        $this->assertNull($formFieldsProperty->getValue($apiCall));
+
+        $this->assertNull($this->getHttpClientProperty($apiCall, 'formFields'));
     }
     
     // ============================================
@@ -440,6 +430,22 @@ class ApiCallTest extends TestCase
         
         // Duplicates should be removed
         $this->assertTrue(true);
+    }
+
+    /**
+     * ApiCall delegates body state to gemvc/http-client HttpClient (internalClient).
+     */
+    private function getHttpClientProperty(ApiCall $apiCall, string $propertyName): mixed
+    {
+        $apiCallReflection = new \ReflectionClass($apiCall);
+        $internalClientProperty = $apiCallReflection->getProperty('internalClient');
+        $client = $internalClientProperty->getValue($apiCall);
+        $this->assertInstanceOf(HttpClient::class, $client);
+
+        $clientReflection = new \ReflectionClass($client);
+        $property = $clientReflection->getProperty($propertyName);
+
+        return $property->getValue($client);
     }
 }
 
