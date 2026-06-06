@@ -1,6 +1,60 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.7.1...5.8.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.0...5.8.1
 # GEMVC Framework - Release Notes
+
+## Version 5.8.1 - Extract helper utilities to `gemvc/helper`
+
+**Release Date**: 04.juni.2026  
+**Type**: Patch Release (Backward Compatible)  
+**Tag**: `5.8.1`
+
+---
+
+## 📋 Overview
+
+Helper classes are now a separate bundled package [`gemvc/helper`](https://github.com/gemvc/helper) **1.0.0**, following the same pattern as `gemvc/cli-base`. The `Gemvc\Helper\` namespace and public API are unchanged.
+
+---
+
+## 🔧 Changes
+
+### Composer
+
+- Added required dependency: `"gemvc/helper": "^1.0"`
+- Removed `src/helper/` from the library repository
+- Removed `Gemvc\Helper\` PSR-4 autoload entry (provided by `gemvc/helper`)
+
+### `ProjectHelper`
+
+- `getLibrarySystemPagesPath()` in `gemvc/helper` resolves `gemvc/library` via `InstalledVersions` (required when helper lives in `vendor/gemvc/helper`)
+
+### Tests
+
+- Helper unit/integration tests moved to the `gemvc/helper` package repository
+
+---
+
+## 🎯 Benefits
+
+- ✅ **Smaller library core** — helper utilities versioned independently
+- ✅ **No app code changes** — `use Gemvc\Helper\...` imports unchanged
+- ✅ **Future helper cleanup** (TraceKit legacy removal, etc.) ships in `gemvc/helper` only
+
+---
+
+## 🔄 Migration Guide
+
+### From 5.8.0 to 5.8.1
+
+```bash
+composer update gemvc/library
+```
+
+`gemvc/helper` is installed automatically. Do **not** `composer require gemvc/helper` separately unless you maintain a fork.
+
+**Breaking Changes**: None for documented `Gemvc\Helper\` usage. Undocumented direct reliance on `src/helper/` file paths in the monorepo will break — use the Composer package instead.
+
+---
 
 ## Version 5.8.0 - Table fluent API: `whereIn` and `whereNotIn`
 

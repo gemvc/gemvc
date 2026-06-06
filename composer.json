@@ -12,7 +12,8 @@
         "gemvc/apm-tracekit": "^2.0",
         "gemvc/http-client": "^1.2",
         "gemvc/connection-openswoole": "^1.1",
-        "gemvc/cli-base": "^1.0.1"
+        "gemvc/cli-base": "^1.0.1",
+        "gemvc/helper": "^1.0"
     },
     "license": "MIT",
     "archive": {
@@ -37,7 +38,6 @@
             "Gemvc\\": "src/",
             "Gemvc\\Database\\": "src/database/",
             "Gemvc\\Database\\Query\\": "src/database/query/",
-            "Gemvc\\Helper\\": "src/helper/",
             "Gemvc\\Http\\": "src/http/",
             "Gemvc\\Core\\": "src/core/",
             "Gemvc\\CLI\\": "src/CLI/",
