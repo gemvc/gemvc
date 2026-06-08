@@ -64,6 +64,7 @@
         }
     },
     "require-dev": {
+        "gemvc/cli-dev": "^1.0",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.1"
     },

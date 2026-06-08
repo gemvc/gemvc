@@ -1,6 +1,60 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.0...5.8.1
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.1...5.9.0
 # GEMVC Framework - Release Notes
+
+## Version 5.9.0 - Extract development CLI to `gemvc/cli-dev` (B2 split)
+
+**Release Date**: June 2026  
+**Type**: Minor Release (Backward Compatible for production deploys)  
+**Tag**: `5.9.0`
+
+---
+
+## Overview
+
+Development CLI commands moved to optional package [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **1.0.0**. Core onboarding and production migrations stay in `gemvc/library`.
+
+---
+
+## What stays in `gemvc/library`
+
+- `gemvc init` / webserver setup (`InitProject`, `InitApache`, `InitSwoole`, `InitNginx`)
+- `db:migrate`, `DbConnect`
+- `bin/gemvc` entry point
+
+## Moved to `gemvc/cli-dev` (install with `--dev`)
+
+- `create:*`, `admin:*`
+- `db:init`, `db:list`, `db:describe`, `db:drop`, `db:unique`
+- `OptionalToolsInstaller` (PHPStan/PHPUnit prompts during `init` when cli-dev is present)
+- Codegen templates (`templates/cli/`)
+
+---
+
+## Composer
+
+```json
+"suggest": {
+    "gemvc/cli-dev": "Development CLI commands — composer require --dev gemvc/cli-dev"
+}
+```
+
+Library does **not** hard-require `gemvc/cli-dev` (no Composer cycle).
+
+---
+
+## Migration
+
+```bash
+composer update gemvc/library
+composer require --dev gemvc/cli-dev
+```
+
+Production (`composer install --no-dev`): `init` and `db:migrate` still work; dev commands omitted.
+
+**Breaking**: None for production-only installs. Dev workflows need `gemvc/cli-dev` added once.
+
+---
 
 ## Version 5.8.1 - Extract helper utilities to `gemvc/helper`
 

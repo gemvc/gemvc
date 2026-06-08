@@ -170,27 +170,48 @@ if (!$commandFound) {
     if ($command === '--help' || $command === '-h') {
         echo "\033[1mGEMVC Framework CLI\033[0m\n\n";
         echo "Usage: gemvc <command> [options]\n\n";
-        echo "\033[1mProject Initialization:\033[0m\n";
-        echo "  \033[32minit\033[0m                          Initialize a new GEMVC project\n";
-        echo "  \033[32msetup [apache|swoole]\033[0m        Configure project for specific platform\n\n";
-        echo "\033[1mCode Generation:\033[0m\n";
-        echo "  \033[32mcreate:service\033[0m <ServiceName> Create a new service\n";
-        echo "  \033[32mcreate:model\033[0m <ModelName>     Create a new model\n";
-        echo "  \033[32mcreate:table\033[0m <TableName>     Create a new table class\n\n";
+
+        if (class_exists(\Gemvc\CLI\CommandCategories::class)) {
+            foreach (\Gemvc\CLI\CommandCategories::CATEGORIES as $category => $commands) {
+                echo "\033[1m{$category}:\033[0m\n";
+                foreach ($commands as $cmd => $description) {
+                    echo "  \033[32m{$cmd}\033[0m";
+                    $padding = max(1, 28 - strlen($cmd));
+                    echo str_repeat(' ', $padding) . "{$description}\n";
+                }
+                echo "\n";
+            }
+            $devHints = \Gemvc\CLI\CommandCategories::getDevCommandHints();
+            $cliDevInstalled = class_exists(\Composer\InstalledVersions::class)
+                && \Composer\InstalledVersions::isInstalled('gemvc/cli-dev');
+            if (!empty($devHints)) {
+                echo "\033[1mDevelopment (gemvc/cli-dev):\033[0m\n";
+                foreach ($devHints as $cmd => $description) {
+                    $marker = $cliDevInstalled ? '' : ' \033[33m(requires: composer require --dev gemvc/cli-dev)\033[0m';
+                    echo "  \033[32m{$cmd}\033[0m  {$description}{$marker}\n";
+                }
+                echo "\n";
+            }
+        } else {
+            echo "\033[1mProject Initialization:\033[0m\n";
+            echo "  \033[32minit\033[0m                          Initialize a new GEMVC project\n\n";
+            echo "\033[1mDatabase:\033[0m\n";
+            echo "  \033[32mdb:migrate\033[0m <TableClass>     Migrate table schema\n\n";
+        }
+
         echo "\033[1mHelp & Information:\033[0m\n";
         echo "  \033[32m--help\033[0m                       Show this help message\n";
-        echo "  \033[32m--version\033[0m                    Show GEMVC version\n";
     } else {
         echo "\033[31mError: Command '$command' not found.\033[0m\n";
-        echo "Run 'gemvc --help' for available commands.\n\n";
-        
-        echo "Debug Information:\n";
-        foreach ($debugInfo as $info) {
-            echo "\nContext: {$info['context']}\n";
-            echo "Class: {$info['class']}\n";
-            echo "File: {$info['file']}\n";
-            echo "Class exists: " . ($info['exists'] ? 'Yes' : 'No') . "\n";
-            echo "Looking for class: " . $info['className'] . "\n";
+        echo "Run 'gemvc --help' for available commands.\n";
+
+        $devPackageInstalled = class_exists(\Composer\InstalledVersions::class)
+            && \Composer\InstalledVersions::isInstalled('gemvc/cli-dev');
+        $isDevCommand = str_starts_with($command, 'create:')
+            || str_starts_with($command, 'admin:')
+            || in_array($command, ['db:init', 'db:list', 'db:describe', 'db:drop', 'db:unique'], true);
+        if (!$devPackageInstalled && $isDevCommand) {
+            echo "\033[33mHint: Install development CLI: composer require --dev gemvc/cli-dev\033[0m\n";
         }
         exit(1);
     }

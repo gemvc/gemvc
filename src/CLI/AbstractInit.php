@@ -7,7 +7,6 @@ use Gemvc\CLI\Command;
 use Gemvc\CLI\FileSystemManager;
 use Gemvc\CLI\DockerComposeInit;
 use Gemvc\CLI\DockerContainerBuilder;
-use Gemvc\CLI\Commands\OptionalToolsInstaller;
 use Gemvc\CLI\Commands\CliBoxShow;
 
 /**
@@ -865,7 +864,10 @@ EOT;
      */
     protected function offerOptionalTools(): void
     {
-        $toolsInstaller = new OptionalToolsInstaller($this->basePath, $this->packagePath, $this->nonInteractive);
+        if (!class_exists(\Gemvc\CLI\Commands\OptionalToolsInstaller::class)) {
+            return;
+        }
+        $toolsInstaller = new \Gemvc\CLI\Commands\OptionalToolsInstaller($this->basePath, $this->packagePath, $this->nonInteractive);
         $toolsInstaller->offerOptionalTools();
     }
     

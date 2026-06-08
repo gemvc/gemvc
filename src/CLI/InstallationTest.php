@@ -17,11 +17,12 @@ class InstallationTest {
 
         // Verify core command classes
         $requiredCommands = [
-            'Gemvc\CLI\Commands\CreateService',
             'Gemvc\CLI\Commands\InitProject',
             'Gemvc\CLI\Commands\InitSwoole',
             'Gemvc\CLI\Commands\InitApache',
             'Gemvc\CLI\Commands\InitNginx',
+            'Gemvc\CLI\Commands\DbMigrate',
+            'Gemvc\CLI\Commands\DbConnect',
         ];
         
         foreach ($requiredCommands as $commandClass) {
