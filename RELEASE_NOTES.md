@@ -12,7 +12,7 @@
 
 ## Overview
 
-Development CLI commands moved to optional package [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **1.0.0**. Core onboarding and production migrations stay in `gemvc/library`.
+Development CLI commands moved to optional package [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **^1.1** (recommended **1.1.2+**). Core onboarding and production migrations stay in `gemvc/library`.
 
 ---
 
@@ -47,7 +47,7 @@ Library does **not** hard-require `gemvc/cli-dev` (no Composer cycle).
 
 ```bash
 composer update gemvc/library
-composer require --dev gemvc/cli-dev
+composer require --dev gemvc/cli-dev:^1.1
 ```
 
 Production (`composer install --no-dev`): `init` and `db:migrate` still work; dev commands omitted.
