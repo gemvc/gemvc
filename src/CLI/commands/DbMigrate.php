@@ -4,6 +4,7 @@ namespace Gemvc\CLI\Commands;
 
 use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\DbConnect;
+use Gemvc\Database\Dialect\DialectResolver;
 use Gemvc\Database\TableGenerator;
 use Gemvc\Database\SchemaGenerator;
 use Gemvc\Helper\ProjectHelper;
@@ -67,17 +68,13 @@ class DbMigrate extends Command
             }
 
             $table = new $className();
-            $generator = new TableGenerator($pdo);
+            $dialect = DialectResolver::resolve($pdo);
+            $generator = new TableGenerator($pdo, $dialect);
 
             // First check if table exists
             // @phpstan-ignore-next-line
             $tableName = $table->getTable();
-            $stmt = $pdo->query("SHOW TABLES LIKE '{$tableName}'");
-            if ($stmt === false) {
-                $this->error("Failed to check if table exists");
-                return false;
-            }
-            $tableExists = $stmt->rowCount() > 0;
+            $tableExists = $dialect->tableExists($pdo, $tableName);
 
             if ($tableExists) {
                 $this->info("Table '{$tableName}' exists. Syncing with class definition...");
@@ -89,7 +86,7 @@ class DbMigrate extends Command
                 }
                 if ($generator->updateTable($table, null, $force, $enforceNotNull, $defaultValue)) {
                     $this->success("Table '{$tableName}' synchronized successfully!");
-                    $this->applySchemaConstraints($pdo, $table, $tableName, $syncSchema);
+                    $this->applySchemaConstraints($pdo, $table, $tableName, $syncSchema, $dialect);
                     return true;
                     // Apply schema constraints after table update
                 } else {
@@ -99,7 +96,7 @@ class DbMigrate extends Command
             } else {
                 $this->info("Table '{$tableName}' does not exist. Creating new table...");
                 if ($generator->createTableFromObject($table)) {
-                    $this->applySchemaConstraints($pdo, $table, $tableName, $syncSchema);
+                    $this->applySchemaConstraints($pdo, $table, $tableName, $syncSchema, $dialect);
                     $this->success("Table '{$tableName}' created successfully!");
                     return true;
                     // Apply schema constraints after table creation
@@ -121,8 +118,9 @@ class DbMigrate extends Command
      * @param object $table Table instance
      * @param string $tableName Table name
      * @param bool $syncSchema Whether to remove obsolete constraints
+     * @param \Gemvc\Database\Dialect\SqlDialectInterface|null $dialect Dialect to use (auto-resolved if omitted)
      */
-    private function applySchemaConstraints(\PDO $pdo, object $table, string $tableName, bool $syncSchema = false): bool
+    private function applySchemaConstraints(\PDO $pdo, object $table, string $tableName, bool $syncSchema = false, ?\Gemvc\Database\Dialect\SqlDialectInterface $dialect = null): bool
     {
         // Check if table has schema constraints defined
         if (!method_exists($table, 'defineSchema')) {
@@ -139,7 +137,7 @@ class DbMigrate extends Command
         }
 
         // Create SchemaGenerator instance
-        $schemaGenerator = new SchemaGenerator($pdo, $tableName, $schemaDefinition);
+        $schemaGenerator = new SchemaGenerator($pdo, $tableName, $schemaDefinition, $dialect);
         
         // Apply constraints (with optional removal of obsolete ones)
         if ($schemaGenerator->applyConstraints($syncSchema)) {

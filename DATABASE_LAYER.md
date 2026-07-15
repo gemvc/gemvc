@@ -25,6 +25,8 @@ The **Table Layer** is GEMVC's Data Access Layer (DAL). All table classes **MUST
 1. **`$_type_map`** - Maps properties to database column types
 2. **`defineSchema()`** - Defines database constraints (indexes, unique, foreign keys, etc.)
 
+> **Multi-database support**: `TableGenerator` and `SchemaGenerator` generate correct DDL for **MySQL**, **PostgreSQL**, and **SQLite** via a SQL dialect abstraction (`Gemvc\Database\Dialect\SqlDialectInterface`, auto-selected from your `.env`'s `DB_DRIVER`). Your `Table` classes need **no changes** — the same `$_type_map`/`defineSchema()` works unmodified against all three engines. Known limitation: SQLite cannot `ALTER` an existing column's type/nullability/default or drop a primary key without a full table rebuild (`db:migrate` skips those specific operations with a clear warning); PostgreSQL/SQLite have no `FULLTEXT INDEX` equivalent in this pass.
+
 ---
 
 ## ⚠️ Core Requirements

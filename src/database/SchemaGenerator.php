@@ -1,15 +1,22 @@
 <?php   
 namespace Gemvc\Database;
 
+use Gemvc\Database\Dialect\DialectResolver;
+use Gemvc\Database\Dialect\SqlDialectInterface;
 use PDO;
 use Exception;
 
 /**
  * SchemaGenerator class for generating database schema from object properties
  * Used in Table classes to define schema constraints that are applied during migrations
+ *
+ * All engine-specific SQL (identifier quoting, introspection, DDL syntax) is delegated
+ * to a SqlDialectInterface implementation, so this class works unmodified against MySQL,
+ * PostgreSQL, and SQLite.
  */ 
 class SchemaGenerator {
     private PDO $pdo;
+    private SqlDialectInterface $dialect;
     /** @var array<SchemaConstraint> */
     private array $schema = [];
     private string $error = '';
@@ -21,11 +28,13 @@ class SchemaGenerator {
      * @param PDO $pdo The PDO instance
      * @param string $tableName The name of the table
      * @param array<SchemaConstraint> $schema Array of SchemaConstraint objects
+     * @param SqlDialectInterface|null $dialect Dialect to use (auto-resolved from $pdo if omitted)
      */
-    public function __construct(PDO $pdo, string $tableName, array $schema) {
+    public function __construct(PDO $pdo, string $tableName, array $schema, ?SqlDialectInterface $dialect = null) {
         $this->pdo = $pdo;
         $this->tableName = $tableName;
         $this->schema = $schema;
+        $this->dialect = $dialect ?? DialectResolver::resolve($pdo);
     }
 
     /**
@@ -136,14 +145,13 @@ class SchemaGenerator {
     private function applyUniqueConstraint(array $constraint): void {
         $columns = is_array($constraint['columns']) ? $constraint['columns'] : [$constraint['columns']];
         $constraintName = isset($constraint['name']) && is_string($constraint['name']) ? $constraint['name'] : 'unique_' . implode('_', $columns);
-        $columnList = '`' . implode('`, `', $columns) . '`';
         
         // Check if constraint already exists
         if ($this->constraintExists($constraintName)) {
             return;
         }
         
-        $sql = "ALTER TABLE `{$this->tableName}` ADD CONSTRAINT `{$constraintName}` UNIQUE ({$columnList})";
+        $sql = $this->dialect->addUniqueConstraintSql($this->tableName, $constraintName, $columns);
         $this->pdo->exec($sql);
     }
 
@@ -154,15 +162,14 @@ class SchemaGenerator {
     private function applyIndexConstraint(array $constraint): void {
         $columns = is_array($constraint['columns']) ? $constraint['columns'] : [$constraint['columns']];
         $indexName = isset($constraint['name']) && is_string($constraint['name']) ? $constraint['name'] : 'idx_' . implode('_', $columns);
-        $columnList = '`' . implode('`, `', $columns) . '`';
-        $unique = !empty($constraint['unique']) ? 'UNIQUE ' : '';
+        $unique = !empty($constraint['unique']);
         
         // Check if index already exists
         if ($this->indexExists($indexName)) {
             return;
         }
         
-        $sql = "CREATE {$unique}INDEX `{$indexName}` ON `{$this->tableName}` ({$columnList})";
+        $sql = $this->dialect->createIndexSql($this->tableName, $indexName, $columns, $unique);
         $this->pdo->exec($sql);
     }
 
@@ -181,6 +188,12 @@ class SchemaGenerator {
         $onDelete = isset($constraint['on_delete']) && is_string($constraint['on_delete']) ? $constraint['on_delete'] : 'RESTRICT';
         $onUpdate = isset($constraint['on_update']) && is_string($constraint['on_update']) ? $constraint['on_update'] : 'RESTRICT';
         $constraintName = isset($constraint['name']) && is_string($constraint['name']) ? $constraint['name'] : 'fk_' . $this->tableName . '_' . $column;
+
+        // Schema::onDeleteSetNull()/onUpdateNoAction() etc. store their action using an
+        // underscore convention (e.g. 'SET_NULL', 'NO_ACTION') - normalize to valid SQL
+        // keywords ('SET NULL', 'NO ACTION') right before generating DDL.
+        $onDelete = str_replace('_', ' ', $onDelete);
+        $onUpdate = str_replace('_', ' ', $onUpdate);
         
         // Parse references (e.g., 'users.id' -> table: users, column: id)
         [$refTable, $refColumn] = explode('.', $references);
@@ -190,12 +203,7 @@ class SchemaGenerator {
             return;
         }
         
-        $sql = "ALTER TABLE `{$this->tableName}` 
-                ADD CONSTRAINT `{$constraintName}` 
-                FOREIGN KEY (`{$column}`) 
-                REFERENCES `{$refTable}`(`{$refColumn}`) 
-                ON DELETE {$onDelete} 
-                ON UPDATE {$onUpdate}";
+        $sql = $this->dialect->addForeignKeySql($this->tableName, $constraintName, $column, $refTable, $refColumn, $onDelete, $onUpdate);
         
         $this->pdo->exec($sql);
     }
@@ -226,7 +234,7 @@ class SchemaGenerator {
             return;
         }
         
-        $sql = "ALTER TABLE `{$this->tableName}` ADD CONSTRAINT `{$constraintName}` CHECK ({$expression})";
+        $sql = $this->dialect->addCheckConstraintSql($this->tableName, $constraintName, $expression);
         $this->pdo->exec($sql);
     }
 
@@ -241,14 +249,19 @@ class SchemaGenerator {
         
         $columns = is_array($constraint['columns']) ? $constraint['columns'] : [$constraint['columns']];
         $indexName = isset($constraint['name']) && is_string($constraint['name']) ? $constraint['name'] : 'ft_' . implode('_', $columns);
-        $columnList = '`' . implode('`, `', $columns) . '`';
         
         // Check if index already exists
         if ($this->indexExists($indexName)) {
             return;
         }
         
-        $sql = "CREATE FULLTEXT INDEX `{$indexName}` ON `{$this->tableName}` ({$columnList})";
+        $sql = $this->dialect->createFulltextIndexSql($this->tableName, $indexName, $columns);
+        if ($sql === null) {
+            // Not supported by this engine in this pass (documented limitation) - skip
+            // instead of emitting invalid SQL.
+            $this->error = "Skipped fulltext index `{$indexName}`: not supported by the '{$this->dialect->getName()}' dialect in this version.";
+            return;
+        }
         $this->pdo->exec($sql);
     }
 
@@ -256,22 +269,14 @@ class SchemaGenerator {
      * Check if a constraint exists
      */
     private function constraintExists(string $constraintName): bool {
-        $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
-                WHERE TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND TABLE_SCHEMA = DATABASE()";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$this->tableName, $constraintName]);
-        return $stmt->fetchColumn() > 0;
+        return $this->dialect->constraintExists($this->pdo, $this->tableName, $constraintName);
     }
 
     /**
      * Check if an index exists
      */
     private function indexExists(string $indexName): bool {
-        $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
-                WHERE TABLE_NAME = ? AND INDEX_NAME = ? AND TABLE_SCHEMA = DATABASE()";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$this->tableName, $indexName]);
-        return $stmt->fetchColumn() > 0;
+        return $this->dialect->indexExists($this->pdo, $this->tableName, $indexName);
     }
 
     /**
@@ -342,36 +347,26 @@ class SchemaGenerator {
         
         // Remove obsolete constraints
         foreach ($existingConstraints as $existing) {
-            // @phpstan-ignore-next-line
-            if (!is_array($existing) || !isset($existing['CONSTRAINT_TYPE']) || !isset($existing['CONSTRAINT_NAME'])) {
-                continue;
-            }
-            
-            if ($existing['CONSTRAINT_TYPE'] === 'UNIQUE' && is_string($existing['CONSTRAINT_NAME'])) {
-                $columns = $this->getConstraintColumns($existing['CONSTRAINT_NAME']);
+            if ($existing['type'] === 'UNIQUE') {
+                $columns = $this->getConstraintColumns($existing['name']);
                 sort($columns);
                 $key = 'unique_' . implode('_', $columns);
                 
                 if (!isset($currentConstraintMap[$key])) {
-                    $this->dropConstraint($existing['CONSTRAINT_NAME']);
+                    $this->dropConstraint($existing['name']);
                 }
             }
         }
         
         // Remove obsolete indexes (excluding PRIMARY and unique constraints)
         foreach ($existingIndexes as $existing) {
-            // @phpstan-ignore-next-line
-            if (!is_array($existing) || !isset($existing['Key_name']) || !isset($existing['Column_name'])) {
-                continue;
-            }
-            
-            if ($existing['Key_name'] !== 'PRIMARY' && is_string($existing['Key_name']) && is_string($existing['Column_name']) && !$this->isUniqueConstraintIndex($existing['Key_name'])) {
-                $columns = [$existing['Column_name']]; // Simplified for single column indexes
+            if ($existing['name'] !== 'PRIMARY' && !$this->isUniqueConstraintIndex($existing['name'])) {
+                $columns = [$existing['column']]; // Simplified for single column indexes
                 sort($columns);
                 $key = 'index_' . implode('_', $columns);
                 
                 if (!isset($currentConstraintMap[$key])) {
-                    $this->dropIndex($existing['Key_name']);
+                    $this->dropIndex($existing['name']);
                 }
             }
         }
@@ -379,29 +374,18 @@ class SchemaGenerator {
 
     /**
      * Get existing constraints from database
-     * @return array<array<string, mixed>>
+     * @return array<int, array{name: string, type: string}>
      */
     private function getExistingConstraints(): array {
-        $sql = "SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE 
-                FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
-                WHERE TABLE_NAME = ? AND TABLE_SCHEMA = DATABASE() 
-                AND CONSTRAINT_TYPE IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$this->tableName]);
-        return $stmt->fetchAll();
+        return $this->dialect->getExistingConstraints($this->pdo, $this->tableName);
     }
 
     /**
      * Get existing indexes from database
-     * @return array<array<string, mixed>>
+     * @return array<int, array{name: string, column: string}>
      */
     private function getExistingIndexes(): array {
-        $sql = "SHOW INDEX FROM `{$this->tableName}`";
-        $stmt = $this->pdo->query($sql);
-        if ($stmt === false) {
-            return [];
-        }
-        return $stmt->fetchAll();
+        return $this->dialect->getExistingIndexes($this->pdo, $this->tableName);
     }
 
     /**
@@ -409,42 +393,27 @@ class SchemaGenerator {
      * @return array<string>
      */
     private function getConstraintColumns(string $constraintName): array {
-        $sql = "SELECT COLUMN_NAME 
-                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-                WHERE CONSTRAINT_NAME = ? AND TABLE_NAME = ? AND TABLE_SCHEMA = DATABASE()
-                ORDER BY ORDINAL_POSITION";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$constraintName, $this->tableName]);
-        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        return $this->dialect->getConstraintColumns($this->pdo, $this->tableName, $constraintName);
     }
 
     /**
      * Check if an index name corresponds to a unique constraint
      */
     private function isUniqueConstraintIndex(string $indexName): bool {
-        $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
-                WHERE CONSTRAINT_NAME = ? AND TABLE_NAME = ? AND TABLE_SCHEMA = DATABASE() 
-                AND CONSTRAINT_TYPE = 'UNIQUE'";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$indexName, $this->tableName]);
-        return $stmt->fetchColumn() > 0;
+        return $this->dialect->isUniqueConstraintIndex($this->pdo, $this->tableName, $indexName);
     }
 
     /**
      * Drop a constraint
      */
     private function dropConstraint(string $constraintName): void {
-        $sql = "ALTER TABLE `{$this->tableName}` DROP CONSTRAINT `{$constraintName}`";
-        $this->pdo->exec($sql);
+        $this->pdo->exec($this->dialect->dropConstraintSql($this->tableName, $constraintName));
     }
 
     /**
      * Drop an index
      */
     private function dropIndex(string $indexName): void {
-        $sql = "DROP INDEX `{$indexName}` ON `{$this->tableName}`";
-        $this->pdo->exec($sql);
+        $this->pdo->exec($this->dialect->dropIndexSql($this->tableName, $indexName));
     }
 }
-
-

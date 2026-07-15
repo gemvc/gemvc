@@ -2,7 +2,7 @@
 **Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.1...5.9.0
 # GEMVC Framework - Release Notes
 
-## Version 5.9.0 - CLI split, decimal type, `gemvc/helper` ^1.1
+## Version 5.9.0 - CLI split, decimal type, PostgreSQL/SQLite support, `gemvc/helper` ^1.1
 
 **Release Date**: July 2026  
 **Type**: Minor Release (Backward Compatible for production deploys)  
@@ -15,6 +15,8 @@
 - Development CLI moved to optional [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **^1.1**
 - Bundled [`gemvc/helper`](https://github.com/gemvc/helper) **^1.1** — schema validation types (`decimal`, `hex`, `uuid`, `slug`, `positive_int`, `timestamp`, `jsonb`)
 - **Decimal type** end-to-end in library: DB migrations + hydration + Request fixes (validation stays in helper)
+- **PostgreSQL and SQLite support**: `gemvc init --db=postgres|sqlite|mysql` (interactive menu too) generates a correctly configured `.env` + Docker service; `db:migrate` now generates correct, engine-specific DDL for all three via a new SQL dialect abstraction
+- Requires [`gemvc/connection-pdo`](https://github.com/gemvc/connection-pdo) **^1.1**
 
 ---
 
@@ -45,6 +47,51 @@ $price = $this->request->decimalValuePost('price');
 
 ---
 
+## PostgreSQL and SQLite support
+
+`gemvc/library` now works end-to-end (project scaffolding + CLI connections + migrations) against **MySQL**, **PostgreSQL**, and **SQLite** — not just MySQL.
+
+### 1. Pick a database at `gemvc init`
+
+```bash
+# Interactive menu (asks after webserver selection)
+gemvc init
+
+# Or non-interactive flags
+gemvc init --swoole --db=postgres --non-interactive
+gemvc init --apache --sqlite --non-interactive
+gemvc init --nginx --mysql --non-interactive   # default, unchanged behavior
+```
+
+- Generates a correctly configured `.env` (`DB_DRIVER`, `DB_PORT`, `DB_USER`, `DB_CHARSET` set per engine; SQLite gets a `database/` folder + `.gitignore` entry instead of host/port/user)
+- Docker Compose service selection is driver-aware: `postgres:16-alpine` + `pgadmin` for Postgres, no DB container at all for SQLite (embedded file, nothing to run)
+- Omitting `--db`/the menu still defaults to `mysql` — **zero behavior change** for existing scripts/CI
+
+### 2. `db:migrate` now generates correct DDL for all three engines
+
+A new SQL dialect abstraction (`Gemvc\Database\Dialect\SqlDialectInterface`, with `MysqlDialect`/`PostgresDialect`/`SqliteDialect` implementations, auto-selected via `DialectResolver::resolve($pdo)` from the live PDO driver) replaced the MySQL-only inline SQL previously hardcoded in `TableGenerator` and `SchemaGenerator`. No code changes needed in your `Table` classes — `$_type_map`, `defineSchema()`, and `db:migrate` work exactly as before, just against whichever `DB_DRIVER` your `.env` specifies.
+
+```bash
+gemvc db:migrate UserTable            # works against mysql, pgsql, or sqlite automatically
+gemvc db:migrate UserTable --sync-schema
+```
+
+**Known limitations** (documented, not silently broken — the CLI reports a clear skip message instead of emitting invalid SQL):
+- SQLite's `ALTER TABLE` cannot change an existing column's type/nullability/default, or drop a primary key, without a full table rebuild — those specific operations are skipped with a warning; adding/removing whole columns, new tables, and indexes all work normally.
+- No `FULLTEXT INDEX` equivalent for PostgreSQL/SQLite in this pass (MySQL unaffected).
+
+### Composer
+
+```json
+"require": {
+    "gemvc/connection-pdo": "^1.1"
+}
+```
+
+`gemvc/connection-pdo` **^1.1** already produces correct Postgres/SQLite connections for the runtime/web path (driven by `DB_DRIVER`) — this release brings the **CLI** (`DbConnect`, `db:migrate`) up to the same level.
+
+---
+
 ## What stays in `gemvc/library`
 
 - `gemvc init` / webserver setup (`InitProject`, `InitApache`, `InitSwoole`, `InitNginx`)
@@ -64,7 +111,8 @@ $price = $this->request->decimalValuePost('price');
 
 ```json
 "require": {
-    "gemvc/helper": "^1.1"
+    "gemvc/helper": "^1.1",
+    "gemvc/connection-pdo": "^1.1"
 },
 "suggest": {
     "gemvc/cli-dev": "Development CLI commands — composer require --dev gemvc/cli-dev"
@@ -82,7 +130,7 @@ composer update gemvc/library
 composer require --dev gemvc/cli-dev:^1.1
 ```
 
-Requires **`gemvc/helper` ^1.1** (installed automatically). For decimal columns use `string` properties and `'decimal'` in `$_type_map`.
+Requires **`gemvc/helper` ^1.1** and **`gemvc/connection-pdo` ^1.1** (both installed automatically). For decimal columns use `string` properties and `'decimal'` in `$_type_map`. Existing MySQL projects need no changes — `DB_DRIVER` defaults to `mysql` when unset.
 
 Production (`composer install --no-dev`): `init` and `db:migrate` still work; dev commands omitted.
 

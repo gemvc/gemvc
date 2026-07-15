@@ -669,6 +669,7 @@ gemvc init
 
 **Interactive Mode**:
 - Prompts you to select webserver (OpenSwoole, Apache, Nginx)
+- Prompts you to select a database (MySQL, PostgreSQL, SQLite)
 - Offers optional PHPStan installation
 - Offers optional testing framework (PHPUnit/Pest)
 - Sets up project structure
@@ -688,16 +689,21 @@ gemvc init --nginx
 # Or use --server flag
 gemvc init --server=swoole
 gemvc init --server=apache
+
+# Database driver (defaults to mysql if omitted)
+gemvc init --apache --db=postgres --non-interactive
+gemvc init --swoole --sqlite --non-interactive
+gemvc init --nginx --mysql --non-interactive
 ```
 
 **What It Does**:
 - ✅ Creates project directory structure (`app/api`, `app/controller`, `app/model`, `app/table`)
 - ✅ Copies webserver-specific files (`index.php`, `Dockerfile`, etc.)
 - ✅ Copies templates (`templates/cli/`) for code generation
-- ✅ Sets up `.env` file from `example.env`
+- ✅ Sets up `.env` file from `example.env`, rewritten for the selected database driver (`DB_DRIVER`, `DB_PORT`, `DB_USER`, `DB_CHARSET`; SQLite gets a `database/` folder instead of host/port/user)
 - ✅ Installs dependencies (`composer.json`)
 - ✅ **Automatically installs OpenSwoole-specific packages** (when OpenSwoole is selected: `gemvc/connection-openswoole` package, which includes all required Hyperf dependencies)
-- ✅ **Offers Docker setup** (interactive service selection via `DockerComposeInit`)
+- ✅ **Offers Docker setup** (interactive service selection via `DockerComposeInit`, driver-aware: MySQL+phpMyAdmin, PostgreSQL+pgAdmin, or no DB container for SQLite)
 - ✅ Offers PHPStan installation (optional)
 - ✅ Offers testing framework (optional)
 
@@ -708,15 +714,20 @@ gemvc init --server=apache
 - `--apache` - Initialize for Apache
 - `--nginx` - Initialize for Nginx
 - `--server=<name>` - Specify webserver (`swoole`, `apache`, `nginx`)
+- `--db=<driver>` - Specify database (`mysql`, `postgres`, `sqlite`) - defaults to `mysql` if omitted
+- `--mysql` / `--postgres` / `--sqlite` - Shorthand equivalents of `--db=<driver>`
 - `--non-interactive` or `-n` - Skip prompts, use defaults
 
 **Example**:
 ```bash
-# Interactive initialization
+# Interactive initialization (asks for webserver, then database)
 gemvc init
 
-# Non-interactive OpenSwoole initialization
+# Non-interactive OpenSwoole initialization (defaults to MySQL)
 gemvc init --swoole --non-interactive
+
+# Non-interactive Apache + PostgreSQL initialization
+gemvc init --apache --db=postgres --non-interactive
 ```
 
 ---
@@ -898,6 +909,8 @@ Create or update database tables based on PHP class definitions.
 ```bash
 gemvc db:migrate <TableClassName> [flags]
 ```
+
+> **Multi-database support**: `db:migrate` generates correct, engine-specific DDL for **MySQL**, **PostgreSQL**, and **SQLite** — it auto-detects the engine from your `.env`'s `DB_DRIVER` (via `DialectResolver`) and requires no changes to your `Table` classes. Known limitation: SQLite cannot `ALTER` an existing column's type/nullability/default or drop a primary key without a full table rebuild (unsupported operations are skipped with a clear warning instead of emitting invalid SQL); adding/removing columns, new tables, and indexes work normally on all three engines.
 
 **Flags**:
 - `--force` - Remove columns not in class definition
@@ -1122,6 +1135,8 @@ gemvc admin:setadmin
 | `--apache` | Initialize for Apache | `init` |
 | `--nginx` | Initialize for Nginx | `init` |
 | `--server=<name>` | Specify webserver | `init` |
+| `--db=<driver>` | Specify database (`mysql`\|`postgres`\|`sqlite`), defaults to `mysql` | `init` |
+| `--mysql` / `--postgres` / `--sqlite` | Shorthand for `--db=<driver>` | `init` |
 | `--non-interactive` or `-n` | Skip prompts | `init` |
 
 ---

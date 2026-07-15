@@ -842,8 +842,12 @@ composer require gemvc/swoole
 ```bash
 php vendor/bin/gemvc init
 # Select: 1) OpenSwoole, 2) Apache, or 3) Nginx
+# Select database: 1) MySQL (default), 2) PostgreSQL, or 3) SQLite
 # Install PHPStan: Yes (recommended)
 # Setup Docker: Yes (recommended)
+
+# Or non-interactively:
+php vendor/bin/gemvc init --swoole --db=postgres --non-interactive
 ```
 
 **3. Start Server:**
@@ -866,6 +870,7 @@ php index.php
 php vendor/bin/gemvc db:init
 php vendor/bin/gemvc db:migrate UserTable
 ```
+> Works against MySQL, PostgreSQL, or SQLite — `db:migrate` auto-detects the engine from `DB_DRIVER` in `.env` and generates correct DDL for each.
 
 **6. Generate Your Service:**
 ```bash

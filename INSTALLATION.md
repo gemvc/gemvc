@@ -11,7 +11,7 @@ Before installing GEMVC, ensure you have:
 ### Required:
 - **PHP 8.2+** (PHP 8.4+ recommended; PHP 8.5 supported since GEMVC 5.6.7)
 - **Composer** (latest version)
-- **MySQL 8.0+** or **MariaDB 10.6+**
+- A database: **MySQL 8.0+**/**MariaDB 10.6+**, **PostgreSQL 13+**, or **SQLite** (embedded, no server needed) — pick one during `gemvc init`
 
 ### Optional (Recommended):
 - **Docker & Docker Compose** (for containerized setup)
@@ -70,6 +70,24 @@ Your choice:
 - `1` for OpenSwoole (recommended for high-performance APIs)
 - `2` for Apache (traditional hosting, shared hosting compatible)
 - `3` for Nginx (high-performance, production-ready)
+
+#### 3.1b: Select Database
+
+```
+Select Your Database:
+  [1] MySQL - Traditional relational database (default)
+  [2] PostgreSQL - Advanced relational database with JSONB support
+  [3] SQLite - Embedded file-based database, no server needed
+
+Enter your choice (1-3) [1]:
+```
+
+**Choose:**
+- `1` for MySQL (default - most common, widest hosting support)
+- `2` for PostgreSQL (advanced features, JSONB support)
+- `3` for SQLite (zero setup, embedded file - great for local dev/small projects)
+
+You can skip this prompt with `--db=mysql|postgres|sqlite` (or `--mysql`/`--postgres`/`--sqlite`) when running `init` non-interactively.
 
 #### 3.2: Install PHPStan? (Recommended!)
 ```
@@ -135,9 +153,10 @@ Edit `.env` file:
 nano .env
 ```
 
-**Configure these settings:**
+**Configure these settings (example shown for MySQL — `gemvc init` already wrote the right values for the database you selected):**
 ```env
 # Database Configuration
+DB_DRIVER="mysql"          # mysql | pgsql | sqlite
 DB_HOST=localhost          # Use 'mysql' if using Docker
 DB_NAME=gemvc_db
 DB_USER=root
@@ -158,8 +177,10 @@ SERVER_PORT=9501
 
 **Important Notes:**
 - Change `TOKEN_SECRET` to a random string in production
-- If using Docker, set `DB_HOST=mysql` (container name)
+- If using Docker, set `DB_HOST=mysql` (or `postgres` for PostgreSQL — container name)
 - For Apache/Nginx, use `DB_HOST=localhost`
+- **PostgreSQL**: `DB_DRIVER="pgsql"`, `DB_PORT="5432"`, `DB_USER="postgres"` — no `DB_CHARSET` param in the connection string (set via `UTF8`/`SET NAMES` post-connect instead)
+- **SQLite**: `DB_DRIVER="sqlite"`, `DB_NAME="database/gemvc.sqlite"` — `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD` are unused (embedded file, no server)
 
 ---
 
