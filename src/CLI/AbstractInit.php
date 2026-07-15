@@ -27,6 +27,7 @@ abstract class AbstractInit extends Command
     protected string $packageName = 'swoole';
     protected bool $nonInteractive = false;
     protected FileSystemManager $fileSystem;
+    protected string $databaseDriver = 'mysql';
     
     // Base PSR-4 autoload configuration (common for all webservers)
     protected const BASE_PSR4_AUTOLOAD = [
@@ -63,6 +64,7 @@ abstract class AbstractInit extends Command
     final public function execute(): bool
     {
         $this->initializeProject();
+        $this->databaseDriver = $this->resolveDatabaseDriver();
         
         try {
             $this->setupProjectStructure();
@@ -183,6 +185,83 @@ abstract class AbstractInit extends Command
     protected function setPackageName(string $packageName): void
     {
         $this->packageName = $packageName;
+    }
+    
+    /**
+     * Resolve the database driver for this project
+     * 
+     * Checks non-interactive flags first (--mysql, --postgres, --sqlite, --db=<driver>),
+     * then falls back to an interactive prompt (or 'mysql' default in non-interactive mode).
+     * 
+     * @return string One of: 'mysql', 'postgres', 'sqlite'
+     */
+    protected function resolveDatabaseDriver(): string
+    {
+        foreach (['mysql', 'postgres', 'sqlite'] as $driver) {
+            if (in_array("--{$driver}", $this->args)) {
+                $this->info("Using {$driver} (from --{$driver} flag)");
+                return $driver;
+            }
+        }
+        
+        foreach ($this->args as $arg) {
+            if (is_string($arg) && strpos($arg, '--db=') === 0) {
+                $choice = strtolower(substr($arg, 5));
+                if (in_array($choice, ['mysql', 'postgres', 'sqlite'], true)) {
+                    $this->info("Using {$choice} (from --db flag)");
+                    return $choice;
+                }
+            }
+        }
+        
+        if ($this->nonInteractive) {
+            return 'mysql';
+        }
+        
+        return $this->promptForDatabaseDriver();
+    }
+    
+    /**
+     * Display an interactive database selection prompt
+     * 
+     * @return string One of: 'mysql', 'postgres', 'sqlite'
+     */
+    protected function promptForDatabaseDriver(): string
+    {
+        $options = [
+            '1' => 'mysql',
+            '2' => 'postgres',
+            '3' => 'sqlite',
+        ];
+        
+        $this->write("\nSelect Your Database:\n", CliColor::Blue);
+        $this->write("  [1] MySQL - Traditional relational database (default)\n", CliColor::White);
+        $this->write("  [2] PostgreSQL - Advanced relational database with JSONB support\n", CliColor::White);
+        $this->write("  [3] SQLite - Embedded file-based database, no server needed\n\n", CliColor::White);
+        
+        while (true) {
+            $this->write('Enter your choice (1-3) [1]: ', CliColor::Blue);
+            
+            $handle = fopen("php://stdin", "r");
+            if ($handle === false) {
+                $this->info("Using MySQL (stdin error)");
+                return 'mysql';
+            }
+            $line = fgets($handle);
+            fclose($handle);
+            
+            $choice = $line !== false ? trim($line) : '';
+            if ($choice === '') {
+                $choice = '1';
+            }
+            
+            if (isset($options[$choice])) {
+                $this->info("Selected: " . ucfirst($options[$choice]));
+                return $options[$choice];
+            }
+            
+            $this->warning("Invalid choice. Please enter 1, 2, or 3.");
+        }
     }
     
     /**
@@ -539,11 +618,102 @@ abstract class AbstractInit extends Command
         }
         
         $envContent = $this->fileSystem->getFileContent($exampleEnvPath);
+        $envContent = $this->applyDatabaseDriverToEnv($envContent);
         $this->fileSystem->writeFile($envPath, $envContent, '.env file');
+        
+        if ($this->databaseDriver === 'sqlite') {
+            $this->createSqliteDirectory();
+        }
         
         $this->info("✓ Environment file created");
     }
-       
+    
+    /**
+     * Rewrite the DB_* block of an example.env template to match the selected database driver
+     * 
+     * All three webserver templates (swoole/apache/nginx) share a single source of truth for
+     * their DB_* defaults (implicitly MySQL). This method overlays driver-specific values on
+     * top, instead of requiring separate template files per driver.
+     * 
+     * @param string $envContent Raw .env template content
+     * @return string Modified .env content with driver-appropriate DB_* values
+     */
+    protected function applyDatabaseDriverToEnv(string $envContent): string
+    {
+        $replacements = match ($this->databaseDriver) {
+            'postgres' => [
+                'DB_DRIVER' => 'pgsql',
+                'DB_PORT' => '5432',
+                'DB_USER' => 'postgres',
+                'DB_CHARSET' => 'UTF8',
+            ],
+            'sqlite' => [
+                'DB_DRIVER' => 'sqlite',
+                'DB_HOST' => '',
+                'DB_PORT' => '',
+                'DB_USER' => '',
+                'DB_PASSWORD' => '',
+                'DB_CHARSET' => '',
+                'DB_NAME' => 'database/gemvc.sqlite',
+            ],
+            default => ['DB_DRIVER' => 'mysql'],
+        };
+        
+        // Insert DB_DRIVER=<value> right before the first DB_HOST_CLI_DEV line (none of the
+        // templates declare DB_DRIVER explicitly today; they rely on connection-pdo's implicit default)
+        if (!preg_match('/^DB_DRIVER=/m', $envContent)) {
+            $driverValue = $replacements['DB_DRIVER'];
+            $withDriver = preg_replace(
+                '/^(DB_HOST_CLI_DEV=)/m',
+                'DB_DRIVER="' . $driverValue . '"' . "\n" . '$1',
+                $envContent,
+                1
+            );
+            if ($withDriver !== null) {
+                $envContent = $withDriver;
+            }
+            unset($replacements['DB_DRIVER']);
+        }
+        
+        foreach ($replacements as $key => $value) {
+            $pattern = '/^' . preg_quote($key, '/') . '=.*/m';
+            $replacement = $key . '=' . ($value === '' ? '' : '"' . $value . '"');
+            $updated = preg_replace($pattern, $replacement, $envContent);
+            if ($updated !== null) {
+                $envContent = $updated;
+            }
+        }
+        
+        return $envContent;
+    }
+    
+    /**
+     * Create the database/ directory for SQLite file storage and ensure it's gitignored
+     * 
+     * @return void
+     */
+    protected function createSqliteDirectory(): void
+    {
+        $sqliteDir = $this->basePath . DIRECTORY_SEPARATOR . 'database';
+        $this->fileSystem->createDirectoryIfNotExists($sqliteDir);
+        
+        $gitkeepPath = $sqliteDir . DIRECTORY_SEPARATOR . '.gitkeep';
+        if (!file_exists($gitkeepPath)) {
+            file_put_contents($gitkeepPath, '');
+        }
+        
+        $gitignorePath = $this->basePath . DIRECTORY_SEPARATOR . '.gitignore';
+        $ignoreEntry = 'database/*.sqlite';
+        if (file_exists($gitignorePath)) {
+            $gitignoreContent = file_get_contents($gitignorePath);
+            if ($gitignoreContent !== false && strpos($gitignoreContent, $ignoreEntry) === false) {
+                file_put_contents($gitignorePath, rtrim($gitignoreContent) . "\n\n# SQLite database file\n{$ignoreEntry}\n");
+            }
+        }
+        
+        $this->info("✓ Created database/ directory for SQLite storage");
+    }
+    
     /**
      * Create global command wrapper
      * 
@@ -768,7 +938,8 @@ EOT;
             $this->basePath, 
             $this->nonInteractive, 
             $webserverType, 
-            $port
+            $port,
+            $this->databaseDriver
         );
         $dockerInit->offerDockerServices();
         
@@ -914,15 +1085,23 @@ EOT;
         
         if ($dockerSetup) {
             // Docker is set up - show Docker command and all configured ports
-            $mysqlPort = $actualPorts['mysql'] ?? 3306;
-            $phpmyadminPort = $actualPorts['phpmyadmin'] ?? 8080;
-            
             $lines[] = "Run: docker compose up -d --build";
             $lines[] = "";
             $lines[] = "Configured Server Ports:";
             $lines[] = "   • Application Server: {$serverPort}";
-            $lines[] = "   • MySQL Database: {$mysqlPort}";
-            $lines[] = "   • phpMyAdmin: {$phpmyadminPort}";
+            
+            if ($this->databaseDriver === 'postgres') {
+                $dbPort = $actualPorts['db'] ?? 5432;
+                $adminPort = $actualPorts['pgadmin'] ?? 8080;
+                $lines[] = "   • PostgreSQL Database: {$dbPort}";
+                $lines[] = "   • pgAdmin: {$adminPort}";
+            } elseif ($this->databaseDriver === 'mysql') {
+                $dbPort = $actualPorts['db'] ?? 3306;
+                $adminPort = $actualPorts['phpmyadmin'] ?? 8080;
+                $lines[] = "   • MySQL Database: {$dbPort}";
+                $lines[] = "   • phpMyAdmin: {$adminPort}";
+            }
+            // sqlite: no database server/port to report (embedded file database)
         } else {
             // Docker not set up - show only application server port
             $lines[] = "Configured Server Port:";
@@ -944,9 +1123,19 @@ EOT;
     private function readActualPortsFromDockerCompose(): array
     {
         $dockerComposeFile = $this->basePath . '/docker-compose.yml';
+        
+        // sqlite has no database container/port to report
+        if ($this->databaseDriver === 'sqlite') {
+            return [];
+        }
+        
+        $isPostgres = $this->databaseDriver === 'postgres';
+        $dbContainerPort = $isPostgres ? 5432 : 3306;
+        $adminServiceName = $isPostgres ? 'pgadmin' : 'phpmyadmin';
+        
         $ports = [
-            'mysql' => 3306,
-            'phpmyadmin' => 8080
+            'db' => $dbContainerPort,
+            $adminServiceName => 8080
         ];
         
         if (!file_exists($dockerComposeFile)) {
@@ -958,19 +1147,19 @@ EOT;
             return $ports;
         }
         
-        // Parse MySQL port - look for db service with port mapping like "3306:3306" or "3307:3306"
-        // Pattern matches: ports: then - "HOST:3306" where HOST is the external port
+        // Parse database port - look for db service with port mapping like "3306:3306"/"5432:5432" or a remapped host port
+        // Pattern matches: ports: then - "HOST:CONTAINER_PORT" where HOST is the external port
         if (preg_match('/\bdb:\s*\n(?:[^\n]+\n)*\s*ports:\s*\n(?:\s*-\s*"[^"]+"\s*\n?)+/s', $content, $dbSection)) {
-            if (preg_match('/-\s*"(\d+):3306"/', $dbSection[0], $matches)) {
-                $ports['mysql'] = (int)$matches[1];
+            if (preg_match('/-\s*"(\d+):' . $dbContainerPort . '"/', $dbSection[0], $matches)) {
+                $ports['db'] = (int)$matches[1];
             }
         }
         
-        // Parse phpMyAdmin port - look for phpmyadmin service with port mapping like "8080:80" or "8081:80"
-        if (preg_match('/\bphpmyadmin:\s*\n(?:[^\n]+\n)*\s*ports:\s*\n(?:\s*-\s*"[^"]+"\s*\n?)+/s', $content, $phpmyadminSection)) {
+        // Parse admin UI port (phpMyAdmin or pgAdmin) - look for its port mapping like "8080:80" or "8081:80"
+        if (preg_match('/\b' . $adminServiceName . ':\s*\n(?:[^\n]+\n)*\s*ports:\s*\n(?:\s*-\s*"[^"]+"\s*\n?)+/s', $content, $adminSection)) {
             // Look for port mapping ending with :80 (container port)
-            if (preg_match('/-\s*"(\d+):80"/', $phpmyadminSection[0], $matches)) {
-                $ports['phpmyadmin'] = (int)$matches[1];
+            if (preg_match('/-\s*"(\d+):80"/', $adminSection[0], $matches)) {
+                $ports[$adminServiceName] = (int)$matches[1];
             }
         }
         

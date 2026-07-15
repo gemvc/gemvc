@@ -22,54 +22,100 @@ class DockerComposeInit extends Command
     private int $webserverPort = 9501;
     private int $cpuLimit = 2;
     private string $memoryLimit = '2g';
-    
-    // Available services configuration
-    private const AVAILABLE_SERVICES = [
-        'redis' => [
-            'name' => 'Redis',
-            'description' => 'Redis cache and session storage',
-            'default' => true,
-            'image' => 'redis:latest',
-            'ports' => ['6379:6379'],
-            'volumes' => ['redis-data:/data']
-        ],
-        'phpmyadmin' => [
-            'name' => 'phpMyAdmin',
-            'description' => 'Web-based MySQL administration tool',
-            'default' => true,
-            'image' => 'phpmyadmin/phpmyadmin',
-            'ports' => ['8080:80'],
-            'environment' => [
-                'PMA_HOST' => 'db',
-                'PMA_PORT' => '3306',
-                'MYSQL_ROOT_PASSWORD' => 'rootpassword'
-            ],
-            'depends_on' => ['db']
-        ],
-        'db' => [
-            'name' => 'MySQL Database',
-            'description' => 'MySQL 8.0 database server',
-            'default' => true,
-            'image' => 'mysql:8.0',
-            'ports' => ['3306:3306'],
-            'volumes' => ['mysql-data:/var/lib/mysql'],
-            'environment' => [
-                'MYSQL_ROOT_PASSWORD' => 'rootpassword',
-                'MYSQL_ALLOW_EMPTY_PASSWORD' => 'no'
-            ]
-        ]
-    ];
+    private string $databaseDriver = 'mysql';
     
     public function __construct(
         string $basePath, 
         bool $nonInteractive = false, 
         string $webserverType = 'openswoole', 
-        int $webserverPort = 9501
+        int $webserverPort = 9501,
+        string $databaseDriver = 'mysql'
     ) {
         $this->basePath = $basePath;
         $this->nonInteractive = $nonInteractive;
         $this->webserverType = $webserverType;
         $this->webserverPort = $webserverPort;
+        $this->databaseDriver = $databaseDriver;
+    }
+    
+    /**
+     * Get the available services configuration, driver-aware.
+     * 
+     * `redis` is always offered (independent axis from the DB choice). The database
+     * service + its admin UI vary by driver: MySQL+phpMyAdmin, PostgreSQL+pgAdmin,
+     * or neither for SQLite (embedded file database, no container needed).
+     * 
+     * @return array<string, array{name: string, description: string, default: bool, image: string, ports?: array<string>, volumes?: array<string>, environment?: array<string, string>, depends_on?: array<string>}>
+     */
+    private function getAvailableServices(): array
+    {
+        $services = [
+            'redis' => [
+                'name' => 'Redis',
+                'description' => 'Redis cache and session storage',
+                'default' => true,
+                'image' => 'redis:latest',
+                'ports' => ['6379:6379'],
+                'volumes' => ['redis-data:/data']
+            ],
+        ];
+        
+        if ($this->databaseDriver === 'postgres') {
+            $services['pgadmin'] = [
+                'name' => 'pgAdmin',
+                'description' => 'Web-based PostgreSQL administration tool',
+                'default' => true,
+                'image' => 'dpage/pgadmin4',
+                'ports' => ['8080:80'],
+                'environment' => [
+                    'PGADMIN_DEFAULT_EMAIL' => 'admin@example.com',
+                    'PGADMIN_DEFAULT_PASSWORD' => 'rootpassword'
+                ],
+                'depends_on' => ['db']
+            ];
+            $services['db'] = [
+                'name' => 'PostgreSQL Database',
+                'description' => 'PostgreSQL 16 database server',
+                'default' => true,
+                'image' => 'postgres:16-alpine',
+                'ports' => ['5432:5432'],
+                'volumes' => ['postgres-data:/var/lib/postgresql/data'],
+                'environment' => [
+                    'POSTGRES_DB' => 'gemvc',
+                    'POSTGRES_USER' => 'postgres',
+                    'POSTGRES_PASSWORD' => 'rootpassword'
+                ]
+            ];
+        } elseif ($this->databaseDriver === 'mysql') {
+            $services['phpmyadmin'] = [
+                'name' => 'phpMyAdmin',
+                'description' => 'Web-based MySQL administration tool',
+                'default' => true,
+                'image' => 'phpmyadmin/phpmyadmin',
+                'ports' => ['8080:80'],
+                'environment' => [
+                    'PMA_HOST' => 'db',
+                    'PMA_PORT' => '3306',
+                    'MYSQL_ROOT_PASSWORD' => 'rootpassword'
+                ],
+                'depends_on' => ['db']
+            ];
+            $services['db'] = [
+                'name' => 'MySQL Database',
+                'description' => 'MySQL 8.0 database server',
+                'default' => true,
+                'image' => 'mysql:8.0',
+                'ports' => ['3306:3306'],
+                'volumes' => ['mysql-data:/var/lib/mysql'],
+                'environment' => [
+                    'MYSQL_ROOT_PASSWORD' => 'rootpassword',
+                    'MYSQL_ALLOW_EMPTY_PASSWORD' => 'no'
+                ]
+            ];
+        }
+        // sqlite: no db/admin service - embedded file database needs no container
+        
+        return $services;
     }
     
     /**
@@ -111,8 +157,7 @@ class DockerComposeInit extends Command
             "Available Services:"
         ];
         
-        foreach (self::AVAILABLE_SERVICES as $key => $service) {
-            // @phpstan-ignore-next-line
+        foreach ($this->getAvailableServices() as $key => $service) {
             $default = $service['default'] ? ' (default)' : '';
             $lines[] = "  {$service['name']} - {$service['description']}{$default}";
         }
@@ -144,8 +189,8 @@ class DockerComposeInit extends Command
     {
         $this->info("Select services to include (press Enter for defaults):");
         
-        foreach (self::AVAILABLE_SERVICES as $key => $service) {
-            // @phpstan-ignore-next-line
+        $availableServices = $this->getAvailableServices();
+        foreach ($availableServices as $key => $service) {
             $default = $service['default'] ? ' [Y/n]' : ' [y/N]';
             $this->write("  {$service['name']} - {$service['description']}{$default}: ", CliColor::White);
             
@@ -157,7 +202,6 @@ class DockerComposeInit extends Command
             fclose($handle);
             $choice = $choice !== false ? trim($choice) : '';
             
-            // @phpstan-ignore-next-line
             $include = $service['default'] ? 
                 (empty($choice) || strtolower($choice) === 'y') :
                 (strtolower($choice) === 'y');
@@ -172,8 +216,8 @@ class DockerComposeInit extends Command
             return;
         }
         
-        $this->info("Selected services: " . implode(', ', array_map(function($key) {
-            return self::AVAILABLE_SERVICES[$key]['name'];
+        $this->info("Selected services: " . implode(', ', array_map(function($key) use ($availableServices) {
+            return $availableServices[$key]['name'];
         }, $this->selectedServices)));
     }
     
@@ -187,7 +231,12 @@ class DockerComposeInit extends Command
             return;
         }
         
-        $this->write("\nMySQL Configuration Mode:\n", CliColor::Blue);
+        // Postgres/SQLite need no equivalent dev/prod tuning flags for v1 - keep default and skip the prompt
+        if ($this->databaseDriver !== 'mysql') {
+            return;
+        }
+        
+        $this->write("\nDatabase Configuration Mode:\n", CliColor::Blue);
         $this->write("  [1] Development Mode - Clean logs, optimized for development\n", CliColor::White);
         $this->write("  [2] Production Mode - Verbose logs, full security warnings\n", CliColor::White);
         $this->write("\nEnter choice (1-2) [1]: ", CliColor::Blue);
@@ -317,7 +366,8 @@ class DockerComposeInit extends Command
         
         // Clean up volumes for selected services
         if (in_array('db', $this->selectedServices)) {
-            $this->runDockerCommand(['volume', 'rm', '-f', basename($this->basePath) . '_mysql-data']);
+            $volumeSuffix = $this->databaseDriver === 'postgres' ? '_postgres-data' : '_mysql-data';
+            $this->runDockerCommand(['volume', 'rm', '-f', basename($this->basePath) . $volumeSuffix]);
         }
         
         if (in_array('redis', $this->selectedServices)) {
@@ -363,16 +413,25 @@ class DockerComposeInit extends Command
         $content .= "#\n";
         $content .= "# ⚠️  WARNING: This configuration is optimized for DEVELOPMENT ONLY!\n";
         $content .= "#\n";
-        $content .= "# For PRODUCTION deployments:\n";
-        $content .= "#   1. Change MySQL innodb-flush-log-at-trx-commit from 2 to 1 (CRITICAL)\n";
-        $content .= "#   2. Enable binary logging (remove skip-log-bin, add --log-bin=mysql-bin)\n";
-        $content .= "#   3. Enable SSL/TLS with proper certificates\n";
-        $content .= "#   4. Use secrets management for passwords (not plain text)\n";
-        $content .= "#   5. Configure automated backups and monitoring\n";
-        $content .= "#   6. Review and adjust resource limits for production load\n";
-        $content .= "#\n";
-        $content .= "# See: MYSQL_PRODUCTION_GUIDE.md for complete production configuration\n";
-        $content .= "#\n";
+        if ($this->databaseDriver === 'mysql') {
+            $content .= "# For PRODUCTION deployments:\n";
+            $content .= "#   1. Change MySQL innodb-flush-log-at-trx-commit from 2 to 1 (CRITICAL)\n";
+            $content .= "#   2. Enable binary logging (remove skip-log-bin, add --log-bin=mysql-bin)\n";
+            $content .= "#   3. Enable SSL/TLS with proper certificates\n";
+            $content .= "#   4. Use secrets management for passwords (not plain text)\n";
+            $content .= "#   5. Configure automated backups and monitoring\n";
+            $content .= "#   6. Review and adjust resource limits for production load\n";
+            $content .= "#\n";
+            $content .= "# See: MYSQL_PRODUCTION_GUIDE.md for complete production configuration\n";
+            $content .= "#\n";
+        } else {
+            $content .= "# For PRODUCTION deployments:\n";
+            $content .= "#   1. Enable SSL/TLS with proper certificates\n";
+            $content .= "#   2. Use secrets management for passwords (not plain text)\n";
+            $content .= "#   3. Configure automated backups and monitoring\n";
+            $content .= "#   4. Review and adjust resource limits for production load\n";
+            $content .= "#\n";
+        }
         $content .= "# ============================================================================\n\n";
         $content .= "services:\n";
         
@@ -514,12 +573,12 @@ EOT;
      */
     private function generateServiceContent(string $serviceKey): string
     {
-        $service = self::AVAILABLE_SERVICES[$serviceKey];
+        $service = $this->getAvailableServices()[$serviceKey];
         $content = "\n  {$serviceKey}:\n";
         $content .= "    image: {$service['image']}\n";
         
-        // Handle MySQL command dynamically
-        if ($serviceKey === 'db') {
+        // Handle MySQL command dynamically (Postgres/SQLite need no equivalent tuning flags for dev)
+        if ($serviceKey === 'db' && $this->databaseDriver === 'mysql') {
             // Add resource limits for MySQL
             $content .= "    mem_limit: 2g\n";
             $content .= "    mem_reservation: 1g\n";
@@ -538,7 +597,6 @@ EOT;
             $content .= "    command: redis-server --requirepass rootpassword\n";
         }
         
-        // @phpstan-ignore-next-line
         if (isset($service['ports'])) {
             $content .= "    ports:\n";
             foreach ($service['ports'] as $port) {
@@ -553,7 +611,6 @@ EOT;
             }
         }
         
-        // @phpstan-ignore-next-line
         if (isset($service['environment']) && !empty($service['environment'])) {
             $content .= "    environment:\n";
             foreach ($service['environment'] as $key => $value) {
@@ -590,7 +647,7 @@ EOT;
         $volumes = [];
         
         if (in_array('db', $this->selectedServices)) {
-            $volumes[] = 'mysql-data';
+            $volumes[] = $this->databaseDriver === 'postgres' ? 'postgres-data' : 'mysql-data';
         }
         if (in_array('redis', $this->selectedServices)) {
             $volumes[] = 'redis-data';
@@ -629,15 +686,20 @@ EOT;
     {
         $boxShow = new \Gemvc\CLI\Commands\CliBoxShow();
         
-        $modeText = $this->developmentMode ? 
-            "Development Mode (clean logs)" : 
-            "Production Mode (verbose logs)";
-            
         $lines = [
             "✓ Docker Services Ready!",
             "",
-            "MySQL Configuration: {$modeText}",
-            "",
+        ];
+        
+        if ($this->databaseDriver === 'mysql') {
+            $modeText = $this->developmentMode ? 
+                "Development Mode (clean logs)" : 
+                "Production Mode (verbose logs)";
+            $lines[] = "MySQL Configuration: {$modeText}";
+            $lines[] = "";
+        }
+        
+        $lines = array_merge($lines, [
             "To start your development environment:",
             " $ docker compose up -d",
             "",
@@ -649,13 +711,20 @@ EOT;
             "",
             "Service URLs:",
             " • " . ucfirst($this->webserverType) . ": http://localhost:{$this->webserverPort}"
-        ];
+        ]);
         
         if (in_array('phpmyadmin', $this->selectedServices)) {
             $lines[] = " • phpMyAdmin: http://localhost:8080";
         }
+        if (in_array('pgadmin', $this->selectedServices)) {
+            $lines[] = " • pgAdmin: http://localhost:8080";
+        }
         if (in_array('db', $this->selectedServices)) {
-            $lines[] = " • MySQL: localhost:3306 (root/rootpassword)";
+            if ($this->databaseDriver === 'postgres') {
+                $lines[] = " • PostgreSQL: localhost:5432 (postgres/rootpassword)";
+            } else {
+                $lines[] = " • MySQL: localhost:3306 (root/rootpassword)";
+            }
         }
         if (in_array('redis', $this->selectedServices)) {
             $lines[] = " • Redis: localhost:6379";
@@ -683,6 +752,6 @@ EOT;
      */
     public function setSelectedServices(array $services): void
     {
-        $this->selectedServices = array_intersect($services, array_keys(self::AVAILABLE_SERVICES));
+        $this->selectedServices = array_intersect($services, array_keys($this->getAvailableServices()));
     }
 }
