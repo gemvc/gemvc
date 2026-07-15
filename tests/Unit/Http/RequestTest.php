@@ -248,7 +248,33 @@ class RequestTest extends TestCase
         $price = $request->floatValueGet('price');
         $this->assertFalse($price);
     }
-    
+
+    public function testDecimalValuePostReturnsValidatedString(): void
+    {
+        $_POST['price'] = '19.99';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $price = $request->decimalValuePost('price');
+        $this->assertSame('19.99', $price);
+    }
+
+    public function testDefinePostSchemaAcceptsRequiredDecimalZero(): void
+    {
+        $_POST['price'] = '0.00';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $result = $request->definePostSchema(['price' => 'decimal']);
+        $this->assertTrue($result);
+    }
+
     // ============================================
     // Schema Validation Tests
     // ============================================

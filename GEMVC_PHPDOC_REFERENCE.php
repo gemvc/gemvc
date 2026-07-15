@@ -516,6 +516,7 @@ interface ValidationTypes {
     const STRING = 'string';
     const INTEGER = 'int';
     const FLOAT = 'float';
+    const DECIMAL = 'decimal';
     const BOOLEAN = 'bool';
     const ARRAY = 'array';
     const EMAIL = 'email';

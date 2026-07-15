@@ -716,11 +716,14 @@ class TableGenerator {
      * @return string The normalized type
      */
     private function normalizeType(string $type): string {
-        // Remove length specifications
-        $type = preg_replace('/\(\d+\)/', '', $type) ?? '';
-        
-        // Normalize common type variations
-        $type = strtolower($type);
+        $lower = strtolower(trim($type));
+
+        if (preg_match('/^decimal\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)/', $lower, $matches)) {
+            return 'decimal:' . $matches[1] . ',' . $matches[2];
+        }
+
+        // Remove length specifications (e.g. INT(11), VARCHAR(255))
+        $type = preg_replace('/\(\d+\)/', '', $lower) ?? $lower;
         $type = str_replace(['unsigned', 'signed'], '', $type);
         $type = trim($type);
         
@@ -848,18 +851,24 @@ class TableGenerator {
         // and becomes TEXT instead of VARCHAR(255) / INT(11).
         $baseType = str_starts_with($phpType, '?') ? substr($phpType, 1) : $phpType;
 
-        $type = match(strtolower($baseType)) {
-            'int', 'integer' => 'INT(11)',
-            'float', 'double' => 'DOUBLE',
-            'bool', 'boolean' => 'TINYINT(1)',
-            'string' => 'VARCHAR(255)',
-            'text' => 'TEXT',
-            'longtext' => 'LONGTEXT',
-            'datetime' => 'DATETIME',
-            'array' => 'JSON',
-            'null', 'unknown' => 'TEXT',
-            default => 'TEXT'
-        };
+        if (preg_match('/^decimal(?::(\d+),(\d+))?$/i', $baseType, $matches)) {
+            $precision = isset($matches[1]) ? (int) $matches[1] : 10;
+            $scale = isset($matches[2]) ? (int) $matches[2] : 2;
+            $type = "DECIMAL({$precision},{$scale})";
+        } else {
+            $type = match(strtolower($baseType)) {
+                'int', 'integer' => 'INT(11)',
+                'float', 'double' => 'DOUBLE',
+                'bool', 'boolean' => 'TINYINT(1)',
+                'string' => 'VARCHAR(255)',
+                'text' => 'TEXT',
+                'longtext' => 'LONGTEXT',
+                'datetime' => 'DATETIME',
+                'array', 'json', 'jsonb' => 'JSON',
+                'null', 'unknown' => 'TEXT',
+                default => 'TEXT'
+            };
+        }
 
         // Special handling for common field names
         if (strtolower($propertyName) === 'id') {

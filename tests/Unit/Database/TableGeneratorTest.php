@@ -64,6 +64,24 @@ class TestTableGeneratorObjectWithUnderscore
     }
 }
 
+class TestTableGeneratorObjectWithDecimal
+{
+    public int $id;
+    public string $amount;
+    public string $unit_price;
+
+    protected array $_type_map = [
+        'id' => 'int',
+        'amount' => 'decimal',
+        'unit_price' => 'decimal:12,4',
+    ];
+
+    public function getTable(): string
+    {
+        return 'products';
+    }
+}
+
 /**
  * @outputBuffering enabled
  */
@@ -132,6 +150,24 @@ class TableGeneratorTest extends TestCase
         
         $this->assertTrue($result);
         $this->assertEquals('', $generator->getError());
+    }
+
+    public function testCreateTableFromObjectWithDecimalColumns(): void
+    {
+        $object = new TestTableGeneratorObjectWithDecimal();
+        $generator = $this->createGenerator();
+
+        $this->mockPdo->expects($this->once())
+            ->method('exec')
+            ->with($this->logicalAnd(
+                $this->stringContains('`amount` DECIMAL(10,2)'),
+                $this->stringContains('`unit_price` DECIMAL(12,4)')
+            ))
+            ->willReturn(1);
+
+        $result = $generator->createTableFromObject($object);
+
+        $this->assertTrue($result);
     }
 
     public function testCreateTableFromObjectWithTableNameParameter(): void

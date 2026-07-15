@@ -2,9 +2,9 @@
 **Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.1...5.9.0
 # GEMVC Framework - Release Notes
 
-## Version 5.9.0 - Extract development CLI to `gemvc/cli-dev` (B2 split)
+## Version 5.9.0 - CLI split, decimal type, `gemvc/helper` ^1.1
 
-**Release Date**: June 2026  
+**Release Date**: July 2026  
 **Type**: Minor Release (Backward Compatible for production deploys)  
 **Tag**: `5.9.0`
 
@@ -12,7 +12,36 @@
 
 ## Overview
 
-Development CLI commands moved to optional package [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **^1.1** (recommended **1.1.2+**). Core onboarding and production migrations stay in `gemvc/library`.
+- Development CLI moved to optional [`gemvc/cli-dev`](https://github.com/gemvc/cli-dev) **^1.1**
+- Bundled [`gemvc/helper`](https://github.com/gemvc/helper) **^1.1** — schema validation types (`decimal`, `hex`, `uuid`, `slug`, `positive_int`, `timestamp`, `jsonb`)
+- **Decimal type** end-to-end in library: DB migrations + hydration + Request fixes (validation stays in helper)
+
+---
+
+## Decimal type (money / fixed precision)
+
+Use **`public string`** properties — never `float` for currency.
+
+```php
+// app/table/ProductTable.php
+public string $price;
+
+protected array $_type_map = [
+    'price' => 'decimal',       // DECIMAL(10,2)
+    'tax'   => 'decimal:12,4', // DECIMAL(12,4)
+];
+
+// app/api/Product.php
+$this->request->definePostSchema(['price' => 'decimal']);
+$price = $this->request->decimalValuePost('price');
+```
+
+| Layer | Package | Role |
+|-------|---------|------|
+| HTTP validation | `gemvc/helper` | `TypeChecker::check('decimal')` |
+| Migrations | `TableGenerator` | `decimal` → `DECIMAL(10,2)` |
+| SELECT hydrate | `PropertyCaster` | Returns decimal as **string** |
+| Request | `decimalValuePost/Get`, schema fix | Zero values (`"0.00"`) allowed for required decimals |
 
 ---
 
@@ -34,6 +63,9 @@ Development CLI commands moved to optional package [`gemvc/cli-dev`](https://git
 ## Composer
 
 ```json
+"require": {
+    "gemvc/helper": "^1.1"
+},
 "suggest": {
     "gemvc/cli-dev": "Development CLI commands — composer require --dev gemvc/cli-dev"
 }
@@ -49,6 +81,8 @@ Library does **not** hard-require `gemvc/cli-dev` (no Composer cycle).
 composer update gemvc/library
 composer require --dev gemvc/cli-dev:^1.1
 ```
+
+Requires **`gemvc/helper` ^1.1** (installed automatically). For decimal columns use `string` properties and `'decimal'` in `$_type_map`.
 
 Production (`composer install --no-dev`): `init` and `db:migrate` still work; dev commands omitted.
 

@@ -24,8 +24,8 @@ class PropertyCaster
      * 
      * Handles type conversion based on the type map, including:
      * - Nullable types (e.g., '?int', '?string')
-     * - Primitive types (int, float, bool, string)
-     * - Complex types (datetime, date, array, json)
+     * - Primitive types (int, float, bool, string, decimal)
+     * - Complex types (datetime, date, array, json, jsonb)
      * 
      * @param string $property Property name
      * @param mixed $value Database value
@@ -45,6 +45,10 @@ class PropertyCaster
             }
             // For non-nullable types, return appropriate default
             // This prevents type errors when assigning to typed properties
+            if ($this->isDecimalType($type)) {
+                return $this->decimalZeroDefault($type);
+            }
+
             return match($type) {
                 'int' => 0,
                 'float' => 0.0,
@@ -66,6 +70,10 @@ class PropertyCaster
         $isNullable = str_starts_with($type, '?');
         if ($isNullable) {
             $type = substr($type, 1); // Remove '?' prefix
+        }
+
+        if ($this->isDecimalType($type)) {
+            return $this->castDecimalValue($value, $isNullable, $property);
         }
         
         switch ($type) {
@@ -129,6 +137,7 @@ class PropertyCaster
                 
             case 'array':
             case 'json':
+            case 'jsonb':
                 if (is_array($value)) {
                     return $value;
                 }
@@ -188,5 +197,49 @@ class PropertyCaster
                 continue;
             }
         }
+    }
+
+    private function isDecimalType(string $type): bool
+    {
+        $baseType = str_starts_with($type, '?') ? substr($type, 1) : $type;
+
+        return preg_match('/^decimal(?::(\d+),(\d+))?$/i', $baseType) === 1;
+    }
+
+    private function decimalZeroDefault(string $type): string
+    {
+        $baseType = str_starts_with($type, '?') ? substr($type, 1) : $type;
+        $scale = 2;
+        if (preg_match('/^decimal:\d+,(\d+)$/i', $baseType, $matches)) {
+            $scale = (int) $matches[1];
+        }
+
+        if ($scale === 0) {
+            return '0';
+        }
+
+        return '0.' . str_repeat('0', $scale);
+    }
+
+    /**
+     * DECIMAL columns are string-typed in PHP; PDO/MySQL return them as strings.
+     */
+    private function castDecimalValue(mixed $value, bool $isNullable, string $property): ?string
+    {
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            return $trimmed === '' ? ($isNullable ? null : '0.00') : $trimmed;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+
+        if (($_ENV['APP_ENV'] ?? '') === 'dev') {
+            error_log("Warning: Invalid decimal value for property '{$property}': " . var_export($value, true));
+        }
+
+        return $isNullable ? null : '0.00';
     }
 }

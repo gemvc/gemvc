@@ -13,7 +13,7 @@
         "gemvc/http-client": "^1.2",
         "gemvc/connection-openswoole": "^1.1",
         "gemvc/cli-base": "^1.0.1",
-        "gemvc/helper": "^1.0"
+        "gemvc/helper": "^1.1"
     },
     "license": "MIT",
     "archive": {

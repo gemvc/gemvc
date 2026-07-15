@@ -646,6 +646,55 @@ class Request
     }
 
     /**
+     * Returns a validated decimal string (fixed precision). Validation via gemvc/helper TypeChecker.
+     *
+     * @param string $type Schema type, e.g. decimal or decimal:12,4
+     */
+    public function decimalValuePost(string $key, string $type = 'decimal'): string|false
+    {
+        if (!isset($this->post[$key])) {
+            return $this->setErrorResponse(["Post parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        if (!TypeChecker::check($type, $this->post[$key])) {
+            return $this->setErrorResponse(["Post parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        $normalized = $this->decimalValueToString($this->post[$key]);
+        if ($normalized === false) {
+            return $this->setErrorResponse(["Post parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param string $type Schema type, e.g. decimal or decimal:12,4
+     */
+    public function decimalValueGet(string $key, string $type = 'decimal'): string|false
+    {
+        if (!isset($this->get[$key])) {
+            return $this->setErrorResponse(["Get parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        $value = $this->get[$key];
+        if (is_array($value)) {
+            return $this->setErrorResponse(["Get parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        if (!TypeChecker::check($type, $value)) {
+            return $this->setErrorResponse(["Get parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        $normalized = $this->decimalValueToString($value);
+        if ($normalized === false) {
+            return $this->setErrorResponse(["Get parameter '$key' is required and must be of type decimal"], 400);
+        }
+
+        return $normalized;
+    }
+
+    /**
      * @param  array<string> $toValidatePost Define Post Schema to validation
      * @return bool
      * definePostSchma(['email'=>'email' , 'id'=>'int' , '?name' => 'string'])
@@ -1029,7 +1078,7 @@ class Request
 
         // Step 2: Check for required fields existence
         foreach ($required as $fieldName => $fieldType) {
-            if (!isset($target[$fieldName]) || empty($target[$fieldName])) {
+            if (!array_key_exists($fieldName, $target) || $this->isMissingRequiredValue($target[$fieldName], $fieldType)) {
                 $errors[] = "Missing required field: $fieldName";
             }
         }
@@ -1051,7 +1100,7 @@ class Request
 
         // Step 4: Validate optional fields if they are present
         foreach ($optional as $fieldName => $fieldType) {
-            if (isset($target[$fieldName]) && !empty($target[$fieldName])) {
+            if (array_key_exists($fieldName, $target) && !$this->isOptionalFieldEmpty($target[$fieldName], $fieldType)) {
                 if (!TypeChecker::check($fieldType, $target[$fieldName])) {
                     $errors[] = "Invalid value for optional field $fieldName, expected type: $fieldType";
                 }
@@ -1064,6 +1113,61 @@ class Request
 
         // All validations passed
         return true;
+    }
+
+    private function decimalValueToString(mixed $value): string|false
+    {
+        if (is_string($value)) {
+            return trim($value);
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+
+        return false;
+    }
+
+    private function isMissingRequiredValue(mixed $value, string $fieldType): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if ($this->allowsZeroAsPresent($fieldType)) {
+            if (is_string($value) && trim($value) === '') {
+                return true;
+            }
+
+            return false;
+        }
+
+        return empty($value);
+    }
+
+    private function isOptionalFieldEmpty(mixed $value, string $fieldType): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if ($this->allowsZeroAsPresent($fieldType)) {
+            return is_string($value) && trim($value) === '';
+        }
+
+        return empty($value);
+    }
+
+    /** Numeric schema types treat 0 / "0.00" as present (not empty). */
+    private function allowsZeroAsPresent(string $fieldType): bool
+    {
+        $baseType = strtolower(ltrim($fieldType, '?'));
+
+        if (str_starts_with($baseType, 'decimal')) {
+            return true;
+        }
+
+        return in_array($baseType, ['int', 'integer', 'float', 'double', 'number', 'positive_int', 'timestamp'], true);
     }
 
 }

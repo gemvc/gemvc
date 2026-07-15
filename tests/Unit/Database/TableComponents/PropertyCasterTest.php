@@ -387,5 +387,29 @@ class PropertyCasterTest extends TestCase
         $this->assertEquals(['tag1', 'tag2'], $instance->tags);
         $this->assertNull($instance->metadata);
     }
+
+    public function testCastValueDecimalFromString(): void
+    {
+        $caster = new PropertyCaster(['amount' => 'decimal']);
+        $this->assertSame('19.99', $caster->castValue('amount', '19.99'));
+    }
+
+    public function testCastValueDecimalZero(): void
+    {
+        $caster = new PropertyCaster(['amount' => 'decimal']);
+        $this->assertSame('0.00', $caster->castValue('amount', '0.00'));
+    }
+
+    public function testCastValueNullableDecimalNull(): void
+    {
+        $caster = new PropertyCaster(['discount' => '?decimal']);
+        $this->assertNull($caster->castValue('discount', null));
+    }
+
+    public function testCastValueDecimalCustomScaleDefault(): void
+    {
+        $caster = new PropertyCaster(['tax' => 'decimal:12,4']);
+        $this->assertSame('0.0000', $caster->castValue('tax', null));
+    }
 }
 
