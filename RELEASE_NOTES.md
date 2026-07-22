@@ -1,6 +1,74 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.8.1...5.9.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.9.0...5.9.1
 # GEMVC Framework - Release Notes
+
+## Version 5.9.1 - `requireAuth()` service-wide guard + 401/403 fix
+
+**Release Date**: July 2026  
+**Type**: Patch Release (Backward Compatible)  
+**Tag**: `5.9.1`
+
+---
+
+## Overview
+
+- New `requireAuth()` on `ApiService`/`SwooleApiService` — call it **once**, typically as the first line of your service's constructor, to protect *every* method of that service. No more repeating `if(!$this->request->auth($roles)){ return $this->request->returnResponse(); }` in each method.
+- New `Gemvc\Core\AuthException`, thrown by `requireAuth()` on failure and caught centrally by `Bootstrap`/`SwooleBootstrap`, which convert it straight into the correct `401 Unauthorized` or `403 Forbidden` response.
+- Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`. `401` is now reserved for "not authenticated at all" (no/invalid token).
+
+---
+
+## `requireAuth()` — guard a whole service in one line
+
+```php
+// app/api/User.php
+class User extends ApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request);
+        $this->requireAuth(['admin']); // every method below now requires role 'admin'
+    }
+
+    public function create(): JsonResponse { /* no auth boilerplate needed */ }
+    public function update(): JsonResponse { /* no auth boilerplate needed */ }
+    public function delete(): JsonResponse { /* no auth boilerplate needed */ }
+}
+```
+
+```php
+public function requireAuth(?array $roles = []): void
+```
+
+- `null` or `[]` → require authentication only (any logged-in user)
+- `['admin', 'editor']` → require authentication **and** one of these roles
+- On failure, throws `AuthException` — nothing to check or return
+- Can also be called inside a single method instead, to protect just that one method
+
+### Why calling it in a constructor actually works
+
+`Bootstrap`/`SwooleBootstrap` build the service object (`new $service($request)`) and invoke the requested method (`$serviceInstance->$method()`) inside the **same** try/catch block. A constructor can't `return` early to stop the framework from calling the target method — but it *can* throw. Throwing `AuthException` during construction means the requested method is never reached, and `Bootstrap`/`SwooleBootstrap` immediately produce the correct error response instead:
+
+| Failure reason | HTTP code |
+|---|---|
+| No / invalid token | `401 Unauthorized` |
+| Valid token, missing required role | `403 Forbidden` |
+
+Under OpenSwoole, this is handled without `die()`/uncaught exceptions — `SwooleBootstrap` catches `AuthException` (both around service construction and around the method call) and returns the correct response without disturbing the persistent worker process.
+
+### Backward compatible
+
+Existing code that still does:
+
+```php
+if ($err = $this->requireAuth($roles)) {
+    return $err;
+}
+```
+
+keeps working exactly the same from the client's point of view — the exception is thrown (and the response produced) before that `if` is ever reached — it's just no longer necessary to write.
+
+---
 
 ## Version 5.9.0 - CLI split, decimal type, PostgreSQL/SQLite support, `gemvc/helper` ^1.1
 
