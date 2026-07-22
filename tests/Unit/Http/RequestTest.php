@@ -844,9 +844,31 @@ class RequestTest extends TestCase
         $request = $ar->request;
         
         $result = $request->auth(['admin', 'moderator']);
-        
+
         // May fail without valid token, but we test the method
         $this->assertIsBool($result);
+    }
+
+    public function testAuthWithWrongRoleReturnsForbidden(): void
+    {
+        // Authenticated (valid token) but missing the required role should be
+        // a 403 Forbidden, distinct from 401 Unauthorized (no/invalid token).
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->createTestTokenWithRole(1, 'user');
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $result = $request->auth(['admin']);
+
+        $this->assertFalse($result);
+        $response = $request->returnResponse();
+        $this->assertEquals(403, $response->response_code);
     }
     
     // ============================================
@@ -1104,6 +1126,20 @@ class RequestTest extends TestCase
         $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] ?? '300';
         
         $jwtToken = new \Gemvc\Http\JWTToken();
+        return $jwtToken->createAccessToken($userId);
+    }
+
+    /**
+     * Create a test JWT token with a specific role for testing role-based authorization
+     */
+    private function createTestTokenWithRole(int $userId, string $role): string
+    {
+        $_ENV['TOKEN_SECRET'] = $_ENV['TOKEN_SECRET'] ?? 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = $_ENV['TOKEN_ISSUER'] ?? 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] ?? '300';
+
+        $jwtToken = new \Gemvc\Http\JWTToken();
+        $jwtToken->role = $role;
         return $jwtToken->createAccessToken($userId);
     }
 }

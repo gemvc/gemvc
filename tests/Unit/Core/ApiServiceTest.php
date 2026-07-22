@@ -30,6 +30,23 @@ class TestApiService extends ApiService
     }
 }
 
+class ConstructorGuardedApiService extends ApiService
+{
+    /**
+     * @param array<string>|null $roles
+     */
+    public function __construct(Request $request, ?array $roles = ['admin'])
+    {
+        parent::__construct($request);
+        $this->requireAuth($roles);
+    }
+
+    public function create(): JsonResponse
+    {
+        return \Gemvc\Http\Response::success(['created' => true]);
+    }
+}
+
 /**
  * @outputBuffering enabled
  */
@@ -383,6 +400,121 @@ class ApiServiceTest extends TestCase
         $service->error = 'Test error';
         $service->error = null;
         $this->assertNull($service->error);
+    }
+
+    // ============================================
+    // requireAuth() Tests
+    // ============================================
+
+    public function testRequireAuthPassesSilentlyWhenAuthorized(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(['admin'])
+            ->willReturn(true);
+        $mockRequest->expects($this->never())->method('returnResponse');
+
+        $service = new TestApiService($mockRequest);
+
+        // Should not throw, returns void
+        $service->requireAuth(['admin']);
+        $this->assertTrue(true);
+    }
+
+    public function testRequireAuthUsesAuthenticationOnlyWhenRolesAreNull(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(null)
+            ->willReturn(true);
+
+        $service = new TestApiService($mockRequest);
+
+        $service->requireAuth(null);
+        $this->assertTrue(true);
+    }
+
+    public function testRequireAuthThrowsAuthExceptionWhenUnauthenticated(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(['admin'])
+            ->willReturn(false);
+        $mockRequest->expects($this->once())
+            ->method('returnResponse')
+            ->willReturn(\Gemvc\Http\Response::unauthorized('Authentication token not found'));
+
+        $service = new TestApiService($mockRequest);
+
+        try {
+            $service->requireAuth(['admin']);
+            $this->fail('Expected AuthException was not thrown');
+        } catch (\Gemvc\Core\AuthException $e) {
+            $this->assertEquals(401, $e->getCode());
+            $this->assertStringContainsString('Authentication token not found', $e->getMessage());
+        }
+    }
+
+    public function testRequireAuthThrowsAuthExceptionWithForbiddenCodeWhenWrongRole(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(['admin'])
+            ->willReturn(false);
+        $mockRequest->expects($this->once())
+            ->method('returnResponse')
+            ->willReturn(\Gemvc\Http\Response::forbidden('Role user not allowed'));
+
+        $service = new TestApiService($mockRequest);
+
+        try {
+            $service->requireAuth(['admin']);
+            $this->fail('Expected AuthException was not thrown');
+        } catch (\Gemvc\Core\AuthException $e) {
+            $this->assertEquals(403, $e->getCode());
+            $this->assertStringContainsString('Role user not allowed', $e->getMessage());
+        }
+    }
+
+    public function testRequireAuthCalledInConstructorThrowsBeforeAnyMethodRuns(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(['admin'])
+            ->willReturn(false);
+        $mockRequest->method('returnResponse')
+            ->willReturn(\Gemvc\Http\Response::unauthorized('nope'));
+
+        $this->expectException(\Gemvc\Core\AuthException::class);
+        // Construction itself throws - proves the guard runs before any action
+        // method (e.g. create()) could ever be invoked by Bootstrap.
+        new ConstructorGuardedApiService($mockRequest, ['admin']);
+    }
+
+    public function testRequireAuthCalledInConstructorAllowsMethodWhenAuthorized(): void
+    {
+        /** @var Request&MockObject $mockRequest */
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())
+            ->method('auth')
+            ->with(['admin'])
+            ->willReturn(true);
+
+        $service = new ConstructorGuardedApiService($mockRequest, ['admin']);
+        $response = $service->create();
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(['created' => true], $response->data);
     }
 }
 

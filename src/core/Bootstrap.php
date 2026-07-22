@@ -215,6 +215,16 @@ class Bootstrap
             
             $response->show();
             return;
+        } catch (\Gemvc\Core\AuthException $e) {
+            // Handle authentication/authorization failures from ApiService::requireAuth()
+            // (401 Unauthorized or 403 Forbidden, depending on why it failed).
+            // This is what lets requireAuth() be called from a service constructor:
+            // throwing here happens before the target method is ever invoked (both
+            // `new $service(...)` and `$serviceInstance->$method()` are in this same try block).
+            $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
+            $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
+            // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
         } catch (\Gemvc\Core\ValidationException $e) {
             // Handle validation exceptions (400 Bad Request) from ApiService or Controller
             $this->errors[] = new GemvcError($e->getMessage(), 400, $e->getFile(), $e->getLine());

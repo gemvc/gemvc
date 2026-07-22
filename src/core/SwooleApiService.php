@@ -5,6 +5,7 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\JsonResponse;
+use Gemvc\Core\AuthException;
 
 /**
  * SwooleApiService - OpenSwoole-compatible API service base class
@@ -26,6 +27,45 @@ class SwooleApiService
     {
         $this->error = null;
         $this->request = $request;
+    }
+
+    /**
+     * Require authentication (and optionally specific roles) before continuing.
+     *
+     * Call this ONCE — typically as the first line of your child class's
+     * constructor — to protect every method of that service, with no per-method
+     * boilerplate at all:
+     *
+     *   class User extends SwooleApiService {
+     *       public function __construct(Request $request) {
+     *           parent::__construct($request);
+     *           $this->requireAuth(['admin']); // whole service now requires role 'admin'
+     *       }
+     *   }
+     *
+     * On failure this THROWS AuthException instead of returning a value. Unlike
+     * a plain die()/exit(), this is safe under OpenSwoole: SwooleBootstrap catches
+     * AuthException (both around service construction and around the method call)
+     * and converts it directly into the correct response (401 Unauthorized or 403
+     * Forbidden) without ever crashing or terminating the persistent worker process.
+     *
+     * Because Bootstrap builds the service object and calls the requested method
+     * from the same place, throwing during construction guarantees the target
+     * method body never runs.
+     *
+     * You can still call it inside a single method instead, if you only want to
+     * protect that one method rather than the whole service.
+     *
+     * @param array<string>|null $roles null or [] = authenticated only (any role), otherwise require one of these roles
+     * @throws AuthException when authentication or authorization fails
+     */
+    public function requireAuth(?array $roles = []): void
+    {
+        $authorized = $roles === null ? $this->request->auth() : $this->request->auth($roles);
+        if (!$authorized) {
+            $response = $this->request->returnResponse();
+            throw new AuthException($response->service_message ?? 'Unauthorized', $response->response_code ?: 401);
+        }
     }
 
     /**

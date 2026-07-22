@@ -254,7 +254,10 @@ class Request
         $this->isAuthorized = false;
         $roleText = $token->role;
         $this->error = "Role $roleText not allowed to perform this action";
-        $this->response = Response::unauthorized($this->error);
+        // 403 Forbidden: the caller IS authenticated (valid token) but lacks the
+        // required role - distinct from 401 Unauthorized (no/invalid credentials),
+        // which is what authenticate() returns above.
+        $this->response = Response::forbidden($this->error);
         return false;
     }
 

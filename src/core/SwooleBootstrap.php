@@ -5,6 +5,7 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\ResponseInterface;
+use Gemvc\Http\JsonResponse;
 use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
@@ -129,6 +130,12 @@ class SwooleBootstrap
         try {
             $service = 'App\\Api\\' . $serviceName;
             $serviceInstance = new $service($this->request);
+        } catch (\Gemvc\Core\AuthException $e) {
+            // requireAuth() failed inside the service constructor (or its parent's).
+            // Return the correct response immediately - the target method is never
+            // reached, and the persistent Swoole worker is not disturbed.
+            $this->recordExceptionInApm($e);
+            return $this->authExceptionToResponse($e);
         } catch (\Throwable $e) {
             return Response::notFound($e->getMessage());
         }
@@ -141,12 +148,28 @@ class SwooleBootstrap
         $method = $methodName;
         try {
             return $serviceInstance->$method();
+        } catch (\Gemvc\Core\AuthException $e) {
+            // requireAuth() failed inside the method body itself.
+            $this->recordExceptionInApm($e);
+            return $this->authExceptionToResponse($e);
         } catch (\Throwable $e) {
             // Record exception in APM if available (via Request object)
             $this->recordExceptionInApm($e);
             // Re-throw to let Swoole handle it
             throw $e;
         }
+    }
+
+    /**
+     * Convert an AuthException into the correct JSON error response
+     * (401 Unauthorized or 403 Forbidden, depending on the exception's code).
+     */
+    private function authExceptionToResponse(\Gemvc\Core\AuthException $e): JsonResponse
+    {
+        $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
+        return $httpCode === 403
+            ? Response::forbidden($e->getMessage())
+            : Response::unauthorized($e->getMessage());
     }
     
     /**
