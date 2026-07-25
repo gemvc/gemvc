@@ -323,7 +323,19 @@ Result: ❌ REJECTED - "String length for post 'name' is 10000, outside range (2
 
 ### ⚙️ Developer Calls - JWT Token System
 
-**Status**: **Available methods** - Developers call `$request->auth()` in their API services.
+**Status**: **Available methods** — prefer `$this->requireAuth()` on the API service (5.9.1), or call `$request->auth()` per method.
+
+**Service-wide guard (recommended)**:
+```php
+class User extends ApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request);
+        $this->requireAuth(['admin']); // AuthException → 401 or 403; all methods protected
+    }
+}
+```
 
 **Token Creation** (JWTToken.php):
 ```php
@@ -356,24 +368,29 @@ $token = (new JWTToken())->createLoginToken($userId);
 }
 ```
 
-**Token Verification** (Request.php):
+**Token Verification** (Request.php) — per-method style:
 ```php
 // In API Service
 public function create(): JsonResponse {
-    // Authentication check
+    // Authentication check → 401 if no/invalid token
     if (!$this->request->auth()) {
-        return $this->request->returnResponse(); // 401 Unauthorized
+        return $this->request->returnResponse();
     }
     
-    // Authorization check (role-based)
+    // Authorization check → 403 if authenticated but wrong role
     if (!$this->request->auth(['admin', 'moderator'])) {
-        return $this->request->returnResponse(); // 403 Forbidden
+        return $this->request->returnResponse();
     }
     
     // ✅ Authenticated and authorized
-    return (new UserController($this->request))->create();
+    return $this->callController(new UserController($this->request))->create();
 }
 ```
+
+| Failure | HTTP |
+|---------|------|
+| No / invalid JWT | **401** Unauthorized |
+| Valid JWT, role not allowed | **403** Forbidden |
 
 **Security Features**:
 - ✅ **HS256 Signature**: Uses `TOKEN_SECRET` from `.env`

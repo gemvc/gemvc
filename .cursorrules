@@ -1,683 +1,77 @@
 # GEMVC Framework - AI Assistant Context
 
-## Framework Overview
-GEMVC is a server-agnostic PHP REST API framework for Apache, OpenSwoole, and Nginx with a 4-layer architecture: API → Controller → Model → Table.
+**Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/API_REFERENCE.md`  
+**Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`), not a single library.
 
-## Core Architecture
+GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx). Version 5.9.1.
 
-### 4-Layer Pattern (MANDATORY)
+## 4-Layer Pattern (MANDATORY)
+
 ```
-API Layer (app/api/)     → Schema validation, authentication
-Controller Layer         → Business logic orchestration
-Model Layer (app/model/) → Data logic, validations, transformations
-Table Layer (app/table/) → Database operations
+API (app/api/) → Controller → Model (app/model/) → Table (app/table/)
 ```
 
-**Flow**: API validates → Controller orchestrates → Model validates business rules → Table performs DB operations
+Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.  
+URL: `/api/{Service}/{method}`. No routes files.
 
-### Naming Conventions
-- API: `User.php` (PascalCase)
-- Controller: `UserController.php` (PascalCase + "Controller")
-- Model: `UserModel.php` (PascalCase + "Model")
-- Table: `UserTable.php` (PascalCase + "Table")
+- `_` properties ignored in CRUD (aggregations)
+- `protected` properties hidden from SELECT
+- Property names = DB columns
 
-### Property Naming
-- Properties starting with `_` are IGNORED in CRUD operations (use for aggregation)
-- `protected` properties are NOT returned in SELECT queries
-- Match property names to database columns exactly
+## Hard Do / Don't
 
-## Key Classes and Usage
+**DO**
 
-### Request Layer
-```php
-// Gemvc\Http\Request - Unified request object
-$this->request->post                    // POST data (sanitized ✅)
-$this->request->get                     // GET data (sanitized ✅)
-$this->request->put                     // PUT data (sanitized ✅)
-$this->request->patch                   // PATCH data (sanitized ✅)
-$this->request->files                   // File uploads (sanitized ✅)
+- Extend `ApiService` or `SwooleApiService`, `Controller`, `Table`
+- `definePostSchema` / `defineGetSchema` before using post/get data
+- `callController()` in API + `createModel()` in Controller (Apache path / APM)
+- `requireAuth(['role'])` in service constructor to guard all methods
+- Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()`
+- Prepared statements via Table query builder only
 
-// Schema Validation (prevent mass assignment)
-$this->request->definePostSchema([
-    'name' => 'string',
-    'email' => 'email',
-    '?phone' => 'string'  // ? = optional
-])  // Returns bool
+**DON'T**
 
-$this->request->defineGetSchema(['id' => 'int'])
+- Skip layers; invent routes; use Eloquent/Laravel conventions
+- Manual input sanitization or string-concat SQL
+- Use `float` for currency
+- Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
+- Copy `callController` / `$this->UserController` into `SwooleApiService` (those are on `ApiService` only)
 
-// String Length Validation
-$this->request->validateStringPosts([
-    'name' => '2|100',  // 2-100 characters
-    'password' => '8|128'
-])
-
-// Type-Safe Getters
-$this->request->intValueGet('id')       // Returns int|null
-$this->request->stringValueGet('name')  // Returns string|null
-
-// Authentication & Authorization
-$this->request->auth()                  // JWT authentication check
-$this->request->auth(['admin', 'moderator'])  // Role-based auth
-
-// Filtering & Sorting
-$this->request->findable(['name' => 'string', 'email' => 'email'])
-$this->request->sortable(['id', 'name', 'created_at'])
-
-// Response
-$this->request->returnResponse()        // Returns JsonResponse
-```
-
-### Response Layer
-```php
-// Gemvc\Http\Response - Response factory
-Response::success($data, $count, $message)
-Response::created($data, $count, $message)    // 201
-Response::updated($result, $count, $message)  // 209
-Response::deleted($result, $count, $message)  // 210
-Response::notFound($message)                  // 404
-Response::badRequest($message)                // 400
-Response::unprocessableEntity($message)        // 422
-Response::internalError($message)             // 500
-Response::unauthorized($message)              // 401
-Response::forbidden($message)                 // 403
-
-// Gemvc\Http\JsonResponse
-$response->show()                    // For Apache/Nginx
-$response->showSwoole($response)     // For OpenSwoole
-```
-
-### Table Layer (Database ORM)
-```php
-// Gemvc\Database\Table - Base class for all tables
-class UserTable extends Table {
-    // Properties match database columns
-    public int $id;
-    public string $name;
-    public ?string $description;  // ? = nullable
-    protected string $password;    // protected = not in SELECT
-    
-    // Required: Type mapping for schema generation
-    protected array $_type_map = [
-        'id' => 'int',
-        'name' => 'string',
-        'description' => 'string',
-        'password' => 'string',
-    ];
-    
-    // Required: Table name
-    public function getTable(): string {
-        return 'users';
-    }
-    
-    // Required: Schema constraints
-    public function defineSchema(): array {
-        return [
-            Schema::primary('id'),
-            Schema::autoIncrement('id'),
-            Schema::unique('email'),
-            Schema::index('name'),
-        ];
-    }
-    
-    // Custom query methods (return null|static or null|static[])
-    public function selectById(int $id): null|static {
-        $result = $this->select()->where('id', $id)->limit(1)->run();
-        return $result[0] ?? null;
-    }
-}
-
-// Fluent Query Builder
-$this->select('id,name')                    // SELECT specific columns (string)
-    ->where('active', true)                  // WHERE clause
-    ->whereEqual('id', $id)                 // WHERE equality (preferred)
-    ->whereLike('name', '%test%')            // WHERE LIKE
-    ->orderBy('name', true)                  // ORDER BY (true = ASC, false = DESC)
-    ->limit(10)                              // LIMIT
-    ->run();                                 // Execute query (?array)
-
-// CRUD Operations
-$this->insertSingleQuery()                  // Insert single record
-$this->updateSingleQuery()                  // Update single record
-$this->deleteByIdQuery($id)                 // Delete by ID
-$this->selectById($id)                      // Custom method pattern
-
-// Helper Methods
-$this->getError()                            // Get last error
-$this->setError($message)                   // Set error
-$this->validateId($id, $operation)          // Validate ID > 0
-```
-
-### Controller Layer
-```php
-// Gemvc\Core\Controller - Base controller
-class UserController extends Controller {
-    
-    // Use createModel() to automatically set Request for APM trace context propagation
-    $model = $this->createModel(new UserModel());
-    
-    // Map POST data to Model with custom handlers
-    $model = $this->request->mapPostToObject(
-        $model,
-        [
-            'email' => 'email',              // Direct mapping
-            'name' => 'name',                // Direct mapping
-            'password' => 'setPassword()'    // Method call
-        ]
-    );
-    
-    // Helper for list operations
-    $this->createList($model)  // Auto pagination, filtering, sorting
-    
-    // Pagination helpers
-    $this->request->limit  // Rows per page
-    $this->request->offset // Current page
-}
-```
-
-### Security Helpers
-```php
-// Gemvc\Helper\CryptHelper - Password hashing
-CryptHelper::hashPassword($plainPassword)      // Argon2i
-CryptHelper::passwordVerify($plain, $hashed)  // Verify password
-
-// Gemvc\Helper\FileHelper - File encryption
-$file = new FileHelper($source, $destination);
-$file->secret = 'my-secret-key';
-$encryptedPath = $file->encrypt();   // AES-256-CBC + HMAC
-$decryptedPath = $file->decrypt();
-
-// Gemvc\Helper\ImageHelper - Image processing
-$image = new ImageHelper($sourceFile);
-$image->convertToWebP(80)  // Converts & validates signature
-```
-
-## Common Patterns
-
-### Creating CRUD Endpoint
-```php
-// API Layer (app/api/User.php)
-public function create(): JsonResponse {
-    if(!$this->request->definePostSchema([
-        'name' => 'string',
-        'email' => 'email',
-        'password' => 'string'
-    ])) {
-        return $this->request->returnResponse();
-    }
-    // Use callController() for automatic APM tracing (if APM_TRACE_CONTROLLER=1)
-    return $this->callController(new UserController($this->request))->create();
-}
-
-// Controller Layer (app/controller/UserController.php)
-public function create(): JsonResponse {
-    // Use createModel() to automatically set Request for APM trace context propagation
-    $model = $this->createModel(new UserModel());
-    
-    $model = $this->request->mapPostToObject(
-        $model,
-        ['email'=>'email', 'name'=>'name', 'password'=>'setPassword()']
-    );
-    if(!$model instanceof UserModel) {
-        return $this->request->returnResponse();
-    }
-    return $model->createModel();
-}
-
-// Model Layer (app/model/UserModel.php)
-public function createModel(): JsonResponse {
-    // Business validation
-    $this->email = strtolower($this->email);
-    $found = $this->selectByEmail($this->email);
-    if ($found) {
-        return Response::unprocessableEntity("User already exists");
-    }
-    
-    // Data transformation
-    $this->setPassword($this->password);
-    
-    // Database operation
-    $this->insertSingleQuery();
-    if ($this->getError()) {
-        return Response::internalError($this->getError());
-    }
-    
-    return Response::created($this, 1, "User created successfully");
-}
-
-// Table Layer (app/table/UserTable.php)
-public function selectByEmail(string $email): null|static {
-    $arr = $this->select()->where('email', $email)->limit(1)->run();
-    return $arr[0] ?? null;
-}
-```
-
-### Authentication Pattern
-```php
-// In API Layer
-public function update(): JsonResponse {
-    // Authenticate
-    if (!$this->request->auth()) {
-        return $this->request->returnResponse();  // 401
-    }
-    
-    // Authorize (role-based)
-    if (!$this->request->auth(['admin', 'moderator'])) {
-        return $this->request->returnResponse();  // 403
-    }
-    
-    // Validate schema
-    if(!$this->request->definePostSchema(['id' => 'int', '?name' => 'string'])) {
-        return $this->request->returnResponse();  // 400
-    }
-    
-    return $this->callController(new UserController($this->request))->update();
-}
-```
-
-### Aggregation Pattern (Properties with _)
-```php
-class UserModel extends UserTable {
-    // This property is IGNORED in database operations
-    public ?Profile $_profile = null;        // Single aggregated model
-    public array $_orders = [];               // Array of aggregated models
-    
-    public function withProfile(): self {
-        if ($this->_profile === null && $this->id) {
-            $profileTable = new ProfileTable();
-            $this->_profile = $profileTable->selectByUserId($this->id);
-        }
-        return $this;
-    }
-}
-
-// Usage: Properties with _ prefix are NOT in database
-$user->_profile = $profile;  // Won't be inserted into users table
-$user->insertSingleQuery();   // Only inserts: id, name, email
-```
-
-### List with Filtering/Sorting
-```php
-// API Layer
-public function list(): JsonResponse {
-    $this->request->findable([
-        'name' => 'string',
-        'email' => 'email'
-    ]);
-    $this->request->sortable(['id', 'name', 'created_at']);
-    return $this->callController(new UserController($this->request))->list();
-}
-
-// Controller Layer
-public function list(): JsonResponse {
-    $model = new UserModel();
-    return $this->createList($model);  // Auto pagination, filtering, sorting
-}
-```
-
-## DO's and DON'Ts
-
-### ✅ DO's
-- Always extend `ApiService` for API classes
-- Always extend `Controller` for controllers
-- Always extend `Table` for models and tables
-- Use `definePostSchema()` for validation
-- Use `mapPostToObject()` for request mapping
-- Use fluent query builder for database operations
-- Return `JsonResponse` objects
-- Use `_` prefix for aggregation properties
-- Use `protected` for sensitive data (passwords)
-- Use nullable types (`?string`) for optional fields
-- Use `Auth()` for authentication checks
-- **Use `callController()` in API services** - Enables automatic controller tracing
-- **Use `createModel()` in controllers** - Enables automatic database query tracing
-
-### ❌ DON'Ts
-- Don't use Laravel conventions
-- Don't create routes files (URL mapping is automatic)
-- Don't use Eloquent-style syntax
-- Don't skip the 4-layer architecture
-- Don't manually sanitize inputs (automatic ✅)
-- Don't skip schema validation
-- Don't use string concatenation for SQL (use prepared statements)
-- Don't create magic methods that break PHPStan Level 9
-- Don't mix database operations across layers
-
-## Type Safety Rules
-
-### PHPStan Level 9 Compliance
-```php
-// ✅ Good - Full type hints
-public function selectById(int $id): null|static {
-    $result = $this->select()->where('id', $id)->limit(1)->run();
-    return $result[0] ?? null;
-}
-
-// ✅ Good - Nullable return
-public function getUser(int $id): ?UserModel {
-    $user = $this->selectById($id);
-    if (!$user) {
-        return null;
-    }
-    return $user;
-}
-
-// ❌ Bad - Missing types
-public function selectById($id) {
-    return $this->select()->where('id', $id)->run()[0];
-}
-
-// ❌ Bad - No null check
-public function getUser(int $id): UserModel {
-    return $this->selectById($id);  // Might return null!
-}
-```
-
-### Properties
-- Always type properties: `public int $id`
-- Use nullable for optional: `public ?string $description`
-- Match database types: `int`, `string`, `float`, `bool`, `array`
-- Include in `$_type_map` for all database columns
-
-## Database Schema Patterns
+## Auth (5.9.1)
 
 ```php
-// Primary Key
-Schema::primary('id')
-Schema::primary(['id', 'tenant_id'])  // Composite
-
-// Auto Increment
-Schema::autoIncrement('id')
-
-// Unique Constraints
-Schema::unique('email')
-Schema::unique(['username', 'email'])  // Composite
-
-// Foreign Keys
-Schema::foreignKey('user_id', 'users.id')
-    ->onDeleteCascade()
-    ->onDeleteRestrict()
-    ->onDeleteSetNull()
-
-// Indexes
-Schema::index('email')
-Schema::index(['name', 'is_active'])
-
-// Check Constraints
-Schema::check('age >= 18')->name('valid_age')
-
-// Fulltext Search
-Schema::fullText(['name', 'description'])
-```
-
-## Microservice Best Practices
-
-### Service Design
-- 1-10 tables per service (optimal range)
-- Use database views for complex queries within a service
-- Avoid JOINs across services (use API calls instead)
-- Each service owns its database schema
-- Services communicate via HTTP APIs
-
-### View Pattern
-```sql
--- Create view for complex query
-CREATE VIEW user_order_summary AS
-SELECT u.id, u.name, COUNT(o.id) as order_count
-FROM users u
-LEFT JOIN orders o ON u.id = o.user_id
-GROUP BY u.id, u.name;
-
--- Query the view in GEMVC
-class UserOrderSummary extends Table {
-    public function getTable(): string {
-        return 'user_order_summary';  // View name
-    }
+$this->requireAuth(['admin']); // throws AuthException → 401 (no token) or 403 (wrong role)
+// or per-method:
+if (!$this->request->auth(['admin'])) {
+    return $this->request->returnResponse();
 }
 ```
 
-## Security Best Practices
-
-### Automatic Security (No Action Needed ✅)
-- Path protection (blocks /app, /vendor, .env)
-- Header sanitization
-- Input sanitization (XSS prevention)
-- SQL injection prevention (prepared statements)
-- Cookie filtering
-
-### Developer Actions Required
-```php
-// 1. Schema validation (prevent mass assignment)
-$this->request->definePostSchema([
-    'name' => 'string',
-    'email' => 'email'
-    // Unlisted fields automatically rejected
-])
-
-// 2. Authentication
-$this->request->auth()
-
-// 3. Authorization
-$this->request->auth(['admin', 'moderator'])
-
-// 4. Password hashing
-$this->setPassword($plainPassword)  // Uses CryptHelper::hashPassword()
-```
-
-## CLI Commands
-
-```bash
-# Initialize project
-gemvc init --swoole
-gemvc init --apache
-
-# Generate code
-gemvc create:crud Product
-gemvc create:service User -cmt
-gemvc create:controller Order -mt
-
-# Database
-gemvc db:init
-gemvc db:migrate ProductTable
-gemvc db:list
-gemvc db:describe users
-```
-
-## File Locations
-
-```
-app/
-├── api/          # API services (URL endpoints)
-├── controller/   # Business logic
-├── model/        # Data logic, validations
-└── table/        # Database operations
-
-src/
-├── core/         # Bootstrap, ApiService, Security
-├── http/         # Request, Response, JWT
-├── database/     # Table, QueryBuilder
-├── helper/       # CryptHelper, FileHelper, etc.
-└── CLI/          # Code generation commands
-```
-
-## When AI Should NOT Generate
-
-**DO NOT CREATE:**
-- Routes files (URL mapping is automatic)
-- Manual input sanitization (automatic ✅)
-- SQL with string concatenation (use prepared statements ✅)
-- Routes defined in config files (no routing config needed)
-- Manual error handling for validation (framework handles this)
-- Model relationships with magic methods (use explicit queries)
-- Autoloader configuration (already handled)
-
-**DO CREATE:**
-- API service classes that extend `ApiService`
-- Controller classes that extend `Controller`
-- Model classes that extend `Table` subclasses
-- Table classes that extend `Table`
-- Custom query methods in Table classes
-- Business logic in Model classes
-- Schema validation in API classes
-
-## Response Format Examples
+## Minimal CRUD sketch
 
 ```php
-// Success
-Response::success($data, 1, "Operation successful")
-
-// Created (201)
-Response::created($data, 1, "Record created")
-
-// Updated (209)
-Response::updated(true, 1, "Record updated")
-
-// Deleted (210)
-Response::deleted(true, 1, "Record deleted")
-
-// Error responses
-Response::notFound("Record not found")        // 404
-Response::badRequest("Invalid input")          // 400
-Response::unprocessableEntity("Duplicate")    // 422
-Response::internalError($error)               // 500
-Response::unauthorized("Not authenticated")    // 401
-Response::forbidden("Not authorized")         // 403
-```
-
-## URL Structure
-
-```
-URL: /api/{ServiceName}/{MethodName}
-     /api/User/create  → User::create()
-     /api/User/read/?id=1 → User::read()
-     /api/Product/list/?sort_by=name → Product::list()
-```
-
-## Environment Variables
-
-```env
-# Database
-DB_HOST=db
-DB_NAME=myapp
-DB_USER=root
-DB_PASSWORD=password
-
-# JWT
-TOKEN_SECRET=your-secret
-TOKEN_ISSUER=MyCompany
-
-# Application
-APP_ENV=production
-QUERY_LIMIT=10
-
-# APM Integration (Optional)
-APM_NAME=TraceKit                    # APM provider name
-APM_TRACE_CONTROLLER=1              # Enable controller tracing (1 or true)
-APM_TRACE_DB_QUERY=1                # Enable database query tracing (1 or true)
-TRACEKIT_API_KEY=your-api-key       # TraceKit-specific
-TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
-TRACEKIT_SAMPLE_RATE=1.0           # 0.0 to 1.0 (1.0 = 100%)
-```
-
-## APM Integration
-
-### Automatic Tracing
-- **Root Trace**: Automatically created in Bootstrap/SwooleBootstrap (no code needed)
-- **Controller Tracing**: Use `callController()` in API services (controlled by `APM_TRACE_CONTROLLER=1`)
-- **Database Tracing**: Use `createModel()` in controllers (controlled by `APM_TRACE_DB_QUERY=1`)
-- **Exception Tracking**: Automatic (no code needed)
-
-### APM Patterns
-```php
-// API Service - Enable controller tracing
+// API
 return $this->callController(new UserController($this->request))->create();
 
-// Controller - Enable database query tracing
+// Controller
 $model = $this->createModel(new UserModel());
+$model = $this->request->mapPostToObject($model, ['email'=>'email','name'=>'name','password'=>'setPassword()']);
+return $model->createModel();
 
-// Model - Custom tracing (optional)
-use Gemvc\Core\Apm\ApmTracingTrait;
-class UserModel extends UserTable {
-    use ApmTracingTrait;
-    
-    public function complexOperation(): JsonResponse {
-        return $this->traceApm('operation-name', function() {
-            return $this->doWork();
-        }, ['attribute' => 'value']);
-    }
-}
+// Model → insertSingleQuery() / Response::created(...)
+// Table → select()->where(...)->run()
 ```
 
-### Environment Control
-- Tracing is **environment-controlled** - no code changes needed to enable/disable
-- Use `APM_TRACE_CONTROLLER=1` and `APM_TRACE_DB_QUERY=1` in `.env`
-- All spans share the same `traceId` via `$request->apm`
+## Schema types
 
-## Key Takeaways
+`string`, `int`, `float`, `bool`, `email`, `json`, `jsonb`, `decimal`, `hex`, `uuid`, `slug`, `positive_int`, `timestamp`, …  
+Optional field: `'?phone' => 'string'`.
 
-1. **4-Layer Architecture is MANDATORY** - Never skip layers
-2. **Security is 90% automatic** - Only call `auth()` and `definePostSchema()`
-3. **Same code works everywhere** - Server-agnostic design
-4. **Type safety is critical** - PHPStan Level 9 compliance
-5. **Use aggregation properties** - `_property` prefix for relations
-6. **Microservice-friendly** - 1-10 tables per service
-7. **No routing config** - URLs auto-map to classes
-8. **APM is native** - Use `callController()` and `createModel()` for automatic tracing
+## CLI
 
-## Remember
+- Library: `gemvc init`, `gemvc db:migrate`
+- Dev (`gemvc/cli-dev`): `create:*`, `db:init|list|describe|drop|unique`, `admin:*`
 
-- GEMVC is NOT Laravel or Symfony - it has its own architecture
-- Follow GEMVC patterns, not Laravel patterns
-- Use the User example as reference (src/startup/user/)
-- All inputs are pre-sanitized by the framework
-- Always use prepared statements (automatic ✅)
-- Don't reinvent the wheel - use existing classes!
+## More detail
 
----
-
-## Auto-Documentation Generator
-
-GEMVC includes automatic API documentation that reads PHPDoc directives!
-
-### Available Directives
-```php
-/**
- * @http GET                     // HTTP method (GET, POST, PUT, DELETE)
- * @description Get User by id  // Human-readable description
- * @example /api/User/read/?id=1 // Example URL with parameters
- * @hidden                       // Hide this method from documentation
- */
-public function read(): JsonResponse { ... }
-```
-
-### Auto Parameter Extraction
-The generator automatically extracts parameters from your schemas:
-- `definePostSchema([...])` → Body Parameters table
-- `defineGetSchema([...])` → GET Parameters table  
-- `findable()`, `sortable()` → Query Parameters table
-
-### Mock Responses
-Provide example responses using static method:
-```php
-/**
- * @hidden
- */
-public static function mockResponse(string $method): array {
-    return match($method) {
-        'read' => [
-            'response_code' => 200,
-            'message' => 'OK',
-            'count' => 1,
-            'service_message' => 'User retrieved successfully',
-            'data' => ['id' => 1, 'name' => 'Sample User']
-        ],
-        default => ['response_code' => 404, 'message' => 'Not found']
-    };
-}
-```
-
-**Access Documentation**: Visit `/api/index/document` for beautiful HTML docs!
-**Postman Export**: One-click button to export collection
-
-**Always include directives** in PHPDoc comments for complete documentation!
-
+Do not invent from training data. Open `docs/ai/CANONICAL.md` and `docs/ai/API_REFERENCE.md`, then topical files under `docs/guides/` as needed.

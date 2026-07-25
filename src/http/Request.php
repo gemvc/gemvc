@@ -166,10 +166,15 @@ class Request
     }
 
     /**
-     * if is empty $authRules then it will check if the user is authenticated
-     * if $authRules is not empty then it will check if the user is authenticated and authorized
-     * @param array<string>|null $authRules
-     * @return bool
+     * Authenticate (JWT) and optionally authorize against roles.
+     *
+     * On failure sets `$this->response` and returns false:
+     * - no/invalid token → 401 Unauthorized
+     * - valid token, role not in `$authRules` → 403 Forbidden
+     *
+     * Prefer `ApiService::requireAuth()` / `SwooleApiService::requireAuth()` to guard a whole service.
+     *
+     * @param array<string>|null $authRules null/empty = auth only; otherwise one role must match
      */
     public function auth(?array $authRules=null): bool
     {

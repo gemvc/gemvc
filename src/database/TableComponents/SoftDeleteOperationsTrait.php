@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace Gemvc\Database\TableComponents;
 
 /**
- * Soft Delete Operations Trait for Table Class
- * 
- * Provides soft delete, restore, activate, and deactivate operations.
- * Extracted from Table class to follow Single Responsibility Principle.
- * Uses trait for optimal performance (zero delegation overhead, direct method calls).
+ * Soft delete / restore for tables that have a `deleted_at` column.
+ *
+ * Prefer `safeDeleteQuery()` over hard `deleteByIdQuery()` when soft delete is required.
+ * `restoreQuery()` clears `deleted_at`. Also provides activate/deactivate when `is_active` exists.
  */
 trait SoftDeleteOperationsTrait
 {
     /**
-     * Marks a record as deleted (soft delete)
-     * 
+     * Soft-delete: SET deleted_at = NOW() for the current primary key.
+     *
      * @return static|null Current instance on success, null on error
      */
     public function safeDeleteQuery(): ?static

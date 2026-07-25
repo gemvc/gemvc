@@ -1,6 +1,11 @@
 # 🛠️ GEMVC CLI Commands Documentation
 
-Complete reference guide for all GEMVC command-line interface commands.
+Complete reference guide for GEMVC command-line interface commands.
+
+> **Package split (5.9.0+)**  
+> - **Always available** (`gemvc/library`): `gemvc init`, `gemvc db:migrate`  
+> - **Dev only** — install with `composer require --dev gemvc/cli-dev`: `create:*`, `db:init|list|describe|drop|unique`, `admin:*`  
+> Without `cli-dev`, codegen and DB introspection commands are not registered.
 
 ---
 
@@ -20,18 +25,19 @@ Complete reference guide for all GEMVC command-line interface commands.
 
 ## 🏗️ CLI Architecture
 
-### Two packages: `gemvc/cli-base` + `gemvc/library`
+### Three packages: `gemvc/cli-base` + `gemvc/library` + `gemvc/cli-dev`
 
-CLI functionality is split so the foundation can be versioned and tested independently:
+CLI functionality is split so the foundation and codegen can be versioned independently:
 
-| Package | Namespace / path | Responsibility |
-|---------|------------------|----------------|
-| **[`gemvc/cli-base`](https://github.com/gemvc/cli-base)** | `vendor/gemvc/cli-base/src/` → `Gemvc\CLI\` | `Command`, `CliColor`, `CliLine`, `FileSystemManager`, `Commands\CliBoxShow`, `AbstractBaseGenerator`, `AbstractBaseCrudGenerator`, `InstallControl` |
-| **`gemvc/library`** | `vendor/gemvc/library/src/CLI/` | `AbstractInit`, Docker helpers, `CommandCategories`, concrete commands, `templates/cli/`, `InstallationTest` |
+| Package | Responsibility |
+|---------|----------------|
+| **[`gemvc/cli-base`](https://github.com/gemvc/cli-base)** | `Command`, `CliColor`, generators base, `InstallControl` |
+| **`gemvc/library`** | `init*`, `db:migrate`, `DbConnect`, Docker helpers |
+| **[`gemvc/cli-dev`](https://github.com/gemvc/cli-dev)** (require-dev) | `create:*`, `db:init|list|describe|drop|unique`, `admin:*` |
 
-**AI / maintainer docs for cli-base:** `vendor/gemvc/cli-base/AI-Assistant.md` (shipped with the package; not in application repos’ `tests/` after 1.0.1).
+**AI / maintainer docs for cli-base:** `vendor/gemvc/cli-base/AI-Assistant.md`
 
-**End users:** Still run `php vendor/bin/gemvc …` — no change to command names.
+**End users:** Still run `php vendor/bin/gemvc …` — command names unchanged when packages are installed.
 
 ### Command class hierarchy
 
@@ -1629,7 +1635,7 @@ CreateCrud::execute()
 **CLI architecture**:
 - ✅ **`gemvc/cli-base`:** `Command`, `CliColor`, `CliLine`, `CliBoxShow`, `FileSystemManager`, generator abstracts, `InstallControl`
 - ✅ **`gemvc/library`:** `AbstractInit`, `InitProject`, webserver inits, `CommandCategories`, `db:*` / `create:*`, Docker wizards, `templates/cli/`, `InstallationTest`
-- ✅ **Docs:** [CLI.md](CLI.md) (this file) + `vendor/gemvc/cli-base/AI-Assistant.md`
+- ✅ **Docs:** [cli.md](cli.md) (this file) + `vendor/gemvc/cli-base/AI-Assistant.md`
 
 **Design Patterns**:
 - Template Method (AbstractInit)

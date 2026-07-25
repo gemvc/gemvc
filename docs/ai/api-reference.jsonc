@@ -4,12 +4,16 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "5.8.0",
+    "version": "5.9.1",
     "library_package": "gemvc/library",
     "cli_base_package": "gemvc/cli-base",
+    "cli_dev_package": "gemvc/cli-dev",
+    "helper_package": "gemvc/helper",
     "cli_base_doc": "vendor/gemvc/cli-base/AI-Assistant.md",
+    "ai_docs": "docs/ai/INDEX.md",
     "target_platforms": ["OpenSwoole", "Apache", "Nginx"],
     "platform_status": "All platforms fully supported and production-ready",
+    "databases": ["mysql", "pgsql", "sqlite"],
     "architecture": {
       "layers": [
         { "name": "API", "location": "app/api/", "purpose": "URL endpoints, schema validation" },
@@ -22,7 +26,10 @@
       "Server-agnostic code",
       "90% automatic security",
       "PHPStan Level 9 compliance",
-      "Code generation CLI (foundation: gemvc/cli-base)",
+      "requireAuth() service-wide auth guard",
+      "Multi-database migrations (MySQL, PostgreSQL, SQLite)",
+      "Decimal and extended schema types via gemvc/helper",
+      "Code generation CLI (gemvc/cli-dev require-dev)",
       "Auto-generated API documentation"
     ]
   },

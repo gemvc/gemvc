@@ -27,7 +27,8 @@
             "/.github",
             "/.gitignore",
             "/.gitattributes",
-            "/MYSQL_PRODUCTION_GUIDE.md",
+            "/docs/ops/mysql-production.md",
+            "/docs/_archive",
             "/SESSION_CHANGES_SUMMARY.md",
             "/PerformanceOptimizazion.md",
             "/docker-compose-production-comments.yml"

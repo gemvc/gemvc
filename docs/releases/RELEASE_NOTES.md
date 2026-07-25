@@ -2,7 +2,7 @@
 **Full Changelog**: https://github.com/gemvc/gemvc/compare/5.9.0...5.9.1
 # GEMVC Framework - Release Notes
 
-## Version 5.9.1 - `requireAuth()` service-wide guard + 401/403 fix
+## Version 5.9.1 - `requireAuth()` service-wide guard + 401/403 fix + Documentation Organisation
 
 **Release Date**: July 2026  
 **Type**: Patch Release (Backward Compatible)  
@@ -15,6 +15,7 @@
 - New `requireAuth()` on `ApiService`/`SwooleApiService` — call it **once**, typically as the first line of your service's constructor, to protect *every* method of that service. No more repeating `if(!$this->request->auth($roles)){ return $this->request->returnResponse(); }` in each method.
 - New `Gemvc\Core\AuthException`, thrown by `requireAuth()` on failure and caught centrally by `Bootstrap`/`SwooleBootstrap`, which convert it straight into the correct `401 Unauthorized` or `403 Forbidden` response.
 - Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`. `401` is now reserved for "not authenticated at all" (no/invalid token).
+- **Documentation Organisation**: all guides moved under [`docs/`](../README.md). AI assistants use a single path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`API_REFERENCE.md`](../ai/API_REFERENCE.md). Root `.cursorrules` is slim and points there. Old root `.md` paths are short redirect stubs.
 
 ---
 

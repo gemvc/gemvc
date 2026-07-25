@@ -1,6 +1,6 @@
 # GEMVC Test Suite
 
-This directory contains the comprehensive test suite for the GEMVC framework, following the strategy outlined in `TEST_STRATEGY.md`.
+This directory contains the PHPUnit test suite for the GEMVC framework.
 
 ## 📁 Test Structure
 

@@ -5,6 +5,56 @@ All notable changes to GEMVC Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
+
+## [5.9.1] - 2026-07-22
+
+### Added
+
+- `ApiService::requireAuth()` / `SwooleApiService::requireAuth()` — service-wide auth guard (throws `AuthException`)
+- `Gemvc\Core\AuthException` caught by `Bootstrap` / `SwooleBootstrap`
+
+### Fixed
+
+- `Request::authorize()` returns **403** Forbidden for wrong role (was incorrectly 401)
+
+### Documentation
+
+- Documentation reorganized under `docs/` with AI pack at `docs/ai/`
+
+## [5.9.0] - 2026-07
+
+### Added
+
+- PostgreSQL / SQLite support: `gemvc init --db=…`, SQL dialects for `db:migrate`
+- Decimal type end-to-end; `gemvc/helper` ^1.1 schema types
+- Development CLI moved to optional `gemvc/cli-dev` ^1.1
+- Requires `gemvc/connection-pdo` ^1.1
+
+## [5.8.1] - 2026-06
+
+### Changed
+
+- Helper utilities extracted / aligned with `gemvc/helper` package
+
+## [5.8.0] - 2026-06
+
+### Added
+
+- Table fluent API: `whereIn` / `whereNotIn`
+
+## [5.7.1] - 2026-05
+
+### Fixed
+
+- TableGenerator type mapping accuracy
+
+## [5.7.0] - 2026-05
+
+### Changed
+
+- CLI foundation extracted to `gemvc/cli-base`
+
 ## [5.6.7] - 2026-05-17
 
 ### Fixed

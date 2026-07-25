@@ -216,10 +216,11 @@ class Controller
     }
 
     /**
-     * columns "id,name,email" only return id name and email
-     * @param object $model
-     * @param string|null $columns
-     * @return JsonResponse
+     * Paginated/filtered list helper. Applies findable/sortable/page from Request.
+     * Calls createModel() first so DB APM tracing works when enabled.
+     *
+     * @param object $model Table/Model instance
+     * @param string|null $columns Comma-separated columns, or null for all public props
      */
     public function createList(object $model, ?string $columns = null): JsonResponse
     {

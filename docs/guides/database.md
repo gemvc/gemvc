@@ -27,6 +27,10 @@ The **Table Layer** is GEMVC's Data Access Layer (DAL). All table classes **MUST
 
 > **Multi-database support**: `TableGenerator` and `SchemaGenerator` generate correct DDL for **MySQL**, **PostgreSQL**, and **SQLite** via a SQL dialect abstraction (`Gemvc\Database\Dialect\SqlDialectInterface`, auto-selected from your `.env`'s `DB_DRIVER`). Your `Table` classes need **no changes** — the same `$_type_map`/`defineSchema()` works unmodified against all three engines. Known limitation: SQLite cannot `ALTER` an existing column's type/nullability/default or drop a primary key without a full table rebuild (`db:migrate` skips those specific operations with a clear warning); PostgreSQL/SQLite have no `FULLTEXT INDEX` equivalent in this pass.
 
+> **Decimal / money**: map columns as `'price' => 'decimal'` or `'decimal:12,4'` in `$_type_map` and declare `public string $price` (never `float`). Request getters: `decimalValuePost` / `decimalValueGet`.
+
+> **Soft delete**: when using soft-delete columns, call `$table->safeDeleteQuery()` and `$table->restoreQuery()` (`SoftDeleteOperationsTrait`) instead of hard `deleteByIdQuery`.
+
 ---
 
 ## ⚠️ Core Requirements

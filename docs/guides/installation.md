@@ -693,8 +693,8 @@ After successful installation:
 
 1. **Read Documentation**
    - [README.MD](README.MD) - Framework overview
-   - [QUICK_START_AI.md](QUICK_START_AI.md) - For AI assistants
-   - [ARCHITECTURE.md](ARCHITECTURE.md) - Deep dive
+   - [docs/ai/INDEX.md](../ai/INDEX.md) - For AI assistants
+   - [architecture.md](architecture.md) - Deep dive
 
 2. **Study Examples**
    - Check `src/startup/user/` for complete User example
@@ -709,7 +709,7 @@ After successful installation:
    ```bash
    vendor/bin/phpstan analyse
    ```
-   CLI foundation is documented in `vendor/gemvc/cli-base/AI-Assistant.md`; framework commands in [CLI.md](CLI.md).
+   CLI foundation is documented in `vendor/gemvc/cli-base/AI-Assistant.md`; framework commands in [cli.md](cli.md).
 
 5. **Customize Templates** (optional)
    - Copy templates from `vendor/gemvc/swoole/templates/` to `templates/`
@@ -735,9 +735,9 @@ curl http://localhost:9501/api
 ## 📞 Need Help?
 
 - 📖 [README.MD](README.MD) - Framework overview
-- 🏗️ [ARCHITECTURE.MD](ARCHITECTURE.md) - Architecture details
-- 🔒 [SECURITY.MD](SECURITY.md) - Security features
-- 🤖 [QUICK_START_AI.md](QUICK_START_AI.md) - For AI assistants
+- 🏗️ [architecture.md](architecture.md) - Architecture details
+- 🔒 [security.md](security.md) - Security features
+- 🤖 [docs/ai/INDEX.md](../ai/INDEX.md) - For AI assistants
 
 **Happy coding with GEMVC! 🎯**
 
