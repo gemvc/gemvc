@@ -126,6 +126,13 @@ class SwooleBootstrap
             return Response::notFound("The service path for '$serviceName' does not exist, check your service name if properly typed");
         }
 
+        try {
+            RateLimiter::enforceFromEnv($this->request);
+        } catch (\Gemvc\Core\RateLimitException $e) {
+            $this->recordExceptionInApm($e);
+            return Response::tooManyRequests($e->getMessage());
+        }
+
         $serviceInstance = false;
         try {
             $service = 'App\\Api\\' . $serviceName;
@@ -136,6 +143,9 @@ class SwooleBootstrap
             // reached, and the persistent Swoole worker is not disturbed.
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (\Gemvc\Core\RateLimitException $e) {
+            $this->recordExceptionInApm($e);
+            return Response::tooManyRequests($e->getMessage());
         } catch (\Throwable $e) {
             return Response::notFound($e->getMessage());
         }
@@ -152,6 +162,9 @@ class SwooleBootstrap
             // requireAuth() failed inside the method body itself.
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (\Gemvc\Core\RateLimitException $e) {
+            $this->recordExceptionInApm($e);
+            return Response::tooManyRequests($e->getMessage());
         } catch (\Throwable $e) {
             // Record exception in APM if available (via Request object)
             $this->recordExceptionInApm($e);

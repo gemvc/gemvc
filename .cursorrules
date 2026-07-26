@@ -28,6 +28,7 @@ URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTI
 - `definePostSchema` / `defineGetSchema` before using post/get data
 - `callController()` in API + `createModel()` in Controller (Apache path / APM)
 - `requireAuth(['role'])` in service constructor to guard all methods
+- `requireRateLimit()` for APCu rate limits (optional; fail-open if APCu off)
 - Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()`
 - Prefer `gemvc/helper` (TypeChecker, CryptHelper, …) and `gemvc/http-client` (outbound HTTP) — never invent Laravel validators or curl wrappers
 - Prefer `createList` + API `findable`/`filterable`/`sortable` for lists (not hand-rolled filter SQL)
@@ -48,6 +49,12 @@ $this->requireAuth(['admin']); // throws AuthException → 401 (no token) or 403
 if (!$this->request->auth(['admin'])) {
     return $this->request->returnResponse();
 }
+```
+
+## Rate limit (APCu, optional)
+
+```php
+$this->requireRateLimit(); // 20/sec, IP+JWT → 429; or REQUEST_RATE_LIMIT_PER_SEC=20 in .env
 ```
 
 ## Minimal CRUD sketch

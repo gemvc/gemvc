@@ -348,6 +348,21 @@ class User extends ApiService
 }
 ```
 
+### Rate limiting (APCu, optional)
+
+Same DX as `requireAuth()`:
+
+```php
+$this->requireRateLimit();                 // 20/sec default, scope both (IP + JWT)
+$this->requireRateLimit(10, 'ip');         // IP only
+$this->requireRateLimit(5, 'token', 120);  // JWT only, block 120s
+```
+
+- Storage: **APCu** (no Redis). If APCu is not enabled, requests are allowed and a one-time `error_log` warning asks you to activate it.
+- Exceed → temporary block of IP and/or token + `error_log` + HTTP **429** (`RateLimitException`).
+- If APCu is **full**: purge only `gemvc:rl:*` keys, retry once; if still failing → **fail-closed** (429) so limits cannot be bypassed. Increase `apc.shm_size` if you see that warning.
+- Global (Bootstrap): set `REQUEST_RATE_LIMIT_PER_SEC=20` (recommended default when enabling). Optional: `REQUEST_RATE_LIMIT_BLOCK_SECONDS=60`, `REQUEST_RATE_LIMIT_SCOPE=both|ip|token`.
+
 **Token Creation** (JWTToken.php):
 ```php
 // Access Token (short-lived)

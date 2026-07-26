@@ -13,5 +13,6 @@ parameters:
         - src/stubs/Redis.php
         - src/stubs/Hyperf.php
         - src/stubs/Psr.php
+        - src/stubs/Apcu.php
     ignoreErrors:
         - '#Possibly invalid array key type float\|int\.#'

@@ -110,6 +110,9 @@ class Bootstrap
             return;
         }
         try {
+            // Optional global rate limit from REQUEST_RATE_LIMIT_PER_SEC (APCu)
+            RateLimiter::enforceFromEnv($this->request);
+
             $service = 'App\\Api\\' . $serviceName;
             
             // Validate service class exists and extends ApiService
@@ -224,6 +227,10 @@ class Bootstrap
             $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
             $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
             // Record exception in APM if available (via Request object)
+            $this->recordExceptionInApm($e);
+        } catch (\Gemvc\Core\RateLimitException $e) {
+            // requireRateLimit() / REQUEST_RATE_LIMIT_PER_SEC → HTTP 429
+            $this->errors[] = new GemvcError($e->getMessage(), 429, $e->getFile(), $e->getLine());
             $this->recordExceptionInApm($e);
         } catch (\Gemvc\Core\ValidationException $e) {
             // Handle validation exceptions (400 Bad Request) from ApiService or Controller

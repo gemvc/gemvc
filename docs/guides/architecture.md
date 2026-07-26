@@ -28,7 +28,7 @@ src/ (gemvc/library — this repo)
 ├── http/ # Inbound Request/Response/JWT (+ ApiCall facades)
 ├── database/ # Table ORM, migrations, query builders
 ├── startup/ # Platform-specific init (Apache/Swoole/Nginx)
-└── stubs/ # IDE type stubs (OpenSwoole, Redis)
+└── stubs/ # IDE type stubs (OpenSwoole, Redis, APCu)
 
 # NOT in library src/ anymore — separate Composer packages:
 # vendor/gemvc/helper/ TypeChecker, CryptHelper, ProjectHelper, …

@@ -68,6 +68,7 @@ Response::forbidden(?string $msg): JsonResponse            // 403
 Response::notFound(?string $msg): JsonResponse             // 404
 Response::conflict(?string $msg): JsonResponse             // 409
 Response::unprocessableEntity(?string $msg): JsonResponse  // 422
+Response::tooManyRequests(?string $msg): JsonResponse      // 429
 Response::internalError(?string $msg): JsonResponse        // 500
 $response->show();           // Apache/Nginx
 $response->showSwoole($swooleResponse);
@@ -80,6 +81,7 @@ $response->showSwoole($swooleResponse);
 ```php
 public function __construct(Request $request)
 public function requireAuth(?array $roles = []): void   // throws AuthException
+public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void  // throws RateLimitException
 protected function callController(Controller $c): ControllerTracingProxy
 // Magic: $this->UserController → ControllerTracingProxy
 public function index(): JsonResponse
@@ -91,6 +93,7 @@ public static function mockResponse(string $method): array
 
 ```php
 public function requireAuth(?array $roles = []): void
+public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 protected function validatePosts(array $schema): ?JsonResponse
 protected function validateStringPosts(array $schema): ?JsonResponse
 // No callController / magic controllers — instantiate Controller yourself
@@ -100,6 +103,11 @@ protected function validateStringPosts(array $schema): ?JsonResponse
 
 Thrown by `requireAuth()`. Response codes come from `Request::auth()`:
 **401** (no token) or **403** (invalid token / wrong role). Caught by `Bootstrap` / `SwooleBootstrap`.
+
+## `Gemvc\Core\RateLimitException` / `RateLimiter`
+
+APCu-backed. Thrown by `requireRateLimit()` or `RateLimiter::enforceFromEnv()`. HTTP **429**.
+Env: `REQUEST_RATE_LIMIT_PER_SEC` (optional global), `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE=both|ip|token`. Fail-open if APCu missing.
 
 ## `Gemvc\Core\Controller`
 

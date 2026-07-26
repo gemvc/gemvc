@@ -136,6 +136,11 @@ class JsonResponse implements ResponseInterface , \JsonSerializable
     {
         return $this->create(400, null, null, $service_message);
     }
+
+    public function tooManyRequests(?string $service_message = null):JsonResponse
+    {
+        return $this->create(429, null, null, $service_message);
+    }
     public function show():void
     {
         // Automatically end Model span if it was started (from Response static methods)
@@ -204,6 +209,8 @@ class JsonResponse implements ResponseInterface , \JsonSerializable
             return 'unsupported media type';
         case 422: 
             return 'unprocessable entity';
+        case 429:
+            return 'too many requests';
         case 500: 
             return 'internal error';
         default:  

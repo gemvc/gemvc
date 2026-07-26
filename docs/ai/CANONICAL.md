@@ -65,6 +65,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 | APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
 | Auth whole service | `requireAuth()` in constructor | same |
+| Rate limit | `requireRateLimit()` in constructor/method | same |
 
 Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw.
 
@@ -92,6 +93,15 @@ class User extends ApiService
 - `requireAuth(null)` or `requireAuth([])` → any authenticated user
 - `requireAuth(['admin','editor'])` → must have one of these roles
 - Throws `Gemvc\Core\AuthException` — Bootstrap converts to JSON; method body never runs if called from constructor
+
+### Rate limit (APCu, optional)
+
+```php
+$this->requireRateLimit();              // 20/sec, IP + token → 429
+$this->requireRateLimit(10, 'ip');
+```
+
+Global: `REQUEST_RATE_LIMIT_PER_SEC=20` (plus optional `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`). Needs APCu; fail-open + warning if missing.
 
 ### Per-method (still valid)
 

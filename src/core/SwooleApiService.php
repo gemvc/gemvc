@@ -70,6 +70,23 @@ class SwooleApiService
     }
 
     /**
+     * Require rate limit (APCu) — same DX as requireAuth().
+     *
+     *   $this->requireRateLimit();
+     *   $this->requireRateLimit(10, 'ip');
+     *
+     * @param 'both'|'ip'|'token'|string $scope
+     * @throws RateLimitException
+     */
+    public function requireRateLimit(
+        int $perSec = RateLimiter::DEFAULT_PER_SEC,
+        string $scope = RateLimiter::SCOPE_BOTH,
+        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
+    ): void {
+        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api');
+    }
+
+    /**
      * Default index method
      * 
      * @return JsonResponse Welcome response

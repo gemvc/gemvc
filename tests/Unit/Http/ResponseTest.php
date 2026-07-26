@@ -169,5 +169,23 @@ class ResponseTest extends TestCase
         $this->assertEquals('unsupported media type', $response->message);
         $this->assertEquals('unsupported media type: Unsupported media type', $response->service_message);
     }
+
+    public function testTooManyRequestsResponse(): void
+    {
+        $response = Response::tooManyRequests('Limit exceeded');
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(429, $response->response_code);
+        $this->assertEquals('too many requests', $response->message);
+        $this->assertEquals('too many requests: Limit exceeded', $response->service_message);
+    }
+
+    public function testTooManyRequestsResponseWithoutMessage(): void
+    {
+        $response = Response::tooManyRequests();
+
+        $this->assertEquals(429, $response->response_code);
+        $this->assertEquals('too many requests', $response->service_message);
+    }
 }
 

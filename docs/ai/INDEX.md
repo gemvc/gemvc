@@ -45,5 +45,6 @@ Optional machine/IDE mirrors (same content, not required):
 - Prefer `callController()` (Apache/`ApiService`) + `createModel()` for APM-ready code; Swoole uses bare `new` Controller — see [api.md](../guides/api.md)
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
+- Use `requireRateLimit()` (APCu) for per-service/method limits; optional global `REQUEST_RATE_LIMIT_PER_SEC`
 - Money/precision: `public string` + `$_type_map` `decimal` — never `float`
 - Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code — especially **`gemvc/helper`**, **`gemvc/http-client`**, and **`gemvc/apm-contracts`** (providers via `APM_NAME`; never hardcode TraceKit in `app/`)

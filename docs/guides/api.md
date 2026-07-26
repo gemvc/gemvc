@@ -66,6 +66,7 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 | Magic `$this->UserController` | yes | **no** |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
 | `requireAuth()` | yes | yes |
+| `requireRateLimit()` | yes | yes |
 
 Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw).
 
@@ -102,6 +103,42 @@ if (!$this->request->auth(['admin'])) {
 | Invalid token or wrong role | **403** |
 
 Full detail: [security.md](security.md).
+
+---
+
+## Rate limiting (APCu)
+
+Optional. Uses in-process APCu (no Redis). If APCu is off, traffic is allowed and a one-time warning is logged.
+
+### Service / method (preferred DX)
+
+```php
+public function __construct(Request $request)
+{
+    parent::__construct($request);
+    $this->requireRateLimit();                 // 20/sec, IP + JWT
+    // $this->requireRateLimit(10, 'ip');      // IP only
+    // $this->requireRateLimit(5, 'token', 120);
+}
+```
+
+Throws `RateLimitException` → HTTP **429**. On exceed, IP and/or token is temporarily blocked (default 60s) and a line is written to `error_log`.
+
+### Global (Bootstrap)
+
+Set in `.env` (only when you want every API request limited):
+
+```env
+REQUEST_RATE_LIMIT_PER_SEC=20
+REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
+REQUEST_RATE_LIMIT_SCOPE=both
+```
+
+Unset / `0` = off. Default recommendation when enabling: **20 requests/second**.
+
+If APCu is full: purge `gemvc:rl:*`, retry once; if still failing → **429** (fail-closed). If APCu is missing → allow + warning (fail-open).
+
+Static helpers: `Gemvc\Core\RateLimiter::enforce()`, `::hit()`, `::block()`, `::unblock()`.
 
 ---
 

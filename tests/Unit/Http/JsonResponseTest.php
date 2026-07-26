@@ -203,6 +203,17 @@ class JsonResponseTest extends TestCase
         $this->assertEquals(400, $response->response_code);
         $this->assertEquals('bad request', $response->message);
     }
+
+    public function testTooManyRequests(): void
+    {
+        $response = new JsonResponse();
+        $result = $response->tooManyRequests('Slow down');
+
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(429, $response->response_code);
+        $this->assertEquals('too many requests', $response->message);
+        $this->assertEquals('Slow down', $response->service_message);
+    }
     
     public function testNotAcceptable(): void
     {

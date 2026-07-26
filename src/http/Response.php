@@ -90,4 +90,11 @@ class Response {
         $service_message = $service_message ? 'bad request: '.$service_message : 'bad request';
         return (new JsonResponse())->badRequest($service_message);
     }
+
+    /** HTTP 429 */
+    public static function tooManyRequests(?string $service_message = null):JsonResponse
+    {
+        $service_message = $service_message ? 'too many requests: '.$service_message : 'too many requests';
+        return (new JsonResponse())->tooManyRequests($service_message);
+    }
 }

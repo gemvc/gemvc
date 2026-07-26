@@ -131,6 +131,30 @@ class ApiService
     }
 
     /**
+     * Require rate limit (APCu) before continuing — same DX as requireAuth().
+     *
+     * Call in the service constructor to guard every method, or inside one method:
+     *
+     *   $this->requireRateLimit();              // 20/sec, IP + token
+     *   $this->requireRateLimit(10);            // 10/sec
+     *   $this->requireRateLimit(10, 'ip');      // IP only
+     *   $this->requireRateLimit(5, 'token', 120);
+     *
+     * Throws RateLimitException → Bootstrap returns HTTP 429.
+     * If APCu is not enabled, fails open (allows traffic) and logs a one-time warning.
+     *
+     * @param 'both'|'ip'|'token'|string $scope
+     * @throws RateLimitException
+     */
+    public function requireRateLimit(
+        int $perSec = RateLimiter::DEFAULT_PER_SEC,
+        string $scope = RateLimiter::SCOPE_BOTH,
+        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
+    ): void {
+        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api');
+    }
+
+    /**
      * Call a controller method with automatic APM span creation
      * 
      * This is the recommended method name. Tracing is controlled by APM_TRACE_CONTROLLER
