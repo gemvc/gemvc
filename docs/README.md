@@ -1,6 +1,6 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.9.1**.
+Single entry point for humans and AI assistants. Framework version: **5.10.0**.
 
 ## For AI assistants (read first)
 
@@ -111,7 +111,7 @@ Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Pre
 When to open release notes vs changelog. **AI: skip unless version/migration task.**
 
 ### [releases/RELEASE_NOTES.md](releases/RELEASE_NOTES.md)
-Narrative notes (what/why/migration), including 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
+Narrative notes (what/why/migration), including 5.10.x rate limiting, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
 
 ### [releases/CHANGELOG.md](releases/CHANGELOG.md)
 Keep-a-Changelog bullets for “is feature X in version Y?”

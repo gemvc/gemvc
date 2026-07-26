@@ -1,6 +1,56 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.9.0...5.9.1
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.9.1...5.10.0
 # GEMVC Framework - Release Notes
+
+## Version 5.10.0 - APCu rate limiting (`requireRateLimit`)
+
+**Release Date**: Saturday, 26 July 2026  
+**Type**: Minor Release (Backward Compatible)  
+**Tag**: `5.10.0`
+
+---
+
+## Overview
+
+- Optional **APCu** rate limiting (no Redis) with a simple API-layer DX matching `requireAuth()`.
+- `requireRateLimit()` on `ApiService` / `SwooleApiService` — constructor (whole service) or single method.
+- Limits by **IP**, **JWT token**, or **both**; on exceed: temporary block, `error_log`, HTTP **429**.
+- Optional Bootstrap global via `REQUEST_RATE_LIMIT_PER_SEC` (recommended default when enabling: **20**/sec, block **60**s).
+- APCu missing → fail-open + warning. APCu full → purge `gemvc:rl:*`, retry, then fail-closed (429).
+
+---
+
+## Quick start
+
+```php
+class User extends ApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request);
+        $this->requireRateLimit();                 // 20/sec, IP + JWT
+        // $this->requireRateLimit(10, 'ip');
+        // $this->requireRateLimit(5, 'token', 120);
+    }
+}
+```
+
+```env
+# Optional — every API request (Bootstrap)
+REQUEST_RATE_LIMIT_PER_SEC=20
+REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
+REQUEST_RATE_LIMIT_SCOPE=both
+```
+
+| Piece | Role |
+|--------|------|
+| `RateLimiter` | Static APCu counters / blocks |
+| `RateLimitException` | Caught → 429 |
+| `Response::tooManyRequests()` | JSON 429 |
+
+Requires the **APCu** PHP extension in production. See [api.md](../guides/api.md#rate-limiting-apcu) and [security.md](../guides/security.md).
+
+---
 
 ## Version 5.9.1 - `requireAuth()` service-wide guard + 401/403 fix + Documentation Organisation
 

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [5.10.0] - 2026-07-26
+
+### Added
+
+- `Gemvc\Core\RateLimiter` — optional APCu rate limiting (no Redis): IP and/or JWT scopes, temporary block after exceed, `error_log` on exceed
+- `ApiService::requireRateLimit()` / `SwooleApiService::requireRateLimit()` — same DX as `requireAuth()` (constructor or per-method); throws `RateLimitException` → HTTP **429**
+- `Gemvc\Core\RateLimitException` caught by `Bootstrap` / `SwooleBootstrap`
+- `Response::tooManyRequests()` / `JsonResponse::tooManyRequests()` (429)
+- Global env (optional): `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE=both|ip|token`
+- APCu stubs (`src/stubs/Apcu.php`) for Intelephense / PHPStan
+- Unit tests for RateLimiter (including full-cache purge → retry → fail-closed)
+
+### Behavior
+
+- APCu missing: fail-open (allow) + one-time warning
+- APCu full / write fail: purge `gemvc:rl:*` keys, retry once; if still failing → fail-closed (429)
+
+### Documentation
+
+- API / security / AI pack / example `.env` notes for rate limiting
+
 ## [5.9.1] - 2026-07-22
 
 ### Added

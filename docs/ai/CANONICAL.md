@@ -1,6 +1,6 @@
 # GEMVC Canonical Guide for AI Assistants
 
-Framework hub: **gemvc/library 5.9.1**.  
+Framework hub: **gemvc/library 5.10.0**.
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
 ---

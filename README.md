@@ -9,7 +9,7 @@
 [![Nginx](https://img.shields.io/badge/Nginx-Supported-009639.svg?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.9.1 — MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
+**Latest:** 5.10.0 — APCu rate limiting (`requireRateLimit`), MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
 
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
 
@@ -55,6 +55,7 @@ app/table/        → database
 Strong request sanitization lives here. As a developer you can:
 
 - Guard a whole service with `$this->requireAuth(['role'])` in the constructor, or call `$this->request->auth(['role'])` per method
+- Optional rate limit with `$this->requireRateLimit()` (APCu; IP and/or JWT → 429)
 - Define exact POST / GET / PUT / PATCH schemas on each endpoint with powerful types (`string`, `email`, `url`, `ip`, …)
 - Then call the Controller — Apache: `callController(...)`; OpenSwoole: `new XController($this->request)` — and pass the sanitized `Request`
 

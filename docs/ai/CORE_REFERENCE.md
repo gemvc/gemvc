@@ -1,6 +1,6 @@
 # GEMVC Core Reference (AI)
 
-Version **5.9.1**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, schema types.
+Version **5.10.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, schema types.
 
 **Not** HTTP endpoint docs (that is [api-documentation.md](../guides/api-documentation.md) / `/api/index/document`).  
 **Not** the `app/api/` layer guide. Prefer this over inventing methods from training data.
