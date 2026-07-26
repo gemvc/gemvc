@@ -5,6 +5,9 @@ composer.phar
 composer.lock
 app/config.php
 
+# macOS
+.DS_Store
+
 # Test results
 test-results.xml
 

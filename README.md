@@ -165,9 +165,8 @@ Open a guide only when you need that topic. Prefer the **layer order**: API → 
 
 Summaries of what each file contains: [docs/README.md](docs/README.md).
 
-### Ops & history
+### Releases
 
-- [docs/ops/mysql-production.md](docs/ops/mysql-production.md) — init MySQL is **dev-only**; production hardening  
 - [docs/releases/README.md](docs/releases/README.md) — when to read notes vs changelog (AI: skip unless version task)  
 - [docs/releases/RELEASE_NOTES.md](docs/releases/RELEASE_NOTES.md) — narrative what/why/migration  
 - [docs/releases/CHANGELOG.md](docs/releases/CHANGELOG.md) — short “is feature X in version Y?”

@@ -2,9 +2,19 @@
 
 **Audience:** customizing `gemvc create:*` output.
 
-**Related:** [cli.md](cli.md) · [installation.md](installation.md)
+**Related:** [cli.md](cli.md) · [installation.md](installation.md) · [controller.md](controller.md) · [model.md](model.md)
 
 Customize codegen while still using CLI commands. After `gemvc init`, templates live under `{project}/templates/cli/`. Requires **`gemvc/cli-dev`** for create commands.
+
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Lookup order (project → vendor) | [How It Works](#how-it-works) |
+| Placeholders | [Template Variables](#template-variables) |
+| Per-layer files (roles) | [Available Templates](#available-templates) |
+| Override path | [Template Structure Reference](#template-structure-reference) |
+| Failures | [Troubleshooting](#troubleshooting) |
 
 ## Overview
 
@@ -17,7 +27,7 @@ Customize codegen while still using CLI commands. After `gemvc init`, templates 
 When you run `gemvc init`, GEMVC automatically copies templates to your project:
 
 ```
-vendor/gemvc/swoole/src/CLI/templates/
+vendor/gemvc/cli-dev/templates/cli/
     ↓ (copied to)
 {projectRoot}/templates/cli/
     ├── service.template
@@ -57,7 +67,7 @@ When generating code, GEMVC uses a **smart template lookup**:
 ```php
 // AbstractBaseGenerator::getTemplate()
 1. First checks: {projectRoot}/templates/cli/{templateName}.template ✅ (Custom)
-2. Fallback: vendor/gemvc/swoole/src/CLI/templates/cli/{templateName}.template (Default)
+2. Fallback: vendor/gemvc/cli-dev/templates/cli/{templateName}.template (Default)
 ```
 
 **Example**: Running `gemvc create:crud Product`
@@ -109,7 +119,7 @@ protected function replaceTemplateVariables(string $content, array $variables): 
 
 ---
 
-### 2. **controller.template** - Business Logic Layer
+### 2. **controller.template** - Orchestration layer
 - Generates: `app/controller/{ServiceName}Controller.php`
 - Extends: `Controller`
 - Methods: `create()`, `read()`, `update()`, `delete()`, `list()`
@@ -122,7 +132,7 @@ protected function replaceTemplateVariables(string $content, array $variables): 
 
 ---
 
-### 3. **model.template** - Data Logic Layer
+### 3. **model.template** - Business / domain logic layer
 - Generates: `app/model/{ServiceName}Model.php`
 - Extends: `{ServiceName}Table`
 - Methods: `createModel()`, `readModel()`, `updateModel()`, `deleteModel()`
@@ -270,7 +280,7 @@ Check 1: {projectRoot}/templates/cli/service.template
     ├─ ✅ EXISTS → Use custom template
     └─ ❌ NOT FOUND → Continue to Check 2
         ↓
-Check 2: vendor/gemvc/swoole/src/CLI/templates/cli/service.template
+Check 2: vendor/gemvc/cli-dev/templates/cli/service.template
     ├─ ✅ EXISTS → Use default template (with warning)
     └─ ❌ NOT FOUND → Throw error
         ↓
@@ -360,7 +370,7 @@ class {$serviceName} extends ApiService
 ## Template Structure Reference
 
 ### Default Templates Location
-- **Vendor**: `vendor/gemvc/swoole/src/CLI/templates/cli/`
+- **Vendor**: `vendor/gemvc/cli-dev/templates/cli/`
 - **Project**: `{projectRoot}/templates/cli/`
 
 ### Template File Names

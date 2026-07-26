@@ -45,14 +45,14 @@ Gemvc\CLI\Command                    ← gemvc/cli-base
     ↓
 ├── Gemvc\CLI\Commands\AbstractBaseGenerator
 │   └── AbstractBaseCrudGenerator
-│       └── Gemvc\CLI\Commands\Create*   ← gemvc/library (concrete generators)
+│       └── Gemvc\CLI\Commands\Create*   ← gemvc/cli-dev (concrete generators)
 │
 ├── Gemvc\CLI\AbstractInit             ← gemvc/library (Template Method)
 │   ├── InitApache
 │   ├── InitSwoole
 │   └── InitNginx
 │
-└── Gemvc\CLI\Commands\*               ← gemvc/library (db:*, admin, …)
+└── Gemvc\CLI\Commands\*               ← gemvc/cli-dev (db:*, admin, …)
 ```
 
 ### Core components
@@ -86,7 +86,7 @@ class MyCommand extends Command
 **Typical extensions**:
 ```php
 class CreateService extends AbstractBaseGenerator  // cli-base → Command
-class DbInit extends Command                      // library, extends cli-base Command
+class DbInit extends Command                      // cli-dev, extends cli-base Command
 ```
 
 ---
@@ -628,7 +628,7 @@ AbstractBaseGenerator extends Command
 ### Install GEMVC
 
 ```bash
-composer require gemvc/swoole
+composer require gemvc/library
 ```
 
 ### Run Commands
@@ -1243,7 +1243,7 @@ php vendor/bin/gemvc create:service Product
 gemvc init
 
 # Or manually copy templates
-cp -r vendor/gemvc/swoole/src/CLI/templates templates
+cp -r vendor/gemvc/cli-dev/templates/cli templates/cli
 
 # Verify templates exist
 ls templates/cli/
@@ -1632,9 +1632,10 @@ CreateCrud::execute()
 ### Summary
 
 **CLI architecture**:
-- ✅ **`gemvc/cli-base`:** `Command`, `CliColor`, `CliLine`, `CliBoxShow`, `FileSystemManager`, generator abstracts, `InstallControl`
-- ✅ **`gemvc/library`:** `AbstractInit`, `InitProject`, webserver inits, `CommandCategories`, `db:*` / `create:*`, Docker wizards, `templates/cli/`, `InstallationTest`
-- ✅ **Docs:** [cli.md](cli.md) (this file) + `vendor/gemvc/cli-base/AI-Assistant.md`
+- **`gemvc/cli-base`:** `Command`, `CliColor`, `CliLine`, `CliBoxShow`, `FileSystemManager`, generator abstracts, `InstallControl`
+- **`gemvc/library`:** `AbstractInit`, `InitProject`, webserver inits, `CommandCategories`, `db:migrate`, Docker wizards, `InstallationTest`
+- **`gemvc/cli-dev`:** `create:*`, `db:init|list|describe|drop|unique`, `admin:*`, `templates/cli/`
+- **Docs:** [cli.md](cli.md) (entry / workflows) · this file (full catalog) · `vendor/gemvc/cli-base/AI-Assistant.md`
 
 **Design Patterns**:
 - Template Method (AbstractInit)

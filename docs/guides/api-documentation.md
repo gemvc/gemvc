@@ -6,6 +6,16 @@
 
 Built-in generator reads PHPDoc directives on API service methods.
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| `@http` / `@description` / `@example` / `@hidden` | [Available Directives](#available-directives) |
+| Schema → params tables | [Automatic Parameter Extraction](#automatic-parameter-extraction) |
+| `mockResponse` | [Mock Responses](#mock-responses) |
+| Full worked example | [Complete Example](#complete-example) |
+| AI usage notes | [Usage in AI Assistants](#usage-in-ai-assistants) |
+
 ## How It Works
 
 The `ApiDocGenerator.php` uses reflection to scan API service classes and extract documentation from PHPDoc comments.

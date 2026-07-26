@@ -27,7 +27,7 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 
 ---
 
-## Reading map
+## Reading map (AI)
 
 | Goal | Section |
 |------|---------|
@@ -126,7 +126,7 @@ Inputs are **already sanitized** by the framework — do not re-sanitize.
 
 ---
 
-## List allowlists (flagship with `createList`)
+## List allowlists
 
 **One of GEMVC’s strongest features.** Declare allowlists here **before** Controller `createList` — only listed fields can filter/sort; values are type-checked. No free-form query SQL from the client.
 

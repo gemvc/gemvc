@@ -1,5 +1,20 @@
 # GEMVC Ecosystem — Packages & Modules
 
+**Audience:** anyone choosing packages, wiring connections / helper / HTTP client / CLI · AI that must not invent Laravel-like replacements.
+
+**Related:** [helper.md](helper.md) · [http-client.md](http-client.md) · [database.md](database.md) · [cli.md](cli.md) · [CANONICAL.md](../ai/CANONICAL.md)
+
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Mental model / diagram | [Mental model](#mental-model) |
+| Full package list | [Package catalog](#package-catalog) |
+| **helper** / **http-client** | [helper.md](helper.md) · [http-client.md](http-client.md) (catalog sections under Package catalog) |
+| Connections / `DB_DRIVER` | [Database connections](#database-connections) · [database.md](database.md) |
+| CLI / cli-dev | [cli.md](cli.md) · [Package catalog](#package-catalog) |
+| Hard rules | [Rules for AI assistants](#rules-for-ai-assistants) |
+
 **GEMVC is not one Composer package.**  
 `gemvc/library` is the **application framework** (4-layer API → Controller → Model → Table). Around it sits a set of **focused, tested, independently versioned** packages under the `gemvc/*` namespace. Apps install `gemvc/library`; Composer pulls most of the ecosystem automatically. AI assistants that only read `library/src` miss half the product.
 

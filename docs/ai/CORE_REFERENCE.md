@@ -157,9 +157,9 @@ setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|
 
 ---
 
-## Helpers (`gemvc/helper`) — core package
+## Helpers (`gemvc/helper`)
 
-Powers schema types, passwords, paths. Guide: [helper.md](../guides/helper.md) · `vendor/gemvc/helper/README.md`.
+Core package. Powers schema types, passwords, paths. Guide: [helper.md](../guides/helper.md) · `vendor/gemvc/helper/README.md`.
 
 ```php
 // TypeChecker — same types as definePostSchema / findable
@@ -177,9 +177,9 @@ CryptHelper::decryptString(string $encryptedString, string $key): false|string
 
 ---
 
-## HTTP client (`gemvc/http-client`) — core package
+## HTTP client (`gemvc/http-client`)
 
-**Outbound** HTTP (calling other APIs). Not inbound `Request`. Guide: [http-client.md](../guides/http-client.md) · `vendor/gemvc/http-client/README.md`.
+**Outbound** HTTP (calling other APIs). Not inbound `Request`. Core package. Guide: [http-client.md](../guides/http-client.md) · `vendor/gemvc/http-client/README.md`.
 
 ```php
 use Gemvc\Http\Client\HttpClient;

@@ -42,7 +42,7 @@ There is **no** required base class for Models. Most entity Models **extend** th
 
 ---
 
-## Reading map
+## Reading map (AI)
 
 | Goal | Section |
 |------|---------|
@@ -53,7 +53,7 @@ There is **no** required base class for Models. Most entity Models **extend** th
 | CRUD method patterns | [CRUD methods](#crud-methods) |
 | Setters + mapping | [Transforms & setters](#transforms--setters) |
 | Validation | [Business validation](#business-validation) |
-| Relations / `_` props | [Aggregations](#aggregations-_properties) |
+| Relations / `_` props | [Aggregations](#aggregations-_-properties) |
 | Heavy reads | [Complex reads](#complex-reads) |
 | Multi-step / APM | [Beyond CRUD](#beyond-crud) |
 | Models without Table | [Composition Models](#composition-models-no-table) |
@@ -310,7 +310,7 @@ $this->request->mapPostToObject($model, [
 
 Put hashing, normalization (`strtolower` email), and derived fields **in Model setters or `*Model()` methods** — not in the Controller.
 
-Keep secrets on **`protected`** Table properties so list/select payloads stay clean.
+Keep secrets on **`protected`** Table properties so typical list / `createList` defaults / API payloads stay clean. They are still DB columns and still appear in SQL `SELECT *` hydration — prefer explicit column lists when needed.
 
 ---
 
@@ -337,7 +337,7 @@ API schema validates **shape**; Model validates **rules** (duplicates, state tra
 
 ---
 
-## Aggregations (`_` properties)
+## Aggregations (_ properties)
 
 Underscore properties are **not** DB columns (ignored by CRUD/migrate):
 

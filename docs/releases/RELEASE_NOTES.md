@@ -437,7 +437,7 @@ This release is **backward compatible** for application code (`app/api`, `app/co
 **What you should do:**
 - Run `composer update` to pull `gemvc/library` 5.7.0 and `gemvc/cli-base` ^1.0.1.
 - **Custom CLI commands:** extend `Gemvc\CLI\Command`; use `CliColor`, not `'green'` / `'cyan'` strings.
-- **AI assistants:** `vendor/gemvc/cli-base/AI-Assistant.md` + [CLI.md](CLI.md).
+- **AI assistants:** `vendor/gemvc/cli-base/AI-Assistant.md` + [cli.md](../guides/cli.md).
 
 **Breaking Changes**: None for `app/` code. Internal library CLI duplicates removed (provided by vendor).
 

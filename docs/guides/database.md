@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/table` · AI assistants generating Table/Model code.
 
-**Related:** [ecosystem.md](ecosystem.md) · [cli.md](cli.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [model.md](model.md) · [controller.md](controller.md#lists-createlist) · [helper.md](helper.md) · [ecosystem.md](ecosystem.md) · [cli.md](cli.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
@@ -29,7 +29,7 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 
 ---
 
-## Reading map
+## Reading map (AI)
 
 | Goal | Section |
 |------|---------|

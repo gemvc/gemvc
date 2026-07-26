@@ -6,6 +6,17 @@
 
 > Complete step-by-step guide to install and run GEMVC. Codegen commands need **`composer require --dev gemvc/cli-dev`**.
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Prerequisites | [Prerequisites](#prerequisites) |
+| Composer + `gemvc init` | [Installation Steps](#installation-steps) |
+| Docker vs bare metal | [Option A: Docker](#option-a-start-with-docker-recommended) · [Option B](#option-b-start-without-docker) |
+| First service / CRUD | [Generate Your First Service](#generate-your-first-service) (needs **cli-dev**) |
+| Troubleshooting | [Troubleshooting](#troubleshooting) |
+| AI pack after install | [docs/ai/INDEX.md](../ai/INDEX.md) |
+
 ## Prerequisites
 
 Before installing GEMVC, ensure you have:
@@ -720,7 +731,7 @@ After successful installation:
    CLI foundation is documented in `vendor/gemvc/cli-base/AI-Assistant.md`; framework commands in [cli.md](cli.md).
 
 5. **Customize Templates** (optional)
-   - Copy templates from `vendor/gemvc/swoole/templates/` to `templates/`
+   - Copy templates from `vendor/gemvc/cli-dev/templates/cli/` to `templates/cli/`
    - Edit to match your coding style
 
 ---
@@ -742,10 +753,10 @@ curl http://localhost:9501/api
 
 ## Need Help?
 
-- 📖 [README.MD](README.MD) - Framework overview
-- 🏗️ [architecture.md](architecture.md) - Architecture details
-- 🔒 [security.md](security.md) - Security features
-- 🤖 [docs/ai/INDEX.md](../ai/INDEX.md) - For AI assistants
+- [README.md](../../README.md) - Framework overview
+- [architecture.md](architecture.md) - Architecture details
+- [security.md](security.md) - Security features
+- [docs/ai/INDEX.md](../ai/INDEX.md) - For AI assistants
 
 **Happy coding with GEMVC! 🎯**
 

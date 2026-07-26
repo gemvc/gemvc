@@ -366,7 +366,7 @@ Visit `/api/index/document`.
 ## DON'T
 
 - Laravel routes / Eloquent / magic relations
-- Skip layers or invent routes files
+- Skip layers on normal HTTP services (runtime allows; strongly discouraged) or invent routes files
 - Manual sanitization or string-concat SQL
 - `float` for money
 - Copy `callController` / magic `$this->XController` into `SwooleApiService` subclasses without checking — those helpers are on `ApiService` only

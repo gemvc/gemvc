@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/controller` · AI assistants generating Controller code.
 
-**Related:** [api.md](api.md) · [database.md](database.md) · [apm.md](apm.md) · [security.md](security.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [model.md](model.md) · [helper.md](helper.md) · [database.md](database.md) · [apm.md](apm.md) · [security.md](security.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
@@ -31,7 +31,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 
 ---
 
-## Reading map
+## Reading map (AI)
 
 | Goal | Section |
 |------|---------|
@@ -184,7 +184,7 @@ $model = $this->createModel(new UserModel());
 
 ---
 
-## Lists (`createList`) — flagship
+## Lists (`createList`)
 
 **Flagship DX + security:** API allowlists (`findable` / `filterable` / `sortable`) + one Controller call. Pipeline in source: `_handleSearchable` → `_handleFindable` → `_handleSortable` → `_handlePagination` → `select` → strip `_` props → `Response::success` + `getTotalCounts()`. Prefer explicit column lists.
 

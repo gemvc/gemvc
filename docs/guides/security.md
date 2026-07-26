@@ -2,7 +2,7 @@
 
 **Audience:** auth, schema hardening, uploads, production checklist.
 
-**Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [helper.md](helper.md) · [http-lifecycle.md](http-lifecycle.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 GEMVC is architected with **security-by-design**: multi-layered defense from request arrival to database operations.
 

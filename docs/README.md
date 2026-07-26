@@ -100,14 +100,11 @@ Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
 TraceKit (and others): root span, env flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`, troubleshooting.
 
 ### [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
-Also linked from [API layer](#1-api-layer--apimd) — adapters, hardening, auto docs. Prefer [api.md](guides/api.md) first for writing `app/api`.
+Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Prefer [api.md](guides/api.md) first for writing `app/api`.
 
 ---
 
-## Ops & history
-
-### [ops/mysql-production.md](ops/mysql-production.md)
-Init MySQL Docker is **dev-only**. Production: InnoDB durability, binlog, passwords, buffer sizing, go-live checklist.
+## Releases
 
 ### [releases/README.md](releases/README.md)
 When to open release notes vs changelog. **AI: skip unless version/migration task.**
