@@ -8,13 +8,21 @@
 
 ## Why it matters
 
-**`gemvc/http-client` is a core GEMVC package** (required by `gemvc/library`). Use it for microservice-to-microservice calls, webhooks, and fire-and-forget logging — **not** `curl_*` spaghetti or Guzzle reinvented for every service.
+**`gemvc/http-client` is a core GEMVC package** (required by `gemvc/library`). Use it for microservice-to-microservice calls, webhooks, and fire-and-forget logging — **not** `curl_*` spaghetti or a bespoke Guzzle wrapper per service.
 
-Do **not** confuse with inbound `Gemvc\Http\Request` (library).  
-- **Inbound** = request into your API  
-- **Outbound** = `Gemvc\Http\Client\*` calling someone else  
+| | Inbound | Outbound |
+|--|---------|----------|
+| Package | `gemvc/library` | **`gemvc/http-client`** |
+| Types | `Gemvc\Http\Request` | `Gemvc\Http\Client\HttpClient` … |
+| Role | Request into *your* API | Your app calling *other* APIs |
 
-Library wrappers `ApiCall` / `AsyncApiCall` use this package internally.
+Library facades `Gemvc\Http\ApiCall` / `AsyncApiCall` use this package internally (environment-aware).
+
+```bash
+composer require gemvc/library   # pulls gemvc/http-client
+# or standalone:
+composer require gemvc/http-client
+```
 
 ---
 
@@ -22,39 +30,101 @@ Library wrappers `ApiCall` / `AsyncApiCall` use this package internally.
 
 | Need | Class |
 |------|--------|
-| Sync GET/POST/… | `Gemvc\Http\Client\HttpClient` |
-| Concurrent / fire-and-forget | `AsyncHttpClient` |
-| OpenSwoole coroutines | `SwooleHttpClient` (auto when in Swoole) |
+| Sync GET/POST/… | `HttpClient` |
+| Concurrent batches | `AsyncHttpClient::executeAll()` |
+| Non-blocking log/APM | `AsyncHttpClient::fireAndForget()` |
+| OpenSwoole coroutines | `SwooleHttpClient` |
+| Exceptions | `NetworkException`, `TimeoutException`, … |
 | Full API | `vendor/gemvc/http-client/README.md` |
 
 **AI rule:** Prefer `gemvc/http-client` over inventing HTTP clients in `app/`.
 
 ---
 
-## Quick start
+## Clients by environment
+
+| Class | Runtime | Notes |
+|-------|---------|--------|
+| `HttpClient` | Apache / Nginx | Sync, curl-based |
+| `AsyncHttpClient` | Apache / Nginx | Concurrent + fire-and-forget |
+| `SwooleHttpClient` | OpenSwoole | Native coroutines (no curl dependency) |
+
+---
+
+## Sync — `HttpClient`
 
 ```php
 use Gemvc\Http\Client\HttpClient;
-use Gemvc\Http\Client\AsyncHttpClient;
+use Gemvc\Http\Client\Exception\NetworkException;
 
-// Sync
 $client = new HttpClient();
-$client->setTimeouts(10, 30)->setRetries(3, 200, [500, 502, 503]);
+$client->setTimeouts(10, 30)
+       ->setRetries(3, 200, [500, 502, 503])
+       ->setUserAgent('MyService/1.0');
+
 $body = $client->get('https://api.example.com/users', ['page' => 1]);
 $client->post('https://api.example.com/users', ['name' => 'John']);
+$client->put($url, $data);
+$client->postForm($url, $fields);
+$client->postMultipart($url, $fields, $files);
+$client->postRaw($url, $body, 'application/json');
 
-// Async / concurrent
-$async = new AsyncHttpClient();
-$async->setMaxConcurrency(5)
-    ->addGet('users', 'https://api.example.com/users')
-    ->addGet('posts', 'https://api.example.com/posts')
-    ->executeAll();
+try {
+    $client->get('https://api.example.com/data');
+} catch (NetworkException $e) {
+    if ($e->isDnsError()) { /* … */ }
+}
 
-// Fire-and-forget (APM, analytics — non-blocking)
-$async->addPost('log', 'https://apm.example.com/log', $payload)->fireAndForget();
+// Or store errors instead of throwing
+$client->throwExceptions(false);
+$client->get($url);
+if ($client->hasErrors()) {
+    $err = $client->getLastError();
+}
 ```
 
-Environment-aware: Apache/Nginx use curl-based clients; OpenSwoole can use coroutine `SwooleHttpClient`.
+Also: `setSsl(...)`, `retryOnNetworkError(bool)`, `clearErrors()`, `getErrors()`.
+
+---
+
+## Async — `AsyncHttpClient`
+
+```php
+use Gemvc\Http\Client\AsyncHttpClient;
+
+$async = new AsyncHttpClient();
+$async->setMaxConcurrency(5)
+      ->setTimeouts(10, 30)
+      ->addGet('users', 'https://api.example.com/users', ['page' => 1])
+      ->addGet('posts', 'https://api.example.com/posts')
+      ->addPost('create', 'https://api.example.com/create', ['name' => 'Test']);
+
+$results = $async->executeAll();
+foreach ($results as $id => $result) {
+    if ($result['success']) {
+        // $result['body'], http_code, duration, …
+    }
+}
+
+// Fire-and-forget (APM, analytics — non-blocking)
+$async->addPost('log', 'https://apm.example.com/log', $payload)
+      ->fireAndForget();
+```
+
+Also: `addPut`, `addPostForm`, `addPostMultipart`, `addPostRaw`, `onResponse($id, callable)`, `waitForAll()`, `clearQueue()`.
+
+---
+
+## Framework facade (optional)
+
+```php
+use Gemvc\Http\ApiCall;
+
+$api = new ApiCall();  // picks HttpClient / Swoole client via WebserverDetector
+$api->get('https://api.example.com/data');
+```
+
+Prefer the package classes directly when writing new microservice clients; facades remain for compatibility.
 
 ---
 
@@ -63,14 +133,15 @@ Environment-aware: Apache/Nginx use curl-based clients; OpenSwoole can use corou
 **Do**
 
 - Use for outbound microservice HTTP  
-- Use retries / timeouts / typed exceptions from the package  
-- Read vendor README for exception types and SSL options  
+- Set timeouts / retries intentionally  
+- Use typed exceptions or `hasErrors()` consistently  
+- Use `fireAndForget` for non-critical telemetry  
 
 **Don’t**
 
-- Confuse with `definePostSchema` / inbound Request  
-- Hand-roll `curl_multi` for concurrent calls  
-- Assume inbound JWT helpers live in http-client (they don’t)  
+- Confuse with inbound `Request` / `definePostSchema`  
+- Hand-roll `curl_multi` for concurrency  
+- Put JWT inbound auth logic in http-client  
 
 ---
 
@@ -78,5 +149,4 @@ Environment-aware: Apache/Nginx use curl-based clients; OpenSwoole can use corou
 
 - Vendor: `vendor/gemvc/http-client/README.md`, `CHANGELOG.md`  
 - Ecosystem: [ecosystem.md](ecosystem.md)  
-- Library facade: `Gemvc\Http\ApiCall`, `AsyncApiCall`  
 - Signatures: [CORE_REFERENCE.md](../ai/CORE_REFERENCE.md#http-client-gemvchttp-client)  

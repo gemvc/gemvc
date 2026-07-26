@@ -13,23 +13,32 @@
 |------|---------|
 | Request flows | [Request Flow Architecture](#request-flow-architecture) |
 | `src/` components | [Component Breakdown](#component-breakdown) |
+| helper / http-client packages | [Ecosystem packages](#ecosystem-packages-not-under-librarysrchelper) |
 | APM hooks | [APM Integration Architecture](#apm-integration-architecture) |
 | URL mapping | [URL-to-Code Mapping](#url-to-code-mapping) |
 
-**AI rule:** Prefer layer guides for writing `app/` code; use this file for framework internals.
+**AI rule:** Prefer layer guides + [helper.md](helper.md) / [http-client.md](http-client.md) for writing `app/` code; use this file for framework internals. Helpers are **not** under `src/helper/` anymore.
 
 ## Directory Structure
 
 ```
-src/
-├── CLI/              # Command-line interface & code generation
-├── core/             # Core framework classes (Bootstrap, ApiService, Security)
-├── http/             # HTTP layer (Request, Response, JWT)
-├── database/         # Database layer (ORM, migrations, query builders)
-├── helper/           # Utility classes (TypeChecker, FileHelper, CryptHelper)
-├── startup/          # Platform-specific initialization files
+src/   (gemvc/library — this repo)
+├── CLI/              # Framework CLI (init, db:migrate, Docker)
+├── core/             # Bootstrap, ApiService, Controller, Security
+├── http/             # Inbound Request/Response/JWT (+ ApiCall facades)
+├── database/         # Table ORM, migrations, query builders
+├── startup/          # Platform-specific init (Apache/Swoole/Nginx)
 └── stubs/            # IDE type stubs (OpenSwoole, Redis)
+
+# NOT in library src/ anymore — separate Composer packages:
+#   vendor/gemvc/helper/       TypeChecker, CryptHelper, ProjectHelper, …
+#   vendor/gemvc/http-client/  outbound HttpClient / AsyncHttpClient
+#   vendor/gemvc/connection-*  DB connections
+#   vendor/gemvc/apm-*         APM
+#   vendor/gemvc/cli-base|cli-dev
 ```
+
+See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](http-client.md).
 
 ---
 
@@ -194,26 +203,16 @@ APM traces sent (fire-and-forget, non-blocking)
 - **Schema generation**
 - **APM query tracing** - Automatic spans for all database queries (optional)
 
-### **helper/** - Utility Classes
-- `TypeChecker.php` - Runtime type validation (advanced options)
-- `ProjectHelper.php` - Path resolution (finds composer.lock), env/base URL/system paths, APM detection, `disableOpcacheIfDev()` for dev
-- `FileHelper.php` - File operations + encryption
-- `ImageHelper.php` - Image processing + signature detection
-- `CryptHelper.php` - Password hashing (Argon2I) + AES-256-CBC encryption
-- `StringHelper.php` - String manipulation utilities
-- `TypeHelper.php` - Type utilities (guid, timestamp, etc.)
-- `JsonHelper.php` - JSON validation
-- `WebHelper.php` - Webserver detection
-- `ChatGptClient.php` - OpenAI integration
-- `ServerMonitorHelper.php` - Server resource monitoring (RAM, CPU)
-- `NetworkHelper.php` - Network statistics collection
+### Ecosystem packages (not under `library/src/helper`)
 
-**Key Features**:
-- **File signature detection** (MIME type verification)
-- **File encryption** (AES-256-CBC + HMAC)
-- **Password security** (Argon2I)
-- **Type validation** (email, string length, regex, dates, etc.)
-- **Server monitoring** (cross-platform RAM, CPU, network metrics)
+Helpers and outbound HTTP **moved out** of the library tree. Use Composer packages:
+
+| Package | Classes | Guide |
+|---------|---------|--------|
+| **`gemvc/helper`** | `TypeChecker`, `CryptHelper`, `ProjectHelper`, `FileHelper`, `ImageHelper`, `TypeHelper`, `JsonHelper`, `StringHelper`, `WebHelper`, `ServerMonitorHelper`, `NetworkHelper`, … | [helper.md](helper.md) · `vendor/gemvc/helper/README.md` |
+| **`gemvc/http-client`** | `HttpClient`, `AsyncHttpClient`, `SwooleHttpClient` | [http-client.md](http-client.md) · `vendor/gemvc/http-client/README.md` |
+
+Library still **requires** these packages. Namespace `Gemvc\Helper\` is unchanged. Do not look for `src/helper/` in this repo.
 
 ### **startup/** - Platform Initialization
 ```

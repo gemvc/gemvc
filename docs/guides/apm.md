@@ -14,7 +14,7 @@
 | `createModel` / Request wire | [Best Practices](#best-practices) |
 | Missing traces | [Troubleshooting](#troubleshooting) |
 
-**AI rule:** Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style.
+**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
 
 ## Table of Contents
 

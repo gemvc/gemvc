@@ -10,9 +10,13 @@
 
 **`gemvc/helper` is a core GEMVC package** (required by `gemvc/library`). Schema validation types, password hashing, project paths, and file/image helpers live here — **not** in Laravel-style validators you invent.
 
-Install path: `composer require gemvc/library` (helper arrives automatically). Do **not** treat it as a random standalone utility kit for non-GEMVC apps.
+```bash
+composer require gemvc/library   # pulls gemvc/helper automatically
+```
 
-Namespace: `Gemvc\Helper\`.
+Do **not** `composer require gemvc/helper` alone expecting a standalone toolkit (several classes assume the GEMVC app layout).
+
+Namespace: `Gemvc\Helper\` · location: `vendor/gemvc/helper/` (not `library/src/helper/`).
 
 ---
 
@@ -20,12 +24,12 @@ Namespace: `Gemvc\Helper\`.
 
 | Need | Class / place |
 |------|----------------|
-| Schema types (`decimal`, `uuid`, …) | `TypeChecker` — powers `define*Schema` / findable types |
+| Schema types (`decimal`, `uuid`, …) | `TypeChecker` — powers `define*Schema` / findable |
 | Password hash / verify | `CryptHelper` |
 | Project root, `.env`, URLs | `ProjectHelper` |
 | Encrypt files | `FileHelper` |
-| WebP images | `ImageHelper` |
-| Full catalog | `vendor/gemvc/helper/README.md` |
+| WebP / image ops | `ImageHelper` |
+| Full catalog / release types | `vendor/gemvc/helper/README.md` |
 
 **AI rule:** Prefer `Gemvc\Helper\*` over inventing hashing, UUID checks, or path helpers.
 
@@ -35,32 +39,99 @@ Namespace: `Gemvc\Helper\`.
 
 | Class | Purpose |
 |-------|---------|
-| `TypeChecker` | HTTP/schema type checks (`string`, `email`, `decimal`, `uuid`, `slug`, `hex`, `positive_int`, `timestamp`, `jsonb`, …) |
-| `CryptHelper` | Argon2i password hash/verify; string encrypt/decrypt |
-| `ProjectHelper` | `rootDir()`, `appDir()`, `loadEnv()`, `getApiBaseUrl()`, env detection |
-| `FileHelper` | AES-256-CBC file encryption |
-| `ImageHelper` | Convert / validate images (e.g. WebP) |
+| `TypeChecker` | HTTP/schema type checks |
+| `CryptHelper` | Argon2i passwords; AES string encrypt/decrypt |
+| `ProjectHelper` | Paths, `.env`, base/API URLs, env detection |
+| `FileHelper` | Copy/move/delete + AES-256-CBC file encryption |
+| `ImageHelper` | WebP conversion, quality, encrypt, base64 |
 | `TypeHelper`, `JsonHelper`, `StringHelper`, `WebHelper` | General utilities |
 | `ServerMonitorHelper`, `NetworkHelper` | Monitoring metrics |
 
 ---
 
-## Everyday usage
+## TypeChecker (schema engine)
+
+Used by `Request::define*Schema`, `findable`, `filterable`. Types include:
+
+`string`, `int`, `integer`, `float`, `number`, `bool`, `boolean`, `email`, `array`, `json`, `jsonb`, `date`, `datetime`, `url`, `ip`, `ipv4`, `ipv6`, **`decimal`**, **`decimal:P,S`**, **`hex`**, **`uuid`**, **`slug`**, **`positive_int`**, **`timestamp`**
+
+```php
+use Gemvc\Helper\TypeChecker;
+
+TypeChecker::check('decimal', '19.99');
+TypeChecker::check('uuid', '550e8400-e29b-41d4-a716-446655440000');
+TypeChecker::check('positive_int', '42', ['min' => 1, 'max' => 100]);
+```
+
+Requires **helper ^1.1** for the newer types (pulled with current library).
+
+---
+
+## CryptHelper
 
 ```php
 use Gemvc\Helper\CryptHelper;
-use Gemvc\Helper\TypeChecker;
 
-// Model — never store plain passwords
-$this->password = CryptHelper::hashPassword($plain);
-CryptHelper::passwordVerify($plain, $this->password);
+$hash = CryptHelper::hashPassword($plain);           // Argon2i
+CryptHelper::passwordVerify($plain, $hash);
 
-// Same types as definePostSchema / findable
-TypeChecker::check('decimal', '19.99');
-TypeChecker::check('uuid', '550e8400-e29b-41d4-a716-446655440000');
+$enc = CryptHelper::encryptString($secret, $key);    // false|string
+$dec = CryptHelper::decryptString($enc, $key);
 ```
 
-`definePostSchema(['price' => 'decimal'])` ultimately uses **helper** `TypeChecker` — that is why helper versions matter (`^1.1` for decimal/uuid/…).
+Use in Models (`setPassword`), never store plaintext.
+
+---
+
+## ProjectHelper
+
+```php
+use Gemvc\Helper\ProjectHelper;
+
+ProjectHelper::rootDir();
+ProjectHelper::appDir();                 // …/app
+ProjectHelper::loadEnv();
+ProjectHelper::getBaseUrl();
+ProjectHelper::getApiBaseUrl();
+ProjectHelper::isDevEnvironment();
+ProjectHelper::getAppEnv();
+ProjectHelper::disableOpcacheIfDev();
+ProjectHelper::updateEnvVariables(['FOO' => 'bar']);
+```
+
+Used heavily by Bootstrap / OpenSwoole / CLI — prefer this over hardcoding paths.
+
+---
+
+## FileHelper / ImageHelper
+
+```php
+use Gemvc\Helper\FileHelper;
+use Gemvc\Helper\ImageHelper;
+
+$file = new FileHelper($source, $destination);
+$file->secret = 'my-secret-key';
+$path = $file->encrypt();    // AES-256-CBC + HMAC
+$file->decrypt();
+
+$image = new ImageHelper($sourceFile);
+$image->convertToWebP(80);
+```
+
+---
+
+## Everyday Model example
+
+```php
+use Gemvc\Helper\CryptHelper;
+
+public function setPassword(string $plain): void
+{
+    $this->password = CryptHelper::hashPassword($plain);
+}
+```
+
+`definePostSchema(['price' => 'decimal'])` → helper `TypeChecker` under the hood.
 
 ---
 
@@ -70,12 +141,14 @@ TypeChecker::check('uuid', '550e8400-e29b-41d4-a716-446655440000');
 
 - Use `CryptHelper` for passwords  
 - Rely on schema types from helper (via Request)  
+- Use `ProjectHelper` for paths / env  
 - Read `vendor/gemvc/helper/README.md` for new types  
 
 **Don’t**
 
 - Invent Laravel `Hash::` / `Validator::` clones  
-- `composer require gemvc/helper` alone expecting a standalone toolkit  
+- Expect `src/helper/` inside `gemvc/library`  
+- `composer require gemvc/helper` alone as a generic toolkit  
 - Copy helper source into `app/`  
 
 ---
@@ -83,5 +156,5 @@ TypeChecker::check('uuid', '550e8400-e29b-41d4-a716-446655440000');
 ## Reference
 
 - Vendor: `vendor/gemvc/helper/README.md`, `RELEASE_NOTES.md`  
-- Ecosystem map: [ecosystem.md](ecosystem.md)  
+- Ecosystem: [ecosystem.md](ecosystem.md)  
 - Signatures: [CORE_REFERENCE.md](../ai/CORE_REFERENCE.md#helpers-gemvchelper)  

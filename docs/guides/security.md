@@ -18,7 +18,7 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 | Production checklist | [Production Security Checklist](#production-security-checklist) |
 | API-layer how-to | [api.md](api.md) |
 
-**AI rule:** Do not ingest this whole file for routine CRUD. Use the map; prefer [api.md](api.md) + [CANONICAL](../ai/CANONICAL.md) for auth patterns.
+**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Use the map; prefer [api.md](api.md) + [CANONICAL](../ai/CANONICAL.md) for auth patterns. Open sections only for the task (e.g. JWT → Layer 5).
 
 ## Multi-Layer Security Architecture
 

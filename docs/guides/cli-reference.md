@@ -2,11 +2,23 @@
 
 **Audience:** full command flags, examples, troubleshooting, custom commands.
 
-**Start here first:** [cli.md](cli.md) (package split, workflows, AI reading map).
+**AI — do not start here.** Read **[cli.md](cli.md)** first (package split, workflows, cheat sheet). Open this ~1.6k-line file only for a **specific** command, flag, or troubleshooting item.
 
 **Related:** [templates.md](templates.md) · [ecosystem.md](ecosystem.md) · [installation.md](installation.md)
 
 > **Package split:** library = `init`, `db:migrate` · require-dev **cli-dev** = `create:*`, most `db:*`, `admin:*`.
+
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Package architecture | [CLI Architecture](#cli-architecture) |
+| `init` | [Project Management](#project-management) |
+| `create:*` / crud | [Code Generation](#code-generation) |
+| `db:*` | [Database Commands](#database-commands) |
+| Flags | [Flags & Options](#flags--options) |
+| Errors | [Troubleshooting](#troubleshooting) |
+| Custom commands | [Architecture Deep Dive](#architecture-deep-dive) |
 
 ---
 
