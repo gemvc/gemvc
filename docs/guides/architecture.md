@@ -1,6 +1,13 @@
-# 🏗️ GEMVC Architecture Overview
+# GEMVC Architecture Overview
 
-## 📦 Directory Structure
+**Audience:** understanding framework internals and request flow (`src/`).
+
+**Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
+
+> App layer how-tos: [api](api.md) · [controller](controller.md) · [model](model.md) · [database](database.md).  
+> 4-layer stack is **strongly recommended** (bypass works; don’t for normal HTTP services).
+
+## Directory Structure
 
 ```
 src/
@@ -51,9 +58,11 @@ Bootstrap.php → APM initialized (early tracing) → Security check (automatic)
     ↓
 ApacheRequest.php → Sanitize all inputs (automatic)
     ↓
-app/api/User.php → Developer schema validation (optional)
+app/api/User.php → schema validation + auth (thin)
     ↓
-UserController.php → Business logic (traced if APM_TRACE_CONTROLLER=1)
+UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
+    ↓
+UserModel.php → business rules / transforms
     ↓
 UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, prepared statements - automatic)
     ↓
@@ -72,9 +81,11 @@ SwooleRequest.php → Sanitize all inputs (automatic)
     ↓
 SwooleBootstrap.php → APM initialized (early tracing) → Route to API service
     ↓
-app/api/User.php → Developer schema validation (optional)
+app/api/User.php → schema validation + auth (thin)
     ↓
-UserController.php → Business logic (traced if APM_TRACE_CONTROLLER=1)
+UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
+    ↓
+UserModel.php → business rules / transforms
     ↓
 UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, connection pooling - automatic)
     ↓
@@ -104,7 +115,7 @@ APM traces sent (fire-and-forget, non-blocking)
 ### **core/** - Framework Core
 - `Bootstrap.php` / `SwooleBootstrap.php` - Request routing, **APM initialization (early tracing)**
 - `ApiService.php` / `SwooleApiService.php` - Base API service classes
-  - `callController()` method for automatic controller tracing
+  - `ApiService::callController()` for controller tracing (**Apache/Nginx only** — not on `SwooleApiService`)
   - Uses `$request->apm` for trace context propagation
 - `Controller.php` - Base controller with pagination, filtering, sanitization
   - `createModel()` helper for automatic Request propagation
@@ -247,7 +258,7 @@ startup/
    - Stored in `$request->apm` for trace context propagation
 2. ✅ **Exception Tracking** - All exceptions automatically recorded
 3. ✅ **Trace Context Propagation** - All spans share the same `traceId`
-   - Bootstrap → ApiService → Controller → Table → UniversalQueryExecuter
+   - Bootstrap → ApiService → Controller → Model → Table → UniversalQueryExecuter
 4. ✅ **Fire-and-Forget Pattern** - Traces sent after HTTP response (non-blocking)
 
 ### **Environment-Controlled Tracing (Optional)**:
@@ -267,10 +278,12 @@ Bootstrap/SwooleBootstrap
     ↓ ($request->apm set)
 ApiService
     ↓ (uses $request->apm)
-    ↓ (callController() creates controller span if enabled)
+    ↓ (ApiService::callController() creates controller span if enabled — Apache/Nginx; Swoole: bare `new Controller`)
 Controller
     ↓ (uses $request->apm)
     ↓ (createModel() sets Request on model)
+Model
+    ↓ (Table-backed Model extends Table; composition forwards setRequest)
 Table → ConnectionManager → PdoQuery
     ↓ (Request propagated through all layers)
 UniversalQueryExecuter
@@ -334,9 +347,11 @@ Calls: User::create()
     ↓
 User::create() validates schema → delegates to UserController
     ↓
-UserController::create() handles business logic
+UserController::create() maps request → Model (createModel / map*ToObject)
     ↓
-UserTable::create() performs database operation
+UserModel::createModel() (or domain method) applies business rules
+    ↓
+UserTable insert/update via Model (Table CRUD)
 ```
 
 **Configuration** (via `.env`):

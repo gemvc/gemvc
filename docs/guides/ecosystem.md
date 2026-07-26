@@ -199,18 +199,20 @@ Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
 
 ## Rules for AI assistants
 
-1. **GEMVC = ecosystem.** Never describe it as “a single PHP file framework” or “Laravel without routes.”
-2. **Prefer Composer packages** already required by `library` over copying helper/DB/APM code into `app/`.
-3. **Read package READMEs** under `vendor/gemvc/<pkg>/` when changing connection, APM, CLI, or TypeChecker behavior.
-4. **Contracts first:** new DB drivers or APM providers implement contracts packages; do not patch Table/Bootstrap with vendor-specific ifs when a package already exists.
-5. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.9.x**.
-6. **cli-dev is optional** in production apps — codegen is a *dev* dependency by design.
+1. **Read first:** `docs/ai/INDEX.md` → `CANONICAL.md` → `CORE_REFERENCE.md`, then this ecosystem guide.
+2. **GEMVC = ecosystem.** Never describe it as “a single PHP file framework” or “Laravel without routes.”
+3. **Prefer Composer packages** already required by `library` over copying helper/DB/APM code into `app/`.
+4. **Read package READMEs** under `vendor/gemvc/<pkg>/` when changing connection, APM, CLI, or TypeChecker behavior.
+5. **Contracts first:** new DB drivers or APM providers implement contracts packages; do not patch Table/Bootstrap with vendor-specific ifs when a package already exists.
+6. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.9.x**.
+7. **cli-dev is optional** in production apps — codegen is a *dev* dependency by design.
 
 ---
 
 ## Related library docs
 
+- [api.md](api.md) — API layer (schema, auth, call Controller)  
 - [cli.md](cli.md) — command reference + package split  
 - [database.md](database.md) — Table ORM + dialects (uses connection packages under the hood)  
-- [apm.md](apm.md) — tracing env flags and `callController` / `createModel`  
+- [apm.md](apm.md) — tracing env flags; `callController` (Apache) / `createModel`  
 - [installation.md](installation.md) — first install pulls the ecosystem via Composer  

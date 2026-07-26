@@ -1,8 +1,12 @@
-# 🎨 GEMVC Customizable Template System
+# GEMVC Customizable Template System
+
+**Audience:** customizing `gemvc create:*` output.
+
+**Related:** [cli.md](cli.md) · [installation.md](installation.md)
+
+Customize codegen while still using CLI commands. After `gemvc init`, templates live under `{project}/templates/cli/`. Requires **`gemvc/cli-dev`** for create commands.
 
 ## Overview
-
-GEMVC's template system allows developers to **customize code generation** while still benefiting from CLI commands. After initializing a project, templates are copied to your project root, giving you full control over generated code style and structure.
 
 ---
 

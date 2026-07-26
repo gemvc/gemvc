@@ -7,7 +7,7 @@
  *
  * @package Gemvc
  * @version 5.9.1
- * @see docs/ai/API_REFERENCE.md
+ * @see docs/ai/CORE_REFERENCE.md
  * @see docs/guides/ecosystem.md
  */
 

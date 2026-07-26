@@ -1,14 +1,14 @@
-# Security Policy
+# GEMVC Security
 
-## 🔒 GEMVC Comprehensive Security Overview
+**Audience:** auth, schema hardening, uploads, production checklist.
 
-GEMVC is architected with **security-by-design** principles, implementing multi-layered defense mechanisms from request arrival to database operations. This document provides a comprehensive overview of all security features, attack prevention strategies, and best practices.
+**Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
-> **🎯 Key Point**: **90% of GEMVC security is AUTOMATIC** - No developer configuration needed! Security checks happen automatically in `Bootstrap.php` (Apache,NginX) and `SwooleBootstrap.php` (OpenSwoole) for every request.
+GEMVC is architected with **security-by-design**: multi-layered defense from request arrival to database operations.
 
----
+> **Key point:** **~90% of security is automatic** — no config needed. Checks run in `Bootstrap` (Apache/Nginx) and `SwooleBootstrap` (OpenSwoole). You add schema validation + auth.
 
-## 🛡️ Multi-Layer Security Architecture
+## Multi-Layer Security Architecture
 
 ```
 Request Arrives

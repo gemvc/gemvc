@@ -1,10 +1,12 @@
-# 📦 GEMVC Installation Guide
+# GEMVC Installation Guide
 
-> Complete step-by-step guide to install and run GEMVC framework
+**Audience:** empty folder → first API call.
 
----
+**Related:** [cli.md](cli.md) · [ecosystem.md](ecosystem.md) · [api.md](api.md) · [docs/README.md](../README.md)
 
-## 📋 Prerequisites
+> Complete step-by-step guide to install and run GEMVC. Codegen commands need **`composer require --dev gemvc/cli-dev`**.
+
+## Prerequisites
 
 Before installing GEMVC, ensure you have:
 
@@ -356,10 +358,14 @@ curl http://localhost:9501/api/User/read/?id=1
 
 ---
 
-## 🎯 Generate Your First Service
+## Generate Your First Service
 
-### Step 12: Create a Product Service
+### Step 12: Install codegen (cli-dev) then create a Product service
+
+`create:crud` lives in **`gemvc/cli-dev`** (require-dev). Without it, the command is not registered.
+
 ```bash
+composer require --dev gemvc/cli-dev
 php vendor/bin/gemvc create:crud Product
 ```
 
@@ -692,16 +698,18 @@ sudo systemctl restart nginx
 After successful installation:
 
 1. **Read Documentation**
-   - [README.MD](README.MD) - Framework overview
-   - [docs/ai/INDEX.md](../ai/INDEX.md) - For AI assistants
-   - [architecture.md](architecture.md) - Deep dive
+   - [README.md](../../README.md) — Framework overview  
+   - [docs/README.md](../README.md) — Docs index (4 layers)  
+   - [docs/ai/INDEX.md](../ai/INDEX.md) — For AI assistants  
+   - [api.md](api.md) · [controller.md](controller.md) · [model.md](model.md) · [database.md](database.md)
 
 2. **Study Examples**
    - Check `src/startup/user/` for complete User example
    - See how 4-layer architecture works
 
-3. **Generate Your Services**
+3. **Generate Your Services** (needs `gemvc/cli-dev`)
    ```bash
+   composer require --dev gemvc/cli-dev
    php vendor/bin/gemvc create:crud YourService
    ```
 

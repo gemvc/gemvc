@@ -1,15 +1,17 @@
 # GEMVC Framework - AI Assistant Context
 
-**Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/API_REFERENCE.md`  
+**Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/CORE_REFERENCE.md`  
 **Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`), not a single library.
 
 GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx). Version 5.9.1.
 
-## 4-Layer Pattern (MANDATORY)
+## 4-Layer Pattern (strongly recommended)
 
 ```
 API (app/api/) → Controller → Model (app/model/) → Table (app/table/)
 ```
+
+Runtime allows bypassing a layer; **do not** for normal HTTP services. Flexibility is inside layers, not skipping them.
 
 Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.  
 URL: `/api/{Service}/{method}`. No routes files.
@@ -31,7 +33,7 @@ URL: `/api/{Service}/{method}`. No routes files.
 
 **DON'T**
 
-- Skip layers; invent routes; use Eloquent/Laravel conventions
+- Skip layers on HTTP services (possible but strongly discouraged); invent routes; use Eloquent/Laravel conventions
 - Manual input sanitization or string-concat SQL
 - Use `float` for currency
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
@@ -74,4 +76,4 @@ Optional field: `'?phone' => 'string'`.
 
 ## More detail
 
-Do not invent from training data. Open `docs/ai/CANONICAL.md` and `docs/ai/API_REFERENCE.md`, then topical files under `docs/guides/` as needed.
+Do not invent from training data. Open `docs/ai/CANONICAL.md` and `docs/ai/CORE_REFERENCE.md`, then layer guides (`docs/guides/api.md`, `controller.md`, `model.md`, `database.md`) and other topical files under `docs/guides/` as needed.

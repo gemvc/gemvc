@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/controller` · AI assistants generating Controller code.
 
-**Related:** [database.md](database.md) · [apm.md](apm.md) · [security.md](security.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [database.md](database.md) · [apm.md](apm.md) · [security.md](security.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
@@ -52,7 +52,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 
 1. Controllers **extend** `Gemvc\Core\Controller`; live in `app/controller/` as `UserController`, etc.
 2. **No schema / auth in Controller** — that belongs in API (`define*Schema`, `requireAuth` / `auth`).
-3. Prefer **`createModel(new XModel())`** before DB work so Request (and APM) reach Table queries.
+3. Prefer **`createModel(new XModel())`** before DB work so Request (and APM) reach Table queries. Works for any object; calls `setRequest` if present (composition Models should forward it to children).
 4. Apache/Nginx API: prefer **`callController(new XController($this->request))->method()`**.
 5. OpenSwoole API (`SwooleApiService`): **`(new XController($this->request))->method()`** — no `callController` / magic `$this->XController`.
 6. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.

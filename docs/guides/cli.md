@@ -1,6 +1,10 @@
-# 🛠️ GEMVC CLI Commands Documentation
+# GEMVC CLI Commands
 
-Complete reference guide for GEMVC command-line interface commands.
+**Audience:** using / extending `gemvc` CLI.
+
+**Related:** [templates.md](templates.md) · [ecosystem.md](ecosystem.md) · [installation.md](installation.md)
+
+Complete reference for GEMVC command-line interface commands.
 
 > **Package split (5.9.0+)**  
 > - **Always available** (`gemvc/library`): `gemvc init`, `gemvc db:migrate`  
@@ -9,7 +13,7 @@ Complete reference guide for GEMVC command-line interface commands.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [CLI Architecture](#cli-architecture)
 - [Installation & Setup](#installation--setup)
@@ -776,7 +780,7 @@ gemvc create:service Product -cmt
 
 ### `create:controller` - Create Controller
 
-Generate a new controller for business logic.
+Generate a new controller for **orchestration** (map request → Model, return `JsonResponse`).
 
 ```bash
 gemvc create:controller <ControllerName> [flags]
@@ -804,7 +808,7 @@ gemvc create:controller Product -mt
 
 ### `create:model` - Create Model
 
-Generate a new model for data logic.
+Generate a new model for **business / data logic** (Table-backed or composition).
 
 ```bash
 gemvc create:model <ModelName> [flags]
@@ -867,10 +871,10 @@ gemvc create:crud Product
 
 **What Gets Generated**:
 - ✅ Full CRUD methods: `create()`, `read()`, `update()`, `delete()`, `list()`
-- ✅ Schema validation in API layer
-- ✅ Business logic in Controller layer
-- ✅ Data logic in Model layer
-- ✅ Database operations in Table layer
+- ✅ Schema validation + thin endpoints in **API** layer
+- ✅ Request mapping / orchestration in **Controller** layer
+- ✅ Business rules / transforms in **Model** layer (Table-backed or composition)
+- ✅ Database operations in **Table** layer
 - ✅ Helper methods (`selectById()`, `selectByName()`, etc.)
 
 ---

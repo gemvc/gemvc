@@ -1,6 +1,9 @@
-# GEMVC API Reference (AI)
+# GEMVC Core Reference (AI)
 
-Version **5.9.1**. Prefer this over scattered legacy notes.
+Version **5.9.1**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, schema types.
+
+**Not** HTTP endpoint docs (that is [api-documentation.md](../guides/api-documentation.md) / `/api/index/document`).  
+**Not** the `app/api/` layer guide. Prefer this over inventing methods from training data.
 
 **Packages:** GEMVC is an ecosystem — see [guides/ecosystem.md](../guides/ecosystem.md) and `vendor/gemvc/*/README.md` before inventing helpers, DB pools, APM, or CLI.
 
@@ -111,7 +114,7 @@ public function clearErrors(): void
 List GET params (API allowlists first): `find_like`, `filter_by`, `sort_by`, `sort_by_asc`, `page_number`.  
 Guide: [controller.md](../guides/controller.md).
 
-App Models are **not** a separate framework class — they extend your Table (`UserModel extends UserTable`) and hold business logic. Guide: [model.md](../guides/model.md).
+App Models are **not** a framework base class. Usual shape: extend your Table (`UserModel extends UserTable`). Also valid: **composition** Models (plain class + other Models) — [model.md](../guides/model.md).
 
 ---
 

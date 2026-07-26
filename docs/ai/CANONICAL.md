@@ -26,14 +26,16 @@ Apps install **`composer require gemvc/library`**; most packages arrive as depen
 
 ---
 
-## 4-layer architecture (mandatory)
+## 4-layer architecture (strongly recommended)
 
 ```
-API (app/api/)           → schema validation, auth, thin
-Controller (app/controller/) → orchestration, map request → model
-Model (app/model/)       → business rules, transforms, domain ops; may return `JsonResponse` **or** PHP types (Controller then builds response) — [guides/model.md](../guides/model.md)
-Table (app/table/)       → DB only (extends Table)
+API (app/api/)           → schema validation, auth, thin — [guides/api.md](../guides/api.md)
+Controller (app/controller/) → orchestration, map request → model — [guides/controller.md](../guides/controller.md)
+Model (app/model/)       → business rules / workflows; Table-backed (`extends XTable`) **or** composition (plain class + other Models); may return `JsonResponse` **or** PHP types — [guides/model.md](../guides/model.md)
+Table (app/table/)       → DB only (extends Table) — [guides/database.md](../guides/database.md)
 ```
+
+The stack is **not** hard-enforced by the framework: you can call a Model from API, or put SQL in a Controller, and requests will still run. That is **strongly discouraged**. Use all four layers for HTTP services unless you have an exceptional, deliberate reason not to. Flexibility belongs *inside* each layer (e.g. composition Models, return styles) — not in skipping layers.
 
 **Naming**
 
@@ -41,7 +43,7 @@ Table (app/table/)       → DB only (extends Table)
 |-------|------|-------|
 | API | `User.php` | `User extends ApiService` (or `SwooleApiService`) |
 | Controller | `UserController.php` | `UserController extends Controller` |
-| Model | `UserModel.php` | `UserModel extends UserTable` |
+| Model | `UserModel.php` | `UserModel extends UserTable` **or** composition class (no Table) |
 | Table | `UserTable.php` | `UserTable extends Table` |
 
 **URL**: `/api/{Service}/{method}` → `App\Api\User::create()`

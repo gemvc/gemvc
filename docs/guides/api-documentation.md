@@ -1,8 +1,12 @@
 # GEMVC Auto-Documentation Directives
 
-GEMVC has a built-in **auto-documentation generator** that reads PHPDoc directives to create beautiful HTML API documentation!
+**Audience:** documenting `app/api` endpoints for `/api/index/document` + Postman.
 
-## 🎯 How It Works
+**Related:** [api.md](api.md) · [CANONICAL.md](../ai/CANONICAL.md)
+
+Built-in generator reads PHPDoc directives on API service methods.
+
+## How It Works
 
 The `ApiDocGenerator.php` uses reflection to scan API service classes and extract documentation from PHPDoc comments.
 

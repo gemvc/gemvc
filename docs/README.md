@@ -8,7 +8,7 @@ Mandatory path (3 files only):
 
 1. [`ai/INDEX.md`](ai/INDEX.md) — reading order and hard rules  
 2. [`ai/CANONICAL.md`](ai/CANONICAL.md) — 4-layer architecture, auth, CRUD, Do/Don’t  
-3. [`ai/API_REFERENCE.md`](ai/API_REFERENCE.md) — Request / Response / Table / Controller signatures  
+3. [`ai/CORE_REFERENCE.md`](ai/CORE_REFERENCE.md) — framework class signatures (Request / Response / Table / Controller)  
 
 Then open topical guides only when needed.
 
@@ -16,7 +16,7 @@ Then open topical guides only when needed.
 
 ## The 4 layers (read in this order)
 
-Every request walks the same stack. **Do not skip layers.**
+Every HTTP request should walk the same stack. **Strongly recommended — do not skip layers** (runtime allows it; architecture does not benefit).
 
 ```
 HTTP → API → Controller → Model → Table → DB
@@ -30,25 +30,20 @@ HTTP → API → Controller → Model → Table → DB
 |-------|--------|-----|
 | **1. API** | `app/api/` | Validate input, authenticate/authorize, call Controller |
 | **2. Controller** | `app/controller/` | Orchestrate: map request → Model, call Model / `createList` |
-| **3. Model** | `app/model/` | Business rules, transforms, domain ops; returns `JsonResponse` **or** PHP types (style choice) |
+| **3. Model** | `app/model/` | Business rules / workflows; Table-backed **or** composition (no Table); `JsonResponse` **or** PHP types |
 | **4. Table** | `app/table/` | Columns, schema, queries, insert/update/delete only |
 
 URL mapping is automatic: `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`.
 
 ---
 
-### 1. API layer
+### 1. API layer — [api.md](guides/api.md)
 
 **What it does:** Thin HTTP boundary. Schema (`definePostSchema` / `defineGetSchema`), auth (`auth()` / `requireAuth()`), list allowlists (`findable` / `sortable`), then `callController(...)` (Apache) or bare `new` (Swoole). No business rules here.
 
-There is no single `api.md` yet — use these for API work:
+Covers: `ApiService` vs `SwooleApiService`; auth; schemas; list allowlists; Controller invoke; `@http` docs; CLI; Do/Don’t.
 
-| Need | Guide |
-|------|--------|
-| Request/Response, server adapters | [http-lifecycle.md](guides/http-lifecycle.md) |
-| Schema validation, JWT, 401 vs 403 | [security.md](guides/security.md) |
-| HTML docs + Postman (`@http`, mocks) | [api-documentation.md](guides/api-documentation.md) |
-| Patterns + CRUD skeleton | [ai/CANONICAL.md](ai/CANONICAL.md) |
+Deeper: [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
 
 ---
 
@@ -62,9 +57,9 @@ Covers: 4-layer role; mapping; `createModel` / `createList` + list GET params; p
 
 ### 3. Model layer — [model.md](guides/model.md)
 
-**What it does:** Where **logic** lives. `XModel extends XTable`. Simple Models are thin CRUD wrappers; domain Models add validation, setters (`setPassword`), login, aggregations (`_profile`), multi-step ops. Return style is a **developer choice**: Model may return `JsonResponse`, or return objects/`null`/other PHP types while Controller builds `JsonResponse`.
+**What it does:** Where **logic** lives. Two shapes: **Table-backed** (`XModel extends XTable`) or **composition** (plain class holding other Models — inter-model workflows, façades, typed result objects). Simple vs domain; return Style A/B (`JsonResponse` or PHP types). Aggregations, views, APM.
 
-Covers: return style A vs B; simple vs domain; CRUD; transforms; validation; `_` aggregations; SQL views; APM; Do/Don’t.
+Covers: return style; composition Models; simple vs domain; CRUD; transforms; validation; `_` aggregations; SQL views; APM; Do/Don’t.
 
 ---
 
@@ -99,7 +94,7 @@ Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
 TraceKit (and others): root span, env flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`, troubleshooting.
 
 ### [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
-Also listed under [API layer](#1-api-layer) — full detail for Request adapters, hardening, and auto docs.
+Also linked from [API layer](#1-api-layer--apimd) — adapters, hardening, auto docs. Prefer [api.md](guides/api.md) first for writing `app/api`.
 
 ---
 

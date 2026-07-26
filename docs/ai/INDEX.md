@@ -5,11 +5,11 @@
 ## Mandatory reading (in order)
 
 1. **[CANONICAL.md](CANONICAL.md)** — 4-layer rules, Do/Don’t, auth, CRUD patterns, multi-DB, decimal
-2. **[API_REFERENCE.md](API_REFERENCE.md)** — classes, methods, schema types
+2. **[CORE_REFERENCE.md](CORE_REFERENCE.md)** — framework class signatures, schema types (not HTTP endpoint docs)
 
 Optional machine/IDE mirrors (same content, not required):
 
-- [api-reference.jsonc](api-reference.jsonc)
+- [core-reference.jsonc](core-reference.jsonc)
 - [phpdoc-reference.php](phpdoc-reference.php)
 
 ## When you need depth
@@ -18,8 +18,13 @@ Optional machine/IDE mirrors (same content, not required):
 |------|------|
 | **All gemvc/* packages (ecosystem)** | [../guides/ecosystem.md](../guides/ecosystem.md) |
 | Migrations / Table / **connections** | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)) |
+| **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
 | **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
-| **Model** business / data logic (JsonResponse **or** PHP types) | [../guides/model.md](../guides/model.md) |
+| **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types) | [../guides/model.md](../guides/model.md) |
+| HTTP Request lifecycle / adapters | [../guides/http-lifecycle.md](../guides/http-lifecycle.md) |
+| Install → first API call | [../guides/installation.md](../guides/installation.md) |
+| Framework internals | [../guides/architecture.md](../guides/architecture.md) |
+| Codegen templates | [../guides/templates.md](../guides/templates.md) |
 | `gemvc init` / `db:migrate` / cli-dev | [../guides/cli.md](../guides/cli.md) |
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |
@@ -29,7 +34,7 @@ Optional machine/IDE mirrors (same content, not required):
 ## Hard rules (never violate)
 
 - GEMVC is an **ecosystem** (`vendor/gemvc/*`) — not a single package; see [ecosystem.md](../guides/ecosystem.md)
-- Always use **4 layers**: API → Controller → Model → Table
+- Prefer **4 layers** for HTTP services: API → Controller → Model → Table. Bypassing a layer is possible but **strongly discouraged**
 - Never skip schema validation (`definePostSchema` / `defineGetSchema`)
 - Never manually sanitize inputs (framework already does)
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)

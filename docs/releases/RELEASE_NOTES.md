@@ -16,7 +16,7 @@
 - New `Gemvc\Core\AuthException`, thrown by `requireAuth()` on failure and caught centrally by `Bootstrap`/`SwooleBootstrap`, which convert it straight into the correct `401 Unauthorized` or `403 Forbidden` response.
 - Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`.
 - Auth HTTP codes (as implemented): **401** = no token / cannot extract Authorization; **403** = token present but invalid (verify failed), or valid token with wrong role.
-- **Documentation Organisation**: all guides moved under [`docs/`](../README.md). AI assistants use a single path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`API_REFERENCE.md`](../ai/API_REFERENCE.md). Root `.cursorrules` is slim and points there. Old root `.md` paths are short redirect stubs.
+- **Documentation Organisation**: all guides moved under [`docs/`](../README.md). AI assistants use a single path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`CORE_REFERENCE.md`](../ai/CORE_REFERENCE.md) (formerly `API_REFERENCE.md`). Root `.cursorrules` is slim and points there. Old root `.md` paths are short redirect stubs.
 
 ---
 

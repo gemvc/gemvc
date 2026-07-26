@@ -1,5 +1,9 @@
 # GEMVC APM Integration Guide
 
+**Audience:** enabling / debugging APM (TraceKit and others).
+
+**Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -161,24 +165,32 @@ The root trace is automatically created in `Bootstrap` or `SwooleBootstrap` and 
 
 **Optional** - Enable via `APM_TRACE_CONTROLLER=1`.
 
-When enabled, automatic spans are created for all controller method calls:
+When enabled, automatic spans are created for controller method calls **when you use `ApiService::callController()`** (Apache/Nginx).
 
 ```php
-// API Layer
+// Apache / Nginx — ApiService
 public function create(): JsonResponse
 {
     return $this->callController(new UserController($this->request))->create();
-    // ↑ Automatically creates span: "controller-operation"
+    // ↑ Creates span "controller-operation" when APM_TRACE_CONTROLLER=1
 }
 ```
 
-**Span Attributes:**
+**OpenSwoole (`SwooleApiService`):** there is **no** `callController()`. Invoke Controllers with bare `new`:
+
+```php
+return (new UserController($this->request))->create();
+```
+
+Root request tracing still works on Swoole. For controller-level spans on Swoole, use manual tracing (`ApmTracingTrait`) or wrap calls yourself — see [Manual Tracing](#manual-tracing).
+
+**Span Attributes** (when `callController` is used):
 - `controller.name`: Controller class name
 - `controller.method`: Method name (create, read, update, delete, etc.)
 - `http.status_code`: HTTP response code
 - `http.response_size`: Response data size (if enabled)
 
-**No code changes required** - just set `APM_TRACE_CONTROLLER=1` in `.env`.
+Set `APM_TRACE_CONTROLLER=1` in `.env`, and use `callController` on Apache/Nginx.
 
 ### 3. Database Query Tracing
 
@@ -354,7 +366,8 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Automatic controller tracing (if APM_TRACE_CONTROLLER=1)
+        // Apache/Nginx: callController → controller span if APM_TRACE_CONTROLLER=1
+        // OpenSwoole: return (new UserController($this->request))->create();
         return $this->callController(new UserController($this->request))->create();
     }
 }
@@ -534,6 +547,12 @@ class ProductController extends Controller
 ```
 
 ## Best Practices
+
+### 0. Match Controller invoke style to server
+
+**Apache/Nginx (`ApiService`):** use `callController()` so `APM_TRACE_CONTROLLER=1` creates controller spans.
+
+**OpenSwoole (`SwooleApiService`):** use `(new XController($this->request))->method()` — no `callController`. Root span still works; add manual spans if you need controller-level detail.
 
 ### 1. Always Set Request on Models
 

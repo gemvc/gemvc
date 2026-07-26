@@ -24,6 +24,65 @@ composer require --dev gemvc/cli-dev
 
 Same application code runs on **OpenSwoole**, **Apache**, and **Nginx**.
 
+## What GEMVC is
+
+- **Server-agnostic** — your code works the same on OpenSwoole, Nginx, and Apache
+- **4-layer** API → Controller → Model → Table — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
+- **Modular ecosystem** — contracts + implementations for DB, APM, HTTP client, helper, CLI (`cli-base` / `cli-dev`) — not one monolith package
+- **No routes file** — `/api/{Service}/{method}` maps automatically
+- **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth
+- **Schema is documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export
+- **Native APM** — `callController()` / `createModel()` + env flags
+- **Library or framework** — migrate gradually or `gemvc init` for a full app
+
+Not a Laravel/Symfony replacement — a focused scalpel for REST microservices.
+
+## Architecture (quick)
+
+After the request reaches the server, Bootstrap sanitizes the incoming request and payload, then builds a **single cross-server `Request` object**. From the URL it resolves the target class and method (or returns 404). It instantiates the **API** layer class, injects `Request`, and calls the method.
+
+```
+app/api/          → endpoints + validation
+app/controller/   → orchestration
+app/model/        → business rules / workflows
+app/table/        → database
+```
+
+### `app/api/` — endpoints + validation
+
+Strong request sanitization lives here. As a developer you can:
+
+- Guard a whole service with `$this->requireAuth(['role'])` in the constructor, or call `$this->request->auth(['role'])` per method
+- Define exact POST / GET / PUT / PATCH schemas on each endpoint with powerful types (`string`, `email`, `url`, `ip`, …)
+- Then call the Controller — Apache: `callController(...)`; OpenSwoole: `new XController($this->request)` — and pass the sanitized `Request`
+
+No business rules here. Details: [api.md](docs/guides/api.md) · [security](docs/guides/security.md) · [http-lifecycle](docs/guides/http-lifecycle.md) · [api docs](docs/guides/api-documentation.md)
+
+### `app/controller/` — orchestration
+
+Map the sanitized request onto a Model with powerful `mapPostToObject` / `mapPutToObject` / `mapPatchToObject`, prefer `createModel()` so Request/APM reach DB work, call Model methods or `createList()`, and **return `JsonResponse`**.
+
+Keep Controllers thin on domain rules. Details: [controller.md](docs/guides/controller.md)
+
+### `app/model/` — business rules
+
+Where logic lives. Two shapes:
+
+1. **Table-backed** — `UserModel extends UserTable`: CRUD, setters (`setPassword`), uniqueness, login, `_` aggregations
+2. **Composition** — plain class that holds other Models as properties: inter-model workflows, façades, typed result objects; you expose or hide child methods as you wish
+
+Return style is yours: Model may return `JsonResponse`, or any PHP type (`?self`, DTO, `array`, `bool`, …) while Controller builds `Response::*`.
+
+Details: [model.md](docs/guides/model.md)
+
+### `app/table/` — database
+
+Columns as typed properties, `$_type_map`, `defineSchema()`, query builder, insert/update/delete. Prefer **SQL views as Table classes** for JOIN-heavy reads instead of inventing ORM relations. Multi-DB via connection packages under the hood.
+
+Details: [database.md](docs/guides/database.md)
+
+---
+
 ## Documentation (all under `docs/`)
 
 **Index:** [docs/README.md](docs/README.md)
@@ -36,82 +95,39 @@ Read these three files in order (mandatory):
 
 1. [docs/ai/INDEX.md](docs/ai/INDEX.md) — reading order and hard rules  
 2. [docs/ai/CANONICAL.md](docs/ai/CANONICAL.md) — 4-layer architecture, `requireAuth()`, CRUD patterns, decimal, multi-DB, CLI split, Do/Don’t  
-3. [docs/ai/API_REFERENCE.md](docs/ai/API_REFERENCE.md) — Request/Response/Table/Controller method signatures and schema types  
+3. [docs/ai/CORE_REFERENCE.md](docs/ai/CORE_REFERENCE.md) — framework class signatures (Request/Response/Table/Controller) — not HTTP endpoint docs  
 
 Cursor also loads [`.cursorrules`](.cursorrules), which points at the same AI pack.
 
-Optional mirrors: [docs/ai/api-reference.jsonc](docs/ai/api-reference.jsonc), [docs/ai/phpdoc-reference.php](docs/ai/phpdoc-reference.php).
+Optional mirrors: [docs/ai/core-reference.jsonc](docs/ai/core-reference.jsonc), [docs/ai/phpdoc-reference.php](docs/ai/phpdoc-reference.php).
 
 ### Guides (humans + deep dives)
 
-Open a guide only when you need that topic. Each summary lists **exactly** what the file contains.
+Open a guide only when you need that topic. Prefer the **layer order**: API → controller → model → database, then supporting topics.
 
-#### [docs/guides/ecosystem.md](docs/guides/ecosystem.md)
-**Start here if you think GEMVC is “just one package.”** Catalog of every `gemvc/*` Composer module under `vendor/gemvc/`: how `library` is the hub; **contracts vs implementations** for DB (`connection-contracts` + `connection-pdo` / `connection-openswoole`) and APM (`apm-contracts` + `apm-tracekit`); `helper` (TypeChecker, CryptHelper, ProjectHelper); `http-client` (outbound sync/async calls); CLI split (`cli-base` foundation vs require-dev `cli-dev` codegen); dependency diagram; decision table (“need X → which package”); hard rules so AIs do not reinvent Laravel helpers or ignore `vendor/gemvc/*/README.md`.
+| Layer / topic | Guide |
+|---------------|--------|
+| Ecosystem (not one package) | [ecosystem.md](docs/guides/ecosystem.md) |
+| Internals / request flow | [architecture.md](docs/guides/architecture.md) |
+| Install → first API call | [installation.md](docs/guides/installation.md) |
+| **API** | [api.md](docs/guides/api.md) |
+| **Controller** | [controller.md](docs/guides/controller.md) |
+| **Model** | [model.md](docs/guides/model.md) |
+| **Table / DB** | [database.md](docs/guides/database.md) |
+| HTTP Request lifecycle | [http-lifecycle.md](docs/guides/http-lifecycle.md) |
+| Security / JWT | [security.md](docs/guides/security.md) |
+| CLI + cli-dev | [cli.md](docs/guides/cli.md) |
+| APM | [apm.md](docs/guides/apm.md) |
+| Auto API docs | [api-documentation.md](docs/guides/api-documentation.md) |
+| Codegen templates | [templates.md](docs/guides/templates.md) |
 
-#### [docs/guides/architecture.md](docs/guides/architecture.md)
-Map of the framework internals and how a request moves through GEMVC. Covers the `src/` tree (`CLI/`, `core/`, `http/`, `database/`, `helper/`, `startup/`, `stubs/`); the four design principles (webserver-agnostic `app/` code, automatic security, environment-aware adapters, CLI codegen); full **Apache/Nginx vs OpenSwoole** request-flow diagrams; component breakdown of Bootstrap, ApiService, Controller, SecurityManager, Request/Response/JWT, Table/QueryBuilder/migrations; where APM hooks sit; URL-to-class mapping (`/api/{Service}/{method}`); design patterns used; and a short CLI command cheat sheet. Use this to understand *where* code lives and *which* bootstrap path runs — not for writing Table schemas (see database guide).
-
-#### [docs/guides/installation.md](docs/guides/installation.md)
-End-to-end “from empty folder to first API call”. Prerequisites (PHP 8.2+, Composer, MySQL/Postgres/SQLite, optional Docker/OpenSwoole/Redis); `composer require gemvc/library`; interactive and non-interactive `gemvc init` (server type, **database driver**, PHPStan, Docker); what files/folders init creates; `.env` database configuration per driver; **Option A** Docker Compose start vs **Option B** bare-metal OpenSwoole/Apache/Nginx; optional `db:init` / `db:migrate` for the sample User; generating a Product service with `create:crud` (needs `cli-dev`); verification checklist; troubleshooting (port 9501, DB connection, class not found, permissions); Docker command reference; server-specific notes for Swoole/Apache/Nginx; next-steps links into the rest of the docs.
-
-#### [docs/guides/database.md](docs/guides/database.md)
-Table how-to: what Table abstracts (pooling/mapping); skeleton; types/schema/PKs; CRUD; soft delete; **SQL views as tables** for complex SELECTs; multi-DB; connection stack under the hood.
-
-#### [docs/guides/controller.md](docs/guides/controller.md)
-Controller orchestration: 4-layer role; **`callController` vs Swoole `new`**; CRUD mapping; **`createModel()`**; **`createList`** and list query params (`find_like`, `filter_by`, `sort_by`, `page_number`); protected columns; errors; CLI templates; Do/Don’t.
-
-#### [docs/guides/model.md](docs/guides/model.md)
-Model layer (where **business logic** lives): `XModel extends XTable`; simple CLI CRUD vs domain Models; return **`JsonResponse` or PHP types** (Controller builds response in the latter style); aggregations; views; APM; Do/Don’t.
-
-#### [docs/guides/http-lifecycle.md](docs/guides/http-lifecycle.md)
-How HTTP arrives as a unified `Gemvc\Http\Request` and leaves as `JsonResponse`, without changing `app/` code when switching servers. Server-agnostic architecture diagram; step-by-step **Apache/Nginx** and **OpenSwoole** lifecycles; deep dive into `ApacheRequest` and `SwooleRequest` adapters (what they sanitize, cookies, body parsing); structure of the unified Request object (`post`/`get`/`put`/`patch`/`files`, auth flags, pagination helpers); Response abstraction (`show()` vs `showSwoole()`); complete flow diagrams; automatic XSS/input sanitization examples; application-level examples that stay identical across servers. Use this to understand adapters and Request/Response — not JWT details (see security) or Table ORM (see database).
-
-#### [docs/guides/cli.md](docs/guides/cli.md)
-Authoritative CLI reference and package split. Explains **three packages**: `gemvc/cli-base` (Command foundation), `gemvc/library` (`init*`, `db:migrate`, Docker helpers), and require-dev **`gemvc/cli-dev`** (`create:*`, `db:init|list|describe|drop|unique`, `admin:*`). Architecture of Command / AbstractInit / InitProject / InitApache|Swoole|Nginx / CommandCategories / DockerComposeInit / ProjectHelper; how commands are discovered; full command docs with flags for `init`, `create:service|controller|model|table|crud`, every `db:*` and `admin:*` command; examples and workflows; troubleshooting (command not found without cli-dev, templates, DB errors, macOS colors); tips; how to write a custom command or add a webserver init strategy. **Do not assume `create:crud` exists unless cli-dev is installed.**
-
-#### [docs/guides/security.md](docs/guides/security.md)
-Full security model: what is automatic vs what you must call. Eight layers — path blocking (`SecurityManager`), header sanitization, XSS input cleaning, schema validation (`definePostSchema` / optional `?fields` / type checks), JWT auth (`auth()` and **`requireAuth()`**, token create/verify, roles, **401 Unauthorized vs 403 Forbidden**), file security (name/MIME/signature/encryption), prepared-statement SQL protection; complete attack-flow example; layer summary table; CryptHelper password hashing; `.env` security-related vars; production checklist; best practices; incident response notes. Use this when implementing auth, uploads, or hardening — not for ORM migration syntax.
-
-#### [docs/guides/apm.md](docs/guides/apm.md)
-Application Performance Monitoring integration (TraceKit and other providers). Zero-config root request span from Bootstrap; env vars (`APM_NAME`, API keys, sample rate, `APM_TRACE_CONTROLLER`, `APM_TRACE_DB_QUERY`); how **`callController()`** creates controller spans and **`createModel()`** wires Request for DB query spans; exception recording; `ApmTracingTrait` API (`traceApm`, `startApmSpan`/`endApmSpan`, …); CRUD and custom-tracing examples; best practices (always use `createModel`, meaningful attributes, span kinds); performance/sample-rate guidance; troubleshooting missing traces / split traceIds; advanced custom provider and CLI/job tracing. Use this when enabling or debugging APM — not for basic CRUD without tracing.
-
-#### [docs/guides/api-documentation.md](docs/guides/api-documentation.md)
-Built-in HTML API docs at `/api/index/document` (and Postman export). How `ApiDocGenerator` reflects `app/api` classes; PHPDoc directives `@http`, `@description`, `@example`, `@hidden`, optional `@param`; **automatic** parameter tables from `definePostSchema` / `defineGetSchema` / `findable` / `sortable`; `mockResponse(string $method): array` for sample payloads; complete annotated service example; what the generated UI includes; best practices for AI-generated code (always add directives + mocks). Use this when documenting endpoints or generating Postman collections — not for Request auth or Table schema.
-
-#### [docs/guides/templates.md](docs/guides/templates.md)
-Customizing what `gemvc create:*` / `create:crud` emit. How `gemvc init` copies templates to `{project}/templates/cli/`; editing `service.template`, `controller.template`, `model.template`, `table.template`; template variables (`{{ServiceName}}`, etc.) and replacement rules; lookup order (project templates override vendor); customization examples (comments, structure, helper methods); best practices (version-control templates, test after edit); advanced custom variables; troubleshooting “template not found” / unreplaced placeholders. Requires **`gemvc/cli-dev`** for the create commands that consume these templates.
+Summaries of what each file contains: [docs/README.md](docs/README.md).
 
 ### Ops & history
 
-#### [docs/ops/mysql-production.md](docs/ops/mysql-production.md)
-Why `gemvc init` MySQL Docker settings are **dev-only**, and what DevOps must change for production: InnoDB flush durability, binary logging, auth plugins/passwords, buffer/pool sizing; full example config for ~8GB RAM; pre-go-live checklist and monitoring metrics; notes on managed DB / HA alternatives. Not needed for local SQLite or default init demos.
-
-#### [docs/releases/RELEASE_NOTES.md](docs/releases/RELEASE_NOTES.md)
-Long-form release narratives: what shipped, why, migration notes, code samples (e.g. 5.9.0 multi-DB/decimal/cli-dev, 5.9.1 `requireAuth` + docs reorg). Prefer this when you need context; use CHANGELOG for a short bullet scan.
-
-#### [docs/releases/CHANGELOG.md](docs/releases/CHANGELOG.md)
-Keep-a-Changelog list (Added/Fixed/Changed) from recent versions back through older releases. Best for “did version X include feature Y?” without reading full release essays.
-
-## What GEMVC is
-
-- **4-layer** API → Controller → Model → Table (recommended, not forced)
-- **No routes file** — `/api/{Service}/{method}` maps automatically
-- **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth
-- **Sanitization IS documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export
-- **Native APM** — `callController()` / `createModel()` + env flags
-- **Library or framework** — migrate gradually or `gemvc init` for a full app
-
-Not a Laravel/Symfony replacement — a focused scalpel for REST microservices.
-
-## Architecture (quick)
-
-```
-app/api/          → endpoints + validation
-app/controller/   → orchestration
-app/model/        → business rules
-app/table/        → database
-```
+- [docs/ops/mysql-production.md](docs/ops/mysql-production.md) — init MySQL is **dev-only**; production hardening  
+- [docs/releases/RELEASE_NOTES.md](docs/releases/RELEASE_NOTES.md) — narrative what/why/migration  
+- [docs/releases/CHANGELOG.md](docs/releases/CHANGELOG.md) — short “is feature X in version Y?”
 
 ## License
 

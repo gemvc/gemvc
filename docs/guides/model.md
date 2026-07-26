@@ -14,22 +14,31 @@ Model is the **data / business-logic** layer:
 API (schema / auth) → Controller (orchestration) → Model (rules + transforms) → Table (DB)
 ```
 
-Canonical pattern:
+Canonical patterns:
 
 ```php
-class UserModel extends UserTable  // inherits columns, queries, insert/update/delete
+// 1) Table-backed (most CRUD entities)
+class UserModel extends UserTable
+
+// 2) Composition (no Table) — orchestrate other Models into one typed object
+class CheckoutModel  // does NOT extend Table
+{
+    public UserModel $user;
+    public OrderModel $order;
+    // expose only the methods you want; hide the rest
+}
 ```
 
 | Belongs in Model | Belongs elsewhere |
 |------------------|-------------------|
 | Business rules (uniqueness, domain checks) | API: schema + auth |
 | Transforms (`setPassword`, normalize email) | Controller: map request → model |
-| Domain ops (login, bootstrap admin) | Table: raw query helpers only |
+| Domain ops (login, multi-model workflows) | Table: raw query helpers only |
 | Domain results (`JsonResponse` **or** PHP types) | Controller: build `JsonResponse` if Model returns data |
 
 **Controller stays thin on logic.** If rules grow past “map and call,” they belong in Model. Who builds the HTTP `JsonResponse` is a **style choice** — see [Return style](#return-style-jsonresponse-vs-php-types).
 
-There is **no** separate framework class for “simple vs complex” Models — both extend Table. Complexity is how much domain logic you add.
+There is **no** required base class for Models. Most entity Models **extend** their Table; composition Models are plain classes that **use** other Models. Complexity and flexibility are yours.
 
 ---
 
@@ -47,7 +56,7 @@ There is **no** separate framework class for “simple vs complex” Models — 
 | Relations / `_` props | [Aggregations](#aggregations-_properties) |
 | Heavy reads | [Complex reads](#complex-reads) |
 | Multi-step / APM | [Beyond CRUD](#beyond-crud) |
-| Rare non-Table | [Non-Table Models](#non-table-models-rare) |
+| Models without Table | [Composition Models](#composition-models-no-table) |
 | Codegen | [CLI](#cli-codegen) |
 | Mistakes | [Do / Don’t](#do--dont) |
 
@@ -55,15 +64,17 @@ There is **no** separate framework class for “simple vs complex” Models — 
 
 ## Hard rules (AI)
 
-1. App Models **extend** their Table (`UserModel extends UserTable`), not bare `Table` (unless composing tools).
+1. **Two Model shapes are valid:**
+   - **Table-backed:** `UserModel extends UserTable` (CRUD entities).
+   - **Composition:** plain class that holds other Models (and/or services) as properties — no `extends Table` required.
 2. Put **business logic in Model**, not Controller or API.
-3. Model may return **`JsonResponse` or any PHP type** (`static`, `?static`, `array`, `bool`, `int`, `string`, DTOs, …). Pick one style per service and stick to it — see [Return style](#return-style-jsonresponse-vs-php-types).
+3. Model may return **`JsonResponse` or any PHP type** (`static`, `?static`, `array`, `bool`, DTOs, composition result objects, …). Pick one style per service — see [Return style](#return-style-jsonresponse-vs-php-types).
 4. If Model returns data (not `JsonResponse`), **Controller** must map success/failure to `Response::*` / `JsonResponse`.
-5. Use inherited Table API / `QueryBuilder` — no string-concat SQL.
-6. Controllers should wrap with **`createModel(new XModel())`** so Request/APM reach DB queries.
+5. Table-backed Models use inherited Table API / `QueryBuilder` — no string-concat SQL.
+6. Controllers should wrap with **`createModel(new XModel())`** when the Model (or its children) touch DB so Request/APM reach queries. Composition Models should call `setRequest` on child Table-backed Models (or implement `setRequest` and forward it).
 7. Map sensitive fields via setters (`'password' => 'setPassword()'`).
-8. Prefer **SQL views + Table** for JOIN-heavy reads ([database.md](database.md#sql-views-as-tables-recommended)).
-9. `_`-prefixed properties are aggregations — not columns.
+8. Prefer **SQL views + Table** for JOIN-heavy reads ([database.md](database.md#sql-views-as-tables-recommended)); use composition Models for **cross-entity workflows** and controlled APIs.
+9. On Table-backed Models, `_`-prefixed properties are aggregations — not columns.
 
 ---
 
@@ -355,6 +366,7 @@ There is **no** built-in Eloquent-style `with()` — write explicit loaders. For
 | Table helpers (`selectByEmail`) | Single-table lookups |
 | `QueryBuilder` in Model | Ad-hoc reads (see `UserModel::readModel`) |
 | **SQL VIEW + Table class** | Joins / aggregates / reporting |
+| **Composition Model** | Multi-entity workflows / façades / typed mixes ([below](#composition-models-no-table)) |
 
 GEMVC recommendation: push JOIN complexity into SQL views, then a simple Model/Table over the view — [SQL views as tables](database.md#sql-views-as-tables-recommended).
 
@@ -390,9 +402,145 @@ Details: [apm.md](apm.md). Request must be set via Controller `createModel()`.
 
 ---
 
-## Non-Table Models (rare)
+## Composition Models (no Table)
 
-Most app Models extend a Table. Exceptions in core (tools/APM) **compose** services instead of `extends Table`. For business entities, **always** extend the Table subclass.
+You are **not** required to `extends XTable`. A Model can be a plain PHP class that **owns other Models** (and helpers) as properties, runs **inter-model logic**, and returns a **new typed object** (or `JsonResponse`).
+
+That is full flexibility: you decide the public API — which child methods to expose, wrap, or hide.
+
+| Shape | Extends Table? | Best for |
+|-------|----------------|----------|
+| Table-backed | Yes (`UserModel extends UserTable`) | One entity / one table CRUD |
+| Aggregations `_profile` | Still Table-backed | Light related data on one entity |
+| **Composition Model** | **No** | Workflows across entities; façades; DTOs built from several Models |
+
+Core examples that do **not** extend Table: `Gemvc\Core\Apm\ApmModel`, `Gemvc\Core\Assistant\GemvcAssistantModel`.
+
+### Pattern
+
+```php
+<?php
+namespace App\Model;
+
+use App\Model\UserModel;
+use App\Model\OrderModel;
+use App\Model\InventoryModel;
+use Gemvc\Http\Request;
+
+/**
+ * Composition Model — not a Table.
+ * Mixes User + Order + Inventory into one controlled domain object.
+ */
+class CheckoutModel
+{
+    public UserModel $user;
+    public OrderModel $order;
+    public InventoryModel $inventory;
+
+    /** Result shape you define — not a DB row */
+    public ?CheckoutResult $result = null;
+
+    public function __construct()
+    {
+        $this->user = new UserModel();
+        $this->order = new OrderModel();
+        $this->inventory = new InventoryModel();
+    }
+
+    /** Forward Request so child Table Models get APM / context */
+    public function setRequest(Request $request): void
+    {
+        $this->user->setRequest($request);
+        $this->order->setRequest($request);
+        $this->inventory->setRequest($request);
+    }
+
+    /**
+     * Inter-model workflow. Only expose what callers need.
+     * Child Models keep their full APIs privately — you limit the surface here.
+     */
+    public function place(int $userId, array $lines): ?CheckoutResult
+    {
+        $user = $this->user->selectById($userId);
+        if ($user === null) {
+            return null;
+        }
+
+        if (!$this->inventory->reserve($lines)) {
+            return null;
+        }
+
+        $order = $this->order->createFromLines($userId, $lines);
+        if ($order === null) {
+            $this->inventory->release($lines);
+            return null;
+        }
+
+        // Typed PHP object — mix of models / scalars you choose
+        $this->result = new CheckoutResult(
+            user: $user,
+            order: $order,
+            reserved: $lines,
+        );
+        return $this->result;
+    }
+
+    // Intentionally NO public access to $inventory->deleteAll() etc.
+    // Callers only see place() / result — full control over the façade.
+}
+
+/** Plain typed result (DTO) — optional but recommended for Style B */
+final class CheckoutResult
+{
+    public function __construct(
+        public UserModel $user,
+        public OrderModel $order,
+        public array $reserved,
+    ) {}
+}
+```
+
+Controller:
+
+```php
+public function place(): JsonResponse
+{
+    $checkout = $this->createModel(new CheckoutModel()); // setRequest if present
+    $result = $checkout->place(
+        $this->request->intValuePost('user_id') ?? 0,
+        $this->request->post['lines'] ?? [],
+    );
+    if ($result === null) {
+        return Response::unprocessableEntity('Checkout failed');
+    }
+    return Response::created($result, 1, 'Order placed');
+}
+```
+
+`Controller::createModel()` accepts **any object**; it calls `setRequest` only if that method exists. Implement `setRequest` on composition Models to wire children.
+
+### When to use what
+
+| Need | Prefer |
+|------|--------|
+| CRUD on one table | Table-backed Model |
+| JOIN / report query | SQL view + Table ([database.md](database.md#sql-views-as-tables-recommended)) |
+| Multi-step write across entities | **Composition Model** |
+| Hide dangerous Table methods from Controllers | **Composition Model** façade |
+| Single payload mixing several entities | Composition result DTO / Style B object |
+
+### Do’s for composition
+
+- Treat the composition class as the **only** public surface Controllers call.
+- Forward `setRequest` to every child that hits the DB.
+- Return a **typed** result object when mixing Models (not a loose `array`), unless Style A returns `JsonResponse` directly.
+- Keep Table-backed Models for per-entity rules; put cross-entity orchestration here.
+
+### Don’ts for composition
+
+- Don’t skip the 4-layer stack for HTTP flows (API still validates; Controller still maps/calls). Runtime allows bypass; architecture strongly recommends against it.
+- Don’t put SQL in the composition Model — call child Model/Table APIs.
+- Don’t confuse with `_` aggregations: those hang **on** a Table-backed Model; composition **is** a separate Model class.
 
 ---
 
@@ -420,35 +568,40 @@ Templates: [templates.md](templates.md).
 
 **Do**
 
-- `extends XTable`; keep business rules and transforms in Model  
-- Choose Style A (`JsonResponse` in Model) **or** Style B (PHP types in Model, `JsonResponse` in Controller) and stay consistent  
-- Use Table query API / views for data access  
-- Grow from simple CRUD to domain methods as the product needs  
+- Table-backed: `extends XTable` for entity CRUD  
+- Composition: plain class + other Models as properties for inter-model workflows / façades  
+- Keep business rules and transforms in Model (entity or composition)  
+- Choose Style A or Style B and stay consistent  
+- Use Table query API / views for data access; composition for cross-entity logic  
 
 **Don’t**
 
-- Assume Models *must* return `JsonResponse` (false — it’s a style choice)  
-- Put business rules only in Controller (HTTP mapping in Controller is fine under Style B)  
+- Assume every Model *must* extend Table (false — composition is first-class)  
+- Assume Models *must* return `JsonResponse` (false — style choice)  
+- Put business rules only in Controller  
 - Invent Eloquent relations / magic `with`  
-- Skip layers (API → Table)  
+- Skip layers on HTTP services (API → Table) — possible, **strongly discouraged**
 - Use `float` for money (use `decimal` + string on Table)  
 - Leak `protected` password into list payloads  
+- Expose raw child Models from a composition façade if you meant to limit their API  
 
 ---
 
 ## Checklist
 
-1. `UserModel extends UserTable` (naming matches service)
-2. Style chosen: A (`Response::*` in Model) or B (types in Model + `Response::*` in Controller)
-3. Setters for secrets / transforms
+1. Shape chosen: Table-backed (`extends XTable`) **or** composition (plain class + child Models)
+2. Style chosen: A (`Response::*` in Model) or B (types / DTO in Model + `Response::*` in Controller)
+3. Setters for secrets / transforms (Table-backed)
 4. Domain validation before writes
-5. Soft delete / views chosen intentionally
-6. Controller uses `createModel(new …)` when calling into Model DB work
+5. Composition: `setRequest` forwarded to children; public API limited intentionally
+6. Soft delete / views chosen intentionally
+7. Controller uses `createModel(new …)` when Models touch DB
 
 ---
 
 ## Reference
 
-- Startup: `src/startup/common/init_example/model/UserModel.php`
+- Startup Table-backed: `src/startup/common/init_example/model/UserModel.php`
+- Core composition (no Table): `src/core/Apm/ApmModel.php`
 - Controller wiring: [controller.md](controller.md)
 - Table / views / connections: [database.md](database.md)

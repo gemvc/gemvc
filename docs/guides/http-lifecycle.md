@@ -1,10 +1,12 @@
-# 🌐 GEMVC HTTP Request Life Cycle Documentation
+# GEMVC HTTP Request Life Cycle
 
-Complete guide to GEMVC's server-agnostic HTTP request handling architecture.
+**Audience:** adapters, unified `Request` / `JsonResponse`, Apache vs OpenSwoole paths.
 
----
+**Related:** [api.md](api.md) · [architecture.md](architecture.md) · [security.md](security.md)
 
-## 📋 Table of Contents
+Complete guide to GEMVC's server-agnostic HTTP request handling.
+
+## Table of Contents
 
 - [Overview](#overview)
 - [Server-Agnostic Architecture](#server-agnostic-architecture)
@@ -84,13 +86,15 @@ Webserver-Specific Output
     ↓
 6. API service validates schema
     ↓
-7. Controller handles business logic
+7. Controller orchestrates (map request → Model)
     ↓
-8. Model performs data operations
+8. Model applies business rules / transforms
     ↓
-9. JsonResponse returned
+9. Table performs database operations
     ↓
-10. JsonResponse->show() outputs to Apache
+10. JsonResponse returned
+    ↓
+11. JsonResponse->show() outputs to Apache
 ```
 
 ### OpenSwoole Life Cycle
@@ -112,13 +116,15 @@ Webserver-Specific Output
     ↓
 6. API service validates schema
     ↓
-7. Controller handles business logic
+7. Controller orchestrates (map request → Model)
     ↓
-8. Model performs data operations
+8. Model applies business rules / transforms
     ↓
-9. JsonResponse returned
+9. Table performs database operations
     ↓
-10. JsonResponse->showSwoole() outputs to OpenSwoole
+10. JsonResponse returned
+    ↓
+11. JsonResponse->showSwoole() outputs to OpenSwoole
 ```
 
 ---
@@ -336,7 +342,7 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Business logic (same for all servers)
+        // Same app code on every server — Controller orchestrates; Model holds rules
         return (new UserController($this->request))->create();
     }
 }
@@ -571,7 +577,7 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Business logic (same for all servers)
+        // Same app code on every server — Controller orchestrates; Model holds rules
         return (new UserController($this->request))->create();
     }
 }
