@@ -15,7 +15,7 @@ Complete guide to GEMVC's server-agnostic HTTP request handling.
 | Unified Request fields | [Unified Request Object](#unified-request-object) |
 | Writing `app/api` | [api.md](api.md) |
 
-**AI rule:** Prefer [api.md](api.md) for endpoint work; open this file for adapter / lifecycle detail only.
+| URL sections / Swoole vs Apache | [architecture.md](architecture.md#url-to-code-mapping) · [api.md](api.md) |
 
 ## Table of Contents
 
@@ -559,7 +559,12 @@ $this->server->on("request", function ($request, $response) {
 
 ### Example 3: Application Code (Server-Agnostic)
 
-**app/api/User.php** - Works on ALL servers:
+**app/api/User.php** — same layering on every server; **base class differs**:
+
+```php
+// Apache/Nginx: extend ApiService and prefer callController(...) for APM
+// OpenSwoole: extend SwooleApiService and use bare (new UserController(...))->create()
+```
 
 ```php
 <?php
@@ -588,13 +593,14 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Same app code on every server — Controller orchestrates; Model holds rules
-        return (new UserController($this->request))->create();
+        // Apache ApiService: prefer callController for APM controller spans
+        return $this->callController(new UserController($this->request))->create();
+        // OpenSwoole SwooleApiService: return (new UserController($this->request))->create();
     }
 }
 ```
 
-**No webserver-specific code needed!**
+**Same 4-layer app code**; only API base class + Controller invoke style differ (see [api.md](api.md)).
 
 ---
 

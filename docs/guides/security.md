@@ -6,7 +6,7 @@
 
 GEMVC is architected with **security-by-design**: multi-layered defense from request arrival to database operations.
 
-> **Key point:** **~90% of security is automatic** — no config needed. Checks run in `Bootstrap` (Apache/Nginx) and `SwooleBootstrap` (OpenSwoole). You add schema validation + auth.
+> **Key point:** Much security is automatic on inbound requests (header/input sanitization; SQL via prepared statements in the Table path). **You must still call** `define*Schema()` and `auth()` / `requireAuth()`. Path blocking via `SecurityManager` runs on **OpenSwoole** (`OpenSwooleServer`) — not on Apache/Nginx Bootstrap. File signature checks and encryption are **developer calls** (`ImageHelper` / `FileHelper`).
 
 ## Reading map (AI)
 
@@ -25,21 +25,21 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 ```
 Request Arrives
     ↓
-1. Path Access Security (SecurityManager) AUTOMATIC
+1. Path Access Security (SecurityManager) — OpenSwoole only (OpenSwooleServer)
     ↓
-2. Header Sanitization (ApacheRequest/SwooleRequest) AUTOMATIC
+2. Header Sanitization (ApacheRequest / SwooleRequest) AUTOMATIC
     ↓
-3. Input Sanitization (XSS Prevention) AUTOMATIC
+3. Input Sanitization (FILTER_SANITIZE_FULL_SPECIAL_CHARS) AUTOMATIC
     ↓
-4. Schema Validation (Request Filtering) Developer calls
+4. Schema Validation (define*Schema) Developer calls
     ↓
-5. Authentication & Authorization (JWT) Developer calls
+5. Authentication & Authorization (JWT auth / requireAuth) Developer calls
     ↓
-6. File Security (Name, MIME, Signature, Encryption) AUTOMATIC + developer calls
+6. File name/MIME — Swoole sanitizes uploads; Apache leaves $_FILES raw — Signature/encryption Developer calls
     ↓
-7. Schema / mass-assignment boundary AUTOMATIC (after define*Schema)
+7. Mass-assignment filtering — only after define*Schema Developer calls
     ↓
-8. Database Security (SQL Injection Prevention) AUTOMATIC
+8. Database — Table path uses prepared statements AUTOMATIC (do not concatenate user input into SQL strings)
 ```
 
 **Legend**:
@@ -197,14 +197,12 @@ private function sanitizeInput(mixed $input): mixed
 }
 ```
 
-**What Gets Sanitized**:
-- All POST data
-- All GET parameters
-- All PUT/PATCH data
+**What Gets Sanitized** (request constructors):
+- All POST / GET / PUT / PATCH data
 - All HTTP headers
-- Query strings
-- Request URIs
-- File names and MIME types
+- Query strings / request URIs (as implemented per adapter)
+- **Upload name/MIME:** OpenSwoole `SwooleRequest` yes; **Apache `$_FILES` not auto-sanitized**
+- Dangerous cookies: filtered on **Swoole** only
 
 **XSS Attack Prevention**:
 ```
@@ -231,7 +229,7 @@ javascript:alert('XSS')  // Special chars escaped
 
 **Purpose**: Validates and filters requests **before** business logic execution.
 
-**Note**: This is the **only layer** that requires developer action. All other security is automatic!
+**Note**: Schema validation **and** auth (`auth` / `requireAuth`) require developer calls. Path blocking is OpenSwoole-only. File signature/encryption are helper calls.
 
 #### 1. Unwanted Field Detection
 ```php
@@ -289,7 +287,8 @@ public function create(): JsonResponse {
     if (!$this->request->validateStringPosts([
         'name' => '2|100',       // 2-100 characters
         'password' => '8|128',   // 8-128 characters
-        '?phone' => '10|15'      // 10-15 characters if provided
+        // Optional lengths: omit key when absent — validateStringPosts has no `?` optional syntax
+        // 'phone' => '10|15',
     ])) {
         return $this->request->returnResponse(); // 400 Bad Request
     }
@@ -299,10 +298,10 @@ public function create(): JsonResponse {
 }
 ```
 
-**Supported Validation Types**:
+**Supported Validation Types** (via `gemvc/helper` TypeChecker):
 - **Basic**: `string`, `int`, `float`, `bool`, `array`
-- **Advanced**: `email`, `url`, `date`, `datetime`, `json`, `ip`, `ipv4`, `ipv6`
-- **Optional**: Prefix with `?` (e.g., `?name`)
+- **Advanced**: `email`, `url`, `date`, `datetime`, `json`, `jsonb`, `ip`, `ipv4`, `ipv6`, `decimal`, `uuid`, `slug`, `hex`, `positive_int`, `timestamp`, …
+- **Optional in `define*Schema` only**: Prefix with `?` (e.g. `'?phone' => 'string'`). **`validateStringPosts` does not treat `?` as optional.**
 
 **Attack Prevention Examples**:
 
@@ -944,12 +943,12 @@ This security policy is regularly updated to reflect:
 
 GEMVC provides **automatic protection** against:
 
-- **XSS (Cross-Site Scripting)** - AUTOMATIC (Input sanitization + output encoding)
-- **SQL Injection** - AUTOMATIC (Prepared statements - 100% coverage)
-- **Path Traversal** - AUTOMATIC (Path blocking + filename sanitization)
-- **Header Injection** - AUTOMATIC (Header sanitization)
-- **File Upload Attacks** - AUTOMATIC (File name/MIME sanitization)
-- **JWT Forgery** - AUTOMATIC (Signature verification + expiration)
+- **XSS (Cross-Site Scripting)** - Input sanitization on request constructors (HTML special chars). Not automatic HTML encoding of JSON API payloads.
+- **SQL Injection** - Table / UniversalQueryExecuter path uses prepared statements. Still do not concatenate untrusted input into SQL strings.
+- **Path Traversal (URL)** - OpenSwoole: `SecurityManager` blocks sensitive paths. Apache/Nginx: rely on webserver + not serving `app/`/`vendor`/`.env`.
+- **Header Injection** - Header sanitization in ApacheRequest / SwooleRequest
+- **File Upload (name/MIME)** - Swoole sanitizes upload name/type; Apache leaves `$_FILES` raw — call `ImageHelper` / validate yourself for signatures
+- **JWT Forgery** - Signature + expiration when you call `auth()` / `requireAuth()` — **not** automatic on every request
 
 ### Developer-Enabled Protection (Simple Method Calls)
 

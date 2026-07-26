@@ -153,9 +153,9 @@ setError(?string $error): void
 setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|uuid; uuid auto-generates
 ```
 
-**Schema helpers:** `Schema::primary`, `autoIncrement`, `unique`, `index`, `foreignKey`, `check`, `fullText` (MySQL).
+**Schema helpers:** `Schema::unique`, `index`, `foreignKey`, `check`, `fullText` (MySQL). `primary` / `autoIncrement` exist in the API but **migrate does not emit PK DDL from them** — prefer property `id`.
 
-**Primary keys:** DDL via `Schema::primary`; runtime via `setPrimaryKey` — see [database.md](../guides/database.md#primary-keys-ddl--runtime).
+**Primary keys:** create-table PK from property **`id`**; runtime ORM via `setPrimaryKey` — see [database.md](../guides/database.md#primary-keys-ddl--runtime).
 
 **Dialects:** `DialectResolver::resolve(PDO)` → Mysql / Postgres / Sqlite for migrations.
 

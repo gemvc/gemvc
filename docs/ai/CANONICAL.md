@@ -283,7 +283,7 @@ $this->updateSingleQuery();
 $this->deleteByIdQuery($id);  // int|string id → returns id or null
 ```
 
-**Primary key (runtime):** default `id` (int). For UUID/string columns call `$this->setPrimaryKey('uuid', 'uuid')` after `parent::__construct()` and match `Schema::primary(...)`. See [database.md — Primary keys](../guides/database.md#primary-keys-ddl--runtime).
+**Primary key (runtime):** default `id` (int). Prefer `public int $id` so migrate creates PK/AI. For UUID/string identity call `$this->setPrimaryKey('uuid', 'uuid')` after `parent::__construct()` — that is **ORM only**; `Schema::primary(...)` is **not** applied as DDL by current migrate. See [database.md — Primary keys](../guides/database.md#primary-keys-ddl--runtime).
 
 **Soft delete** (when table has `deleted_at` / soft-delete columns):
 
@@ -293,7 +293,7 @@ $this->restoreQuery();     // restore
 ```
 
 **Multi-DB** (`DB_DRIVER=mysql|pgsql|sqlite`): DSN from connection packages; dialects auto-selected for `db:migrate`.  
-Limitations: SQLite cannot ALTER column type/null/default without rebuild; no FULLTEXT on Postgres/SQLite.
+Limitations: SQLite cannot ALTER column type/null/default without rebuild (migrate skips); no FULLTEXT on Postgres/SQLite; type map SQL differs by dialect (see [database.md](../guides/database.md)).
 
 **Complex reads:** prefer a **SQL VIEW** + Table class on the view (`getTable()` = view name) instead of JOINs in PHP — [database.md — SQL views](../guides/database.md#sql-views-as-tables-recommended).
 

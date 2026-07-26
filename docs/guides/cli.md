@@ -89,7 +89,7 @@ What `create:crud` generates (layer roles):
 | `db:migrate` | library | Create/update table from Table class |
 | `create:crud` | cli-dev | Full 4-layer scaffold |
 | `create:service\|controller\|model\|table` | cli-dev | Partial scaffold |
-| `db:init\|list\|describe\|drop\|unique` | cli-dev | DB introspection / constraints |
+| `db:init\|list\|describe\|drop\|unique` | cli-dev | DB introspection / constraints (`db:drop --force` skips confirm) |
 | `admin:setpassword\|setadmin` | cli-dev | Bootstrap admin user |
 
 Flags, examples, troubleshooting, custom commands → **[cli-reference.md](cli-reference.md)**.

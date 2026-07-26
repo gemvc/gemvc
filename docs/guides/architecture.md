@@ -71,47 +71,23 @@ See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](h
 ### Apache/Nginx Flow:
 ```
 HTTP Request
- ↓
-index.php (startup/apache/index.php)
- ↓
-Bootstrap.php → APM initialized (early tracing) → Security check (automatic)
- ↓
-ApacheRequest.php → Sanitize all inputs (automatic)
- ↓
-app/api/User.php → schema validation + auth (thin)
- ↓
-UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
- ↓
-UserModel.php → business rules / transforms
- ↓
-UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, prepared statements - automatic)
- ↓
-JsonResponse.php → Return JSON
- ↓
-APM traces sent (fire-and-forget, non-blocking)
+ → startup/apache/index.php → ApacheRequest (sanitize headers/body)
+ → Bootstrap (APM root) → route /api/{Service}/{method}
+ → ApiService (schema + auth) → callController → Controller
+ → Model → Table (DB span if APM_TRACE_DB_QUERY=1)
+ → JsonResponse → APM flush
 ```
+Controller spans need `APM_TRACE_CONTROLLER=1` **and** `callController`.
 
 ### OpenSwoole Flow:
 ```
 HTTP Request
- ↓
-OpenSwooleServer.php → Security check (automatic)
- ↓
-SwooleRequest.php → Sanitize all inputs (automatic)
- ↓
-SwooleBootstrap.php → APM initialized (early tracing) → Route to API service
- ↓
-app/api/User.php → schema validation + auth (thin)
- ↓
-UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
- ↓
-UserModel.php → business rules / transforms
- ↓
-UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, connection pooling - automatic)
- ↓
-JsonResponse.php → Return JSON (via showSwoole())
- ↓
-APM traces sent (fire-and-forget, non-blocking)
+ → OpenSwooleServer (SecurityManager path check — Swoole only)
+ → SwooleRequest (sanitize; upload name/MIME)
+ → SwooleBootstrap (APM root; SERVICE_IN_URL_SECTION / METHOD_IN_URL_SECTION)
+ → SwooleApiService (schema + auth) → bare `new Controller` (no callController)
+ → Model → Table (pool + DB span if APM_TRACE_DB_QUERY=1)
+ → JsonResponse|HtmlResponse showSwoole → APM flush
 ```
 
 ---
@@ -217,19 +193,19 @@ Library still **requires** these packages. Namespace `Gemvc\Helper\` is unchange
 ### **startup/** - Platform Initialization
 ```
 startup/
-├── apache/ # Apache-specific files
-│ ├── index.php # Apache entry point
-│ ├── appIndex.php # Application bootstrap
-│ ├── composer.json # Apache dependencies
-│ └── docker-compose.yml
-├── swoole/ # OpenSwoole-specific files
-│ ├── index.php # OpenSwoole entry point
-│ ├── appIndex.php # Application bootstrap
-│ ├── composer.json # OpenSwoole dependencies (Hyperf)
-│ └── docker-compose.yml
-├── nginx/            # Nginx init / startup files
-└── common/ # Shared files for all platforms
- └── user/ # Example User files
+├── apache/
+│   ├── index.php
+│   ├── example.env
+│   └── Dockerfile …
+├── swoole/
+│   ├── index.php
+│   ├── example.env      # SERVICE_IN_URL_SECTION, SWOOLE_*, pools
+│   └── Dockerfile …
+├── nginx/
+│   ├── index.php
+│   └── …
+└── common/
+    └── user/            # sample User layers
 ```
 
 **Key Features**:
@@ -277,30 +253,24 @@ Bootstrap → $request->apm
 
 ## URL-to-Code Mapping
 
-**Apache/Nginx:** `/api/{Service}/{method}` (literal `api` hop).  
-**OpenSwoole:** `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults `1`/`2`) — no automatic `api` hop.
+**Apache/Nginx:** URL contains a literal `api` segment; service/method are the next two parts → `/api/User/create` → `App\Api\User::create()`.
+
+**OpenSwoole:** **no** automatic `api` hop. Indices come from `.env` (defaults `SERVICE_IN_URL_SECTION=1`, `METHOD_IN_URL_SECTION=2`). Those vars are read by **`SwooleBootstrap` only** (Apache `Bootstrap` ignores `METHOD_IN_URL_SECTION`).
+
+Example with Swoole defaults and path `/User/create` → segments `['', 'User', 'create']` → service `User`, method `create`.  
+If you keep a leading `/api/...` on Swoole with defaults `1`/`2`, segment 1 is `api` → wrong service name — raise indices or drop the `api` prefix.
 
 ```
+# Apache/Nginx example
 URL: /api/User/create
- ↓
-Extracts: Service = "User", Method = "create"
- ↓
-Loads: app/api/User.php
- ↓
-Calls: User::create()
- ↓
-User::create() validates schema → delegates to UserController
- ↓
-UserController::create() maps request → Model (createModel / map*ToObject)
- ↓
-UserModel::createModel() (or domain method) applies business rules
- ↓
-UserTable insert/update via Model (Table CRUD)
+ → Service = User, Method = create
+ → app/api/User.php::create()
+ → Controller → Model → Table
 ```
 
-**Configuration** (via `.env`):
-- `SERVICE_IN_URL_SECTION=1` (default: 1)
-- `METHOD_IN_URL_SECTION=2` (default: 2)
+Dev OpenSwoole: request path `/` may route to `Developer` / `app` when `APP_ENV=dev`.
+
+**Swoole `.env` live in** `src/startup/swoole/example.env` (also `SWOOLE_*`, pools, `IS_OPENSWOOLE`).
 
 ---
 

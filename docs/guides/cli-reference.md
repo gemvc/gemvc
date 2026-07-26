@@ -922,7 +922,7 @@ gemvc db:migrate <TableClassName> [flags]
 - `--force` - Remove columns not in class definition
 - `--enforce-not-null` - Enforce NOT NULL constraints
 - `--sync-schema` - Sync schema constraints (unique, indexes, foreign keys)
-- `--default=<value>` - Set default value for new columns
+- `--default <value>` - Set default value for new columns (space-separated; **not** `--default=value`)
 
 **Examples**:
 ```bash
@@ -936,7 +936,7 @@ gemvc db:migrate UserTable --force
 gemvc db:migrate UserTable --sync-schema
 
 # Set default value for new columns
-gemvc db:migrate UserTable --default="Active"
+gemvc db:migrate UserTable --default Active
 ```
 
 **What It Does**:
@@ -1009,12 +1009,13 @@ Indexes:
 Drop a database table.
 
 ```bash
-gemvc db:drop <TableName>
+gemvc db:drop <TableName> [--force]
 ```
 
 **Examples**:
 ```bash
 gemvc db:drop users
+gemvc db:drop users --force   # skip yes/no confirmation
 ```
 
 **Warning**: This permanently deletes the table and all its data!
@@ -1131,7 +1132,7 @@ gemvc admin:setadmin
 | `--force` | Remove columns not in class | `db:migrate` |
 | `--enforce-not-null` | Enforce NOT NULL constraints | `db:migrate` |
 | `--sync-schema` | Sync schema constraints | `db:migrate` |
-| `--default=<value>` | Set default for new columns | `db:migrate` |
+| `--default <value>` | Set default for new columns (next argv; not `=`) | `db:migrate` |
 
 ### Project Initialization Flags
 
@@ -1200,7 +1201,7 @@ gemvc db:migrate UserTable
 gemvc db:migrate UserTable --force --sync-schema
 
 # Add unique constraint
-gemvc db:unique users email
+gemvc db:unique users/email
 
 # List all tables
 gemvc db:list

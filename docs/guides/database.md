@@ -151,16 +151,17 @@ protected array $_type_map = [
 ];
 ```
 
-| Type | Typical SQL | Notes |
-|------|-------------|--------|
-| `int` | INT | Default PK when property is `id` |
+| Type | Typical SQL (MySQL) | Notes |
+|------|---------------------|--------|
+| `int` | INT | Default PK when property is **`id`** |
 | `string` | VARCHAR | `*email` names often get longer VARCHAR |
-| `bool` | TINYINT(1) | |
-| `float` | DOUBLE | **Not for money** |
-| `decimal` / `decimal:P,S` | DECIMAL | Pair with `public string $…` |
-| `array` / `json` / `jsonb` | JSON / JSONB | |
-| `datetime` / `date` | DATETIME / DATE | |
-| `uuid` | dialect-specific | Often + `setPrimaryKey(..., 'uuid')` |
+| `bool` | TINYINT(1) | PG → BOOLEAN; SQLite → INTEGER |
+| `float` | DOUBLE | PG → DOUBLE PRECISION; SQLite → REAL. **Not for money** |
+| `decimal` / `decimal:P,S` | DECIMAL | Pair with `public string $…`; SQLite stores as TEXT |
+| `array` / `json` / `jsonb` | JSON | PG → JSONB; SQLite → TEXT |
+| `datetime` | DATETIME | Mapped in dialects |
+| `date` | *(falls through to TEXT today)* | Prefer `datetime` or a string column until dialects gain `date` |
+| `uuid` | TEXT (all dialects today) | Runtime UUID via `setPrimaryKey(..., 'uuid')` — **not** a native UUID SQL type in migrate |
 
 Nullable: `?string` / `?int` on the property; still list the base type in `$_type_map`.  
 HTTP: `Request::decimalValuePost` / `decimalValueGet`.
@@ -193,24 +194,27 @@ public function defineSchema(): array
 
 | Helper | Purpose |
 |--------|---------|
-| `primary` | PK DDL (single or composite) |
-| `autoIncrement` | Int auto-increment |
+| `primary` | Declared for documentation / future use — **migrate currently does not emit PK DDL from this**. Create-table PK/auto-increment comes from a property named **`id`** |
+| `autoIncrement` | Same — **no DDL today**; `id` int columns get engine auto-increment from `idColumnDefinition()` |
 | `unique` | Unique; optional `->name()` |
 | `foreignKey` | FK + `onDeleteCascade` / `Restrict` / `SetNull` |
 | `index` | Index; optional `->name()` / `->timestamp()` |
 | `check` | Check constraint |
-| `fullText` | MySQL fulltext (limited/absent on PG/SQLite) |
+| `fullText` | MySQL fulltext (skipped on PG/SQLite) |
+
+**AI / migrate truth:** Prefer `public int $id` for primary keys. Non-`id` PKs need careful DDL (manual or future Schema support); `setPrimaryKey()` is **runtime** ORM identity only.
 
 ---
 
 ## Primary keys (DDL + runtime)
 
-| Concern | API |
-|---------|-----|
-| Migrate constraint | `Schema::primary(...)` |
+| Concern | Reality today |
+|---------|----------------|
+| Create-table PK / AI | Property named **`id`** → dialect `idColumnDefinition()` |
+| `Schema::primary` / `autoIncrement` | Present in API; **not applied as DDL** by current migrate |
 | ORM identity (CRUD / soft delete / default order) | `setPrimaryKey($column, $type)` |
 
-**Default:** `public int $id` → no `setPrimaryKey()` needed.
+**Default (recommended):** `public int $id` → no `setPrimaryKey()` needed; migrate creates PK.
 
 ```php
 public function setPrimaryKey(string $column = 'id', string $type = 'int'): self
@@ -218,11 +222,11 @@ public function setPrimaryKey(string $column = 'id', string $type = 'int'): self
 
 | `$type` | Behavior |
 |---------|----------|
-| `int` | Integer PK (+ usually `autoIncrement`) |
+| `int` | Integer PK |
 | `string` | You set the value before insert |
-| `uuid` | Auto-generated when empty |
+| `uuid` | Auto-generated when empty (`generateUuid`) |
 
-Call after `parent::__construct()`. Align `$_type_map` and `Schema::primary` with the same column.
+Call after `parent::__construct()`. Align `$_type_map` with the same column. For non-`id` keys, ensure the physical table PK exists (manual SQL / future Schema) — **`Schema::primary('uuid')` alone does not create a PK today**.
 
 ```php
 class ProductTable extends Table
@@ -238,20 +242,21 @@ class ProductTable extends Table
     public function __construct()
     {
         parent::__construct();
-        $this->setPrimaryKey('uuid', 'uuid');
+        $this->setPrimaryKey('uuid', 'uuid'); // runtime ORM only
     }
 
     public function getTable(): string { return 'products'; }
 
     public function defineSchema(): array
     {
-        return [Schema::primary('uuid')];
+        // uniques/indexes/FKs here; do not rely on Schema::primary for DDL yet
+        return [Schema::unique('uuid')];
     }
 }
 ```
 
-- **Composite DDL:** `Schema::primary(['user_id', 'role_id'])` — yes for migrate.  
-- **Composite runtime ORM:** not yet — `setPrimaryKey` is single-column only.
+- **Composite DDL via `Schema::primary([...])`:** not emitted by migrate today.  
+- **Composite runtime ORM:** not supported — `setPrimaryKey` is single-column only.
 
 ---
 
@@ -411,8 +416,9 @@ gemvc db:migrate UserTable [--force] [--sync-schema]
 
 | Limit | Detail |
 |-------|--------|
-| SQLite | No ALTER type/null/default / drop PK without rebuild — migrate warns and skips |
-| FULLTEXT | MySQL; not equivalent on PG/SQLite here |
+| SQLite | No ALTER type/null/default without table rebuild — migrate **skips** those ALTERs (may set internal error; not a user-facing “drop PK” warning — drop-PK SQL is unused) |
+| FULLTEXT | MySQL only; skipped on PG/SQLite |
+| PK create | Prefer property **`id`**; `Schema::primary` is not DDL today |
 
 Pooling vs simple PDO is still automatic per server — see below.
 
