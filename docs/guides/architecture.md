@@ -7,6 +7,17 @@
 > App layer how-tos: [api](api.md) · [controller](controller.md) · [model](model.md) · [database](database.md).  
 > 4-layer stack is **strongly recommended** (bypass works; don’t for normal HTTP services).
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Request flows | [Request Flow Architecture](#request-flow-architecture) |
+| `src/` components | [Component Breakdown](#component-breakdown) |
+| APM hooks | [APM Integration Architecture](#apm-integration-architecture) |
+| URL mapping | [URL-to-Code Mapping](#url-to-code-mapping) |
+
+**AI rule:** Prefer layer guides for writing `app/` code; use this file for framework internals.
+
 ## Directory Structure
 
 ```
@@ -22,7 +33,7 @@ src/
 
 ---
 
-## 🎯 Core Design Principles
+## Core Design Principles
 
 ### 1. **Webserver-Agnostic Application Code**
 - `app/` folder code **never changes** when switching webservers
@@ -46,7 +57,7 @@ src/
 
 ---
 
-## 🔄 Request Flow Architecture
+## Request Flow Architecture
 
 ### Apache/Nginx Flow:
 ```
@@ -96,7 +107,7 @@ APM traces sent (fire-and-forget, non-blocking)
 
 ---
 
-## 🗂️ Component Breakdown
+## Component Breakdown
 
 ### **CLI/** - Code Generation & Project Management
 - `Command.php` - Base command class
@@ -230,7 +241,7 @@ startup/
 
 ---
 
-## 🔐 Security Architecture
+## Security Architecture
 
 ### **Automatic Security (No Developer Action)**:
 1. ✅ **Path Protection** - Blocks `/app`, `/vendor`, `.env`, etc.
@@ -249,7 +260,7 @@ startup/
 
 ---
 
-## 📊 APM Integration Architecture
+## APM Integration Architecture
 
 ### **Automatic APM Tracing (Zero Configuration)**:
 1. ✅ **Root Trace** - Automatically created in Bootstrap/SwooleBootstrap
@@ -317,7 +328,7 @@ APM Traces Sent (fire-and-forget, non-blocking)
 
 ---
 
-## 🚀 Performance Features
+## Performance Features
 
 ### **OpenSwoole Optimizations**:
 - Connection pooling (database)
@@ -334,7 +345,7 @@ APM Traces Sent (fire-and-forget, non-blocking)
 
 ---
 
-## 📊 URL-to-Code Mapping
+## URL-to-Code Mapping
 
 ```
 URL: /api/User/create
@@ -360,7 +371,7 @@ UserTable insert/update via Model (Table CRUD)
 
 ---
 
-## 🎨 Design Patterns Used
+## Design Patterns Used
 
 1. **Template Method** - `AbstractInit.php` → `InitApache.php` / `InitSwoole.php`
 2. **Strategy** - `DatabaseManagerFactory` → Different DB managers
@@ -372,7 +383,7 @@ UserTable insert/update via Model (Table CRUD)
 
 ---
 
-## 🛠️ CLI Commands
+## CLI Commands
 
 ### **Project Management**:
 - `gemvc init` - Initialize new project (select webserver)
@@ -395,7 +406,7 @@ UserTable insert/update via Model (Table CRUD)
 
 ---
 
-## 📝 Key Files Reference
+## Key Files Reference
 
 ### **Entry Points**:
 - `startup/apache/index.php` - Apache entry
@@ -417,7 +428,7 @@ UserTable insert/update via Model (Table CRUD)
 
 ---
 
-## 🎯 Summary
+## Summary
 
 **GEMVC is a production-ready, multi-platform PHP REST API framework** that:
 

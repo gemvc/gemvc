@@ -10,7 +10,7 @@ Customize codegen while still using CLI commands. After `gemvc init`, templates 
 
 ---
 
-## 🔄 How It Works
+## How It Works
 
 ### Step 1: Project Initialization (`gemvc init`)
 
@@ -68,7 +68,7 @@ When generating code, GEMVC uses a **smart template lookup**:
 
 ---
 
-## 📝 Template Variables
+## Template Variables
 
 Templates use placeholder variables that get replaced during generation:
 
@@ -94,7 +94,7 @@ protected function replaceTemplateVariables(string $content, array $variables): 
 
 ---
 
-## 📋 Available Templates
+## Available Templates
 
 ### 1. **service.template** - API Service Layer
 - Generates: `app/api/{ServiceName}.php`
@@ -148,7 +148,7 @@ protected function replaceTemplateVariables(string $content, array $variables): 
 
 ---
 
-## 🎯 Customization Examples
+## Customization Examples
 
 ### Example 1: Add Custom Comments
 
@@ -259,7 +259,7 @@ class {$serviceName}Controller extends Controller
 
 ---
 
-## 🔍 Template Lookup Flow
+## Template Lookup Flow
 
 ```
 Developer runs: gemvc create:crud Product
@@ -285,7 +285,7 @@ Write to: app/api/Product.php
 
 ---
 
-## 💡 Best Practices
+## Best Practices
 
 ### 1. **Version Control Templates**
 ```bash
@@ -328,7 +328,7 @@ templates/cli/
 
 ---
 
-## 🛠️ Advanced: Custom Template Variables
+## Advanced: Custom Template Variables
 
 You can extend generators to add custom variables:
 
@@ -357,7 +357,7 @@ class {$serviceName} extends ApiService
 
 ---
 
-## 📚 Template Structure Reference
+## Template Structure Reference
 
 ### Default Templates Location
 - **Vendor**: `vendor/gemvc/swoole/src/CLI/templates/cli/`
@@ -376,7 +376,7 @@ class {$serviceName} extends ApiService
 
 ---
 
-## 🎨 Example: Complete Custom Workflow
+## Example: Complete Custom Workflow
 
 ```bash
 # 1. Initialize project
@@ -406,7 +406,7 @@ gemvc create:crud Category
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Template Not Found Error
 ```
@@ -438,7 +438,7 @@ If `{$serviceName}` appears in generated code:
 
 ---
 
-## 📖 Summary
+## Summary
 
 **Key Benefits**:
 - ✅ **Customize code style** per project/team

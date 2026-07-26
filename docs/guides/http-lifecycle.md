@@ -6,6 +6,17 @@
 
 Complete guide to GEMVC's server-agnostic HTTP request handling.
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Apache vs Swoole path | [Request Life Cycle](#request-life-cycle) |
+| Adapters | [Server Adapters](#server-adapters) |
+| Unified Request fields | [Unified Request Object](#unified-request-object) |
+| Writing `app/api` | [api.md](api.md) |
+
+**AI rule:** Prefer [api.md](api.md) for endpoint work; open this file for adapter / lifecycle detail only.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -19,7 +30,7 @@ Complete guide to GEMVC's server-agnostic HTTP request handling.
 
 ---
 
-## 🎯 Overview
+## Overview
 
 GEMVC's HTTP layer is designed to be **completely server-agnostic**. The same application code works identically on Apache, OpenSwoole, and Nginx. This is achieved through:
 
@@ -31,7 +42,7 @@ GEMVC's HTTP layer is designed to be **completely server-agnostic**. The same ap
 
 ---
 
-## 🏗️ Server-Agnostic Architecture
+## Server-Agnostic Architecture
 
 ### Architecture Pattern
 
@@ -65,7 +76,7 @@ Webserver-Specific Output
 
 ---
 
-## 🔄 Request Life Cycle
+## Request Life Cycle
 
 ### Apache/Nginx Life Cycle
 
@@ -129,7 +140,7 @@ Webserver-Specific Output
 
 ---
 
-## 🔌 Server Adapters
+## Server Adapters
 
 ### ApacheRequest Adapter
 
@@ -230,7 +241,7 @@ $unifiedRequest = $sr->request;  // Unified Request object
 
 ---
 
-## 🎯 Unified Request Object
+## Unified Request Object
 
 ### Request Class Structure
 
@@ -291,7 +302,7 @@ class Request
 
 ---
 
-## 📤 Response Handling
+## Response Handling
 
 ### Response Abstraction
 
@@ -354,7 +365,7 @@ class User extends ApiService
 
 ---
 
-## 📊 Flow Diagrams
+## Flow Diagrams
 
 ### Complete Request Flow (Apache)
 
@@ -446,7 +457,7 @@ JsonResponse->showSwoole($response)
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 ### Automatic Sanitization
 
@@ -483,7 +494,7 @@ JsonResponse->showSwoole($response)
 
 ---
 
-## 💡 Examples
+## Examples
 
 ### Example 1: Apache Request Handling
 
@@ -587,7 +598,7 @@ class User extends ApiService
 
 ---
 
-## 🎯 Key Benefits
+## Key Benefits
 
 ### 1. **Server-Agnostic Application Code**
 
@@ -628,7 +639,7 @@ return Response::success($data);  // Works everywhere!
 
 ---
 
-## 📖 Summary
+## Summary
 
 **GEMVC's HTTP Request Life Cycle**:
 
@@ -642,7 +653,7 @@ return Response::success($data);  // Works everywhere!
 
 ---
 
-## 🔑 Key Takeaways
+## Key Takeaways
 
 1. **Server adapters** (`ApacheRequest`, `SwooleRequest`) convert requests
 2. **Unified `Request` object** - same interface for all servers

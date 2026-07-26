@@ -31,7 +31,7 @@ composer --version
 
 ---
 
-## 🚀 Installation Steps
+## Installation Steps
 
 ### Step 1: Create Project Directory
 ```bash
@@ -186,7 +186,7 @@ SERVER_PORT=9501
 
 ---
 
-## 🐳 Option A: Start with Docker (Recommended)
+## Option A: Start with Docker (Recommended)
 
 ### Step 6a: Start Docker Containers
 ```bash
@@ -204,7 +204,7 @@ my-gemvc-api-swoole-1   php index.php   Up 2 seconds   0.0.0.0:9501->9501/tcp
 my-gemvc-api-mysql-1    mysqld          Up 2 seconds   0.0.0.0:3306->3306/tcp
 ```
 
-### Step 7a: Test Server is Running ✅
+### Step 7a: Test Server is Running
 
 **Open your browser or use curl:**
 ```bash
@@ -224,7 +224,7 @@ curl http://localhost:9501/api
 
 ---
 
-## 🖥️ Option B: Start without Docker
+## Option B: Start without Docker
 
 ### Step 6b: Install OpenSwoole Extension (if using OpenSwoole)
 
@@ -259,7 +259,7 @@ php index.php
 - Restart Nginx
 - Access via `http://localhost/api`
 
-### Step 8b: Test Server is Running ✅
+### Step 8b: Test Server is Running
 
 ```bash
 curl http://localhost:9501/api
@@ -276,7 +276,7 @@ curl http://localhost:9501/api
 
 ---
 
-## 🗄️ Database Setup (Optional - for User endpoints)
+## Database Setup (Optional - for User endpoints)
 
 **Note:** The basic health check (`/api`) works without database!
 
@@ -436,7 +436,7 @@ curl -X POST http://localhost:9501/api/Product/create \
 
 ---
 
-## ✅ Verification Checklist
+## Verification Checklist
 
 After installation, verify everything works:
 
@@ -492,7 +492,7 @@ curl http://localhost:9501/api/User/list
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Issue: "Connection refused" on port 9501
 
@@ -577,7 +577,7 @@ SERVER_PORT=9502
 
 ---
 
-## 🐳 Docker Commands Reference
+## Docker Commands Reference
 
 ```bash
 # Start all services
@@ -606,7 +606,7 @@ docker-compose down -v
 
 ---
 
-## 📊 Different Server Setups
+## Different Server Setups
 
 ### OpenSwoole Setup (Recommended)
 
@@ -693,7 +693,7 @@ sudo systemctl restart nginx
 
 ---
 
-## 🎓 Next Steps
+## Next Steps
 
 After successful installation:
 
@@ -725,7 +725,7 @@ After successful installation:
 
 ---
 
-## 🎉 Installation Complete!
+## Installation Complete!
 
 Your GEMVC framework is ready to use!
 
@@ -740,7 +740,7 @@ curl http://localhost:9501/api
 
 ---
 
-## 📞 Need Help?
+## Need Help?
 
 - 📖 [README.MD](README.MD) - Framework overview
 - 🏗️ [architecture.md](architecture.md) - Architecture details

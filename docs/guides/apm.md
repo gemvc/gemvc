@@ -4,6 +4,18 @@
 
 **Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| Env flags | [Environment Configuration](#environment-configuration) |
+| Root / controller / DB spans | [Automatic Tracing](#automatic-tracing) |
+| Apache `callController` vs Swoole | [Controller Operation Tracing](#2-controller-operation-tracing) |
+| `createModel` / Request wire | [Best Practices](#best-practices) |
+| Missing traces | [Troubleshooting](#troubleshooting) |
+
+**AI rule:** Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -711,11 +723,11 @@ TRACEKIT_SAMPLE_RATE=1.0
 **Fastest**: Use `1` (no quotes) in `.env` files:
 
 ```env
-# ✅ Fastest (recommended)
+# Fastest (recommended)
 APM_TRACE_CONTROLLER=1
 APM_TRACE_DB_QUERY=1
 
-# ✅ Also works (slower)
+# Also works (slower)
 APM_TRACE_CONTROLLER=true
 ```
 

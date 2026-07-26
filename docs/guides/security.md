@@ -8,6 +8,18 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 
 > **Key point:** **~90% of security is automatic** — no config needed. Checks run in `Bootstrap` (Apache/Nginx) and `SwooleBootstrap` (OpenSwoole). You add schema validation + auth.
 
+## Reading map (AI)
+
+| Need | Jump to |
+|------|---------|
+| What is automatic vs you call | [Multi-Layer Security Architecture](#multi-layer-security-architecture) |
+| Schema / `define*Schema` | [Layer 4: Schema Validation](#layer-4-schema-validation-request-filtering) |
+| JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication--authorization) |
+| Production checklist | [Production Security Checklist](#production-security-checklist) |
+| API-layer how-to | [api.md](api.md) |
+
+**AI rule:** Do not ingest this whole file for routine CRUD. Use the map; prefer [api.md](api.md) + [CANONICAL](../ai/CANONICAL.md) for auth patterns.
+
 ## Multi-Layer Security Architecture
 
 ```
@@ -57,9 +69,9 @@ new SwooleBootstrap($sr->request); // All sanitization already done
 
 ---
 
-## 🚪 Layer 1: Path Access Security
+## Layer 1: Path Access Security
 
-### ✅ AUTOMATIC - SecurityManager.php
+### AUTOMATIC - SecurityManager.php
 
 **Status**: **Automatically enabled** - No developer configuration needed!
 
@@ -110,9 +122,9 @@ if (!$this->security->isRequestAllowed($requestUri)) {
 
 ---
 
-## 📥 Layer 2: Header Sanitization
+## Layer 2: Header Sanitization
 
-### ✅ AUTOMATIC - ApacheRequest.php & SwooleRequest.php
+### AUTOMATIC - ApacheRequest.php & SwooleRequest.php
 
 **Status**: **Automatically enabled** - All headers sanitized in Request constructors!
 
@@ -167,9 +179,9 @@ Authorization: Bearer &lt;script&gt;alert('XSS')&lt;/script&gt;
 
 ---
 
-## 🧹 Layer 3: Input Sanitization (XSS Prevention)
+## Layer 3: Input Sanitization (XSS Prevention)
 
-### ✅ AUTOMATIC - ApacheRequest.php & SwooleRequest.php
+### AUTOMATIC - ApacheRequest.php & SwooleRequest.php
 
 **Status**: **Automatically enabled** - All inputs sanitized when Request object is created!
 
@@ -211,9 +223,9 @@ javascript:alert('XSS')  // Special chars escaped
 
 ---
 
-## 🔍 Layer 4: Schema Validation (Request Filtering)
+## Layer 4: Schema Validation (Request Filtering)
 
-### ⚙️ Developer Calls - Request.php
+### Developer Calls - Request.php
 
 **Status**: **Available methods** - Developers call these in their API services to validate requests.
 
@@ -319,9 +331,9 @@ Result: ❌ REJECTED - "String length for post 'name' is 10000, outside range (2
 
 ---
 
-## 🔐 Layer 5: Authentication & Authorization
+## Layer 5: Authentication & Authorization
 
-### ⚙️ Developer Calls - JWT Token System
+### Developer Calls - JWT Token System
 
 **Status**: **Available methods** — prefer `$this->requireAuth()` on the API service (5.9.1), or call `$request->auth()` per method.
 
@@ -418,16 +430,16 @@ Result: ❌ REJECTED - "Role user not allowed to perform this action"
 
 ---
 
-## 📁 Layer 6: File Security
+## Layer 6: File Security
 
-### ✅ AUTOMATIC + ⚙️ Developer Calls
+### AUTOMATIC + Developer Calls
 
 **Status**: 
 - **File name/MIME sanitization**: ✅ AUTOMATIC (in Request constructors)
 - **File signature detection**: ⚙️ Use ImageHelper methods
 - **File encryption**: ⚙️ Use FileHelper/ImageHelper methods
 
-### ✅ AUTOMATIC - File Name & MIME Sanitization
+### AUTOMATIC - File Name & MIME Sanitization
 
 **SwooleRequest.php** (Line 141-175):
 ```php
@@ -539,9 +551,9 @@ Result: ❌ DECRYPTION FAILED - "Cannot decrypt file - Secret is wrong"
 
 ---
 
-## 🗄️ Layer 7: Database Security (SQL Injection Prevention)
+## Layer 7: Database Security (SQL Injection Prevention)
 
-### ✅ AUTOMATIC - UniversalQueryExecuter.php
+### AUTOMATIC - UniversalQueryExecuter.php
 
 **Status**: **Automatically enforced** - ALL database queries use prepared statements!
 
@@ -623,7 +635,7 @@ $user->deleteSingleQuery();
 
 ---
 
-## 🛡️ Complete Security Flow Example
+## Complete Security Flow Example
 
 ### Attack Scenario: Malicious File Upload with SQL Injection
 
@@ -658,7 +670,7 @@ $user->deleteSingleQuery();
 
 ---
 
-## 📊 Security Layers Summary
+## Security Layers Summary
 
 | Layer | Protection | Technique | Status |
 |-------|-----------|-----------|--------|
@@ -677,7 +689,7 @@ $user->deleteSingleQuery();
 
 ---
 
-## 🔒 Additional Security Features
+## Additional Security Features
 
 ### Password Security (CryptHelper.php)
 
@@ -709,7 +721,7 @@ echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
 
 ---
 
-## 🚨 Attack Prevention Matrix
+## Attack Prevention Matrix
 
 | Attack Type | Attack Vector | GEMVC Protection | Result |
 |------------|--------------|------------------|--------|
@@ -729,7 +741,7 @@ echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
 
 ---
 
-## 🔧 Security Configuration
+## Security Configuration
 
 ### Environment Variables (.env)
 
@@ -761,7 +773,7 @@ REDIS_PREFIX=gemvc:
 
 ---
 
-## 📋 Production Security Checklist
+## Production Security Checklist
 
 ### Request Security
 - [x] Path access blocking enabled
@@ -800,7 +812,7 @@ REDIS_PREFIX=gemvc:
 
 ---
 
-## 🎯 Security Best Practices
+## Security Best Practices
 
 ### 1. Always Use Schema Validation
 ```php
@@ -859,7 +871,7 @@ if (pathinfo($file, PATHINFO_EXTENSION) === 'jpg') {
 
 ---
 
-## 🆘 Security Incident Response
+## Security Incident Response
 
 ### Immediate Actions
 1. **Revoke compromised tokens** - Change `TOKEN_SECRET` immediately
@@ -877,7 +889,7 @@ if (pathinfo($file, PATHINFO_EXTENSION) === 'jpg') {
 
 ---
 
-## 📞 Security Support
+## Security Support
 
 ### Reporting Security Issues
 
@@ -897,7 +909,7 @@ If you discover a security vulnerability in GEMVC:
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 ### Security Documentation
 - [OpenSwoole Security Guide](https://openswoole.com/docs)
@@ -913,7 +925,7 @@ If you discover a security vulnerability in GEMVC:
 
 ---
 
-## 🔄 Security Policy Updates
+## Security Policy Updates
 
 This security policy is regularly updated to reflect:
 - New security features
@@ -926,7 +938,7 @@ This security policy is regularly updated to reflect:
 
 ---
 
-## ✅ Security Guarantees
+## Security Guarantees
 
 ### Automatic Protection (No Developer Action Needed)
 

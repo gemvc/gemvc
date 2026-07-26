@@ -25,11 +25,12 @@ Optional machine/IDE mirrors (same content, not required):
 | Install → first API call | [../guides/installation.md](../guides/installation.md) |
 | Framework internals | [../guides/architecture.md](../guides/architecture.md) |
 | Codegen templates | [../guides/templates.md](../guides/templates.md) |
-| `gemvc init` / `db:migrate` / cli-dev | [../guides/cli.md](../guides/cli.md) |
+| `gemvc init` / workflows / cli-dev | [../guides/cli.md](../guides/cli.md) |
+| Full CLI flags / troubleshooting | [../guides/cli-reference.md](../guides/cli-reference.md) |
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |
 | Auto API docs (`@http`) | [../guides/api-documentation.md](../guides/api-documentation.md) |
-| What changed in 5.9.x | [../releases/RELEASE_NOTES.md](../releases/RELEASE_NOTES.md) |
+| What changed in 5.9.x (only if needed) | [../releases/README.md](../releases/README.md) |
 
 ## Hard rules (never violate)
 
@@ -38,7 +39,7 @@ Optional machine/IDE mirrors (same content, not required):
 - Never skip schema validation (`definePostSchema` / `defineGetSchema`)
 - Never manually sanitize inputs (framework already does)
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)
-- Prefer `callController()` + `createModel()` for APM-ready code
+- Prefer `callController()` (Apache/`ApiService`) + `createModel()` for APM-ready code; Swoole uses bare `new` Controller — see [api.md](../guides/api.md)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - Money/precision: `public string` + `$_type_map` `decimal` — never `float`
 - Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code

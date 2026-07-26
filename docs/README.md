@@ -84,8 +84,8 @@ Empty folder → first API call: Composer, `gemvc init`, `.env`, Docker vs bare 
 ### [ecosystem.md](guides/ecosystem.md)
 Multi-package map under `vendor/gemvc/` (library, connections, APM, helper, http-client, cli-base / cli-dev). Read before inventing replacements.
 
-### [cli.md](guides/cli.md)
-CLI reference: `cli-base` vs require-dev **`cli-dev`** (`create:*`, `db:*`, `admin:*`). Commands, workflows, custom commands. **Do not assume `create:crud` without cli-dev.**
+### [cli.md](guides/cli.md) · [cli-reference.md](guides/cli-reference.md)
+CLI entry (package split, workflows) + full command catalog. **AI: start with cli.md**; open cli-reference only for a specific flag. **Do not assume `create:crud` without cli-dev.**
 
 ### [templates.md](guides/templates.md)
 Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
@@ -102,6 +102,9 @@ Also linked from [API layer](#1-api-layer--apimd) — adapters, hardening, auto 
 
 ### [ops/mysql-production.md](ops/mysql-production.md)
 Init MySQL Docker is **dev-only**. Production: InnoDB durability, binlog, passwords, buffer sizing, go-live checklist.
+
+### [releases/README.md](releases/README.md)
+When to open release notes vs changelog. **AI: skip unless version/migration task.**
 
 ### [releases/RELEASE_NOTES.md](releases/RELEASE_NOTES.md)
 Narrative notes (what/why/migration), including 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.

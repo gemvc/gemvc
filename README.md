@@ -116,7 +116,7 @@ Open a guide only when you need that topic. Prefer the **layer order**: API → 
 | **Table / DB** | [database.md](docs/guides/database.md) |
 | HTTP Request lifecycle | [http-lifecycle.md](docs/guides/http-lifecycle.md) |
 | Security / JWT | [security.md](docs/guides/security.md) |
-| CLI + cli-dev | [cli.md](docs/guides/cli.md) |
+| CLI + cli-dev | [cli.md](docs/guides/cli.md) · [cli-reference.md](docs/guides/cli-reference.md) |
 | APM | [apm.md](docs/guides/apm.md) |
 | Auto API docs | [api-documentation.md](docs/guides/api-documentation.md) |
 | Codegen templates | [templates.md](docs/guides/templates.md) |
@@ -126,6 +126,7 @@ Summaries of what each file contains: [docs/README.md](docs/README.md).
 ### Ops & history
 
 - [docs/ops/mysql-production.md](docs/ops/mysql-production.md) — init MySQL is **dev-only**; production hardening  
+- [docs/releases/README.md](docs/releases/README.md) — when to read notes vs changelog (AI: skip unless version task)  
 - [docs/releases/RELEASE_NOTES.md](docs/releases/RELEASE_NOTES.md) — narrative what/why/migration  
 - [docs/releases/CHANGELOG.md](docs/releases/CHANGELOG.md) — short “is feature X in version Y?”
 

@@ -15,7 +15,7 @@ Visit: `http://localhost/api/index/document`
 
 ---
 
-## 📝 Available Directives
+## Available Directives
 
 ### 1. HTTP Method Directive
 ```php
@@ -73,7 +73,7 @@ public function update(): JsonResponse { ... }
 
 ---
 
-## 🔍 Automatic Parameter Extraction
+## Automatic Parameter Extraction
 
 The generator automatically extracts parameters from your validation schemas!
 
@@ -128,7 +128,7 @@ public function list(): JsonResponse
 
 ---
 
-## 📊 Mock Responses
+## Mock Responses
 
 Provide example responses using the `mockResponse()` static method:
 
@@ -159,7 +159,7 @@ public static function mockResponse(string $method): array
 
 ---
 
-## 🎨 Complete Example
+## Complete Example
 
 ```php
 <?php
@@ -221,7 +221,7 @@ class User extends ApiService
 
 ---
 
-## 📋 Generated Documentation Includes
+## Generated Documentation Includes
 
 1. **HTTP Method Badge** (GET/POST/PUT/DELETE)
 2. **Endpoint Path**
@@ -237,7 +237,7 @@ class User extends ApiService
 
 ---
 
-## 🎯 Best Practices
+## Best Practices
 
 ### 1. Always Add Directives
 ```php
@@ -282,7 +282,7 @@ private function helperMethod(): void { ... }
 
 ---
 
-## 🚀 Usage in AI Assistants
+## Usage in AI Assistants
 
 ### When Generating Code
 
@@ -313,7 +313,7 @@ public function create(): JsonResponse { ... }
 
 ---
 
-## 📸 Documentation Features
+## Documentation Features
 
 - **Auto-generated** from your PHPDoc
 - **Always up-to-date** (scans code)
@@ -324,7 +324,7 @@ public function create(): JsonResponse { ... }
 
 ---
 
-## 🎓 Summary
+## Summary
 
 **Directive System** = PHPDoc annotations that document your API
 **Generator** = Reads code + directives → Beautiful HTML documentation

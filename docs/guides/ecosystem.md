@@ -212,7 +212,7 @@ Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
 ## Related library docs
 
 - [api.md](api.md) — API layer (schema, auth, call Controller)  
-- [cli.md](cli.md) — command reference + package split  
+- [cli.md](cli.md) — CLI entry (package split / workflows); [cli-reference.md](cli-reference.md) for full flags  
 - [database.md](database.md) — Table ORM + dialects (uses connection packages under the hood)  
 - [apm.md](apm.md) — tracing env flags; `callController` (Apache) / `createModel`  
 - [installation.md](installation.md) — first install pulls the ecosystem via Composer  
