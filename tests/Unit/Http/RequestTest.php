@@ -182,6 +182,73 @@ class RequestTest extends TestCase
         $this->assertFalse($id);
     }
     
+    public function testStringValuePostReturnsString(): void
+    {
+        $_POST['name'] = 'Alice';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $name = $request->stringValuePost('name');
+        $this->assertIsString($name);
+        $this->assertEquals('Alice', $name);
+    }
+
+    public function testStringValuePostReturnsFalseForMissingKey(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $name = $request->stringValuePost('name');
+        $this->assertFalse($name);
+        $this->assertNotNull($request->error);
+    }
+
+    public function testStringValuePostReturnsFalseForNonString(): void
+    {
+        $_POST['name'] = ['not', 'a', 'string'];
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $name = $request->stringValuePost('name');
+        $this->assertFalse($name);
+    }
+
+    public function testStringValueGetReturnsString(): void
+    {
+        $_GET['q'] = 'search-term';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['QUERY_STRING'] = 'q=search-term';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $q = $request->stringValueGet('q');
+        $this->assertIsString($q);
+        $this->assertEquals('search-term', $q);
+    }
+
+    public function testStringValueGetReturnsFalseForMissingKey(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+
+        $q = $request->stringValueGet('q');
+        $this->assertFalse($q);
+    }
+
     public function testIntValuePostReturnsFalseForInvalidValue(): void
     {
         $_POST['id'] = 'not a number';
@@ -851,8 +918,8 @@ class RequestTest extends TestCase
 
     public function testAuthWithWrongRoleReturnsForbidden(): void
     {
-        // Authenticated (valid token) but missing the required role should be
-        // a 403 Forbidden, distinct from 401 Unauthorized (no/invalid token).
+        // Authenticated (valid token) but missing the required role → 403 Forbidden.
+        // Contrast: no token → 401; present but invalid token (verify fail) → 403.
         $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
         $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
         $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
@@ -1045,6 +1112,51 @@ class RequestTest extends TestCase
             // Skip test if PUT data is not available
             $this->assertTrue(true);
         }
+    }
+
+    public function testMapPatchToObject(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        $request->patch = [
+            'name' => 'Patched',
+            'email' => 'patched@example.com',
+        ];
+
+        $object = new class {
+            public ?string $name = null;
+            public ?string $email = null;
+        };
+
+        $result = $request->mapPatchToObject($object, [
+            'name' => 'name',
+            'email' => 'email',
+        ]);
+
+        $this->assertNotNull($result);
+        $this->assertEquals('Patched', $object->name);
+        $this->assertEquals('patched@example.com', $object->email);
+    }
+
+    public function testMapPatchToObjectReturnsNullWhenEmpty(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new ApacheRequest();
+        $request = $ar->request;
+        $request->patch = [];
+
+        $object = new class {
+            public ?string $name = null;
+        };
+
+        $result = $request->mapPatchToObject($object);
+        $this->assertNull($result);
+        $this->assertNotNull($request->error);
     }
     
     // ============================================

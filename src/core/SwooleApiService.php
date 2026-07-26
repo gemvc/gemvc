@@ -46,8 +46,9 @@ class SwooleApiService
      * On failure this THROWS AuthException instead of returning a value. Unlike
      * a plain die()/exit(), this is safe under OpenSwoole: SwooleBootstrap catches
      * AuthException (both around service construction and around the method call)
-     * and converts it directly into the correct response (401 Unauthorized or 403
-     * Forbidden) without ever crashing or terminating the persistent worker process.
+     * and converts it directly into the correct response (401 if no token /
+     * cannot extract Authorization; 403 if token is invalid or role is missing)
+     * without ever crashing or terminating the persistent worker process.
      *
      * Because Bootstrap builds the service object and calls the requested method
      * from the same place, throwing during construction guarantees the target

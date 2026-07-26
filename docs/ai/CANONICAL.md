@@ -100,7 +100,8 @@ if (!$this->request->auth(['admin'])) {
 
 | Situation | HTTP |
 |-----------|------|
-| No / invalid token | **401** Unauthorized |
+| No token / cannot extract `Authorization` | **401** Unauthorized |
+| Token present but invalid (bad signature, expired, …) | **403** Forbidden |
 | Valid token, wrong role | **403** Forbidden |
 
 ---
@@ -248,13 +249,13 @@ $this->select('id,name')
     ->whereEqual('id', $id)
     ->whereLike('name', '%x%')
     ->whereIn('status', ['active', 'pending'])
-    ->orderBy('name', true)
+    ->orderBy('name', true)   // true = ASC; false or null = DESC
     ->limit(10)
     ->run();
 
 $this->insertSingleQuery();
 $this->updateSingleQuery();
-$this->deleteByIdQuery($id);
+$this->deleteByIdQuery($id);  // int|string id → returns id or null
 ```
 
 **Soft delete** (when table has `deleted_at` / soft-delete columns):

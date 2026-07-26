@@ -7,9 +7,9 @@ namespace Gemvc\Core;
  * when authentication or authorization fails.
  *
  * This exception is caught centrally by Bootstrap and SwooleBootstrap and
- * converted directly into the correct JSON error response — 401 Unauthorized
- * when the caller is not authenticated, or 403 Forbidden when the caller is
- * authenticated but does not have one of the required roles.
+ * converted directly into the correct JSON error response:
+ * - **401** Unauthorized — no token / cannot extract Authorization header
+ * - **403** Forbidden — token present but invalid, or authenticated without a required role
  *
  * Throwing (rather than returning a value) is what allows requireAuth() to be
  * called once from a constructor and protect an entire ApiService/SwooleApiService

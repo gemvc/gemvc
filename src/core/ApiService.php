@@ -107,8 +107,9 @@ class ApiService
      *
      * On failure this THROWS AuthException instead of returning a value — there
      * is nothing to check or return. Bootstrap/SwooleBootstrap catch AuthException
-     * and immediately produce the correct error response (401 if not authenticated,
-     * 403 if authenticated but missing the required role).
+     * and immediately produce the correct error response:
+     * 401 if no token / cannot extract Authorization,
+     * 403 if token is present but invalid, or authenticated but missing the required role.
      *
      * This actually stops execution (not just the final response) even when
      * called from the constructor: Bootstrap builds the service object and calls

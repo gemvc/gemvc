@@ -259,13 +259,13 @@ class Request
     public function defineGetSchema(array $schema): bool { }
     
     // Query Helpers
-    public function intValueGet(string $key): ?int { }
-    public function stringValueGet(string $key): ?string { }
+    public function intValueGet(string $key): int|false { }
+    public function stringValueGet(string $key): string|false { }
     
     // Filtering & Sorting
-    public function findable(array $fields): void { }
-    public function sortable(array $fields): void { }
-    public function filterable(array $fields): void { }
+    public function findable(array $fields): bool { }
+    public function sortable(array $fields): bool { }
+    public function filterable(array $fields): bool { }
     
     // Authentication
     public function auth(array $roles = null): bool { }

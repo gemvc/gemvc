@@ -21,12 +21,12 @@ intValueGet(string $key): int|false
 intValuePost(string $key): int|false
 floatValueGet(string $key): float|false
 floatValuePost(string $key): float|false
-stringValueGet(string $key): ?string
-stringValuePost(string $key): ?string
+stringValueGet(string $key): string|false
+stringValuePost(string $key): string|false
 decimalValueGet(string $key, string $type = 'decimal'): string|false
 decimalValuePost(string $key, string $type = 'decimal'): string|false
 
-auth(?array $roles = null): bool          // sets response 401 or 403 on failure
+auth(?array $roles = null): bool          // 401 missing token; 403 invalid token or wrong role
 returnResponse(): JsonResponse
 
 findable(array $fields): bool             // LIKE
@@ -38,7 +38,7 @@ getPageNumber(): int
 getPerPage(): int
 
 mapPostToObject(object $o, ?array $map = null): object|null
-mapPutToObject(object $o, ?array $map = null): object|false
+mapPutToObject(object $o, ?array $map = null): object|null
 mapPatchToObject(object $o, ?array $map = null): object|null
 ```
 
@@ -55,10 +55,12 @@ Response::success($data, ?int $count = null, ?string $msg = null): JsonResponse 
 Response::created(...): JsonResponse   // 201
 Response::updated(...): JsonResponse   // 209
 Response::deleted(...): JsonResponse   // 210
+Response::successButNoContentToShow(...): JsonResponse  // 204
 Response::badRequest(?string $msg): JsonResponse           // 400
 Response::unauthorized(?string $msg): JsonResponse         // 401
 Response::forbidden(?string $msg): JsonResponse            // 403
 Response::notFound(?string $msg): JsonResponse             // 404
+Response::conflict(?string $msg): JsonResponse             // 409
 Response::unprocessableEntity(?string $msg): JsonResponse  // 422
 Response::internalError(?string $msg): JsonResponse        // 500
 $response->show();           // Apache/Nginx
@@ -90,14 +92,15 @@ protected function validateStringPosts(array $schema): ?JsonResponse
 
 ## `Gemvc\Core\AuthException`
 
-Thrown by `requireAuth()`. Codes: **401** or **403**. Caught by `Bootstrap` / `SwooleBootstrap`.
+Thrown by `requireAuth()`. Response codes come from `Request::auth()`:
+**401** (no token) or **403** (invalid token / wrong role). Caught by `Bootstrap` / `SwooleBootstrap`.
 
 ## `Gemvc\Core\Controller`
 
 ```php
 public function __construct(Request $request)
 protected function createModel(object $model): object   // wires Request for DB APM
-protected function createList(Table $model): JsonResponse
+public function createList(object $model, ?string $columns = null): JsonResponse
 ```
 
 ---
@@ -109,25 +112,25 @@ public function getTable(): string
 public function defineSchema(): array
 protected array $_type_map;
 
-select(?string $columns = null): static
-where($col, $val): static
-whereEqual(string $col, mixed $val): static
-whereLike(string $col, string $pattern): static
-whereIn(string $col, array $vals): static
-whereNotIn(string $col, array $vals): static
-orderBy(string $col, bool $asc = true): static
-limit(int $n): static
+select(?string $columns = null): self
+where(string $col, mixed $val): self
+whereEqual(string $col, mixed $val): self
+whereLike(string $col, string $pattern): self
+whereIn(string $col, array $vals): self
+whereNotIn(string $col, array $vals): self
+orderBy(?string $col = null, ?bool $ascending = null): self  // true = ASC; false/null = DESC; null col = PK
+limit(int $n): self
 run(): ?array
 
 insertSingleQuery(): ?static
 updateSingleQuery(): ?static
-deleteByIdQuery(int $id): bool
+deleteByIdQuery(int|string $id): int|string|null  // returns deleted id, or null on error
 
 safeDeleteQuery(): ?static    // soft delete
 restoreQuery(): ?static
 
 getError(): ?string
-setError(string $msg): void
+setError(?string $error): void
 ```
 
 **Schema helpers:** `Schema::primary`, `autoIncrement`, `unique`, `index`, `foreignKey`, `check`, `fullText` (MySQL).
@@ -139,9 +142,11 @@ setError(string $msg): void
 ## Helpers (`gemvc/helper`)
 
 ```php
-CryptHelper::hashPassword(string $plain): string
-CryptHelper::passwordVerify(string $plain, string $hash): bool
-TypeChecker::check(string $type, mixed $value, array $options = []): bool
+CryptHelper::hashPassword(string $password): string
+CryptHelper::passwordVerify(string $passwordToCheck, string $hash): bool
+CryptHelper::encryptString(string $string, string $key): false|string
+CryptHelper::decryptString(string $encryptedString, string $key): false|string
+TypeChecker::check(mixed $type, mixed $value, array $options = []): bool
 ```
 
 ---
@@ -149,8 +154,8 @@ TypeChecker::check(string $type, mixed $value, array $options = []): bool
 ## CLI (library)
 
 ```
-gemvc init [--swoole|--apache|--nginx] [--db=mysql|postgres|sqlite] [--non-interactive]
-gemvc db:migrate TableClass [--sync-schema]
+gemvc init [--swoole|--apache|--nginx] [--db=mysql|postgres|sqlite] [--non-interactive|-n]
+gemvc db:migrate TableClass [--force] [--sync-schema]
 ```
 
 ## CLI (`gemvc/cli-dev`, require-dev)
@@ -159,6 +164,7 @@ gemvc db:migrate TableClass [--sync-schema]
 gemvc create:crud|service|controller|model|table …
 gemvc db:init|list|describe|drop|unique
 gemvc admin:setadmin
+gemvc admin:setpassword
 ```
 
 ---

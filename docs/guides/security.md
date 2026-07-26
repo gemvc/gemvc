@@ -332,7 +332,7 @@ class User extends ApiService
     public function __construct(Request $request)
     {
         parent::__construct($request);
-        $this->requireAuth(['admin']); // AuthException → 401 or 403; all methods protected
+        $this->requireAuth(['admin']); // AuthException → 401 (no token) or 403 (invalid token / wrong role); all methods protected
     }
 }
 ```
@@ -372,12 +372,12 @@ $token = (new JWTToken())->createLoginToken($userId);
 ```php
 // In API Service
 public function create(): JsonResponse {
-    // Authentication check → 401 if no/invalid token
+    // 401 if no token; 403 if token present but invalid
     if (!$this->request->auth()) {
         return $this->request->returnResponse();
     }
     
-    // Authorization check → 403 if authenticated but wrong role
+    // 403 if authenticated but wrong role
     if (!$this->request->auth(['admin', 'moderator'])) {
         return $this->request->returnResponse();
     }
@@ -389,7 +389,8 @@ public function create(): JsonResponse {
 
 | Failure | HTTP |
 |---------|------|
-| No / invalid JWT | **401** Unauthorized |
+| No token / cannot extract `Authorization` | **401** Unauthorized |
+| Token present but invalid (bad signature, expired, …) | **403** Forbidden |
 | Valid JWT, role not allowed | **403** Forbidden |
 
 **Security Features**:

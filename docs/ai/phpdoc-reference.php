@@ -1,683 +1,228 @@
 <?php
 /**
- * GEMVC Framework - PHPDoc Reference for AI Assistants
- * 
- * This file provides comprehensive PHPDoc annotations for GitHub Copilot
- * and other AI code completion tools to understand GEMVC framework.
- * 
+ * GEMVC Framework - PHPDoc stub reference for AI assistants
+ *
+ * Source of truth: library + gemvc/* package source. Keep signatures aligned with code.
+ * Not executed — IDE/AI annotations only.
+ *
  * @package Gemvc
- * @version 2.0
- * @see https://gemvc.de
+ * @version 5.9.1
+ * @see docs/ai/API_REFERENCE.md
+ * @see docs/guides/ecosystem.md
  */
 
 namespace AIAssistant;
 
 /**
- * Core Request Object
- * All inputs are pre-sanitized - NO manual sanitization needed!
- * 
- * @property string $requestedUrl Sanitized URL
- * @property array $post Sanitized POST data
- * @property array $get Sanitized GET data
- * @property array|null $put Sanitized PUT data
- * @property array|null $patch Sanitized PATCH data
- * @property array|null $files Sanitized file uploads
- * @property mixed $cookies Filtered cookies
- * @property int $limit Pagination limit
- * @property int $offset Pagination offset
+ * @property array<mixed> $post
+ * @property string|array<mixed> $get
+ * @property array<mixed>|null $put
+ * @property array<mixed>|null $patch
+ * @property array<mixed>|null $files
+ * @property mixed $cookies
+ * @property null|string|array<string> $authorizationHeader
+ * @property bool $isAuthenticated
+ * @property bool $isAuthorized
+ * @property \Gemvc\Core\Apm\ApmInterface|null $apm
  */
-interface RequestReference {
-    /**
-     * Validate POST schema - prevents mass assignment
-     * 
-     * @param array<string, string> $schema Validation schema
-     * @param string $schema['field'] 'string'|'int'|'email'|'?field' (optional with ?)
-     * @return bool True if valid, false if validation failed
-     * 
-     * @example
-     * $this->request->definePostSchema([
-     *     'name' => 'string',
-     *     'email' => 'email',
-     *     '?phone' => 'string'  // Optional field
-     * ])
-     */
+interface RequestReference
+{
     public function definePostSchema(array $schema): bool;
-    
-    /**
-     * Validate GET schema
-     * 
-     * @param array<string, string> $schema Validation schema
-     * @return bool
-     */
     public function defineGetSchema(array $schema): bool;
-    
+    public function definePutSchema(array $schema): bool;
+    public function definePatchSchema(array $schema): bool;
+    public function validateStringPosts(array $stringPosts): bool;
+
+    public function intValueGet(string $key): int|false;
+    public function intValuePost(string $key): int|false;
+    public function floatValueGet(string $key): float|false;
+    public function floatValuePost(string $key): float|false;
+    public function stringValueGet(string $key): string|false;
+    public function stringValuePost(string $key): string|false;
+    public function decimalValueGet(string $key, string $type = 'decimal'): string|false;
+    public function decimalValuePost(string $key, string $type = 'decimal'): string|false;
+
     /**
-     * Validate string lengths in POST data
-     * 
-     * @param array<string, string> $validations Map of field => 'min|max'
-     * @return bool
-     * 
-     * @example
-     * $this->request->validateStringPosts([
-     *     'name' => '2|100',      // 2-100 chars
-     *     'password' => '8|128'   // 8-128 chars
-     * ])
+     * Failure responses: 401 = no token / cannot extract Authorization;
+     * 403 = token present but invalid, or valid token with wrong role.
      */
-    public function validateStringPosts(array $validations): bool;
-    
-    /**
-     * Get integer value from GET params
-     * 
-     * @param string $key Parameter key
-     * @return int|null Integer value or null
-     */
-    public function intValueGet(string $key): ?int;
-    
-    /**
-     * Get string value from GET params
-     * 
-     * @param string $key Parameter key
-     * @return string|null String value or null
-     */
-    public function stringValueGet(string $key): ?string;
-    
-    /**
-     * JWT Authentication check
-     * 
-     * @param array<string>|null $roles Required roles (null = just authenticated)
-     * @return bool True if authenticated/authorized
-     * 
-     * @example
-     * $this->request->auth()  // Just authenticated
-     * $this->request->auth(['admin', 'moderator'])  // Role check
-     */
-    public function auth(?array $roles = null): bool;
-    
-    /**
-     * Map POST data to model object
-     * 
-     * @param object $object Model instance
-     * @param array<string, string> $mapping Field mappings ['field' => 'setMethod()']
-     * @return object|false Mapped object or false on error
-     * 
-     * @example
-     * $model = $this->request->mapPostToObject(
-     *     new UserModel(),
-     *     ['email'=>'email', 'password'=>'setPassword()']
-     * );
-     */
-    public function mapPostToObject(object $object, array $mapping = []): object|false;
-    
-    /**
-     * Set filterable fields for list operations
-     * 
-     * @param array<string, string> $fields Field definitions
-     * @return void
-     * 
-     * @example
-     * $this->request->findable(['name' => 'string', 'email' => 'email'])
-     */
-    public function findable(array $fields): void;
-    
-    /**
-     * Set sortable fields for list operations
-     * 
-     * @param array<string> $fields Sortable field names
-     * @return void
-     * 
-     * @example
-     * $this->request->sortable(['id', 'name', 'created_at'])
-     */
-    public function sortable(array $fields): void;
-    
-    /**
-     * Return error response
-     * 
-     * @return \Gemvc\Http\JsonResponse Error response
-     */
+    public function auth(?array $authRules = null): bool;
     public function returnResponse(): \Gemvc\Http\JsonResponse;
+
+    public function findable(array $filterableGetValues): bool;
+    public function filterable(array $searchableGetValues): bool;
+    public function sortable(array $sortableGetValues): bool;
+    public function setPageNumber(): bool;
+    public function setPerPage(): bool;
+    public function getPageNumber(): int;
+    public function getPerPage(): int;
+
+    public function mapPostToObject(object $object, ?array $manualMap = null): object|null;
+    public function mapPutToObject(object $object, ?array $manualMap = null): object|null;
+    public function mapPatchToObject(object $object, ?array $manualMap = null): object|null;
 }
 
 /**
- * Response Factory
- * Static methods for creating responses
+ * Gemvc\Http\Response — all message params are optional (?string).
  */
-interface ResponseFactory {
-    /**
-     * Success response (200 OK)
-     * 
-     * @param mixed $data Response data
-     * @param int $count Number of items
-     * @param string $message Success message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function success($data, int $count, string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Created response (201 Created)
-     * 
-     * @param mixed $data Response data
-     * @param int $count Number of items
-     * @param string $message Success message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function created($data, int $count, string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Updated response (209 Updated)
-     * 
-     * @param bool $result Update success
-     * @param int $count Number of items
-     * @param string $message Success message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function updated(bool $result, int $count, string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Deleted response (210 Deleted)
-     * 
-     * @param bool $result Delete success
-     * @param int $count Number of items
-     * @param string $message Success message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function deleted(bool $result, int $count, string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Not found response (404)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function notFound(string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Bad request response (400)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function badRequest(string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Unprocessable entity response (422)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function unprocessableEntity(string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Internal error response (500)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function internalError(string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Unauthorized response (401)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function unauthorized(string $message): \Gemvc\Http\JsonResponse;
-    
-    /**
-     * Forbidden response (403)
-     * 
-     * @param string $message Error message
-     * @return \Gemvc\Http\JsonResponse
-     */
-    public static function forbidden(string $message): \Gemvc\Http\JsonResponse;
+interface ResponseFactory
+{
+    public static function success(mixed $data, ?int $count = null, ?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function created(mixed $data, ?int $count = null, ?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function updated(mixed $data, ?int $count = null, ?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function deleted(mixed $data, ?int $count = null, ?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function successButNoContentToShow(mixed $data, ?int $count = null, ?string $service_message = null): \Gemvc\Http\JsonResponse; // 204
+    public static function badRequest(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function unauthorized(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function forbidden(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function notFound(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function unprocessableEntity(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function internalError(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function conflict(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function notAcceptable(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function unsupportedMediaType(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function unknownError(mixed $data, ?string $service_message = null): \Gemvc\Http\JsonResponse;
+}
+
+interface JsonResponseReference
+{
+    public function show(): void;
+    public function showSwoole(object $swooleResponse): void;
+}
+
+interface ApiServiceReference
+{
+    public function __construct(\Gemvc\Http\Request $request);
+    /** @throws \Gemvc\Core\AuthException */
+    public function requireAuth(?array $roles = []): void;
+    /** @return \Gemvc\Core\ControllerTracingProxy */
+    public function callController(\Gemvc\Core\Controller $controller);
+    public function index(): \Gemvc\Http\JsonResponse;
+    public function validatePosts(array $post_schema): void;
+    public static function mockResponse(string $method): array;
+}
+
+interface SwooleApiServiceReference
+{
+    public function __construct(\Gemvc\Http\Request $request);
+    /** @throws \Gemvc\Core\AuthException */
+    public function requireAuth(?array $roles = []): void;
+    public function validatePosts(array $post_schema): ?\Gemvc\Http\JsonResponse;
+    public function validateStringPosts(array $post_string_schema): ?\Gemvc\Http\JsonResponse;
+    // No callController / magic $this->XController
+    public static function mockResponse(string $method): array;
+}
+
+interface ControllerReference
+{
+    public function __construct(\Gemvc\Http\Request $request);
+    public function createModel(object $model): object;
+    public function createList(object $model, ?string $columns = null): \Gemvc\Http\JsonResponse;
+    public function listJsonResponse(object $model, ?string $columns = null): \Gemvc\Http\JsonResponse;
 }
 
 /**
- * Table ORM Base Class
- * All table classes MUST extend \Gemvc\Database\Table
+ * Gemvc\Database\Table (+ CrudOperationsTrait, SoftDeleteOperationsTrait)
  */
-interface TableReference {
-    /**
-     * Start SELECT query
-     * 
-     * @param array<string>|null $columns Columns to select (null = all)
-     * @return self
-     */
-    public function select(?array $columns = null): self;
-    
-    /**
-     * Add WHERE clause
-     * 
-     * @param string $column Column name
-     * @param mixed $value Value to match
-     * @return self
-     */
+interface TableReference
+{
+    public function getTable(): string;
+    public function defineSchema(): array;
+
+    public function select(?string $columns = null): self;
     public function where(string $column, mixed $value): self;
-    
-    /**
-     * Add WHERE IN clause
-     * 
-     * @param string $column Column name
-     * @param array $values Values to match
-     * @return self
-     */
+    public function whereEqual(string $column, mixed $value): self;
+    public function whereLike(string $column, string $value): self;
     public function whereIn(string $column, array $values): self;
-
-    /**
-     * Add WHERE NOT IN clause (bound parameters)
-     *
-     * @param string $column Column name
-     * @param array<int|string|float|bool> $values Values to exclude
-     * @return self
-     */
     public function whereNotIn(string $column, array $values): self;
-    
-    /**
-     * Add WHERE LIKE clause
-     * 
-     * @param string $column Column name
-     * @param string $pattern LIKE pattern
-     * @return self
-     */
-    public function whereLike(string $column, string $pattern): self;
-    
-    /**
-     * Add WHERE OR clause
-     * 
-     * @param string $column Column name
-     * @param array $values Values to match (OR logic)
-     * @return self
-     */
-    public function whereOr(string $column, array $values): self;
-    
-    /**
-     * Add WHERE IS NULL clause
-     * 
-     * @param string $column Column name
-     * @return self
-     */
-    public function whereIsNull(string $column): self;
-    
-    /**
-     * Add WHERE IS NOT NULL clause
-     * 
-     * @param string $column Column name
-     * @return self
-     */
-    public function whereIsNotNull(string $column): self;
-    
-    /**
-     * Add JOIN clause
-     * 
-     * @param string $table Table to join
-     * @param string $condition Join condition
-     * @param string $type Join type (INNER, LEFT, RIGHT, etc.)
-     * @return self
-     */
+    public function whereOr(string $column, mixed $value): self;
     public function join(string $table, string $condition, string $type = 'INNER'): self;
-    
-    /**
-     * Add ORDER BY clause
-     * 
-     * @param string $column Column name
-     * @param string $direction ASC or DESC
-     * @return self
-     */
-    public function orderBy(string $column, string $direction = 'ASC'): self;
-    
-    /**
-     * Add LIMIT clause
-     * 
-     * @param int $limit Number of rows
-     * @return self
-     */
+    /** true = ASC; false or null = DESC; null column = primary key */
+    public function orderBy(?string $columnName = null, ?bool $ascending = null): self;
     public function limit(int $limit): self;
-    
-    /**
-     * Add OFFSET clause
-     * 
-     * @param int $offset Offset value
-     * @return self
-     */
-    public function offset(int $offset): self;
-    
-    /**
-     * Execute query and return results
-     * 
-     * @return array<static> Array of model objects
-     */
-    public function run(): array;
-    
-    /**
-     * Insert single record
-     * 
-     * @return bool Success
-     */
-    public function insertSingleQuery(): bool;
-    
-    /**
-     * Update single record
-     * 
-     * @return bool Success
-     */
-    public function updateSingleQuery(): bool;
-    
-    /**
-     * Delete by ID
-     * 
-     * @param int $id Record ID
-     * @return bool Success
-     */
-    public function deleteByIdQuery(int $id): bool;
-    
-    /**
-     * Get last error
-     * 
-     * @return string|null Error message
-     */
+    public function run(): ?array;
+
+    public function insertSingleQuery(): ?static;
+    public function updateSingleQuery(): ?static;
+    public function deleteByIdQuery(int|string $id): int|string|null;
+    public function deleteSingleQuery(): ?int;
+    public function safeDeleteQuery(): ?static;
+    public function restoreQuery(): ?static;
+    public function activateQuery(int|string $id): ?int;
+    public function deactivateQuery(int|string $id): ?int;
+
     public function getError(): ?string;
-    
-    /**
-     * Set error message
-     * 
-     * @param string|null $error Error message
-     * @return void
-     */
     public function setError(?string $error): void;
-    
-    /**
-     * Validate ID parameter
-     * 
-     * @param int $id ID to validate
-     * @param string $operation Operation name
-     * @return bool True if valid
-     */
-    public function validateId(int $id, string $operation = 'operation'): bool;
+    public function setRequest(?\Gemvc\Http\Request $request): void;
+}
+
+interface SchemaReference
+{
+    public static function primary(string|array $columns): object;
+    public static function autoIncrement(string $column): object;
+    public static function unique(string|array $columns): object;
+    public static function foreignKey(string $column, string $references): object;
+    public static function index(string|array $columns): object;
+    public static function check(string $expression): object;
+    /** MySQL; method name is fullText (camelCase T) */
+    public static function fullText(string|array $columns): object;
+}
+
+interface HelperReference
+{
+    public static function CryptHelper_hashPassword(string $password): string;
+    public static function CryptHelper_passwordVerify(string $passwordToCheck, string $hash): bool;
+    public static function CryptHelper_encryptString(string $string, string $key): false|string;
+    public static function CryptHelper_decryptString(string $encryptedString, string $key): false|string;
+    /** @param mixed $type */
+    public static function TypeChecker_check(mixed $type, mixed $value, array $options = []): bool;
 }
 
 /**
- * Schema Builder Methods
- * Use in defineSchema() method
+ * Schema type strings accepted by TypeChecker / define*Schema
  */
-interface SchemaReference {
-    /**
-     * Create primary key constraint
-     * 
-     * @param string|array<string> $columns Column name(s)
-     * @return object Schema object
-     */
-    public static function primary(string|array $columns);
-    
-    /**
-     * Create auto increment constraint
-     * 
-     * @param string $column Column name
-     * @return object Schema object
-     */
-    public static function autoIncrement(string $column);
-    
-    /**
-     * Create unique constraint
-     * 
-     * @param string|array<string> $columns Column name(s)
-     * @return object Schema object
-     */
-    public static function unique(string|array $columns);
-    
-    /**
-     * Create foreign key constraint
-     * 
-     * @param string $column Column name
-     * @param string $reference Reference (e.g., 'users.id')
-     * @return object Fluent builder object with ->onDeleteCascade(), ->onDeleteRestrict() methods
-     */
-    public static function foreignKey(string $column, string $reference);
-    
-    /**
-     * Create index
-     * 
-     * @param string|array<string> $columns Column name(s)
-     * @return object Schema object
-     */
-    public static function index(string|array $columns);
-    
-    /**
-     * Create check constraint
-     * 
-     * @param string $condition Check condition (e.g., 'age >= 18')
-     * @return object Schema object
-     */
-    public static function check(string $condition);
-    
-    /**
-     * Create fulltext index
-     * 
-     * @param string|array<string> $columns Column name(s)
-     * @return object Schema object
-     */
-    public static function fulltext(string|array $columns);
-}
-
-/**
- * Framework Rules for AI Assistants
- */
-interface FrameworkRules {
-    /**
-     * ALL table classes MUST extend \Gemvc\Database\Table
-     */
-    const TABLE_BASE_CLASS = 'Gemvc\\Database\\Table';
-    
-    /**
-     * ALL API services MUST extend \Gemvc\Core\ApiService
-     */
-    const API_BASE_CLASS = 'Gemvc\\Core\\ApiService';
-    
-    /**
-     * ALL controllers MUST extend \Gemvc\Core\Controller
-     */
-    const CONTROLLER_BASE_CLASS = 'Gemvc\\Core\\Controller';
-    
-    /**
-     * Properties starting with _ are IGNORED in CRUD operations
-     */
-    const AGGREGATION_PREFIX = '_';
-    
-    /**
-     * Use protected for sensitive data (hidden from SELECT)
-     */
-    const USE_PROTECTED_FOR_SENSITIVE = true;
-    
-    /**
-     * All inputs are pre-sanitized - NO manual sanitization
-     */
-    const SANITIZATION_AUTOMATIC = true;
-    
-    /**
-     * All queries use prepared statements - NO string concatenation
-     */
-    const SQL_INJECTION_PREVENTION = true;
-    
-    /**
-     * URL mapping is automatic - NO routes config needed
-     */
-    const AUTOMATIC_ROUTING = true;
-    
-    /**
-     * PHPStan Level 9 compliance required
-     */
-    const TYPE_SAFETY_REQUIRED = true;
-}
-
-/**
- * Validation Types Reference
- * Use in definePostSchema() and defineGetSchema()
- */
-interface ValidationTypes {
+interface ValidationTypes
+{
     const STRING = 'string';
-    const INTEGER = 'int';
+    const INT = 'int';
+    const INTEGER = 'integer';
     const FLOAT = 'float';
+    const NUMBER = 'number';
     const DECIMAL = 'decimal';
-    const BOOLEAN = 'bool';
+    const BOOL = 'bool';
+    const BOOLEAN = 'boolean';
     const ARRAY = 'array';
     const EMAIL = 'email';
     const URL = 'url';
     const DATE = 'date';
     const DATETIME = 'datetime';
     const JSON = 'json';
+    const JSONB = 'jsonb';
     const IP = 'ip';
     const IPV4 = 'ipv4';
     const IPV6 = 'ipv6';
-    
-    /**
-     * Optional field prefix
-     * Add ? before field name to make it optional
-     * 
-     * @example '?phone' => 'string'
-     */
+    const HEX = 'hex';
+    const UUID = 'uuid';
+    const SLUG = 'slug';
+    const POSITIVE_INT = 'positive_int';
+    const TIMESTAMP = 'timestamp';
     const OPTIONAL_PREFIX = '?';
 }
 
-/**
- * Common Helper Classes
- */
-interface HelperClasses {
-    /**
-     * Password hashing (Argon2i)
-     * 
-     * @param string $plainPassword Plain text password
-     * @return string Hashed password
-     */
-    public static function CryptHelper_hashPassword(string $plainPassword): string;
-    
-    /**
-     * Password verification
-     * 
-     * @param string $plain Plain text password
-     * @param string $hashed Hashed password
-     * @return bool True if valid
-     */
-    public static function CryptHelper_passwordVerify(string $plain, string $hashed): bool;
-    
-    /**
-     * File encryption (AES-256-CBC + HMAC)
-     * 
-     * @param string $data Data to encrypt
-     * @param string $secret Encryption key
-     * @return string Encrypted data
-     */
-    public static function CryptHelper_encrypt(string $data, string $secret): string;
-    
-    /**
-     * File decryption
-     * 
-     * @param string $encrypted Encrypted data
-     * @param string $secret Encryption key
-     * @return string Decrypted data
-     */
-    public static function CryptHelper_decrypt(string $encrypted, string $secret): string;
-    
-    /**
-     * Image validation and conversion
-     * 
-     * @param string $sourceFile Source image file
-     * @param int $quality Quality (1-100)
-     * @return bool True if valid image and converted successfully
-     */
-    public static function ImageHelper_convertToWebP(string $sourceFile, int $quality = 80): bool;
-    
-    /**
-     * Get memory usage metrics (cross-platform)
-     * 
-     * @return array<string, mixed> Memory usage information
-     */
-    public static function ServerMonitorHelper_getMemoryUsage(): array;
-    
-    /**
-     * Get CPU load average
-     * 
-     * @return array<string, float> Load average (1min, 5min, 15min)
-     */
-    public static function ServerMonitorHelper_getCpuLoad(): array;
-    
-    /**
-     * Get CPU core count
-     * 
-     * @return int Number of CPU cores
-     */
-    public static function ServerMonitorHelper_getCpuCores(): int;
-    
-    /**
-     * Get CPU usage percentage
-     * 
-     * @return float|null CPU usage percentage or null if unavailable
-     */
-    public static function ServerMonitorHelper_getCpuUsage(): ?float;
-    
-    /**
-     * Get network statistics for all interfaces
-     * 
-     * @return array<string, mixed> Network statistics
-     */
-    public static function NetworkHelper_getNetworkStats(): array;
-    
-    /**
-     * Get list of network interfaces
-     * 
-     * @return array<string> Interface names
-     */
-    public static function NetworkHelper_getNetworkInterfaces(): array;
-    
-    /**
-     * Get statistics for specific network interface
-     * 
-     * @param string $interface Interface name
-     * @return array<string, mixed> Interface statistics
-     */
-    public static function NetworkHelper_getInterfaceStats(string $interface): array;
-    
-    /**
-     * Check if APM is enabled and return provider name
-     * 
-     * @return string|null APM provider name if enabled, null otherwise
-     */
-    public static function ProjectHelper_isApmEnabled(): ?string;
-    
-    /**
-     * Create APM instance via factory
-     * 
-     * @param \Gemvc\Http\Request|null $request Request object
-     * @return \Gemvc\Core\Apm\ApmInterface|null APM instance or null
-     */
-    public static function ApmFactory_create(?\Gemvc\Http\Request $request): ?\Gemvc\Core\Apm\ApmInterface;
-    
-    /**
-     * Check if APM is enabled
-     * 
-     * @return bool True if APM is enabled
-     */
-    public static function ApmFactory_isEnabled(): bool;
+interface FrameworkRules
+{
+    const TABLE_BASE_CLASS = 'Gemvc\\Database\\Table';
+    const API_BASE_CLASS = 'Gemvc\\Core\\ApiService'; // or SwooleApiService on OpenSwoole
+    const CONTROLLER_BASE_CLASS = 'Gemvc\\Core\\Controller';
+    const AGGREGATION_PREFIX = '_';
+    const AUTOMATIC_ROUTING = true;
 }
 
 /**
- * CLI foundation (Composer package gemvc/cli-base, namespace Gemvc\CLI)
- *
  * @see vendor/gemvc/cli-base/AI-Assistant.md
- * @see CLI.md Framework commands in gemvc/library
  */
-interface CliBaseReference {
-    /**
-     * Colored terminal output — second argument MUST be CliColor enum (not strings).
-     *
-     * @param string $message Text to print
-     * @param \Gemvc\CLI\CliColor $color e.g. CliColor::Blue for prompts
-     */
-    public function Command_write(string $message, \Gemvc\CLI\CliColor $color): void;
-
-    /**
-     * All gemvc CLI commands implement execute().
-     *
-     * @return bool Success
-     */
+interface CliBaseReference
+{
     public function Command_execute(): bool;
+    public function Command_write(string $message, \Gemvc\CLI\CliColor $color): void;
 }
-

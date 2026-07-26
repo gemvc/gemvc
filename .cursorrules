@@ -40,7 +40,7 @@ URL: `/api/{Service}/{method}`. No routes files.
 ## Auth (5.9.1)
 
 ```php
-$this->requireAuth(['admin']); // throws AuthException → 401 (no token) or 403 (wrong role)
+$this->requireAuth(['admin']); // throws AuthException → 401 (no token) or 403 (invalid token / wrong role)
 // or per-method:
 if (!$this->request->auth(['admin'])) {
     return $this->request->returnResponse();

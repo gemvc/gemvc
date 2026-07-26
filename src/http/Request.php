@@ -169,8 +169,9 @@ class Request
      * Authenticate (JWT) and optionally authorize against roles.
      *
      * On failure sets `$this->response` and returns false:
-     * - no/invalid token → 401 Unauthorized
-     * - valid token, role not in `$authRules` → 403 Forbidden
+     * - no token / cannot extract Authorization header → **401** Unauthorized
+     * - token present but invalid (verify fails: bad signature, expired, …) → **403** Forbidden
+     * - valid token, role not in `$authRules` → **403** Forbidden
      *
      * Prefer `ApiService::requireAuth()` / `SwooleApiService::requireAuth()` to guard a whole service.
      *
@@ -222,6 +223,7 @@ class Request
         if($JWT->extractToken($this))
         {
             if (!$JWT->verify()) {
+                // Present but invalid token → 403 (distinct from 401 = missing/unextractable)
                 $this->error = $JWT->error;	
                 $this->response = Response::forbidden($this->error);
                 return false;
@@ -654,6 +656,32 @@ class Request
     }
 
     /**
+     * Returns a required POST string. Sets `$this->response` (400) and returns false on failure.
+     */
+    public function stringValuePost(string $key): string|false
+    {
+        if (!isset($this->post[$key]) || !TypeChecker::check('string', $this->post[$key])) {
+            return $this->setErrorResponse(["Post parameter '$key' is required and must be of type string"], 400);
+        }
+        /** @var string $value */
+        $value = $this->post[$key];
+        return $value;
+    }
+
+    /**
+     * Returns a required GET string. Sets `$this->response` (400) and returns false on failure.
+     */
+    public function stringValueGet(string $key): string|false
+    {
+        if (!is_array($this->get) || !isset($this->get[$key]) || !TypeChecker::check('string', $this->get[$key])) {
+            return $this->setErrorResponse(["Get parameter '$key' is required and must be of type string"], 400);
+        }
+        /** @var string $value */
+        $value = $this->get[$key];
+        return $value;
+    }
+
+    /**
      * Returns a validated decimal string (fixed precision). Validation via gemvc/helper TypeChecker.
      *
      * @param string $type Schema type, e.g. decimal or decimal:12,4
@@ -972,6 +1000,58 @@ class Request
             return null;
         }
         
+        return $object;
+    }
+
+    /**
+     * if $manualMap is null then map all patch to object
+     * if $manualMap is not null then map only the patch keys in $manualMap
+     * if success return object, if failed return null and set $this->error and $this->response
+     * @param object $object
+     * @param array<string>|null  $manualMap
+     * @return object|null
+     */
+    public function mapPatchToObject(object $object, ?array $manualMap = null): null|object
+    {
+        if (!is_array($this->patch) || count($this->patch) == 0) {
+            $this->setErrorResponse(["No patch data available"], 422);
+            return null;
+        }
+
+        if ($manualMap == null) {
+            return $this->_mapArrayToObject($this->patch, $object, 'patch');
+        }
+        $errors = [];
+
+        foreach ($manualMap as $keyName => $value) {
+            if (!isset($this->patch[$keyName])) {
+                $errors[] = "Manual map patch $keyName not found in request";
+            }
+            try {
+                if (str_ends_with($value, '()')) {
+                    $methodName = substr($value, 0, -2);
+                    if (method_exists($object, $methodName)) {
+                        $object->$methodName($this->patch[$keyName]);
+                    } else {
+                        $errors[] = "Method $value not found in " . get_class($object);
+                    }
+                } else {
+                    if (property_exists($object, $keyName)) {
+                        $object->$keyName = $this->patch[$keyName];
+                    } else {
+                        $errors[] = "Property $keyName not found in " . get_class($object);
+                    }
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error mapping patch $keyName: " . $e->getMessage();
+            }
+        }
+
+        if (!empty($errors)) {
+            $this->setErrorResponse($errors, 422);
+            return null;
+        }
+
         return $object;
     }
 

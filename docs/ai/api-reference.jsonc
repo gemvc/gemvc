@@ -1,18 +1,13 @@
 {
-  // This file provides GEMVC API reference for AI assistants
-  // Format: JSONC (JSON with Comments)
+  // GEMVC API reference for AI — signatures must match source code (docs follow code).
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
     "version": "5.9.1",
     "library_package": "gemvc/library",
-    "cli_base_package": "gemvc/cli-base",
-    "cli_dev_package": "gemvc/cli-dev",
-    "helper_package": "gemvc/helper",
-    "cli_base_doc": "vendor/gemvc/cli-base/AI-Assistant.md",
+    "ecosystem_doc": "docs/guides/ecosystem.md",
     "ai_docs": "docs/ai/INDEX.md",
     "target_platforms": ["OpenSwoole", "Apache", "Nginx"],
-    "platform_status": "All platforms fully supported and production-ready",
     "databases": ["mysql", "pgsql", "sqlite"],
     "architecture": {
       "layers": [
@@ -21,236 +16,220 @@
         { "name": "Model", "location": "app/model/", "purpose": "Data logic, validations" },
         { "name": "Table", "location": "app/table/", "purpose": "Database operations" }
       ]
-    },
-    "features": [
-      "Server-agnostic code",
-      "90% automatic security",
-      "PHPStan Level 9 compliance",
-      "requireAuth() service-wide auth guard",
-      "Multi-database migrations (MySQL, PostgreSQL, SQLite)",
-      "Decimal and extended schema types via gemvc/helper",
-      "Code generation CLI (gemvc/cli-dev require-dev)",
-      "Auto-generated API documentation"
-    ]
+    }
+  },
+  "packages": {
+    "gemvc/library": "Framework hub",
+    "gemvc/helper": "^1.1 TypeChecker, CryptHelper, …",
+    "gemvc/connection-contracts": "DB interfaces",
+    "gemvc/connection-pdo": "^1.1 Apache/Nginx/CLI",
+    "gemvc/connection-openswoole": "OpenSwoole pools",
+    "gemvc/apm-contracts": "ApmInterface / ApmFactory",
+    "gemvc/apm-tracekit": "Default TraceKit provider",
+    "gemvc/http-client": "Outbound HTTP",
+    "gemvc/cli-base": "^1.0.1 CLI foundation",
+    "gemvc/cli-dev": "require-dev: create:*, db:list|describe|…, admin:*"
   },
   "cli_base": {
     "package": "gemvc/cli-base",
-    "namespace": "Gemvc\\CLI\\",
-    "version_constraint": "^1.0.1",
     "documentation": "vendor/gemvc/cli-base/AI-Assistant.md",
-    "classes": {
-      "Command": {
-        "methods": {
-          "execute": "execute(): bool",
-          "write": "write(string $message, CliColor $color = CliColor::White): void",
-          "info": "info(string $message): void",
-          "success": "success(string $message, bool $shouldExit = true): void",
-          "error": "error(string $message): void",
-          "warning": "warning(string $message): void"
-        }
-      },
-      "CliColor": "enum — use CliColor::Blue, ::Green, ::Red, ::Yellow, ::White (not string names)",
-      "CliLine": "static box helpers — returns strings",
-      "CliBoxShow": "Gemvc\\CLI\\Commands\\CliBoxShow — displayBox(), displayInfoBox()",
-      "FileSystemManager": "directory/file/template operations for CLI",
-      "AbstractBaseGenerator": "Gemvc\\CLI\\Commands\\AbstractBaseGenerator — template path + replaceTemplateVariables",
-      "AbstractBaseCrudGenerator": "extends AbstractBaseGenerator — CRUD scaffolding"
-    },
     "rules": [
-      "cli-base must NOT require gemvc/library",
       "Custom commands extend Gemvc\\CLI\\Command",
-      "Use CliColor enum in write(), never 'green' or 'cyan' strings",
-      "Stock bin/gemvc dispatches Gemvc\\CLI\\Commands\\ and App\\CLI\\Commands\\ only"
+      "Use CliColor enum in write(), never string color names"
     ]
-  },
-  "phpstan": {
-    "library_repo": "composer phpstan (src/ only, phpstan.neon)",
-    "note": "phpstan-tests.neon removed from gemvc/library; test suite not analyzed by default"
   },
   "request_class": {
     "namespace": "Gemvc\\Http\\Request",
     "properties": {
-      "post": { "type": "array", "sanitized": true, "description": "POST data (pre-sanitized)" },
-      "get": { "type": "array", "sanitized": true, "description": "GET data (pre-sanitized)" },
-      "put": { "type": "array|null", "sanitized": true, "description": "PUT data" },
-      "patch": { "type": "array|null", "sanitized": true, "description": "PATCH data" },
-      "files": { "type": "array|null", "sanitized": true, "description": "File uploads" },
-      "cookies": { "type": "mixed", "description": "Filtered cookies" }
+      "post": { "type": "array" },
+      "get": { "type": "string|array" },
+      "put": { "type": "array|null" },
+      "patch": { "type": "array|null" },
+      "files": { "type": "array|null" },
+      "cookies": { "type": "mixed" },
+      "authorizationHeader": { "type": "null|string|array" },
+      "isAuthenticated": { "type": "bool" },
+      "isAuthorized": { "type": "bool" },
+      "apm": { "type": "ApmInterface|null" }
+    },
+    "auth_http_codes": {
+      "401": "No token / cannot extract Authorization",
+      "403": "Token present but invalid (verify failed), or valid token with wrong role"
     },
     "methods": {
-      "definePostSchema": {
-        "signature": "definePostSchema(array $schema): bool",
-        "description": "Validate POST request schema (prevents mass assignment)",
-        "example": "{ 'name': 'string', 'email': 'email', '?phone': 'string' }"
-      },
-      "defineGetSchema": {
-        "signature": "defineGetSchema(array $schema): bool",
-        "description": "Validate GET request schema"
-      },
-      "intValueGet": { "signature": "intValueGet(string $key): ?int" },
-      "stringValueGet": { "signature": "stringValueGet(string $key): ?string" },
-      "auth": {
-        "signature": "auth(?array $roles = null): bool",
-        "description": "JWT authentication/authorization check"
-      },
-      "mapPostToObject": {
-        "signature": "mapPostToObject(object $object, array $mapping = []): object|false",
-        "description": "Map POST data to model with optional method calls"
-      },
-      "returnResponse": { "signature": "returnResponse(): JsonResponse" }
+      "definePostSchema": { "signature": "definePostSchema(array $schema): bool" },
+      "defineGetSchema": { "signature": "defineGetSchema(array $schema): bool" },
+      "definePutSchema": { "signature": "definePutSchema(array $schema): bool" },
+      "definePatchSchema": { "signature": "definePatchSchema(array $schema): bool" },
+      "validateStringPosts": { "signature": "validateStringPosts(array $stringPosts): bool" },
+      "intValueGet": { "signature": "intValueGet(string $key): int|false" },
+      "intValuePost": { "signature": "intValuePost(string $key): int|false" },
+      "floatValueGet": { "signature": "floatValueGet(string $key): float|false" },
+      "floatValuePost": { "signature": "floatValuePost(string $key): float|false" },
+      "stringValueGet": { "signature": "stringValueGet(string $key): string|false" },
+      "stringValuePost": { "signature": "stringValuePost(string $key): string|false" },
+      "decimalValueGet": { "signature": "decimalValueGet(string $key, string $type = 'decimal'): string|false" },
+      "decimalValuePost": { "signature": "decimalValuePost(string $key, string $type = 'decimal'): string|false" },
+      "auth": { "signature": "auth(?array $authRules = null): bool" },
+      "returnResponse": { "signature": "returnResponse(): JsonResponse" },
+      "findable": { "signature": "findable(array $fields): bool", "description": "LIKE filters" },
+      "filterable": { "signature": "filterable(array $fields): bool", "description": "Exact filters" },
+      "sortable": { "signature": "sortable(array $fields): bool" },
+      "setPageNumber": { "signature": "setPageNumber(): bool" },
+      "setPerPage": { "signature": "setPerPage(): bool" },
+      "getPageNumber": { "signature": "getPageNumber(): int" },
+      "getPerPage": { "signature": "getPerPage(): int" },
+      "mapPostToObject": { "signature": "mapPostToObject(object $object, ?array $manualMap = null): object|null" },
+      "mapPutToObject": { "signature": "mapPutToObject(object $object, ?array $manualMap = null): object|null" },
+      "mapPatchToObject": { "signature": "mapPatchToObject(object $object, ?array $manualMap = null): object|null" }
     }
   },
   "response_factory": {
     "namespace": "Gemvc\\Http\\Response",
     "methods": {
-      "success": { "code": 200, "signature": "success($data, $count, $message): JsonResponse" },
-      "created": { "code": 201, "signature": "created($data, $count, $message): JsonResponse" },
-      "updated": { "code": 209, "signature": "updated($result, $count, $message): JsonResponse" },
-      "deleted": { "code": 210, "signature": "deleted($result, $count, $message): JsonResponse" },
-      "notFound": { "code": 404, "signature": "notFound(string $message): JsonResponse" },
-      "badRequest": { "code": 400, "signature": "badRequest(string $message): JsonResponse" },
-      "unprocessableEntity": { "code": 422, "signature": "unprocessableEntity(string $message): JsonResponse" },
-      "internalError": { "code": 500, "signature": "internalError(string $message): JsonResponse" },
-      "unauthorized": { "code": 401, "signature": "unauthorized(string $message): JsonResponse" },
-      "forbidden": { "code": 403, "signature": "forbidden(string $message): JsonResponse" }
+      "success": { "code": 200, "signature": "success(mixed $data, ?int $count = null, ?string $service_message = null): JsonResponse" },
+      "created": { "code": 201, "signature": "created(mixed $data, ?int $count = null, ?string $service_message = null): JsonResponse" },
+      "updated": { "code": 209, "signature": "updated(mixed $data, ?int $count = null, ?string $service_message = null): JsonResponse" },
+      "deleted": { "code": 210, "signature": "deleted(mixed $data, ?int $count = null, ?string $service_message = null): JsonResponse" },
+      "successButNoContentToShow": { "code": 204, "signature": "successButNoContentToShow(mixed $data, ?int $count = null, ?string $service_message = null): JsonResponse" },
+      "badRequest": { "code": 400, "signature": "badRequest(?string $service_message = null): JsonResponse" },
+      "unauthorized": { "code": 401, "signature": "unauthorized(?string $service_message = null): JsonResponse" },
+      "forbidden": { "code": 403, "signature": "forbidden(?string $service_message = null): JsonResponse" },
+      "notFound": { "code": 404, "signature": "notFound(?string $service_message = null): JsonResponse" },
+      "notAcceptable": { "code": 406, "signature": "notAcceptable(?string $service_message = null): JsonResponse" },
+      "conflict": { "code": 409, "signature": "conflict(?string $service_message = null): JsonResponse" },
+      "unsupportedMediaType": { "code": 415, "signature": "unsupportedMediaType(?string $service_message = null): JsonResponse" },
+      "unprocessableEntity": { "code": 422, "signature": "unprocessableEntity(?string $service_message = null): JsonResponse" },
+      "internalError": { "code": 500, "signature": "internalError(?string $service_message = null): JsonResponse" },
+      "unknownError": { "signature": "unknownError(mixed $data, ?string $service_message = null): JsonResponse" }
+    },
+    "json_response": {
+      "show": "show(): void",
+      "showSwoole": "showSwoole(object $swooleResponse): void"
+    }
+  },
+  "api_service": {
+    "ApiService": {
+      "requireAuth": "requireAuth(?array $roles = []): void  // throws AuthException",
+      "callController": "callController(Controller $c): ControllerTracingProxy",
+      "validatePosts": "validatePosts(array $schema): void",
+      "mockResponse": "mockResponse(string $method): array",
+      "magic_controllers": true
+    },
+    "SwooleApiService": {
+      "requireAuth": "requireAuth(?array $roles = []): void",
+      "validatePosts": "validatePosts(array $schema): ?JsonResponse",
+      "validateStringPosts": "validateStringPosts(array $schema): ?JsonResponse",
+      "callController": false,
+      "magic_controllers": false
+    }
+  },
+  "controller": {
+    "namespace": "Gemvc\\Core\\Controller",
+    "methods": {
+      "createModel": { "signature": "protected createModel(object $model): object" },
+      "createList": { "signature": "public createList(object $model, ?string $columns = null): JsonResponse" },
+      "listJsonResponse": { "signature": "public listJsonResponse(object $model, ?string $columns = null): JsonResponse" }
     }
   },
   "table_orm": {
     "namespace": "Gemvc\\Database\\Table",
-    "base_class": "All table classes MUST extend Table",
-    "required_methods": [
-      "getTable(): string",
-      "defineSchema(): array"
-    ],
-    "required_properties": [
-      { "name": "_type_map", "type": "array", "description": "Property-to-type mapping" }
-    ],
+    "required_methods": ["getTable(): string", "defineSchema(): array"],
+    "required_properties": [{ "name": "_type_map", "type": "array" }],
     "query_builder_methods": {
-      "select": { "signature": "select(?array $columns = null): self", "description": "Start SELECT query" },
-      "from": { "signature": "from(string $table): self" },
-      "where": { "signature": "where(string $column, mixed $value): self", "description": "WHERE clause (AND)" },
-      "whereIn": { "signature": "whereIn(string $column, array $values): self", "note": "Empty values array adds no clause" },
-      "whereNotIn": { "signature": "whereNotIn(string $column, array $values): self", "note": "Empty values array adds no clause" },
-      "whereLike": { "signature": "whereLike(string $column, string $pattern): self" },
-      "whereOr": { "signature": "whereOr(string $column, array $values): self", "description": "WHERE clause (OR)" },
+      "select": { "signature": "select(?string $columns = null): self" },
+      "where": { "signature": "where(string $column, mixed $value): self" },
+      "whereEqual": { "signature": "whereEqual(string $column, mixed $value): self" },
+      "whereIn": { "signature": "whereIn(string $column, array $values): self" },
+      "whereNotIn": { "signature": "whereNotIn(string $column, array $values): self" },
+      "whereLike": { "signature": "whereLike(string $column, string $value): self" },
+      "whereOr": { "signature": "whereOr(string $column, mixed $value): self" },
       "join": { "signature": "join(string $table, string $condition, string $type = 'INNER'): self" },
-      "orderBy": { "signature": "orderBy(string $column, string $direction = 'ASC'): self" },
+      "orderBy": { "signature": "orderBy(?string $columnName = null, ?bool $ascending = null): self", "note": "true=ASC; false/null=DESC; null column=PK" },
       "limit": { "signature": "limit(int $limit): self" },
-      "offset": { "signature": "offset(int $offset): self" },
-      "run": { "signature": "run(): array", "description": "Execute query and return results" }
+      "run": { "signature": "run(): ?array" }
     },
     "crud_methods": {
-      "insertSingleQuery": { "signature": "insertSingleQuery(): ?static", "description": "Insert single record, returns self with ID" },
-      "updateSingleQuery": { "signature": "updateSingleQuery(): ?static", "description": "Update single record, returns self" },
-      "deleteByIdQuery": { "signature": "deleteByIdQuery(int $id): ?int", "description": "Delete by ID, returns deleted ID" },
-      "selectById": { "signature": "selectById(int $id): null|static", "description": "Custom method pattern" }
-    }
+      "insertSingleQuery": { "signature": "insertSingleQuery(): ?static" },
+      "updateSingleQuery": { "signature": "updateSingleQuery(): ?static" },
+      "deleteByIdQuery": { "signature": "deleteByIdQuery(int|string $id): int|string|null" },
+      "deleteSingleQuery": { "signature": "deleteSingleQuery(): ?int" },
+      "safeDeleteQuery": { "signature": "safeDeleteQuery(): ?static", "requires": "deleted_at" },
+      "restoreQuery": { "signature": "restoreQuery(): ?static" },
+      "activateQuery": { "signature": "activateQuery(int|string $id): ?int" },
+      "deactivateQuery": { "signature": "deactivateQuery(int|string $id): ?int" },
+      "getError": { "signature": "getError(): ?string" },
+      "setError": { "signature": "setError(?string $error): void" }
+    },
+    "schema_helpers": ["primary", "autoIncrement", "unique", "foreignKey", "index", "check", "fullText"],
+    "note": "No Table::offset() or Table::from() — do not invent them"
   },
   "validation_types": {
-    "basic": ["string", "int", "float", "bool", "array"],
-    "advanced": ["email", "url", "date", "datetime", "json", "ip", "ipv4", "ipv6"],
+    "from_TypeChecker": [
+      "string", "int", "integer", "float", "number", "double", "bool", "boolean",
+      "array", "email", "url", "date", "datetime", "json", "jsonb",
+      "ip", "ipv4", "ipv6", "decimal", "decimal:P,S", "hex", "uuid", "slug",
+      "positive_int", "timestamp"
+    ],
     "optional": { "prefix": "?", "example": "?name" },
     "length_validation": {
       "method": "validateStringPosts",
-      "format": "field_name => 'min|max'",
-      "example": "{ 'name': '2|100', 'password': '8|128' }"
+      "format": "field => 'min|max'"
     }
-  },
-  "security": {
-    "automatic": [
-      "Path protection (blocks /app, /vendor, .env)",
-      "Header sanitization",
-      "Input sanitization (XSS prevention)",
-      "SQL injection prevention (prepared statements)",
-      "Cookie filtering"
-    ],
-    "developer_required": [
-      "Schema validation (definePostSchema)",
-      "Authentication (auth())",
-      "Authorization (auth(['role']))",
-      "Password hashing (CryptHelper)"
-    ]
-  },
-  "common_patterns": {
-    "create_operation": {
-      "api_layer": "Validate schema with definePostSchema()",
-      "controller_layer": "Map POST to model with mapPostToObject()",
-      "model_layer": "Business validation → Transform data → insertSingleQuery()",
-      "response": "Response::created()"
-    },
-    "read_operation": {
-      "api_layer": "Validate GET schema → Extract ID → Pass to controller",
-      "model_layer": "selectById() → Hide sensitive data → Response::success()"
-    },
-    "update_operation": {
-      "api_layer": "auth() → definePostSchema()",
-      "model_layer": "Verify exists → updateSingleQuery() → Response::updated()"
-    },
-    "list_operation": {
-      "api_layer": "Set findable() and sortable() fields",
-      "controller_layer": "createList(model) - auto pagination/filtering"
-    }
-  },
-  "property_rules": {
-    "database_columns": "Match property names to column names exactly",
-    "protected_properties": "Not returned in SELECT queries (use for passwords)",
-    "underscore_prefix": "Properties starting with _ are IGNORED in CRUD operations",
-    "nullable_types": "Use ? for optional fields: ?string, ?int",
-    "type_mapping": "Must define all properties in $_type_map"
   },
   "cli_commands": {
-    "project_management": {
-      "init": { "command": "gemvc init [--swoole|--apache]", "description": "Initialize project" }
+    "library": {
+      "init": "gemvc init [--swoole|--apache|--nginx] [--db=mysql|postgres|sqlite] [--non-interactive]",
+      "db:migrate": "gemvc db:migrate TableClass [--force] [--sync-schema]"
     },
-    "code_generation": {
-      "create:crud": "gemvc create:crud ServiceName",
+    "cli_dev_require_dev": {
+      "create:crud": "gemvc create:crud Name",
       "create:service": "gemvc create:service Name [-cmt]",
       "create:controller": "gemvc create:controller Name [-mt]",
       "create:model": "gemvc create:model Name [-t]",
-      "create:table": "gemvc create:table Name"
-    },
-    "database": {
+      "create:table": "gemvc create:table Name",
       "db:init": "gemvc db:init",
-      "db:migrate": "gemvc db:migrate TableClassName [--force]",
       "db:list": "gemvc db:list",
       "db:describe": "gemvc db:describe TableName",
-      "db:drop": "gemvc db:drop TableName"
+      "db:drop": "gemvc db:drop TableName",
+      "db:unique": "gemvc db:unique …",
+      "admin:setadmin": "gemvc admin:setadmin",
+      "admin:setpassword": "gemvc admin:setpassword"
     }
   },
   "helpers": {
+    "package": "gemvc/helper",
     "CryptHelper": {
-      "hashPassword": "hashPassword(string $plain): string // Argon2i",
-      "passwordVerify": "passwordVerify(string $plain, string $hashed): bool",
-      "encrypt": "encrypt(string $data, string $secret): string",
-      "decrypt": "decrypt(string $encrypted, string $secret): string"
+      "hashPassword": "hashPassword(string $password): string",
+      "passwordVerify": "passwordVerify(string $passwordToCheck, string $hash): bool",
+      "encryptString": "encryptString(string $string, string $key): false|string",
+      "decryptString": "decryptString(string $encryptedString, string $key): false|string"
+    },
+    "TypeChecker": {
+      "check": "check(mixed $type, mixed $value, array $options = []): bool"
     },
     "FileHelper": {
-      "encrypt": "encrypt(): ?string // AES-256-CBC",
-      "decrypt": "decrypt(): ?string"
+      "encrypt": "encrypt(): false|string",
+      "decrypt": "decrypt(): false|string"
     },
     "ImageHelper": {
-      "convertToWebP": "convertToWebP(int $quality): bool // Validates signature"
+      "convertToWebP": "convertToWebP(int $quality = 80): bool"
     }
   },
   "dont_create": {
-    "routes": "No routes config files (URL mapping is automatic)",
-    "sanitization": "No manual input sanitization (automatic)",
-    "raw_sql": "No string concatenation for SQL (use prepared statements)",
-    "autoloader": "No autoloader config (handled by framework)"
+    "routes": "No routes config files",
+    "sanitization": "No manual input sanitization",
+    "raw_sql": "No string-concat SQL",
+    "ghost_apis": "Do not invent methods not in source (e.g. Table::offset, CryptHelper::encrypt)"
   },
   "must_extend": {
-    "api_classes": "ApiService",
+    "api_classes": "ApiService or SwooleApiService",
     "controller_classes": "Controller",
-    "model_classes": "Table (or Table subclass)",
+    "model_classes": "Table subclass",
     "table_classes": "Table"
   },
   "url_structure": {
     "pattern": "/api/{ServiceName}/{MethodName}",
-    "examples": [
-      "/api/User/create",
-      "/api/User/read/?id=1",
-      "/api/Product/list/?sort_by=name"
-    ]
+    "examples": ["/api/User/create", "/api/User/read/?id=1", "/api/Product/list/?sort_by=name"]
   }
 }
-

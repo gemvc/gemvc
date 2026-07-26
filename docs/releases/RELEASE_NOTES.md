@@ -14,7 +14,8 @@
 
 - New `requireAuth()` on `ApiService`/`SwooleApiService` — call it **once**, typically as the first line of your service's constructor, to protect *every* method of that service. No more repeating `if(!$this->request->auth($roles)){ return $this->request->returnResponse(); }` in each method.
 - New `Gemvc\Core\AuthException`, thrown by `requireAuth()` on failure and caught centrally by `Bootstrap`/`SwooleBootstrap`, which convert it straight into the correct `401 Unauthorized` or `403 Forbidden` response.
-- Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`. `401` is now reserved for "not authenticated at all" (no/invalid token).
+- Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`.
+- Auth HTTP codes (as implemented): **401** = no token / cannot extract Authorization; **403** = token present but invalid (verify failed), or valid token with wrong role.
 - **Documentation Organisation**: all guides moved under [`docs/`](../README.md). AI assistants use a single path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`API_REFERENCE.md`](../ai/API_REFERENCE.md). Root `.cursorrules` is slim and points there. Old root `.md` paths are short redirect stubs.
 
 ---
@@ -52,7 +53,8 @@ public function requireAuth(?array $roles = []): void
 
 | Failure reason | HTTP code |
 |---|---|
-| No / invalid token | `401 Unauthorized` |
+| No token / cannot extract `Authorization` | `401 Unauthorized` |
+| Token present but invalid (bad signature, expired, …) | `403 Forbidden` |
 | Valid token, missing required role | `403 Forbidden` |
 
 Under OpenSwoole, this is handled without `die()`/uncaught exceptions — `SwooleBootstrap` catches `AuthException` (both around service construction and around the method call) and returns the correct response without disturbing the persistent worker process.
