@@ -101,7 +101,17 @@ Thrown by `requireAuth()`. Response codes come from `Request::auth()`:
 public function __construct(Request $request)
 protected function createModel(object $model): object   // wires Request for DB APM
 public function createList(object $model, ?string $columns = null): JsonResponse
+public function listJsonResponse(object $model, ?string $columns = null): JsonResponse
+protected function addError(string $message, int $httpCode = 400): void
+public function getErrors(): array
+public function hasErrors(): bool
+public function clearErrors(): void
 ```
+
+List GET params (API allowlists first): `find_like`, `filter_by`, `sort_by`, `sort_by_asc`, `page_number`.  
+Guide: [controller.md](../guides/controller.md).
+
+App Models are **not** a separate framework class — they extend your Table (`UserModel extends UserTable`) and hold business logic. Guide: [model.md](../guides/model.md).
 
 ---
 
@@ -131,9 +141,13 @@ restoreQuery(): ?static
 
 getError(): ?string
 setError(?string $error): void
+
+setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|uuid; uuid auto-generates
 ```
 
 **Schema helpers:** `Schema::primary`, `autoIncrement`, `unique`, `index`, `foreignKey`, `check`, `fullText` (MySQL).
+
+**Primary keys:** DDL via `Schema::primary`; runtime via `setPrimaryKey` — see [database.md](../guides/database.md#primary-keys-ddl--runtime).
 
 **Dialects:** `DialectResolver::resolve(PDO)` → Mysql / Postgres / Sqlite for migrations.
 

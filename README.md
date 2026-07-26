@@ -56,7 +56,13 @@ Map of the framework internals and how a request moves through GEMVC. Covers the
 End-to-end “from empty folder to first API call”. Prerequisites (PHP 8.2+, Composer, MySQL/Postgres/SQLite, optional Docker/OpenSwoole/Redis); `composer require gemvc/library`; interactive and non-interactive `gemvc init` (server type, **database driver**, PHPStan, Docker); what files/folders init creates; `.env` database configuration per driver; **Option A** Docker Compose start vs **Option B** bare-metal OpenSwoole/Apache/Nginx; optional `db:init` / `db:migrate` for the sample User; generating a Product service with `create:crud` (needs `cli-dev`); verification checklist; troubleshooting (port 9501, DB connection, class not found, permissions); Docker command reference; server-specific notes for Swoole/Apache/Nginx; next-steps links into the rest of the docs.
 
 #### [docs/guides/database.md](docs/guides/database.md)
-How to write and migrate Table-layer classes. Rules: every table extends `Table`; required `getTable()`, `defineSchema()`, and `$_type_map`; full type-map vocabulary (`int`, `string`, `bool`, `float`, **`decimal` / `decimal:p,s`**, dates, etc.); Schema helpers with examples — `primary`, `autoIncrement`, `unique`, `foreignKey` (+ onDelete/onUpdate), `index`, `check`, `fullText` (MySQL); property rules (`public` vs `protected` vs `_` aggregation, nullable `?types`); complete `UserTable` example; best practices; migration workflow (`gemvc db:migrate`); PHP↔SQL type mapping table; **multi-DB** notes (MySQL/Postgres/SQLite dialects, SQLite ALTER limits, no FULLTEXT on PG/SQLite); **soft delete** via `safeDeleteQuery()` / `restoreQuery()`. Use this before creating any new table or changing columns.
+Table how-to: what Table abstracts (pooling/mapping); skeleton; types/schema/PKs; CRUD; soft delete; **SQL views as tables** for complex SELECTs; multi-DB; connection stack under the hood.
+
+#### [docs/guides/controller.md](docs/guides/controller.md)
+Controller orchestration: 4-layer role; **`callController` vs Swoole `new`**; CRUD mapping; **`createModel()`**; **`createList`** and list query params (`find_like`, `filter_by`, `sort_by`, `page_number`); protected columns; errors; CLI templates; Do/Don’t.
+
+#### [docs/guides/model.md](docs/guides/model.md)
+Model layer (where **business logic** lives): `XModel extends XTable`; simple CLI CRUD vs domain Models; return **`JsonResponse` or PHP types** (Controller builds response in the latter style); aggregations; views; APM; Do/Don’t.
 
 #### [docs/guides/http-lifecycle.md](docs/guides/http-lifecycle.md)
 How HTTP arrives as a unified `Gemvc\Http\Request` and leaves as `JsonResponse`, without changing `app/` code when switching servers. Server-agnostic architecture diagram; step-by-step **Apache/Nginx** and **OpenSwoole** lifecycles; deep dive into `ApacheRequest` and `SwooleRequest` adapters (what they sanitize, cookies, body parsing); structure of the unified Request object (`post`/`get`/`put`/`patch`/`files`, auth flags, pagination helpers); Response abstraction (`show()` vs `showSwoole()`); complete flow diagrams; automatic XSS/input sanitization examples; application-level examples that stay identical across servers. Use this to understand adapters and Request/Response — not JWT details (see security) or Table ORM (see database).
@@ -76,13 +82,10 @@ Built-in HTML API docs at `/api/index/document` (and Postman export). How `ApiDo
 #### [docs/guides/templates.md](docs/guides/templates.md)
 Customizing what `gemvc create:*` / `create:crud` emit. How `gemvc init` copies templates to `{project}/templates/cli/`; editing `service.template`, `controller.template`, `model.template`, `table.template`; template variables (`{{ServiceName}}`, etc.) and replacement rules; lookup order (project templates override vendor); customization examples (comments, structure, helper methods); best practices (version-control templates, test after edit); advanced custom variables; troubleshooting “template not found” / unreplaced placeholders. Requires **`gemvc/cli-dev`** for the create commands that consume these templates.
 
-### Ops, design & history
+### Ops & history
 
 #### [docs/ops/mysql-production.md](docs/ops/mysql-production.md)
 Why `gemvc init` MySQL Docker settings are **dev-only**, and what DevOps must change for production: InnoDB flush durability, binary logging, auth plugins/passwords, buffer/pool sizing; full example config for ~8GB RAM; pre-go-live checklist and monitoring metrics; notes on managed DB / HA alternatives. Not needed for local SQLite or default init demos.
-
-#### [docs/design/primary-key.md](docs/design/primary-key.md)
-Design/ADR document for flexible primary keys (`int` default, `string`, `uuid` with auto-generate, future composite keys). Proposed config API, implementation sketches, usage examples, migration/compatibility guarantees. Read if extending the ORM PK system — **not** a tutorial for everyday `Schema::primary('id')` tables.
 
 #### [docs/releases/RELEASE_NOTES.md](docs/releases/RELEASE_NOTES.md)
 Long-form release narratives: what shipped, why, migration notes, code samples (e.g. 5.9.0 multi-DB/decimal/cli-dev, 5.9.1 `requireAuth` + docs reorg). Prefer this when you need context; use CHANGELOG for a short bullet scan.

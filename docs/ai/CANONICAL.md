@@ -31,7 +31,7 @@ Apps install **`composer require gemvc/library`**; most packages arrive as depen
 ```
 API (app/api/)           → schema validation, auth, thin
 Controller (app/controller/) → orchestration, map request → model
-Model (app/model/)       → business rules, transforms
+Model (app/model/)       → business rules, transforms, domain ops; may return `JsonResponse` **or** PHP types (Controller then builds response) — [guides/model.md](../guides/model.md)
 Table (app/table/)       → DB only (extends Table)
 ```
 
@@ -159,6 +159,8 @@ Response::internalError($msg);                // 500
 
 ## Full CRUD pattern (with APM hooks)
 
+Model method details: [guides/model.md](../guides/model.md).
+
 ```php
 // API
 public function create(): JsonResponse {
@@ -201,6 +203,8 @@ public function selectByEmail(string $email): null|static {
 }
 ```
 
+**Style note:** Models may return PHP types instead of `JsonResponse`; then Controller maps to `Response::*`. See [guides/model.md — Return style](../guides/model.md#return-style-jsonresponse-vs-php-types).
+
 List:
 
 ```php
@@ -210,14 +214,18 @@ $this->request->sortable(['id', 'name', 'created_at']);
 return $this->callController(new UserController($this->request))->list();
 
 // Controller
-return $this->createList($this->createModel(new UserModel()));
+return $this->createList($this->createModel(new UserModel()), 'id,name,email,created_at');
 ```
+
+Full list params / `createList` vs columns: [guides/controller.md](../guides/controller.md).
 
 Magic controller access (ApiService only): `$this->UserController->create()` (same as `callController`).
 
 ---
 
 ## Table / database
+
+Extend `Table`. **You do not manage pooling, PDO, or row hydration** — Table + `connection-pdo` / `connection-openswoole` (via `DatabaseManagerFactory`) do that. Same Table code on Apache, Nginx, and OpenSwoole. Details: [database.md](../guides/database.md).
 
 ```php
 class UserTable extends Table {
@@ -258,6 +266,8 @@ $this->updateSingleQuery();
 $this->deleteByIdQuery($id);  // int|string id → returns id or null
 ```
 
+**Primary key (runtime):** default `id` (int). For UUID/string columns call `$this->setPrimaryKey('uuid', 'uuid')` after `parent::__construct()` and match `Schema::primary(...)`. See [database.md — Primary keys](../guides/database.md#primary-keys-ddl--runtime).
+
 **Soft delete** (when table has `deleted_at` / soft-delete columns):
 
 ```php
@@ -265,8 +275,10 @@ $this->safeDeleteQuery();  // soft delete
 $this->restoreQuery();     // restore
 ```
 
-**Multi-DB** (`DB_DRIVER=mysql|pgsql|sqlite`): dialects auto-selected for `db:migrate`.  
+**Multi-DB** (`DB_DRIVER=mysql|pgsql|sqlite`): DSN from connection packages; dialects auto-selected for `db:migrate`.  
 Limitations: SQLite cannot ALTER column type/null/default without rebuild; no FULLTEXT on Postgres/SQLite.
+
+**Complex reads:** prefer a **SQL VIEW** + Table class on the view (`getTable()` = view name) instead of JOINs in PHP — [database.md — SQL views](../guides/database.md#sql-views-as-tables-recommended).
 
 ---
 

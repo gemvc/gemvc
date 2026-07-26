@@ -17,7 +17,9 @@ Optional machine/IDE mirrors (same content, not required):
 | Task | Open |
 |------|------|
 | **All gemvc/* packages (ecosystem)** | [../guides/ecosystem.md](../guides/ecosystem.md) |
-| Migrations / Table / dialects | [../guides/database.md](../guides/database.md) |
+| Migrations / Table / **connections** | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)) |
+| **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
+| **Model** business / data logic (JsonResponse **or** PHP types) | [../guides/model.md](../guides/model.md) |
 | `gemvc init` / `db:migrate` / cli-dev | [../guides/cli.md](../guides/cli.md) |
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |

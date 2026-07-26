@@ -1,41 +1,67 @@
-# 🗄️ GEMVC Database Layer Documentation
+# GEMVC Database Layer — `Table`
 
-Complete guide to GEMVC's Table layer - the foundation of all database operations.
+**Audience:** developers writing `app/table` · AI assistants generating Table/Model code.
 
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Core Requirements](#core-requirements)
-- [TypeMap (`$_type_map`)](#typemap-_type_map)
-- [Schema Definition (`defineSchema()`)](#schema-definition-defineschema)
-- [Required Methods](#required-methods)
-- [Property Mapping](#property-mapping)
-- [Schema Constraints](#schema-constraints)
-- [Examples](#examples)
-- [Best Practices](#best-practices)
+**Related:** [ecosystem.md](ecosystem.md) · [cli.md](cli.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
-## 🎯 Overview
+## What `Table` does for you
 
-The **Table Layer** is GEMVC's Data Access Layer (DAL). All table classes **MUST extend** the `Table` class and implement two critical components:
+Extend `Gemvc\Database\Table`. You declare **columns as properties**, a **`$_type_map`**, and **`defineSchema()`**. Then you query and save.
 
-1. **`$_type_map`** - Maps properties to database column types
-2. **`defineSchema()`** - Defines database constraints (indexes, unique, foreign keys, etc.)
+You do **not** need to implement or worry about:
 
-> **Multi-database support**: `TableGenerator` and `SchemaGenerator` generate correct DDL for **MySQL**, **PostgreSQL**, and **SQLite** via a SQL dialect abstraction (`Gemvc\Database\Dialect\SqlDialectInterface`, auto-selected from your `.env`'s `DB_DRIVER`). Your `Table` classes need **no changes** — the same `$_type_map`/`defineSchema()` works unmodified against all three engines. Known limitation: SQLite cannot `ALTER` an existing column's type/nullability/default or drop a primary key without a full table rebuild (`db:migrate` skips those specific operations with a clear warning); PostgreSQL/SQLite have no `FULLTEXT INDEX` equivalent in this pass.
+| Concern | Handled by |
+|---------|------------|
+| Opening / closing DB connections | Connection packages via `DatabaseManagerFactory` |
+| Connection **pooling** (OpenSwoole) or persistent PDO (Apache/Nginx) | `connection-openswoole` / `connection-pdo` — automatic by server |
+| get/release around every query | `UniversalQueryExecuter` |
+| Mapping object properties ↔ rows (cast, insert/update fields) | `Table` + `$_type_map` |
+| Prepared statements / SQL injection safety | Query builder + executer |
+| MySQL vs Postgres vs SQLite DDL differences | `DialectResolver` on migrate |
+| Which PDO vs pool implementation to use | Runtime detection — same Table code everywhere |
 
-> **Decimal / money**: map columns as `'price' => 'decimal'` or `'decimal:12,4'` in `$_type_map` and declare `public string $price` (never `float`). Request getters: `decimalValuePost` / `decimalValueGet`.
+**Your job:** model the table (or **view**), migrate base tables, call fluent queries / CRUD.  
+**Not your job:** invent pools, `new PDO()`, manual hydration, server-specific connection code, or giant JOINs in PHP — use [SQL views as tables](#sql-views-as-tables-recommended) for complex reads.
 
-> **Soft delete**: when using soft-delete columns, call `$table->safeDeleteQuery()` and `$table->restoreQuery()` (`SoftDeleteOperationsTrait`) instead of hard `deleteByIdQuery`.
+Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-stack).
 
 ---
 
-## ⚠️ Core Requirements
+## Reading map
 
-### 1. **All Table Classes Must Extend `Table`**
+| Goal | Section |
+|------|---------|
+| Understand the abstraction | [What `Table` does for you](#what-table-does-for-you) |
+| Copy a working class | [Minimal table](#minimal-table) |
+| Columns & visibility | [Properties](#properties) |
+| Types / decimal / money | [Type map](#type-map-_type_map) |
+| Indexes, FK, unique | [Schema](#schema-defineschema) |
+| UUID / string PK | [Primary keys](#primary-keys-ddl--runtime) |
+| select / insert / update / delete | [Queries & CRUD](#queries--crud) |
+| Soft delete | [Soft delete](#soft-delete) |
+| Complex joins → SQL views | [SQL views as tables](#sql-views-as-tables-recommended) |
+| Drivers & `db:migrate` | [Multi-DB & migrate](#multi-db--migrate) |
+| Connection packages (advanced) | [Under the hood](#under-the-hood-connection-stack) |
+| Mistakes | [Do / Don’t](#do--dont) |
+
+---
+
+## Hard rules (AI)
+
+1. Extend `Table`. Implement `getTable()`, `defineSchema()`, `$_type_map`.
+2. Property names = column names. `protected` = secret columns; `_prefix` = not in DB.
+3. Money → `public string` + `$_type_map` `decimal` — never `float`.
+4. Use Table query builder / CRUD — **never** `new PDO` or custom pools in `app/`.
+5. Soft delete with `deleted_at` → `safeDeleteQuery()` / `restoreQuery()`.
+6. Non-`id` PK → `setPrimaryKey(...)` after `parent::__construct()`; match `Schema::primary`.
+7. Same Table class on Apache, Nginx, and OpenSwoole — do not fork connection logic.
+8. Prefer **SQL views + a Table class on the view** over complex JOINs in PHP ([SQL views as tables](#sql-views-as-tables-recommended)).
+
+---
+
+## Minimal table
 
 ```php
 <?php
@@ -44,65 +70,14 @@ namespace App\Table;
 use Gemvc\Database\Table;
 use Gemvc\Database\Schema;
 
-class UserTable extends Table  // ✅ MUST extend Table
-{
-    // Your implementation
-}
-```
-
-### 2. **Required Methods**
-
-Every table class **MUST** implement:
-
-- `getTable(): string` - Returns database table name
-- `defineSchema(): array` - Returns schema constraints array
-- `$_type_map` - Property type mapping array
-
----
-
-## 📊 TypeMap (`$_type_map`)
-
-### Purpose
-
-The `$_type_map` array maps your class properties to database column types. It's used by:
-- `TableGenerator` - For creating/updating database tables
-- Query execution - For proper type casting
-
-### Structure
-
-```php
-protected array $_type_map = [
-    'property_name' => 'php_type',
-    // ...
-];
-```
-
-### Available Types
-
-| PHP Type | SQL Mapping | Description |
-|----------|-------------|-------------|
-| `int` | `INT(11)` | Integer (auto PRIMARY KEY if property is `id`) |
-| `float` | `DOUBLE` | Floating point number |
-| `bool` | `TINYINT(1)` | Boolean (0/1) |
-| `string` | `VARCHAR(255)` | String (VARCHAR(320) for `email` properties) |
-| `array` | `JSON` | Array stored as JSON |
-| `datetime` | `DATETIME` | Date and time |
-
-### Example
-
-```php
 class UserTable extends Table
 {
     public int $id;
     public string $name;
     public string $email;
     public ?string $description;
-    protected string $password;
-    
-    /**
-     * Type mapping for database operations
-     * Maps each property to its PHP type
-     */
+    protected string $password; // stored, hidden from SELECT
+
     protected array $_type_map = [
         'id' => 'int',
         'name' => 'string',
@@ -110,581 +85,396 @@ class UserTable extends Table
         'description' => 'string',
         'password' => 'string',
     ];
-}
-```
 
-### Important Notes
-
-- ✅ **Include ALL properties** that map to database columns
-- ✅ **Match property names exactly** (case-sensitive)
-- ✅ **Use PHP types** (`int`, `string`, `bool`, etc.)
-- ✅ **Include protected properties** that are stored in database
-- ❌ **Don't include** properties starting with `_` (aggregation properties)
-
----
-
-## 🏗️ Schema Definition (`defineSchema()`)
-
-### Purpose
-
-The `defineSchema()` method defines database constraints and relationships. It's used by:
-- `TableGenerator` - For creating indexes, unique constraints, foreign keys
-- `SchemaGenerator` - For managing database schema
-
-### Method Signature
-
-```php
-public function defineSchema(): array
-{
-    return [
-        // Schema constraints
-    ];
-}
-```
-
-### Available Schema Methods
-
-#### 1. **Primary Key**
-
-```php
-Schema::primary('id')                    // Single column
-Schema::primary(['id', 'tenant_id'])     // Composite primary key
-```
-
-#### 2. **Auto Increment**
-
-```php
-Schema::autoIncrement('id')
-```
-
-#### 3. **Unique Constraints**
-
-```php
-Schema::unique('email')                          // Single column
-Schema::unique(['username', 'email'])             // Composite unique
-Schema::unique('email')->name('unique_email')     // Named constraint
-```
-
-#### 4. **Foreign Keys**
-
-```php
-// Basic foreign key
-Schema::foreignKey('user_id', 'users.id')
-
-// With cascade delete
-Schema::foreignKey('parent_id', 'users.id')->onDeleteCascade()
-
-// With restrict delete
-Schema::foreignKey('role_id', 'roles.id')->onDeleteRestrict()
-
-// With set null delete
-Schema::foreignKey('category_id', 'categories.id')->onDeleteSetNull()
-```
-
-#### 5. **Indexes**
-
-```php
-Schema::index('email')                                 // Single column
-Schema::index(['name', 'is_active'])                   // Composite index
-Schema::index('created_at')->name('idx_created')       // Named index
-Schema::index('created_at')->timestamp()               // Mark as timestamp index (for metadata)
-Schema::index('created_at')->name('idx_created')->timestamp()  // Named timestamp index
-```
-
-**Note:** The `timestamp()` method marks an index as being for a timestamp column. This is useful for documentation and metadata purposes, helping identify indexes that are specifically for date/time columns like `created_at`, `updated_at`, etc.
-
-#### 6. **Check Constraints**
-
-```php
-Schema::check('age >= 18')->name('valid_age')
-Schema::check('salary > 0')
-```
-
-#### 7. **Fulltext Search**
-
-```php
-Schema::fullText(['name', 'description'])
-```
-
-### Complete Example
-
-```php
-public function defineSchema(): array
-{
-    return [
-        // Primary key with auto increment
-        Schema::primary('id'),
-        Schema::autoIncrement('id'),
-        
-        // Unique constraints
-        Schema::unique('email'),                        // Single column unique
-        Schema::unique(['username', 'email']),          // Composite unique
-        
-        // Foreign keys with different actions
-        Schema::foreignKey('role_id', 'roles.id')->onDeleteRestrict(),
-        Schema::foreignKey('parent_id', 'users.id')->onDeleteCascade(),
-        Schema::foreignKey('category_id', 'categories.id')->onDeleteSetNull(),
-        
-        // Indexes for performance
-        Schema::index('email'),                         // Single column index
-        Schema::index(['name', 'is_active']),          // Composite index
-        Schema::index('created_at')->name('idx_created'),  // Named index
-        Schema::index('updated_at')->name('idx_updated')->timestamp(),  // Named timestamp index
-        
-        // Check constraints for data validation
-        Schema::check('age >= 18')->name('valid_age'),
-        Schema::check('salary > 0'),
-        
-        // Full-text search
-        Schema::fullText(['name', 'description'])
-    ];
-}
-```
-
----
-
-## 🔧 Required Methods
-
-### `getTable(): string`
-
-**Purpose**: Returns the database table name.
-
-**Required**: ✅ Yes - Must be implemented
-
-**Example**:
-```php
-public function getTable(): string
-{
-    return 'users';  // Database table name
-}
-```
-
----
-
-### `defineSchema(): array`
-
-**Purpose**: Returns array of schema constraints.
-
-**Required**: ✅ Yes - Should return array (can be empty)
-
-**Example**:
-```php
-public function defineSchema(): array
-{
-    return [
-        Schema::index('email'),
-        Schema::unique('email'),
-    ];
-}
-```
-
----
-
-## 🗺️ Property Mapping
-
-### Database Column Mapping
-
-Properties in your table class **must match** database column names:
-
-```php
-class UserTable extends Table
-{
-    // Property name = Database column name
-    public int $id;           // Maps to: `id` column
-    public string $name;      // Maps to: `name` column
-    public string $email;    // Maps to: `email` column
-}
-```
-
-### Property Visibility
-
-| Visibility | Database | SELECT Queries | INSERT/UPDATE |
-|------------|----------|----------------|---------------|
-| `public` | ✅ Included | ✅ Returned | ✅ Included |
-| `protected` | ✅ Included | ❌ Not returned | ✅ Included |
-| `private` | ✅ Included | ❌ Not returned | ✅ Included |
-| `_property` | ❌ Ignored | ❌ Ignored | ❌ Ignored |
-
-**Use Cases**:
-- **`public`** - Normal database columns returned in queries
-- **`protected`** - Database columns NOT returned in SELECT (e.g., `password`)
-- **`_property`** - Aggregation/composition properties (not in database)
-
-### Nullable Properties
-
-Use `?` prefix for nullable columns:
-
-```php
-public ?string $description;  // NULL allowed
-public string $name;          // NOT NULL
-```
-
----
-
-## 📚 Complete Example
-
-### UserTable.php
-
-```php
-<?php
-namespace App\Table;
-
-use Gemvc\Database\Table;
-use Gemvc\Database\Schema;
-
-/**
- * User table class for handling User database operations
- */
-class UserTable extends Table
-{
-    // Database columns (properties match column names)
-    public int $id;
-    public string $name;
-    public string $email;
-    public ?string $description;
-    protected string $password;  // Protected = not returned in SELECT
-    
-    /**
-     * Type mapping for properties to database columns
-     * Used by TableGenerator for schema generation
-     */
-    protected array $_type_map = [
-        'id' => 'int',
-        'name' => 'string',
-        'email' => 'string',
-        'description' => 'string',
-        'password' => 'string',
-    ];
-    
-    public function __construct()
-    {
-        parent::__construct();
-        $this->description = null;
-    }
-    
-    /**
-     * Return database table name
-     * REQUIRED METHOD
-     */
     public function getTable(): string
     {
         return 'users';
     }
-    
-    /**
-     * Define database schema constraints
-     * REQUIRED METHOD
-     */
+
     public function defineSchema(): array
     {
         return [
-            // Primary key with auto increment
             Schema::primary('id'),
             Schema::autoIncrement('id'),
-            
-            // Unique constraint on email
             Schema::unique('email'),
-            
-            // Indexes for performance
-            Schema::index('email'),
-            Schema::index('description'),
-            Schema::index('created_at')->name('idx_created')->timestamp(),  // Named timestamp index
+            Schema::index('name'),
         ];
     }
-    
-    /**
-     * Custom query method - Get user by ID
-     */
-    public function selectById(int $id): null|static
-    {
-        $result = $this->select()->where('id', $id)->limit(1)->run();
-        return $result[0] ?? null;
-    }
-    
-    /**
-     * Custom query method - Get user by email
-     */
+
     public function selectByEmail(string $email): null|static
     {
-        $arr = $this->select()->where('email', $email)->limit(1)->run();
-        return $arr[0] ?? null;
-    }
-    
-    /**
-     * Custom query method - Search by name
-     */
-    public function selectByName(string $name): null|array
-    {
-        return $this->select()->whereLike('name', $name)->run();
+        $rows = $this->select()->whereEqual('email', $email)->limit(1)->run();
+        return $rows[0] ?? null;
     }
 }
 ```
-
----
-
-## 🎯 Schema Constraints Reference
-
-### Primary Key
-
-```php
-// Single column primary key
-Schema::primary('id')
-
-// Composite primary key
-Schema::primary(['id', 'tenant_id'])
-```
-
-### Auto Increment
-
-```php
-Schema::autoIncrement('id')
-```
-
-### Unique Constraints
-
-```php
-// Single column
-Schema::unique('email')
-
-// Composite unique
-Schema::unique(['username', 'email'])
-
-// Named constraint
-Schema::unique('email')->name('unique_user_email')
-```
-
-### Foreign Keys
-
-```php
-// Basic
-Schema::foreignKey('user_id', 'users.id')
-
-// Cascade delete (delete children when parent deleted)
-Schema::foreignKey('parent_id', 'users.id')->onDeleteCascade()
-
-// Restrict delete (prevent delete if children exist)
-Schema::foreignKey('role_id', 'roles.id')->onDeleteRestrict()
-
-// Set null on delete
-Schema::foreignKey('category_id', 'categories.id')->onDeleteSetNull()
-```
-
-### Indexes
-
-```php
-// Single column index
-Schema::index('email')
-
-// Composite index
-Schema::index(['name', 'is_active'])
-
-// Named index
-Schema::index('created_at')->name('idx_created_at')
-
-// Timestamp index (for documentation/metadata)
-Schema::index('created_at')->timestamp()
-
-// Named timestamp index
-Schema::index('created_at')->name('idx_created')->timestamp()
-```
-
-### Check Constraints
-
-```php
-// Age validation
-Schema::check('age >= 18')->name('valid_age')
-
-// Salary validation
-Schema::check('salary > 0')
-
-// Status validation
-Schema::check("status IN ('active', 'inactive', 'pending')")
-```
-
-### Fulltext Search
-
-```php
-// Single column
-Schema::fullText('description')
-
-// Multiple columns
-Schema::fullText(['name', 'description'])
-```
-
----
-
-## 💡 Best Practices
-
-### 1. Always Extend Table
-
-```php
-// ✅ CORRECT
-class UserTable extends Table { }
-
-// ❌ WRONG
-class UserTable { }
-```
-
-### 2. Implement Required Methods
-
-```php
-// ✅ REQUIRED
-public function getTable(): string { return 'users'; }
-public function defineSchema(): array { return []; }
-protected array $_type_map = [];
-```
-
-### 3. Match Property Names to Columns
-
-```php
-// ✅ CORRECT - Property matches column name
-public string $email;  // Maps to `email` column
-
-// ❌ WRONG - Property doesn't match column
-public string $userEmail;  // Should be: $email
-```
-
-### 4. Include All Properties in TypeMap
-
-```php
-// ✅ CORRECT - All properties included
-protected array $_type_map = [
-    'id' => 'int',
-    'name' => 'string',
-    'email' => 'string',
-];
-
-// ❌ WRONG - Missing properties
-protected array $_type_map = [
-    'id' => 'int',
-    // Missing 'name' and 'email'
-];
-```
-
-### 5. Use Protected for Sensitive Data
-
-```php
-// ✅ CORRECT - Password not returned in SELECT
-protected string $password;
-
-// ❌ WRONG - Password exposed in queries
-public string $password;
-```
-
-### 6. Define Schema for Performance
-
-```php
-// ✅ CORRECT - Indexes defined
-public function defineSchema(): array
-{
-    return [
-        Schema::index('email'),
-        Schema::unique('email'),
-    ];
-}
-
-// ❌ WRONG - No indexes (slow queries)
-public function defineSchema(): array
-{
-    return [];  // Empty - no optimization
-}
-```
-
-### 7. Use Nullable Types for Optional Columns
-
-```php
-// ✅ CORRECT - Description can be NULL
-public ?string $description;
-
-// ❌ WRONG - Forces NOT NULL constraint
-public string $description;
-```
-
----
-
-## 🔄 Migration Workflow
-
-### 1. Create Table Class
 
 ```bash
-gemvc create:table Product
+gemvc db:migrate UserTable          # library CLI
+# optional: --force  --sync-schema
+# codegen: gemvc create:table Product   # needs gemvc/cli-dev
 ```
 
-### 2. Define Properties & TypeMap
+Set `DB_*` in `.env` once. Pooling and driver selection stay invisible to this class.
+
+---
+
+## Properties
+
+| Kind | In DB? | In SELECT? | In INSERT/UPDATE? |
+|------|--------|------------|-------------------|
+| `public` | yes | yes | yes |
+| `protected` / `private` | yes | no | yes |
+| `_foo` | **no** | no | no |
 
 ```php
-class ProductTable extends Table
-{
-    public int $id;
-    public string $name;
-    public float $price;
-    
-    protected array $_type_map = [
-        'id' => 'int',
-        'name' => 'string',
-        'price' => 'float',
-    ];
-}
+public string $email;
+protected string $password;
+public ?Profile $_profile;    // aggregation — ignored by CRUD/migrate
+public ?string $description;  // nullable column
 ```
 
-### 3. Implement Required Methods
+---
+
+## Type map (`$_type_map`)
+
+Tells migrate + casting how each **column** property maps. Do not list `_` aggregations.
 
 ```php
-public function getTable(): string
-{
-    return 'products';
-}
+protected array $_type_map = [
+    'id' => 'int',
+    'price' => 'decimal',     // or 'decimal:12,4'
+    'meta' => 'json',
+];
+```
 
+| Type | Typical SQL | Notes |
+|------|-------------|--------|
+| `int` | INT | Default PK when property is `id` |
+| `string` | VARCHAR | `*email` names often get longer VARCHAR |
+| `bool` | TINYINT(1) | |
+| `float` | DOUBLE | **Not for money** |
+| `decimal` / `decimal:P,S` | DECIMAL | Pair with `public string $…` |
+| `array` / `json` / `jsonb` | JSON / JSONB | |
+| `datetime` / `date` | DATETIME / DATE | |
+| `uuid` | dialect-specific | Often + `setPrimaryKey(..., 'uuid')` |
+
+Nullable: `?string` / `?int` on the property; still list the base type in `$_type_map`.  
+HTTP: `Request::decimalValuePost` / `decimalValueGet`.
+
+---
+
+## Schema (`defineSchema`)
+
+Constraints for **`gemvc db:migrate`**. Empty `[]` is allowed; real apps should declare indexes/uniques.
+
+```php
 public function defineSchema(): array
 {
     return [
         Schema::primary('id'),
         Schema::autoIncrement('id'),
-        Schema::index('name'),
+        Schema::unique('email'),
+        Schema::unique(['tenant_id', 'slug']),
+        Schema::foreignKey('user_id', 'users.id')->onDeleteCascade(),
+        Schema::foreignKey('role_id', 'roles.id')->onDeleteRestrict(),
+        Schema::foreignKey('category_id', 'categories.id')->onDeleteSetNull(),
+        Schema::index('email'),
+        Schema::index(['name', 'is_active']),
+        Schema::index('created_at')->name('idx_created')->timestamp(),
+        Schema::check('age >= 18')->name('valid_age'),
+        Schema::fullText(['name', 'description']), // MySQL
     ];
 }
 ```
 
-### 4. Migrate to Database
+| Helper | Purpose |
+|--------|---------|
+| `primary` | PK DDL (single or composite) |
+| `autoIncrement` | Int auto-increment |
+| `unique` | Unique; optional `->name()` |
+| `foreignKey` | FK + `onDeleteCascade` / `Restrict` / `SetNull` |
+| `index` | Index; optional `->name()` / `->timestamp()` |
+| `check` | Check constraint |
+| `fullText` | MySQL fulltext (limited/absent on PG/SQLite) |
 
-```bash
-gemvc db:migrate ProductTable
+---
+
+## Primary keys (DDL + runtime)
+
+| Concern | API |
+|---------|-----|
+| Migrate constraint | `Schema::primary(...)` |
+| ORM identity (CRUD / soft delete / default order) | `setPrimaryKey($column, $type)` |
+
+**Default:** `public int $id` → no `setPrimaryKey()` needed.
+
+```php
+public function setPrimaryKey(string $column = 'id', string $type = 'int'): self
 ```
 
+| `$type` | Behavior |
+|---------|----------|
+| `int` | Integer PK (+ usually `autoIncrement`) |
+| `string` | You set the value before insert |
+| `uuid` | Auto-generated when empty |
+
+Call after `parent::__construct()`. Align `$_type_map` and `Schema::primary` with the same column.
+
+```php
+class ProductTable extends Table
+{
+    public string $uuid;
+    public string $name;
+
+    protected array $_type_map = [
+        'uuid' => 'string',
+        'name' => 'string',
+    ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setPrimaryKey('uuid', 'uuid');
+    }
+
+    public function getTable(): string { return 'products'; }
+
+    public function defineSchema(): array
+    {
+        return [Schema::primary('uuid')];
+    }
+}
+```
+
+- **Composite DDL:** `Schema::primary(['user_id', 'role_id'])` — yes for migrate.  
+- **Composite runtime ORM:** not yet — `setPrimaryKey` is single-column only.
+
 ---
 
-## 📖 TypeMap Reference
+## Queries & CRUD
 
-### PHP to SQL Type Mapping
+You write fluent queries; Table handles binding, execution, and result mapping into table objects.
 
-| PHP Type | SQL Type | Notes |
-|----------|----------|-------|
-| `int` | `INT(11)` | Auto PRIMARY KEY if property is `id` |
-| `float` | `DOUBLE` | Floating point number |
-| `bool` | `TINYINT(1)` | Boolean (0/1) |
-| `string` | `VARCHAR(255)` | String |
-| `string` (email) | `VARCHAR(320)` | If property name ends with `email` |
-| `array` | `JSON` | Array stored as JSON |
-| `datetime` | `DATETIME` | Date and time |
-| `?string` | `VARCHAR(255) NULL` | Nullable string |
-| `?int` | `INT(11) NULL` | Nullable integer |
+```php
+$rows = $this->select('id,name')
+    ->whereEqual('id', $id)
+    ->whereLike('name', '%x%')
+    ->whereIn('status', ['active', 'pending'])
+    ->whereNotIn('role', ['banned'])
+    ->orderBy('name', true)   // true = ASC; false|null = DESC
+    ->limit(10)
+    ->run();                  // ?array of static
+```
+
+Also: `where`, `whereOr`, `join($table, $condition, $type = 'INNER')`.
+
+| Method | Returns | Notes |
+|--------|---------|--------|
+| `insertSingleQuery()` | `?static` | Insert current object |
+| `updateSingleQuery()` | `?static` | Update by PK |
+| `deleteByIdQuery($id)` | `int\|string\|null` | Hard delete |
+| `deleteSingleQuery()` | `?int` | Delete current row |
+| `getError()` / `setError(?string)` | | Last error |
+
+```php
+$this->name = 'Ada';
+$this->insertSingleQuery();
+if ($this->getError()) { /* handle */ }
+```
+
+No `Table::offset()` / `Table::from()`. List pagination → Controller `createList()`.
 
 ---
 
-## 🎓 Summary
+## Soft delete
 
-**Key Points**:
+Needs `deleted_at` (optional `is_active`). Built into `Table`.
 
-1. ✅ **All table classes MUST extend `Table`**
-2. ✅ **Two critical components**:
-   - `$_type_map` - Property type mapping
-   - `defineSchema()` - Database constraints
-3. ✅ **Required methods**:
-   - `getTable(): string` - Table name
-   - `defineSchema(): array` - Schema constraints
-4. ✅ **Properties match database columns** (exact names)
-5. ✅ **Use `protected` for sensitive data** (not returned in SELECT)
-6. ✅ **Use `_` prefix for aggregation** (ignored in CRUD operations)
+```php
+$table->safeDeleteQuery();
+$table->restoreQuery();
+```
 
-**Result**: Clean, type-safe database operations with automatic schema management! 🚀
+Prefer over hard `deleteByIdQuery` when soft delete is required.  
+Also: `activateQuery($id)`, `deactivateQuery($id)`.
 
+---
+
+## SQL views as tables (recommended)
+
+GEMVC is built for **microservice-style** data access: keep each service’s queries simple. For reports, dashboards, or denormalized reads that would need heavy JOINs in PHP:
+
+1. Create a **SQL VIEW** in the database (joins, aggregates, filters live in SQL).
+2. Create a **`Table` subclass** whose properties match the **view columns**.
+3. Point `getTable()` at the **view name** (same as a physical table from GEMVC’s point of view).
+4. Use the normal fluent `select` / `whereEqual` / `orderBy` / `limit` / `run()` API — complex SELECT becomes easy.
+
+**Why**
+
+- Avoids sprawling JOINs and N+1 patterns in application code  
+- Lets the database optimizer own the heavy query  
+- Keeps PHP typed, filterable, and list-friendly (`createList`, `findable`, …)  
+- View definition can change without rewriting PHP JOIN trees  
+
+**Read-oriented:** treat view Tables as **SELECT-first**. Do not rely on `insertSingleQuery` / `updateSingleQuery` / `deleteByIdQuery` against a view unless your engine supports updatable views and you know the rules. Writes stay on the underlying base tables.
+
+### Example
+
+```sql
+-- Run once in the DB (migration SQL / DBA script — not gemvc db:migrate on a view class)
+CREATE VIEW user_order_summary AS
+SELECT
+    u.id          AS user_id,
+    u.name        AS user_name,
+    u.email       AS email,
+    COUNT(o.id)   AS order_count,
+    COALESCE(SUM(o.total), 0) AS order_total
+FROM users u
+LEFT JOIN orders o ON o.user_id = u.id
+GROUP BY u.id, u.name, u.email;
+```
+
+```php
+<?php
+namespace App\Table;
+
+use Gemvc\Database\Table;
+
+/**
+ * Read model over view `user_order_summary`.
+ * Properties = view output columns (exact names).
+ */
+class UserOrderSummaryTable extends Table
+{
+    public int $user_id;
+    public string $user_name;
+    public string $email;
+    public int $order_count;
+    public string $order_total; // decimal → string
+
+    protected array $_type_map = [
+        'user_id' => 'int',
+        'user_name' => 'string',
+        'email' => 'string',
+        'order_count' => 'int',
+        'order_total' => 'decimal',
+    ];
+
+    public function getTable(): string
+    {
+        return 'user_order_summary'; // view name
+    }
+
+    public function defineSchema(): array
+    {
+        // Views are not created by db:migrate — return empty (or omit unused helpers)
+        return [];
+    }
+
+    public function selectByEmail(string $email): null|static
+    {
+        $rows = $this->select()
+            ->whereEqual('email', $email)
+            ->limit(1)
+            ->run();
+        return $rows[0] ?? null;
+    }
+}
+```
+
+```php
+// Complex reporting SELECT — still a simple Table query
+$summaries = (new UserOrderSummaryTable())
+    ->select()
+    ->whereEqual('order_count', 0)      // or use findable from Request in a list endpoint
+    ->orderBy('order_total', false)     // DESC
+    ->limit(50)
+    ->run();
+```
+
+**AI rule:** Prefer a view + Table for multi-table reads inside one service. Do **not** invent Eloquent-style `hasMany` / magic joins. Across services, call HTTP APIs instead of joining foreign databases.
+
+---
+
+## Multi-DB & migrate
+
+One Table class works for **MySQL / PostgreSQL / SQLite**. Set `DB_DRIVER=mysql|pgsql|sqlite`; connection packages build the DSN; migrate uses the matching dialect.
+
+```bash
+gemvc init --db=mysql|postgres|sqlite   # writes .env (Postgres → DB_DRIVER=pgsql)
+gemvc db:migrate UserTable [--force] [--sync-schema]
+```
+
+| Limit | Detail |
+|-------|--------|
+| SQLite | No ALTER type/null/default / drop PK without rebuild — migrate warns and skips |
+| FULLTEXT | MySQL; not equivalent on PG/SQLite here |
+
+Pooling vs simple PDO is still automatic per server — see below.
+
+---
+
+## Under the hood (connection stack)
+
+Read this when debugging connections or documenting the ecosystem. **App Table authors can skip it.**
+
+```
+Table / Model
+  → TableComponents\ConnectionManager   (PdoQuery helper — not the contracts manager)
+    → PdoQuery
+      → UniversalQueryExecuter
+        → DatabaseManagerFactory::getManager()
+          → PdoConnection (connection-pdo)  OR  SwooleConnection (connection-openswoole)
+            → adapter → PDO
+```
+
+| Package | Role |
+|---------|------|
+| `gemvc/connection-contracts` | `ConnectionManagerInterface`, `ConnectionInterface` |
+| `gemvc/connection-pdo` | Apache/Nginx/CLI — PDO cache / optional persistent (**not** Hyperf pool) |
+| `gemvc/connection-openswoole` | OpenSwoole — true pool (get + release) |
+
+| Axis | Who decides |
+|------|-------------|
+| PDO vs pool | Webserver (`WebserverDetector` → swoole / apache / nginx) |
+| mysql / pgsql / sqlite | `DB_DRIVER` |
+
+**`.env` you set:** `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`. Optional pool / persistent / `APP_ENV_SERVER` hints.
+
+**Name trap:** `TableComponents\ConnectionManager` ≠ `ConnectionManagerInterface` / `PdoConnection`.  
+Do not `new PdoConnection()` from `app/`. Package READMEs live under `vendor/gemvc/connection-*/`. Catalog: [ecosystem.md](ecosystem.md).
+
+---
+
+## Do / Don’t
+
+**Do**
+
+- Extend `Table` and let it own connections, pooling, and row mapping
+- Complete `$_type_map`; match property names to columns
+- Use `decimal` + string for money; `protected` for secrets; `_` for relations
+- Query via fluent API; check `getError()` after writes
+- Configure `DB_*` once
+- Use **SQL views + view Table classes** for complex multi-table SELECTs
+
+**Don’t**
+
+- Reimplement pooling, PDO, or hydration in `app/`
+- Use `float` for currency or skip `$_type_map`
+- Invent Eloquent-style relations or string-concat SQL / giant JOINs in PHP
+- Assume `create:table` without `gemvc/cli-dev`
+- Fork Table code per webserver
+- Run `db:migrate` expecting it to create views — manage view DDL in SQL separately
+
+---
+
+## Checklist
+
+1. `.env` has `DB_*` (pooling chosen automatically)
+2. Class `extends Table`
+3. Properties + visibility correct
+4. `$_type_map` complete
+5. `getTable()` + `defineSchema()`
+6. PK default or `setPrimaryKey` + `Schema::primary`
+7. `gemvc db:migrate YourTable`

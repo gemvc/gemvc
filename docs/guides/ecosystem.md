@@ -72,6 +72,18 @@ When validating HTTP input, types come from **helper**, not from inventing Larav
 
 ### Database connections
 
+Table ORM **requires** these packages (pulled in by `gemvc/library`). Without them, `DatabaseManagerFactory` cannot supply connections and the Table layer cannot run queries.
+
+#### Call path
+
+```
+Table → PdoQuery → UniversalQueryExecuter → DatabaseManagerFactory
+  → connection-pdo (Apache/Nginx/CLI)  OR  connection-openswoole (pools)
+  ← both implement connection-contracts
+```
+
+See the full stack in [database.md — Under the hood](database.md#under-the-hood-connection-stack).
+
 #### `gemvc/connection-contracts`
 
 | | |
@@ -84,20 +96,26 @@ When validating HTTP input, types come from **helper**, not from inventing Larav
 
 | | |
 |--|--|
-| **Role** | **PDO** connection manager for Apache/Nginx (and CLI). Builds DSN from `DB_DRIVER` / `DB_*` env — **MySQL, PostgreSQL, SQLite** |
-| **Key pieces** | Manager + adapter implementing the contracts |
+| **Role** | **PDO** connection manager for Apache/Nginx (and CLI). Builds DSN from `DB_DRIVER` / `DB_*` — **MySQL, PostgreSQL, SQLite** |
+| **Pooling** | Simple cache / optional persistent connections — **not** a Hyperf-style pool |
+| **Key pieces** | `PdoConnection` (manager) + `PdoConnectionAdapter` |
 | **Docs** | `vendor/gemvc/connection-pdo/README.md`, `CHANGELOG.md` |
 
 #### `gemvc/connection-openswoole` (^1.1+)
 
 | | |
 |--|--|
-| **Role** | **True connection pooling** for OpenSwoole (Hyperf pool under the hood), not simple PDO-per-request |
-| **Drivers** | MySQL (primary), **PostgreSQL** supported; implements same contracts |
-| **When used** | OpenSwoole runtime — library’s `DatabaseManagerFactory` selects this vs PDO by environment |
+| **Role** | **True connection pooling** for OpenSwoole (Hyperf pool), get + release per operation |
+| **Drivers** | MySQL (primary), **PostgreSQL** supported; same contracts |
+| **When used** | `WebserverDetector` → `swoole` and class exists; else factory falls back to PDO |
 | **Docs** | `vendor/gemvc/connection-openswoole/README.md`, `RELEASE_NOTES.md` |
 
-**AI rule:** Do not hardcode “always PDO” or “always MySQL”. Runtime + `DB_DRIVER` choose the driver; contracts keep app code stable.
+**AI rules:**
+
+- Do not hardcode “always PDO” or “always MySQL”. **Runtime** chooses PDO vs OpenSwoole; **`DB_DRIVER`** chooses SQL engine.
+- Do not `new PDO` / invent pools in `app/` — use Table/Model only.
+- Do not confuse `TableComponents\ConnectionManager` with `ConnectionManagerInterface`.
+- Deep how-to: [database.md](database.md#under-the-hood-connection-stack).
 
 ---
 
