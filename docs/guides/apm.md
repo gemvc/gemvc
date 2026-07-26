@@ -1,20 +1,22 @@
 # GEMVC APM Integration Guide
 
-**Audience:** enabling / debugging APM (TraceKit and others).
+**Audience:** enabling / debugging APM via **`gemvc/apm-contracts`** (any provider). TraceKit is one implementation.
 
-**Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md) · `vendor/gemvc/apm-contracts/README.md`
 
 ## Reading map (AI)
 
 | Need | Jump to |
 |------|---------|
-| Env flags | [Environment Configuration](#environment-configuration) |
+| Env flags (contracts `APM_*`) | [Environment Configuration](#environment-configuration) |
+| Provider example (TraceKit) | [TraceKit provider (example)](#tracekit-provider-example) |
 | Root / controller / DB spans | [Automatic Tracing](#automatic-tracing) |
 | Apache `callController` vs Swoole | [Controller Operation Tracing](#2-controller-operation-tracing) |
 | `createModel` / Request wire | [Best Practices](#best-practices) |
+| New provider | [Custom APM Provider](#custom-apm-provider) |
 | Missing traces | [Troubleshooting](#troubleshooting) |
 
-**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
+**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Framework talks to **`ApmFactory` / `ApmInterface`** (`gemvc/apm-contracts`) — never hardcode TraceKit in app code. Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
 
 ## Table of Contents
 
@@ -30,21 +32,23 @@
 
 ## Overview
 
-GEMVC framework provides **automatic Application Performance Monitoring (APM)** integration that captures the full request lifecycle without requiring code changes. The APM system is designed to be:
+GEMVC provides **automatic Application Performance Monitoring** through **`gemvc/apm-contracts`** (required by `gemvc/library`). The library never depends on a specific vendor SDK in app code — Bootstrap / `callController` / DB tracing talk to **`ApmFactory`** → **`ApmInterface`**.
 
-- **Zero-Configuration**: Works automatically once APM provider is installed
-- **Environment-Controlled**: Enable/disable tracing via environment variables
-- **Non-Blocking**: Traces are sent asynchronously after HTTP response
-- **Framework-Agnostic**: Works with any APM provider (TraceKit, Datadog, New Relic, etc.)
+Providers (TraceKit, Datadog, …) are **separate Composer packages** that implement the contracts. Switch providers with `APM_NAME` + install the matching package — no changes to `app/`.
+
+- **Contracts-first**: `ApmInterface`, `AbstractApm`, `ApmFactory`, toolkit contracts — see `vendor/gemvc/apm-contracts/README.md`
+- **Environment-controlled**: unified `APM_*` flags; providers may add their own env keys
+- **Non-blocking**: traces are sent after the HTTP response where possible
+- **Pluggable**: any provider that follows the naming/autoload convention works
 
 ### Key Features
 
-✅ **Automatic Root Trace**: Captures full request lifecycle from Bootstrap  
-✅ **Controller Tracing**: Automatic spans for controller operations (optional)  
-✅ **Database Query Tracing**: Automatic spans for all SQL queries (optional)  
-✅ **Exception Tracking**: Automatic exception recording in traces  
-✅ **Trace Context Propagation**: All spans share the same traceId  
-✅ **Fire-and-Forget**: Non-blocking trace sending (no performance impact)
+- **Automatic Root Trace**: Captures full request lifecycle from Bootstrap  
+- **Controller Tracing**: Optional spans for controller operations (`APM_TRACE_CONTROLLER`)  
+- **Database Query Tracing**: Optional spans for SQL (`APM_TRACE_DB_QUERY`)  
+- **Exception Tracking**: Automatic exception recording in traces  
+- **Trace Context Propagation**: All spans share the same `traceId` via `$request->apm`  
+- **Fire-and-Forget**: Non-blocking send where the provider supports it
 
 ## Architecture
 
@@ -88,76 +92,95 @@ Table → $request->apm (via setRequest())
 UniversalQueryExecuter → $request->apm (same traceId)
 ```
 
+### APM stack (contracts + providers)
+
+```
+app / library (Bootstrap, ApiService, Controller, UniversalQueryExecuter)
+        │  uses ApmFactory::create() — does not import TraceKit types
+        ▼
+gemvc/apm-contracts   ← always required with library
+  ApmInterface · AbstractApm · ApmFactory · toolkit contracts
+        │  APM_NAME=YourProvider → Gemvc\Core\Apm\Providers\YourProvider\YourProvider
+        ▼
+gemvc/apm-tracekit (example) | Datadog | New Relic | … (your package)
+```
+
+Same pattern as DB connections: **contracts** + **swappable implementations**. New vendors implement contracts; they do **not** fork `library`.
+
 ### APM Provider Support
 
-GEMVC uses the `gemvc/apm-contracts` package which provides a universal abstraction layer. Any APM provider that implements `ApmInterface` will work:
+Any package that implements `ApmInterface` (typically extends `AbstractApm`) and is autoloadable under `Gemvc\Core\Apm\Providers\{Name}\{Name}` works when `APM_NAME={Name}`:
 
-- **TraceKit** (`gemvc/apm-tracekit`)
-- **Datadog** (custom provider)
-- **New Relic** (custom provider)
-- **Elastic APM** (custom provider)
-- **OpenTelemetry** (custom provider)
+- **TraceKit** — `gemvc/apm-tracekit` (ships with library today; one provider among many)
+- Datadog / New Relic / Elastic / OpenTelemetry — custom packages following the same contracts
+
+Deep provider authoring: `vendor/gemvc/apm-contracts/README.md`.
 
 ## Environment Configuration
 
-### Required Configuration
+Config is **contracts-first**. Unified `APM_*` variables are read by `AbstractApm` / `ApmFactory` in **`gemvc/apm-contracts`**. Provider packages may add their own keys (e.g. TraceKit’s `TRACEKIT_*`) and often also accept the unified names as fallbacks.
+
+### Required (any provider)
 
 ```env
-# Enable APM provider (required)
+# Select provider class via ApmFactory (must match installed package)
 APM_NAME=TraceKit
-
-# APM provider-specific configuration
-TRACEKIT_API_KEY=your-api-key
-TRACEKIT_API_URL=https://api.tracekit.io
 ```
 
-### Optional Configuration
+Without `APM_NAME`, APM stays off. Install the matching package (e.g. `gemvc/apm-tracekit` for TraceKit).
+
+### Unified flags (`gemvc/apm-contracts` / `AbstractApm`)
 
 ```env
-# Sample rate: 0.0 to 1.0 (default: 1.0 = 100%)
-# Examples: 1.0 = 100% (all requests), 0.05 = 5%, 0.1 = 10%
-# NOTE: Errors are ALWAYS logged regardless of sample rate
-TRACEKIT_SAMPLE_RATE=1.0
+APM_ENABLED=true
+APM_SAMPLE_RATE=1.0
+APM_TRACE_RESPONSE=false
+APM_TRACE_REQUEST_BODY=false
 
-# Service name (default: 'gemvc-app')
-TRACEKIT_SERVICE_NAME=my-service
-
-# Enable/disable tracing (default: true)
-TRACEKIT_ENABLED=true
-
-# Include response data in traces (default: false)
-TRACEKIT_TRACE_RESPONSE=false
-
-# Include request body in traces (default: false)
-TRACEKIT_TRACE_REQUEST_BODY=false
-```
-
-### Optional Tracing Flags
-
-```env
-# Enable controller operation tracing (default: disabled)
+# Library feature flags (any provider)
 APM_TRACE_CONTROLLER=1
-
-# Enable database query tracing (default: disabled)
 APM_TRACE_DB_QUERY=1
 ```
 
-**Performance Note**: Use `1` (no quotes) instead of `"true"` for faster string comparison. Both formats are supported.
-
-### Environment Variable Values
-
 | Variable | Values | Default | Description |
 |----------|--------|---------|-------------|
-| `APM_NAME` | `TraceKit`, `Datadog`, etc. | `null` (disabled) | APM provider name |
-| `TRACEKIT_API_KEY` | String | `null` (required) | TraceKit API key |
-| `TRACEKIT_API_URL` | URL string | `https://app.tracekit.dev/v1/traces` | TraceKit endpoint |
-| `TRACEKIT_SAMPLE_RATE` | `0.0` to `1.0` | `1.0` (100%) | Sample rate (0.0 = 0%, 1.0 = 100%) |
-| `TRACEKIT_SERVICE_NAME` | String | `gemvc-app` | Service name for traces |
-| `TRACEKIT_ENABLED` | `true`, `1`, `false`, `0` | `true` | Enable/disable tracing |
-| `TRACEKIT_TRACE_RESPONSE` | `true`, `1`, `false`, `0` | `false` | Include response data in traces |
-| `TRACEKIT_TRACE_REQUEST_BODY` | `true`, `1`, `false`, `0` | `false` | Include request body in traces |
-| `APM_TRACE_CONTROLLER` | `1`, `true`, or not set | `disabled` | Enable controller tracing |
-| `APM_TRACE_DB_QUERY` | `1`, `true`, or not set | `disabled` | Enable database query tracing |
+| `APM_NAME` | Provider short name (`TraceKit`, `Datadog`, …) | unset (disabled) | Selects `Providers\{Name}\{Name}` via `ApmFactory` |
+| `APM_ENABLED` | `true`, `1`, `false`, `0` | `true` | Master enable when `APM_NAME` is set |
+| `APM_SAMPLE_RATE` | `0.0`–`1.0` | `1.0` | Fraction of requests to sample (errors still recorded) |
+| `APM_TRACE_RESPONSE` | `true`/`1`/`false`/`0` | `false` | Include response payload attrs when supported |
+| `APM_TRACE_REQUEST_BODY` | `true`/`1`/`false`/`0` | `false` | Include request body attrs when supported |
+| `APM_TRACE_CONTROLLER` | `1`, `true`, or unset | disabled | Controller spans via `callController` (Apache) |
+| `APM_TRACE_DB_QUERY` | `1`, `true`, or unset | disabled | SQL spans via Request/`createModel` wire |
+| `APM_API_KEY` | string | — | Optional unified API key (providers may prefer their own key) |
+| `APM_SEND_INTERVAL` | int | provider default | Batch send interval (contracts) |
+| `APM_MAX_STRING_LENGTH` | int | `2000` | Truncate long string attrs |
+
+**Performance note:** Prefer `1` over `"true"` for boolean-ish flags (faster string compare).
+
+### TraceKit provider (example)
+
+TraceKit is **one** implementation (`gemvc/apm-tracekit`). Prefer unified `APM_*` where possible; TraceKit also reads provider-specific env (and often falls back to `APM_*`):
+
+```env
+APM_NAME=TraceKit
+TRACEKIT_API_KEY=your-api-key
+TRACEKIT_ENDPOINT=https://app.tracekit.dev/v1/traces
+# Optional TraceKit overrides (also accept APM_* equivalents in many cases):
+# TRACEKIT_SAMPLE_RATE=1.0
+# TRACEKIT_SERVICE_NAME=my-service
+# TRACEKIT_ENABLED=true
+# TRACEKIT_TRACE_RESPONSE=false
+# TRACEKIT_TRACE_REQUEST_BODY=false
+```
+
+| Variable | Description |
+|----------|-------------|
+| `TRACEKIT_API_KEY` | TraceKit API key (also tries `APM_API_KEY`) |
+| `TRACEKIT_ENDPOINT` | Ingest URL (default `https://app.tracekit.dev/v1/traces`) |
+| `TRACEKIT_SERVICE_NAME` | Service name in TraceKit UI |
+| `TRACEKIT_*` flags | Provider overrides for sample/enable/trace body — see `vendor/gemvc/apm-tracekit` |
+
+Other providers use their own `YOURPROVIDER_*` keys the same way. Do **not** treat `TRACEKIT_*` as framework-wide env names.
 
 ## Automatic Tracing
 
@@ -200,7 +223,7 @@ Root request tracing still works on Swoole. For controller-level spans on Swoole
 - `controller.name`: Controller class name
 - `controller.method`: Method name (create, read, update, delete, etc.)
 - `http.status_code`: HTTP response code
-- `http.response_size`: Response data size (if enabled)
+- Optional `response.*` fields when response tracing is enabled
 
 Set `APM_TRACE_CONTROLLER=1` in `.env`, and use `callController` on Apache/Nginx.
 
@@ -682,24 +705,25 @@ $span = $this->startApmSpan('api-call', [], ApmInterface::SPAN_KIND_SERVER);
 **Sample rate** controls what percentage of requests are traced. This is useful for high-traffic applications to reduce APM costs and overhead.
 
 ```env
-# Trace 100% of requests (default)
-TRACEKIT_SAMPLE_RATE=1.0
+# Trace 100% of requests (default) — unified contracts flag
+APM_SAMPLE_RATE=1.0
 
 # Trace 10% of requests (recommended for high traffic)
-TRACEKIT_SAMPLE_RATE=0.1
+APM_SAMPLE_RATE=0.1
 
 # Trace 5% of requests (for very high traffic)
-TRACEKIT_SAMPLE_RATE=0.05
+APM_SAMPLE_RATE=0.05
 
-# Trace 0% of requests (disabled, but errors still logged)
-TRACEKIT_SAMPLE_RATE=0.0
+# Trace 0% of requests (disabled sampling; errors still logged)
+APM_SAMPLE_RATE=0.0
 ```
 
 **Important Notes:**
-- ✅ **Errors are ALWAYS logged** regardless of sample rate
-- ✅ Sample rate range: `0.0` (0%) to `1.0` (100%)
-- ✅ Default: `1.0` (100% - all requests traced)
-- ✅ Sampling is random per request (not deterministic)
+- **Errors are ALWAYS logged** regardless of sample rate
+- Sample rate range: `0.0` (0%) to `1.0` (100%)
+- Default: `1.0` (100% - all requests traced)
+- Sampling is random per request (not deterministic)
+- Providers may also expose `YOURPROVIDER_SAMPLE_RATE` (e.g. TraceKit `TRACEKIT_SAMPLE_RATE`) that overrides when set
 
 **When to Use Sample Rate:**
 - **High Traffic** (>1000 req/sec): Use `0.1` (10%) or `0.05` (5%)
@@ -709,13 +733,13 @@ TRACEKIT_SAMPLE_RATE=0.0
 **Example:**
 ```env
 # Production: High traffic, sample 10% of requests
-TRACEKIT_SAMPLE_RATE=0.1
+APM_SAMPLE_RATE=0.1
 
 # Staging: Medium traffic, sample 50% of requests
-TRACEKIT_SAMPLE_RATE=0.5
+APM_SAMPLE_RATE=0.5
 
 # Development: Low traffic, trace everything
-TRACEKIT_SAMPLE_RATE=1.0
+APM_SAMPLE_RATE=1.0
 ```
 
 ### Environment Variable Checks
@@ -828,24 +852,15 @@ $model = new UserModel();
 
 ### Custom APM Provider
 
-To create a custom APM provider:
+`gemvc/apm-contracts` is **already required** by `gemvc/library` — do not reinvent factory logic in the app.
 
-1. Install `gemvc/apm-contracts`:
-   ```bash
-   composer require gemvc/apm-contracts
-   ```
+1. Create a Composer package that **requires** `gemvc/apm-contracts` and autoloads:
+   `Gemvc\Core\Apm\Providers\YourProvider\YourProvider`
+2. Extend `AbstractApm` / implement `ApmInterface` (and toolkit contracts if needed) — follow `vendor/gemvc/apm-contracts/README.md`
+3. Install the package in the app; set `APM_NAME=YourProvider`
+4. **No** changes to `library` or `ApmFactory` — factory discovers by name
 
-2. Implement `ApmInterface`:
-   ```php
-   class MyApmProvider extends AbstractApm implements ApmInterface
-   {
-       // Implement required methods
-   }
-   ```
-
-3. Register in `ApmFactory` (or use auto-discovery)
-
-4. Set `APM_NAME=MyApmProvider` in `.env`
+App code stays on `callController` / `createModel` / `$request->apm` regardless of provider.
 
 ### CLI/Background Jobs
 
@@ -901,34 +916,34 @@ class UserController extends Controller
 
 ## Summary
 
+### Architecture reminder
+
+Library → **`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) → provider package (`APM_NAME=…`). TraceKit is an example provider, not the abstraction.
+
 ### What's Automatic
 
-✅ Root request trace  
-✅ Exception tracking  
-✅ Controller spans (if `APM_TRACE_CONTROLLER=1`)  
-✅ Database query spans (if `APM_TRACE_DB_QUERY=1`)
+- Root request trace  
+- Exception tracking  
+- Controller spans (if `APM_TRACE_CONTROLLER=1` + Apache `callController`)  
+- Database query spans (if `APM_TRACE_DB_QUERY=1` + Request wired)
 
 ### What Requires Code
 
-🔧 Custom spans in Models (use `ApmTracingTrait`)  
-🔧 Setting Request on models (use `Controller::createModel()`)
+- Custom spans in Models (use `ApmTracingTrait`)  
+- Setting Request on models (use `Controller::createModel()`)
 
 ### Key Takeaways
 
-1. **Zero configuration** for basic tracing
-2. **Environment-controlled** - enable/disable via `.env`
-3. **Non-blocking** - no performance impact
-4. **Automatic trace context** - all spans share traceId
-5. **Fire-and-forget** - traces sent after HTTP response
+1. **Contracts-first** — app/library use `ApmFactory` / `ApmInterface`, not TraceKit types
+2. **`APM_NAME` + provider package** selects the backend; TraceKit is one option
+3. **Unified `APM_*` flags** in contracts; providers may add their own env keys
+4. **Non-blocking** send where supported; sample with `APM_SAMPLE_RATE`
+5. **Automatic trace context** — all spans share `traceId` via `$request->apm`
 
 ---
 
 **For more information:**
 - APM Contracts: `vendor/gemvc/apm-contracts/README.md`
-- Framework Documentation: `README.md`
-- CLI Commands: `CLI.md`
-
-**Author:** Ali Khorsandfard  
-**Framework:** [GEMVC PHP Framework](https://gemvc.de)  
-**Version:** 5.3.0+
+- Provider example: `vendor/gemvc/apm-tracekit/README.md`
+- [cli.md](cli.md) · [ecosystem.md](ecosystem.md)
 

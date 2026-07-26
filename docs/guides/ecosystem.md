@@ -141,19 +141,20 @@ See the full stack in [database.md — Under the hood](database.md#under-the-hoo
 
 | | |
 |--|--|
-| **Role** | `ApmInterface`, `AbstractApm`, **`ApmFactory`**, toolkit contracts — pluggable providers without changing app code |
-| **Docs** | `vendor/gemvc/apm-contracts/README.md` |
+| **Role** | **Foundation:** `ApmInterface`, `AbstractApm`, **`ApmFactory`**, toolkit contracts — pluggable providers without changing app code |
+| **Unified env** | `APM_NAME`, `APM_ENABLED`, `APM_SAMPLE_RATE`, `APM_TRACE_*`, … |
+| **Docs** | `vendor/gemvc/apm-contracts/README.md` · library [apm.md](apm.md) |
 
 #### `gemvc/apm-tracekit` (^2.0)
 
 | | |
 |--|--|
-| **Role** | Default TraceKit provider (OTLP-style traces, batching). Ships with library |
-| **Config** | `APM_NAME=TraceKit`, API key/URL, sample rate; optional `APM_TRACE_CONTROLLER` / `APM_TRACE_DB_QUERY` |
+| **Role** | **One** provider (OTLP-style traces, batching). Ships with library today — not the only possible backend |
+| **Config** | `APM_NAME=TraceKit` + unified `APM_*`; optional `TRACEKIT_API_KEY` / `TRACEKIT_ENDPOINT` / … |
 | **Setup** | `php vendor/bin/tracekit init` (when available) |
-| **Docs** | `vendor/gemvc/apm-tracekit/README.md`; library guide [apm.md](apm.md) |
+| **Docs** | `vendor/gemvc/apm-tracekit/README.md` |
 
-**AI rule:** New APM vendors implement `apm-contracts`; they do **not** fork `library`. App code keeps using `callController()` / `createModel()` / factory.
+**AI rule:** New APM vendors implement **`apm-contracts`**; they do **not** fork `library` or hardcode TraceKit. App code keeps using `callController()` / `createModel()` / `$request->apm`.
 
 ---
 

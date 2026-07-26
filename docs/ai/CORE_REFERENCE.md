@@ -43,6 +43,9 @@ getPerPage(): int
 mapPostToObject(object $o, ?array $map = null): object|null
 mapPutToObject(object $o, ?array $map = null): object|null
 mapPatchToObject(object $o, ?array $map = null): object|null
+// Manual map: key = request field name (= object property for non-method maps).
+// Value ending in () → call that method with the field value.
+// Otherwise value is ignored; property name is the map key (e.g. 'email' => 'email').
 ```
 
 **Schema type strings:**  
@@ -122,8 +125,9 @@ App Models are **not** a framework base class. Usual shape: extend your Table (`
 ## `Gemvc\Database\Table`
 
 ```php
-public function getTable(): string
-public function defineSchema(): array
+abstract public function getTable(): string   // required on every Table subclass
+// Convention (not declared on base Table): public function defineSchema(): array
+// — used by db:migrate / generators via method_exists; must be public
 protected array $_type_map;
 
 select(?string $columns = null): self
@@ -229,6 +233,9 @@ DB_HOST= DB_PORT= DB_NAME= DB_USER= DB_PASSWORD=
 TOKEN_SECRET= TOKEN_ISSUER=
 QUERY_LIMIT=10
 APM_NAME=TraceKit
+APM_SAMPLE_RATE=1.0
 APM_TRACE_CONTROLLER=1
 APM_TRACE_DB_QUERY=1
+# Provider keys (example TraceKit): TRACEKIT_API_KEY TRACEKIT_ENDPOINT
+# Contracts: vendor/gemvc/apm-contracts — providers implement ApmInterface
 ```

@@ -97,7 +97,7 @@ CLI entry (package split, workflows) + full command catalog. **AI: start with cl
 Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
 
 ### [apm.md](guides/apm.md)
-TraceKit (and others): root span, env flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`, troubleshooting.
+**`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) + providers (e.g. TraceKit): root span, unified `APM_*` flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`.
 
 ### [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
 Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Prefer [api.md](guides/api.md) first for writing `app/api`.

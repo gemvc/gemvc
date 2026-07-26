@@ -46,7 +46,8 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 | Model | `UserModel.php` | `UserModel extends UserTable` **or** composition class (no Table) |
 | Table | `UserTable.php` | `UserTable extends Table` |
 
-**URL**: `/api/{Service}/{method}` → `App\Api\User::create()`
+**URL (Apache/Nginx):** `/api/{Service}/{method}` → `App\Api\User::create()`  
+**OpenSwoole:** path segments come from `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults `1` / `2`) — there is no automatic `api` hop; configure sections so `{Service}` / `{method}` land correctly (see [architecture.md](../guides/architecture.md)).
 
 **Properties**
 
@@ -62,7 +63,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 |--|--------------|-------------------|
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
 | APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
-| Validation fail | often throws / dies | return `?JsonResponse` |
+| Validation fail | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
 | Auth whole service | `requireAuth()` in constructor | same |
 
 Use the matching base class for the target server.
@@ -319,15 +320,20 @@ Do not assume `create:*` exists without cli-dev.
 
 ## APM (optional)
 
+Built on **`gemvc/apm-contracts`** (`ApmFactory` → `ApmInterface`). TraceKit is one provider (`gemvc/apm-tracekit`), not the framework API.
+
 ```env
 APM_NAME=TraceKit
+APM_SAMPLE_RATE=1.0
 APM_TRACE_CONTROLLER=1
 APM_TRACE_DB_QUERY=1
+# Provider-specific keys as needed (e.g. TRACEKIT_API_KEY / TRACEKIT_ENDPOINT)
 ```
 
 - Root span: Bootstrap (automatic)
-- Controllers: use `callController()`
+- Controllers: use `callController()` (Apache/`ApiService`)
 - DB: use `createModel()`
+- Details: [guides/apm.md](../guides/apm.md) · `vendor/gemvc/apm-contracts/README.md`
 
 ---
 

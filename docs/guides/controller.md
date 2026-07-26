@@ -142,7 +142,7 @@ No `callController` and no `$this->UserController` magic on `SwooleApiService`.
 Typical flow:
 
 1. API already validated schema (and auth).
-2. Controller maps body → model (`mapPostToObject` / `mapPutToObject` / `mapPatchToObject`).
+2. Controller maps body → model (`mapPostToObject` / `mapPutToObject` / `mapPatchToObject`). Manual map: **key** = request field (= property name); value ending in `()` calls a setter; non-`() ` values are ignored (do not remap `'email' => 'userEmail'`).
 3. On mapping failure → `return $this->request->returnResponse()`.
 4. Delegate to Model. Either:
    - **Style A:** Model returns `JsonResponse` → pass it through (`return $model->createModel()`).

@@ -22,21 +22,19 @@ Customize codegen while still using CLI commands. After `gemvc init`, templates 
 
 ## How It Works
 
-### Step 1: Project Initialization (`gemvc init`)
+### Step 1: Project templates (optional override)
 
-When you run `gemvc init`, GEMVC automatically copies templates to your project:
+`gemvc create:*` (from **`gemvc/cli-dev`**) resolves templates in this order:
 
+1. `{projectRoot}/templates/cli/{name}.template` (your overrides)
+2. `vendor/gemvc/cli-dev/templates/cli/{name}.template` (shipped defaults)
+
+`gemvc init` may copy `gemvc/library`’s `src/CLI/templates/` into `{project}/templates/` **if that folder exists** (`FileSystemManager::copyTemplatesFolder`). Create stubs themselves live in **cli-dev**, not library — so after install you usually either rely on the cli-dev vendor fallback or copy them once:
+
+```bash
+mkdir -p templates/cli
+cp vendor/gemvc/cli-dev/templates/cli/*.template templates/cli/
 ```
-vendor/gemvc/cli-dev/templates/cli/
-    ↓ (copied to)
-{projectRoot}/templates/cli/
-    ├── service.template
-    ├── controller.template
-    ├── model.template
-    └── table.template
-```
-
-**Code Reference**: `AbstractInit::copyTemplatesFolder()` → `FileSystemManager::copyTemplatesFolder()`
 
 ---
 
@@ -65,7 +63,7 @@ vim templates/cli/controller.template
 When generating code, GEMVC uses a **smart template lookup**:
 
 ```php
-// AbstractBaseGenerator::getTemplate()
+// DevGenerator::getTemplate() (cli-dev)
 1. First checks: {projectRoot}/templates/cli/{templateName}.template ✅ (Custom)
 2. Fallback: vendor/gemvc/cli-dev/templates/cli/{templateName}.template (Default)
 ```

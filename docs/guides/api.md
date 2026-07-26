@@ -14,7 +14,7 @@ API is the **thin HTTP boundary**:
 HTTP → API (schema + auth) → Controller → Model → Table → DB
 ```
 
-You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiService` (OpenSwoole). URL maps automatically: `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`.
+You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiService` (OpenSwoole). URL mapping: Apache `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop — see [architecture.md](architecture.md)).
 
 | Belongs in API | Belongs elsewhere |
 |----------------|-------------------|
@@ -64,7 +64,7 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 | Server | Apache / Nginx | OpenSwoole |
 | `callController()` | yes (APM proxy) | **no** |
 | Magic `$this->UserController` | yes | **no** |
-| Validation fail | often throws / dies | return `?JsonResponse` |
+| Validation fail | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
 | `requireAuth()` | yes | yes |
 
 Same `app/` layering either way; only the API base class and how you invoke Controllers differ. Details: [http-lifecycle.md](http-lifecycle.md).
