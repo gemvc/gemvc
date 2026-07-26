@@ -33,7 +33,8 @@ HTTP → API → Controller → Model → Table → DB
 | **3. Model** | `app/model/` | Business rules / workflows; Table-backed **or** composition (no Table); `JsonResponse` **or** PHP types |
 | **4. Table** | `app/table/` | Columns, schema, queries, insert/update/delete only |
 
-URL mapping is automatic: `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`.
+URL mapping (Apache/Nginx): `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`.  
+OpenSwoole: configure `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop) — see [architecture.md](guides/architecture.md).
 
 ---
 
@@ -121,6 +122,8 @@ Keep-a-Changelog bullets for “is feature X in version Y?”
 
 - **`gemvc/helper`** — TypeChecker, CryptHelper, ProjectHelper, FileHelper, … → [guides/helper.md](guides/helper.md)
 - **`gemvc/http-client`** — outbound HttpClient / AsyncHttpClient → [guides/http-client.md](guides/http-client.md)
+- **`gemvc/apm-contracts`** — `ApmFactory` / `ApmInterface` (required with library) → [guides/apm.md](guides/apm.md)
+- `gemvc/apm-tracekit` — one APM provider (example); not the abstraction
 - `gemvc/cli-dev` — `create:*`, `db:init|list|describe|drop|unique`, `admin:*`
 - `gemvc/cli-base` — `vendor/gemvc/cli-base/AI-Assistant.md`
 - `gemvc/connection-pdo` — runtime DB connections (`DB_DRIVER`)

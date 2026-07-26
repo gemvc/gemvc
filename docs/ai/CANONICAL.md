@@ -63,8 +63,10 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 |--|--------------|-------------------|
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
 | APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
-| Validation fail | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
+| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
 | Auth whole service | `requireAuth()` in constructor | same |
+
+Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw.
 
 Use the matching base class for the target server.
 

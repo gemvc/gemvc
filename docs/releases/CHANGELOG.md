@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - Documentation reorganized under `docs/` with AI pack at `docs/ai/`
+- Docs aligned to source: contracts-first APM (`gemvc/apm-contracts`), cli-dev templates, Apache vs Swoole URL sections, `TRACEKIT_ENDPOINT`
 
 ## [5.9.0] - 2026-07
 
@@ -116,9 +117,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation** - CHANGELOG, ARCHITECTURE.md, CLI.md updated for 5.6.5 (see RELEASE_NOTES.md)
 
 ### Benefits
-- ✅ Single source of truth for paths and env in core
-- ✅ Hot reload scoped to app code; faster cycle (5s)
-- ✅ OPcache disabled in dev so edits are picked up (Apache/Nginx and OpenSwoole)
+- Single source of truth for paths and env in core
+- Hot reload scoped to app code; faster cycle (5s)
+- OPcache disabled in dev so edits are picked up (Apache/Nginx and OpenSwoole)
 
 ## [5.6.4] - 2026-01-29
 
@@ -132,9 +133,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Location: `src/helper/ProjectHelper.php` (lines 41–52)
 
 ### Benefits
-- ✅ Docker compatibility: `.env` can override container-provided environment variables
-- ✅ Consistent behavior between Apache entrypoint and ProjectHelper
-- ✅ Backward compatible for apps without pre-set env vars
+- Docker compatibility: `.env` can override container-provided environment variables
+- Consistent behavior between Apache entrypoint and ProjectHelper
+- Backward compatible for apps without pre-set env vars
 
 ### Security
 - No security vulnerabilities reported
@@ -162,11 +163,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Location: `src/core/SwooleBootstrap.php`
 
 ### Benefits
-- ✅ Cleaner API for APM assignment
-- ✅ Better type safety with explicit method signature
-- ✅ Centralized logic for APM assignment
-- ✅ More maintainable codebase
-- ✅ Consistent pattern across Bootstrap classes
+- Cleaner API for APM assignment
+- Better type safety with explicit method signature
+- Centralized logic for APM assignment
+- More maintainable codebase
+- Consistent pattern across Bootstrap classes
 
 ### Security
 - No security vulnerabilities reported
@@ -241,12 +242,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically installed with framework
 
 ### Benefits
-- ✅ Automatic environment detection for optimal performance
-- ✅ Optimized Swoole performance (native coroutines)
-- ✅ Better error handling and retry mechanisms
-- ✅ Cleaner codebase architecture (delegation pattern)
-- ✅ Future-proof design (package can be updated independently)
-- ✅ 100% backward compatible - all existing code continues to work
+- Automatic environment detection for optimal performance
+- Optimized Swoole performance (native coroutines)
+- Better error handling and retry mechanisms
+- Cleaner codebase architecture (delegation pattern)
+- Future-proof design (package can be updated independently)
+- 100% backward compatible - all existing code continues to work
 
 ### Fixed
 - No breaking changes - All existing code continues to work without modification
@@ -280,11 +281,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Better separation: framework code in `src/core/`, user examples in `app/`
 
 ### Benefits
-- ✅ Cleaner initial app - users see only User service as complete example
-- ✅ Framework services hidden - implementation details in core, not copied to user projects
-- ✅ Better separation - framework code in `src/core/`, user examples in `app/`
-- ✅ Easier maintenance - framework services updated in one place
-- ✅ Focused learning - users see one complete example instead of multiple services
+- Cleaner initial app - users see only User service as complete example
+- Framework services hidden - implementation details in core, not copied to user projects
+- Better separation - framework code in `src/core/`, user examples in `app/`
+- Easier maintenance - framework services updated in one place
+- Focused learning - users see one complete example instead of multiple services
 
 ### Fixed
 - No breaking changes - All API endpoints remain functional

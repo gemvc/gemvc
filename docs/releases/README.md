@@ -9,4 +9,6 @@
 
 These files are large (~1–2k lines). They are **not** part of the AI mandatory path (`INDEX` → `CANONICAL` → `CORE_REFERENCE`). Do not load them for ordinary coding tasks.
 
+**Env name note (APM):** older release text may have said `TRACEKIT_API_URL`; current TraceKit provider env is **`TRACEKIT_ENDPOINT`**. Prefer unified `APM_*` from `gemvc/apm-contracts` — see [apm.md](../guides/apm.md).
+
 Current framework version in docs: **5.9.1** — see root [README](../../README.md) and [docs/README](../README.md).

@@ -16,7 +16,7 @@
 - New `Gemvc\Core\AuthException`, thrown by `requireAuth()` on failure and caught centrally by `Bootstrap`/`SwooleBootstrap`, which convert it straight into the correct `401 Unauthorized` or `403 Forbidden` response.
 - Fixed `Request::authorize()`: an authenticated caller with the wrong role was incorrectly getting `401 Unauthorized` — it now correctly returns `403 Forbidden`.
 - Auth HTTP codes (as implemented): **401** = no token / cannot extract Authorization; **403** = token present but invalid (verify failed), or valid token with wrong role.
-- **Documentation Organisation**: all guides moved under [`docs/`](../README.md). AI assistants use a single path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`CORE_REFERENCE.md`](../ai/CORE_REFERENCE.md) (formerly `API_REFERENCE.md`). Root `.cursorrules` is slim and points there. Old root `.md` paths are short redirect stubs.
+- **Documentation Organisation**: all guides under [`docs/`](../README.md). AI path: [`docs/ai/INDEX.md`](../ai/INDEX.md) → [`CANONICAL.md`](../ai/CANONICAL.md) → [`CORE_REFERENCE.md`](../ai/CORE_REFERENCE.md). Docs emphasize the **ecosystem** (`gemvc/helper`, `gemvc/http-client`, **`gemvc/apm-contracts`** + providers), flagship `createList`, and source-accurate Apache vs OpenSwoole differences.
 
 ---
 
@@ -217,13 +217,13 @@ Production (`composer install --no-dev`): `init` and `db:migrate` still work; de
 
 ---
 
-## 📋 Overview
+## Overview
 
 Helper classes are now a separate bundled package [`gemvc/helper`](https://github.com/gemvc/helper) **1.0.0**, following the same pattern as `gemvc/cli-base`. The `Gemvc\Helper\` namespace and public API are unchanged.
 
 ---
 
-## 🔧 Changes
+## Changes
 
 ### Composer
 
@@ -241,15 +241,15 @@ Helper classes are now a separate bundled package [`gemvc/helper`](https://githu
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Smaller library core** — helper utilities versioned independently
-- ✅ **No app code changes** — `use Gemvc\Helper\...` imports unchanged
-- ✅ **Future helper cleanup** (TraceKit legacy removal, etc.) ships in `gemvc/helper` only
+- **Smaller library core** — helper utilities versioned independently
+- **No app code changes** — `use Gemvc\Helper\...` imports unchanged
+- **Future helper cleanup** (TraceKit legacy removal, etc.) ships in `gemvc/helper` only
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.8.0 to 5.8.1
 
@@ -271,13 +271,13 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This release adds **`whereIn()`** and **`whereNotIn()`** to the `Table` fluent query builder, matching capabilities already available on `Gemvc\Database\Query\WhereTrait` (Select/Update/Delete query objects).
 
 ---
 
-## 🔧 Changes
+## Changes
 
 ### `Gemvc\Database\Table`
 
@@ -292,15 +292,15 @@ This release adds **`whereIn()`** and **`whereNotIn()`** to the `Table` fluent q
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Parity** between `Table` fluent selects and standalone QueryBuilder
-- ✅ **Prepared statements** for all IN list values (no string concatenation of user data)
-- ✅ **Predictable chaining** with existing `whereEqual`, `whereLike`, joins, etc.
+- **Parity** between `Table` fluent selects and standalone QueryBuilder
+- **Prepared statements** for all IN list values (no string concatenation of user data)
+- **Predictable chaining** with existing `whereEqual`, `whereLike`, joins, etc.
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.7.1 to 5.8.0
 
@@ -327,13 +327,13 @@ $rows = $this->select()
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release improves SQL type generation accuracy in `TableGenerator` by correctly handling nullable mapped PHP types and by preventing unintended `_id` coercion for non-integer IDs.
 
 ---
 
-## 🔧 Changes
+## Changes
 
 ### `TableGenerator::mapTypeToSqlType()`
 
@@ -343,15 +343,15 @@ This patch release improves SQL type generation accuracy in `TableGenerator` by 
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Correct schema mapping for nullable types** (`?string` no longer falls back to `TEXT`)
-- ✅ **Safer data integrity for non-integer IDs** (no unintended cast to `INT`)
-- ✅ **Backward-compatible behavior for classic integer foreign keys**
+- **Correct schema mapping for nullable types** (`?string` no longer falls back to `TEXT`)
+- **Safer data integrity for non-integer IDs** (no unintended cast to `INT`)
+- **Backward-compatible behavior for classic integer foreign keys**
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.7.0 to 5.7.1
 
@@ -373,7 +373,7 @@ This release is **fully backward compatible**.
 
 ---
 
-## 📋 Overview
+## Overview
 
 This release moves shared CLI infrastructure into the Composer package **[`gemvc/cli-base`](https://github.com/gemvc/cli-base)** (^1.0.1). The framework library keeps framework-specific commands (`init`, `db:*`, Docker wizards, templates) while terminal I/O, filesystem helpers, and codegen abstract bases live in the dedicated package.
 
@@ -385,7 +385,7 @@ composer require gemvc/library:^5.7 --with-all-dependencies
 
 ---
 
-## 🔧 Changes
+## Changes
 
 ### New dependency: `gemvc/cli-base`
 
@@ -414,16 +414,16 @@ composer require gemvc/library:^5.7 --with-all-dependencies
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Smaller, clearer CLI layer** in the main library
-- ✅ **Reusable CLI foundation** for future GEMVC packages
-- ✅ **Dedicated tests and docs** in `gemvc/cli-base` (`AI-Assistant.md`, PHPUnit)
-- ✅ **Same `gemvc` binary and commands** for end users
+- **Smaller, clearer CLI layer** in the main library
+- **Reusable CLI foundation** for future GEMVC packages
+- **Dedicated tests and docs** in `gemvc/cli-base` (`AI-Assistant.md`, PHPUnit)
+- **Same `gemvc` binary and commands** for end users
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.7 to 5.7.0
 
@@ -456,13 +456,13 @@ This release is **backward compatible** for application code (`app/api`, `app/co
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release removes PHP 8.5 deprecation warnings for MySQL PDO init-command attributes and improves CLI colored output on macOS Terminal by using blue instead of cyan. No API or configuration changes are required.
 
 ---
 
-## 🔧 Changes
+## Changes
 
 ### PHP 8.5 – PDO MySQL init command attribute
 
@@ -481,15 +481,15 @@ This patch release removes PHP 8.5 deprecation warnings for MySQL PDO init-comma
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **PHP 8.5 ready** – No deprecation noise from CLI or Developer database setup
-- ✅ **Better CLI UX on Mac** – Readable colors on macOS Terminal, Windows, and Linux
-- ✅ **Backward compatible** – PHP 8.2–8.4 unchanged; no migration steps
+- **PHP 8.5 ready** – No deprecation noise from CLI or Developer database setup
+- **Better CLI UX on Mac** – Readable colors on macOS Terminal, Windows, and Linux
+- **Backward compatible** – PHP 8.2–8.4 unchanged; no migration steps
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.6 to 5.6.7
 
@@ -515,13 +515,13 @@ For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release hardens the framework's security by implementing strict path normalization in `SecurityManager` to prevent access rule bypasses. It also improves input sanitization and request body handling in `ApacheRequest` (fixing empty body issues with PUT/PATCH) and sanitizes request URIs in `SwooleRequest`.
 
 ---
 
-## 🔒 Security & Changes
+## Security & Changes
 
 ### SecurityManager – Path Normalization
 - **Path access rules enforcement**: 
@@ -548,16 +548,16 @@ This patch release hardens the framework's security by implementing strict path 
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Stronger Security**: Path normalization prevents common bypass techniques (double slashes, encoding, traversal).
-- ✅ **Reliability**: PUT/PATCH bodies are correctly parsed on Apache.
-- ✅ **Safety**: Fail-safe defaults (empty strings) when sanitization filters fail.
-- ✅ **XSS Prevention**: Deep recursive sanitization for all input arrays.
+- **Stronger Security**: Path normalization prevents common bypass techniques (double slashes, encoding, traversal).
+- **Reliability**: PUT/PATCH bodies are correctly parsed on Apache.
+- **Safety**: Fail-safe defaults (empty strings) when sanitization filters fail.
+- **XSS Prevention**: Deep recursive sanitization for all input arrays.
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.5 to 5.6.6
 
@@ -577,13 +577,13 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release centralizes paths and environment handling via `ProjectHelper` across the library core (DRY), improves hot reload so it watches only the app directory and runs with a 5-second interval in dev, and disables OPcache in development so file changes take effect without restart (Apache/Nginx and OpenSwoole). Documentation is updated to match.
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Core – ProjectHelper (DRY)
 
@@ -612,7 +612,7 @@ This patch release centralizes paths and environment handling via `ProjectHelper
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **CHANGELOG.md** – Added [5.6.5] entry for core DRY, hot reload, and OPcache changes.
 - **ARCHITECTURE.md** – Updated `HotReloadManager` and `ProjectHelper` descriptions to reflect app-only watch, 5s interval, and `disableOpcacheIfDev()`.
@@ -620,23 +620,23 @@ This patch release centralizes paths and environment handling via `ProjectHelper
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Single source of truth** – Paths and env in core come from `ProjectHelper` only.
-- ✅ **Faster dev cycle** – Hot reload watches app code only; 5s interval.
-- ✅ **No restart in dev** – OPcache disabled in dev (Bootstrap + OpenSwoole workers) so edits take effect immediately.
-- ✅ **Backward compatible** – No API or behavior change for existing apps.
+- **Single source of truth** – Paths and env in core come from `ProjectHelper` only.
+- **Faster dev cycle** – Hot reload watches app code only; 5s interval.
+- **No restart in dev** – OPcache disabled in dev (Bootstrap + OpenSwoole workers) so edits take effect immediately.
+- **Backward compatible** – No API or behavior change for existing apps.
 
 ---
 
-## 🔒 Security
+## Security
 
 - No security vulnerabilities reported in this release.
 - All existing security features maintained (90% automatic security).
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.4 to 5.6.5
 
@@ -657,13 +657,13 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release fixes environment variable loading so that applications work correctly in Dockerized environments. We changed `Dotenv::load()` to `Dotenv::overload()` in the Apache entrypoint and in `ProjectHelper::loadEnv()`, so that `.env` values can override existing environment variables (e.g. set by the container). This ensures consistent behavior when the same code runs in Docker and on a host.
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Apache Entrypoint (index.php)
 
@@ -680,22 +680,22 @@ This patch release fixes environment variable loading so that applications work 
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Docker compatibility** - `.env` can override container-provided environment variables when needed
-- ✅ **Consistent behavior** - Same loading semantics in Apache entrypoint and `ProjectHelper`
-- ✅ **No breaking change** - Existing apps without pre-set env vars behave as before
+- **Docker compatibility** - `.env` can override container-provided environment variables when needed
+- **Consistent behavior** - Same loading semantics in Apache entrypoint and `ProjectHelper`
+- **No breaking change** - Existing apps without pre-set env vars behave as before
 
 ---
 
-## 🔒 Security
+## Security
 
 - No security vulnerabilities reported in this release
 - All existing security features maintained (90% automatic security)
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.2 to 5.6.3
 
@@ -716,13 +716,13 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release introduces a cleaner, more precise API for setting APM instances on the Request object. We've added a dedicated `setApm()` method to the Request class and updated both Bootstrap classes to use this new method instead of direct property assignment. This improvement provides better type safety, cleaner code, and a more maintainable codebase.
 
 ---
 
-## ✨ Added
+## Added
 
 ### Request::setApm() Method
 
@@ -744,7 +744,7 @@ $request->setApm($apmInstance);
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Bootstrap Classes Refactoring
 
@@ -765,25 +765,25 @@ $request->setApm($apmInstance);
 
 ---
 
-## 🎯 Benefits
+## Benefits
 
-- ✅ **Cleaner API** - Explicit method call instead of property assignment
-- ✅ **Better Type Safety** - Method signature enforces `ApmInterface` type
-- ✅ **Centralized Logic** - All APM assignment goes through one method
-- ✅ **More Maintainable** - Easier to modify APM assignment behavior in the future
-- ✅ **Consistent Pattern** - Both Bootstrap classes use the same approach
-- ✅ **Developer-Friendly** - More precise and better for use in other classes
+- **Cleaner API** - Explicit method call instead of property assignment
+- **Better Type Safety** - Method signature enforces `ApmInterface` type
+- **Centralized Logic** - All APM assignment goes through one method
+- **More Maintainable** - Easier to modify APM assignment behavior in the future
+- **Consistent Pattern** - Both Bootstrap classes use the same approach
+- **Developer-Friendly** - More precise and better for use in other classes
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
@@ -794,7 +794,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - No performance impact from these changes
 - Method call overhead is negligible
@@ -802,7 +802,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.1 to 5.6.2
 
@@ -829,19 +829,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for maintaining high code quality standards.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -869,13 +869,13 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release focuses on resolving all PHPStan Level 9 static analysis errors across the framework. We've fixed type safety issues, removed unused properties, and improved method signatures to ensure full compliance with the highest static analysis level. All changes are backward compatible and require no code modifications.
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 ### PHPStan Level 9 Compliance
 
@@ -901,7 +901,7 @@ This patch release focuses on resolving all PHPStan Level 9 static analysis erro
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Type Safety Improvements
 - Enhanced null handling in lazy-loaded client instances
@@ -910,27 +910,27 @@ This patch release focuses on resolving all PHPStan Level 9 static analysis erro
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - No performance impact from these changes
 - Code cleanup may provide minor memory savings (removed unused properties)
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.6.0 to 5.6.1
 
@@ -958,19 +958,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for maintaining high code quality standards with PHPStan Level 9.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -998,7 +998,7 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This release focuses on standardizing the **Application Performance Monitoring (APM)** architecture across the framework core. We have unified the tracing logic using a centralized `ApmTracingTrait`, reducing code duplication and ensuring consistent behavior across `ApiService`, `Controller`, and `UniversalQueryExecuter`.
 
@@ -1006,9 +1006,9 @@ Additionally, we introduced **Magic Properties** in `ApiService` for a significa
 
 ---
 
-## ✨ Added
+## Added
 
-### 🪄 Magic Controller Access (DX Improvement)
+### Magic Controller Access (DX Improvement)
 
 - **Fluent Controller Access** - Access controllers as properties in `ApiService`
   - Syntax: `$this->UserController->method()`
@@ -1017,7 +1017,7 @@ Additionally, we introduced **Magic Properties** in `ApiService` for a significa
   - **Type Safety**: Includes `@property` annotations for IDE autocompletion
   - Location: `src/core/ApiService.php`
 
-### 🔧 Unified APM Architecture
+### Unified APM Architecture
 
 - **ApmTracingTrait** - Centralized APM logic
   - Provides unified `startApmSpan`, `endApmSpan`, `traceApm`, and `recordApmException` methods
@@ -1027,7 +1027,7 @@ Additionally, we introduced **Magic Properties** in `ApiService` for a significa
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Controller Layer Refactoring
 
@@ -1053,28 +1053,28 @@ Additionally, we introduced **Magic Properties** in `ApiService` for a significa
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 - **Context Propagation Safety** - Fixed potential conflict in `UniversalQueryExecuter` where `$request` property could clash with database columns named "request". using `$_request` ensures safety.
 - **Trace Continuity** - Ensured database traces are always correctly linked to the parent HTTP request trace via strict object propagation.
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 - **No configuration settings changed**
 - APM behavior (enabled/disabled) is still controlled via `.env` variables (`APM_ENABLED`, etc.)
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - **Reduced Overhead** - Removed redundant method calls and checks in tracing logic
 - **Optimized Tracing** - Centralized "should trace" checks are more efficient
@@ -1082,7 +1082,7 @@ Additionally, we introduced **Magic Properties** in `ApiService` for a significa
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.5.0 to 5.6.0
 
@@ -1103,13 +1103,13 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 📋 Overview
+## Overview
 
 This release integrates the `gemvc/http-client` package into the framework core, providing automatic environment detection to select the optimal HTTP client implementation. `ApiCall` and `AsyncApiCall` classes now use the new package internally while maintaining 100% backward compatibility. The integration provides better error handling, improved performance in Swoole environments, and a cleaner codebase architecture.
 
 ---
 
-## ✨ Added
+## Added
 
 ### HTTP Client Package Integration
 
@@ -1131,7 +1131,7 @@ This release integrates the `gemvc/http-client` package into the framework core,
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### ApiCall Class Refactoring
 
@@ -1143,11 +1143,11 @@ This release integrates the `gemvc/http-client` package into the framework core,
   - Location: `src/http/ApiCall.php`
 
 **Benefits:**
-- ✅ Better error handling from package
-- ✅ Improved retry mechanisms
-- ✅ Cleaner codebase (delegation pattern)
-- ✅ Future-proof (package can be updated independently)
-- ✅ 100% backward compatible
+- Better error handling from package
+- Improved retry mechanisms
+- Cleaner codebase (delegation pattern)
+- Future-proof (package can be updated independently)
+- 100% backward compatible
 
 ### AsyncApiCall Class Refactoring
 
@@ -1160,11 +1160,11 @@ This release integrates the `gemvc/http-client` package into the framework core,
   - Location: `src/http/AsyncApiCall.php`
 
 **Benefits:**
-- ✅ Automatic environment detection
-- ✅ Optimized Swoole performance (native coroutines)
-- ✅ Better error handling from package
-- ✅ Cleaner codebase (delegation pattern)
-- ✅ 100% backward compatible
+- Automatic environment detection
+- Optimized Swoole performance (native coroutines)
+- Better error handling from package
+- Cleaner codebase (delegation pattern)
+- 100% backward compatible
 
 ### Dependencies
 
@@ -1175,7 +1175,7 @@ This release integrates the `gemvc/http-client` package into the framework core,
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 - **No breaking changes** - All existing code continues to work without modification
 - All 41 ApiCall tests passing
@@ -1184,7 +1184,7 @@ This release integrates the `gemvc/http-client` package into the framework core,
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
@@ -1193,7 +1193,7 @@ This release integrates the `gemvc/http-client` package into the framework core,
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
@@ -1211,7 +1211,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - **Swoole Optimization** - Native coroutines provide better performance in Swoole environment
 - **No Performance Impact** - Backward compatible, same performance characteristics
@@ -1220,7 +1220,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.4.4 to 5.5.0
 
@@ -1247,19 +1247,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for testing and feedback on the http-client package integration.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -1286,13 +1286,13 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This release significantly improves the initial project structure by moving framework-specific services from user projects into the core framework. The initial app is now much cleaner, containing only user-facing examples (User service) and thin API wrappers for framework services. All framework implementation details are now properly encapsulated in `src/core/`.
 
 ---
 
-## ✨ Added
+## Added
 
 ### Framework Services in Core
 
@@ -1319,7 +1319,7 @@ This release significantly improves the initial project structure by moving fram
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Initial Project Structure
 
@@ -1334,38 +1334,38 @@ app/
 ├── controller/
 │   ├── UserController.php
 │   ├── IndexController.php
-│   ├── ApmController.php          # ❌ Framework code in user project
-│   ├── GemvcAssistantController.php  # ❌ Framework code in user project
-│   ├── GemvcMonitoringController.php # ❌ Framework code in user project
-│   └── DeveloperController.php    # ❌ Framework code in user project
+│   ├── ApmController.php          # Framework code in user project
+│   ├── GemvcAssistantController.php  # Framework code in user project
+│   ├── GemvcMonitoringController.php # Framework code in user project
+│   └── DeveloperController.php    # Framework code in user project
 ├── model/
 │   ├── UserModel.php
-│   ├── ApmModel.php               # ❌ Framework code in user project
-│   ├── GemvcAssistantModel.php    # ❌ Framework code in user project
-│   ├── GemvcMonitoringModel.php   # ❌ Framework code in user project
-│   └── DeveloperModel.php        # ❌ Framework code in user project
+│   ├── ApmModel.php               # Framework code in user project
+│   ├── GemvcAssistantModel.php    # Framework code in user project
+│   ├── GemvcMonitoringModel.php   # Framework code in user project
+│   └── DeveloperModel.php        # Framework code in user project
 └── table/
     ├── UserTable.php
-    └── DeveloperTable.php         # ❌ Framework code in user project
+    └── DeveloperTable.php         # Framework code in user project
 ```
 
 **After (5.4.4):**
 ```
 app/
 ├── api/
-│   ├── User.php                   # ✅ Full example (CRUD)
-│   ├── Apm.php                    # ✅ Thin wrapper → core
-│   ├── GemvcAssistant.php         # ✅ Thin wrapper → core
-│   └── GemvcMonitoring.php        # ✅ Thin wrapper → core
+│   ├── User.php                   # Full example (CRUD)
+│   ├── Apm.php                    # Thin wrapper → core
+│   ├── GemvcAssistant.php         # Thin wrapper → core
+│   └── GemvcMonitoring.php        # Thin wrapper → core
 ├── controller/
-│   ├── UserController.php         # ✅ Full example
-│   └── IndexController.php        # ✅ Index controller
+│   ├── UserController.php         # Full example
+│   └── IndexController.php        # Index controller
 ├── model/
-│   └── UserModel.php              # ✅ Full example
+│   └── UserModel.php              # Full example
 └── table/
-    └── UserTable.php              # ✅ Full example
+    └── UserTable.php              # Full example
 
-src/core/                           # ✅ Framework services
+src/core/                           # Framework services
 ├── Apm/
 │   ├── ApmController.php
 │   └── ApmModel.php
@@ -1394,15 +1394,15 @@ public function test(): JsonResponse
 ```
 
 **Benefits:**
-- ✅ Cleaner initial app - users see only User service as complete example
-- ✅ Framework services hidden - implementation details in core, not copied to user projects
-- ✅ Better separation - framework code in `src/core/`, user examples in `app/`
-- ✅ Easier maintenance - framework services updated in one place
-- ✅ Focused learning - users see one complete example instead of multiple services
+- Cleaner initial app - users see only User service as complete example
+- Framework services hidden - implementation details in core, not copied to user projects
+- Better separation - framework code in `src/core/`, user examples in `app/`
+- Easier maintenance - framework services updated in one place
+- Focused learning - users see one complete example instead of multiple services
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 - **No breaking changes** - All API endpoints remain functional
 - Framework services continue to work exactly as before
@@ -1410,7 +1410,7 @@ public function test(): JsonResponse
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained
@@ -1418,7 +1418,7 @@ public function test(): JsonResponse
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
@@ -1434,7 +1434,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 📚 Migration Guide
+## Migration Guide
 
 ### From 5.4.3 to 5.4.4
 
@@ -1470,13 +1470,13 @@ If you want to clean up your existing project structure:
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release implements a reliable batch sending mechanism for APM traces, replacing the previous asynchronous API call approach with a time-based batch system. The new implementation uses synchronous `ApiCall()` with automatic batch sending every 5 seconds, significantly improving APM trace delivery reliability. All changes are backward compatible and require no code modifications.
 
 ---
 
-## ✨ Added
+## Added
 
 ### APM Batch Sending Mechanism
 
@@ -1495,7 +1495,7 @@ This patch release implements a reliable batch sending mechanism for APM traces,
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Bootstrap.php
 
@@ -1529,7 +1529,7 @@ In Swoole environment, `http_response_code()` cannot be reliably called after he
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 ### PHPStan Level 9 Compliance
 
@@ -1541,7 +1541,7 @@ In Swoole environment, `http_response_code()` cannot be reliably called after he
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
@@ -1549,7 +1549,7 @@ In Swoole environment, `http_response_code()` cannot be reliably called after he
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
@@ -1561,7 +1561,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - **Improved APM reliability** - Batch sending reduces failed trace deliveries
 - **Reduced API overhead** - Batching multiple traces in single requests
@@ -1570,7 +1570,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.4.2 to 5.4.3
 
@@ -1600,19 +1600,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for feedback on APM reliability improvements.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -1640,13 +1640,13 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release fixes a critical Docker build issue that prevented `docker compose up -d --build` from working correctly. The `.dockerignore` file was incorrectly excluding `composer.json` and `composer.lock`, which are required for the Docker build process. All changes are backward compatible and require no code modifications.
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 ### OpenSwoole Dockerfile Build Failure
 
@@ -1690,7 +1690,7 @@ README.md
 
 ---
 
-## 🗑️ Removed
+## Removed
 
 ### Unnecessary composer.json
 
@@ -1702,20 +1702,20 @@ README.md
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - No performance impact from these changes
 - Docker builds now complete successfully without errors
@@ -1723,7 +1723,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.4.1 to 5.4.2
 
@@ -1747,19 +1747,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for reporting the Docker build issue.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -1787,13 +1787,13 @@ composer update gemvc/library
 
 ---
 
-## 📋 Overview
+## Overview
 
 This patch release fixes the OpenSwoole Dockerfile healthcheck endpoint and officially includes TraceKit as a default dependency in the GEMVC package. All changes are backward compatible and require no code modifications.
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 ### OpenSwoole Dockerfile Healthcheck
 
@@ -1817,7 +1817,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 ---
 
-## ✨ Added
+## Added
 
 ### TraceKit as Default Dependency
 
@@ -1837,14 +1837,14 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 No configuration changes required. All improvements are automatic and backward compatible.
 
@@ -1854,12 +1854,12 @@ No configuration changes required. All improvements are automatic and backward c
   ```env
   APM_NAME=TraceKit
   TRACEKIT_API_KEY=your-api-key
-  TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+  TRACEKIT_ENDPOINT=https://app.tracekit.dev/v1/traces
   ```
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - No performance impact from these changes
 - Healthcheck fix improves Docker container reliability
@@ -1867,7 +1867,7 @@ No configuration changes required. All improvements are automatic and backward c
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.4.0 to 5.4.1
 
@@ -1892,19 +1892,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Thank you to the community for reporting the Docker healthcheck issue and providing feedback.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc
@@ -1940,7 +1940,7 @@ This release introduces **Native APM (Application Performance Monitoring) Integr
 
 ##  New Features
 
-### 🚀 Native APM Integration
+### Native APM Integration
 
 A complete Application Performance Monitoring solution built directly into the framework, providing automatic tracing of requests, controllers, and database queries with zero configuration required.
 
@@ -1986,7 +1986,7 @@ A complete Application Performance Monitoring solution built directly into the f
 - **Performance**: Non-blocking trace sending (fire-and-forget pattern)
 - **Compatibility**: Works with all webserver types (Apache, Nginx, OpenSwoole)
 
-### 🔧 Developer Tools
+### Developer Tools
 
 #### **ApmTracingTrait**
 - Unified APM tracing methods for reuse across all layers
@@ -2007,7 +2007,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🔄 Changes
+## Changes
 
 ### Bootstrap / SwooleBootstrap
 
@@ -2044,7 +2044,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 - **ApiService::callController()** - Fixed static method calls to use `AbstractApm` instead of interface
   - Resolves "Cannot call abstract method" errors
@@ -2057,7 +2057,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 📚 Documentation Updates
+## Documentation Updates
 
 - **GEMVC_APM_INTEGRATION.md** - Comprehensive APM integration guide
   - Architecture overview and trace flow diagrams
@@ -2080,7 +2080,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🔒 Security
+## Security
 
 - **No security vulnerabilities** reported in this release
 - All existing security features maintained (90% automatic security)
@@ -2090,7 +2090,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Required Configuration
 
@@ -2104,7 +2104,7 @@ A complete Application Performance Monitoring solution built directly into the f
    ```env
    APM_NAME=TraceKit
    TRACEKIT_API_KEY=your-api-key
-   TRACEKIT_API_URL=https://app.tracekit.dev/v1/traces
+   TRACEKIT_ENDPOINT=https://app.tracekit.dev/v1/traces
    ```
 
 ### Optional Configuration
@@ -2138,7 +2138,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🚀 Performance
+## Performance
 
 - **Zero Overhead When Disabled** - Environment flags control tracing (no performance impact when off)
 - **Minimal Overhead When Enabled** - ~0.25ms per request when tracing is active
@@ -2149,7 +2149,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🧪 Testing
+## Testing
 
 - **ControllerCreateModelTest** - Tests Request propagation to models via `createModel()`
 - **TableRequestPropagationTest** - Tests Request propagation through database layers
@@ -2159,7 +2159,7 @@ A complete Application Performance Monitoring solution built directly into the f
 
 ---
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From 5.3.0 to 5.4.0
 
@@ -2196,19 +2196,19 @@ This release is **fully backward compatible**. No action required.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Special thanks to the community for feedback and feature requests that led to this comprehensive monitoring solution.
 
 ---
 
-## 📝 Full Changelog
+## Full Changelog
 
 For detailed changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Documentation**: https://gemvc.de
 - **GitHub**: https://github.com/gemvc/gemvc

@@ -4,7 +4,7 @@
 
 **Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
-> App layer how-tos: [api](api.md) · [controller](controller.md) · [model](model.md) · [database](database.md).  
+> App layer how-tos: [api](api.md) · [controller](controller.md) · [model](model.md) · [database](database.md).
 > 4-layer stack is **strongly recommended** (bypass works; don’t for normal HTTP services).
 
 ## Reading map (AI)
@@ -14,28 +14,28 @@
 | Request flows | [Request Flow Architecture](#request-flow-architecture) |
 | `src/` components | [Component Breakdown](#component-breakdown) |
 | helper / http-client packages | [Ecosystem packages](#ecosystem-packages-not-under-librarysrchelper) |
-| APM hooks | [APM Integration Architecture](#apm-integration-architecture) |
+| APM hooks | [APM Integration Architecture](#apm-integration-architecture) · [apm.md](apm.md) |
 | URL mapping | [URL-to-Code Mapping](#url-to-code-mapping) |
 
-**AI rule:** Prefer layer guides + [helper.md](helper.md) / [http-client.md](http-client.md) for writing `app/` code; use this file for framework internals. Helpers are **not** under `src/helper/` anymore.
+**AI rule:** Prefer layer guides + [helper.md](helper.md) / [http-client.md](http-client.md) for writing `app/` code; use this file for framework internals and diagrams. Do not ingest security/APM/CLI catalogs here — open [security.md](security.md), [apm.md](apm.md), [cli.md](cli.md). Helpers are **not** under `src/helper/`.
 
 ## Directory Structure
 
 ```
-src/   (gemvc/library — this repo)
-├── CLI/              # Framework CLI (init, db:migrate, Docker)
-├── core/             # Bootstrap, ApiService, Controller, Security
-├── http/             # Inbound Request/Response/JWT (+ ApiCall facades)
-├── database/         # Table ORM, migrations, query builders
-├── startup/          # Platform-specific init (Apache/Swoole/Nginx)
-└── stubs/            # IDE type stubs (OpenSwoole, Redis)
+src/ (gemvc/library — this repo)
+├── CLI/ # Framework CLI (init, db:migrate, Docker)
+├── core/ # Bootstrap, ApiService, Controller, Security
+├── http/ # Inbound Request/Response/JWT (+ ApiCall facades)
+├── database/ # Table ORM, migrations, query builders
+├── startup/ # Platform-specific init (Apache/Swoole/Nginx)
+└── stubs/ # IDE type stubs (OpenSwoole, Redis)
 
 # NOT in library src/ anymore — separate Composer packages:
-#   vendor/gemvc/helper/       TypeChecker, CryptHelper, ProjectHelper, …
-#   vendor/gemvc/http-client/  outbound HttpClient / AsyncHttpClient
-#   vendor/gemvc/connection-*  DB connections
-#   vendor/gemvc/apm-*         APM
-#   vendor/gemvc/cli-base|cli-dev
+# vendor/gemvc/helper/ TypeChecker, CryptHelper, ProjectHelper, …
+# vendor/gemvc/http-client/ outbound HttpClient / AsyncHttpClient
+# vendor/gemvc/connection-* DB connections
+# vendor/gemvc/apm-* APM
+# vendor/gemvc/cli-base|cli-dev
 ```
 
 See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](http-client.md).
@@ -71,46 +71,46 @@ See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](h
 ### Apache/Nginx Flow:
 ```
 HTTP Request
-    ↓
+ ↓
 index.php (startup/apache/index.php)
-    ↓
+ ↓
 Bootstrap.php → APM initialized (early tracing) → Security check (automatic)
-    ↓
+ ↓
 ApacheRequest.php → Sanitize all inputs (automatic)
-    ↓
+ ↓
 app/api/User.php → schema validation + auth (thin)
-    ↓
+ ↓
 UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
-    ↓
+ ↓
 UserModel.php → business rules / transforms
-    ↓
+ ↓
 UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, prepared statements - automatic)
-    ↓
+ ↓
 JsonResponse.php → Return JSON
-    ↓
+ ↓
 APM traces sent (fire-and-forget, non-blocking)
 ```
 
 ### OpenSwoole Flow:
 ```
 HTTP Request
-    ↓
+ ↓
 OpenSwooleServer.php → Security check (automatic)
-    ↓
+ ↓
 SwooleRequest.php → Sanitize all inputs (automatic)
-    ↓
+ ↓
 SwooleBootstrap.php → APM initialized (early tracing) → Route to API service
-    ↓
+ ↓
 app/api/User.php → schema validation + auth (thin)
-    ↓
+ ↓
 UserController.php → orchestration / map request → Model (traced if APM_TRACE_CONTROLLER=1)
-    ↓
+ ↓
 UserModel.php → business rules / transforms
-    ↓
+ ↓
 UserTable.php → Database operations (traced if APM_TRACE_DB_QUERY=1, connection pooling - automatic)
-    ↓
+ ↓
 JsonResponse.php → Return JSON (via showSwoole())
-    ↓
+ ↓
 APM traces sent (fire-and-forget, non-blocking)
 ```
 
@@ -135,11 +135,11 @@ APM traces sent (fire-and-forget, non-blocking)
 ### **core/** - Framework Core
 - `Bootstrap.php` / `SwooleBootstrap.php` - Request routing, **APM initialization (early tracing)**
 - `ApiService.php` / `SwooleApiService.php` - Base API service classes
-  - `ApiService::callController()` for controller tracing (**Apache/Nginx only** — not on `SwooleApiService`)
-  - Uses `$request->apm` for trace context propagation
+ - `ApiService::callController()` for controller tracing (**Apache/Nginx only** — not on `SwooleApiService`)
+ - Uses `$request->apm` for trace context propagation
 - `Controller.php` - Base controller with pagination, filtering, sanitization
-  - `createModel()` helper for automatic Request propagation
-  - Uses `$request->apm` for trace context
+ - `createModel()` helper for automatic Request propagation
+ - Uses `$request->apm` for trace context
 - `ApmTracingTrait.php` - Unified APM tracing methods (reusable across layers)
 - `SecurityManager.php` - Path access protection
 - `WebserverDetector.php` - Environment detection (cached)
@@ -154,10 +154,10 @@ APM traces sent (fire-and-forget, non-blocking)
 - Developer-friendly base classes
 - Built-in documentation generation
 - **Native APM integration** - Automatic tracing with zero configuration
-  - Early APM initialization in Bootstrap/SwooleBootstrap
-  - Controller tracing via `callController()` (environment-controlled)
-  - Database query tracing (environment-controlled)
-  - Trace context propagation through all layers
+ - Early APM initialization in Bootstrap/SwooleBootstrap
+ - Controller tracing via `callController()` (environment-controlled)
+ - Database query tracing (environment-controlled)
+ - Trace context propagation through all layers
 
 ### **http/** - HTTP Layer
 - `Request.php` - Unified request object (all inputs sanitized)
@@ -178,15 +178,15 @@ APM traces sent (fire-and-forget, non-blocking)
 
 ### **database/** - Database Layer
 - `Table.php` - Main ORM class (fluent interface)
-  - `setRequest()` method for APM trace context propagation
+ - `setRequest()` method for APM trace context propagation
 - `UniversalQueryExecuter.php` - **Enforces prepared statements**
-  - **APM query tracing** (if `APM_TRACE_DB_QUERY=1`)
-  - Captures query type, execution time, rows affected
-  - Uses `$request->apm` for trace context
+ - **APM query tracing** (if `APM_TRACE_DB_QUERY=1`)
+ - Captures query type, execution time, rows affected
+ - Uses `$request->apm` for trace context
 - `ConnectionManager.php` - Connection management
-  - `setRequest()` method for Request propagation
+ - `setRequest()` method for Request propagation
 - `PdoQuery.php` - PDO query wrapper
-  - `setRequest()` method for Request propagation
+ - `setRequest()` method for Request propagation
 - `DatabaseManagerFactory.php` - Auto-selects DB manager
 - `SwooleDatabaseManager.php` - Connection pooling (OpenSwoole)
 - `SimplePdoDatabaseManager.php` - Standard PDO (Apache/Nginx)
@@ -217,19 +217,19 @@ Library still **requires** these packages. Namespace `Gemvc\Helper\` is unchange
 ### **startup/** - Platform Initialization
 ```
 startup/
-├── apache/           # Apache-specific files
-│   ├── index.php     # Apache entry point
-│   ├── appIndex.php  # Application bootstrap
-│   ├── composer.json # Apache dependencies
-│   └── docker-compose.yml
-├── swoole/           # OpenSwoole-specific files
-│   ├── index.php     # OpenSwoole entry point
-│   ├── appIndex.php  # Application bootstrap
-│   ├── composer.json # OpenSwoole dependencies (Hyperf)
-│   └── docker-compose.yml
-├── nginx/            # Nginx files (coming soon)
-└── common/           # Shared files for all platforms
-    └── user/         # Example User files
+├── apache/ # Apache-specific files
+│ ├── index.php # Apache entry point
+│ ├── appIndex.php # Application bootstrap
+│ ├── composer.json # Apache dependencies
+│ └── docker-compose.yml
+├── swoole/ # OpenSwoole-specific files
+│ ├── index.php # OpenSwoole entry point
+│ ├── appIndex.php # Application bootstrap
+│ ├── composer.json # OpenSwoole dependencies (Hyperf)
+│ └── docker-compose.yml
+├── nginx/            # Nginx init / startup files
+└── common/ # Shared files for all platforms
+ └── user/ # Example User files
 ```
 
 **Key Features**:
@@ -242,125 +242,59 @@ startup/
 
 ## Security Architecture
 
-### **Automatic Security (No Developer Action)**:
-1. ✅ **Path Protection** - Blocks `/app`, `/vendor`, `.env`, etc.
-2. ✅ **Header Sanitization** - All HTTP headers sanitized
-3. ✅ **Input Sanitization** - All GET/POST/PUT/PATCH sanitized (XSS prevention)
-4. ✅ **SQL Injection Prevention** - All queries use prepared statements
-5. ✅ **File Name Sanitization** - Uploaded file names sanitized
-6. ✅ **Cookie Filtering** - Dangerous cookies blocked
+Brief pointer only — full detail: [security.md](security.md).
 
-### **Developer-Enabled Security (Simple Method Calls)**:
-1. ⚙️ **Schema Validation** - Call `definePostSchema()` (prevents mass assignment)
-2. ⚙️ **Authentication** - Call `$request->auth()` (JWT validation)
-3. ⚙️ **Authorization** - Call `$request->auth(['role'])` (role checking)
-4. ⚙️ **File Signature Detection** - Use `ImageHelper` methods
-5. ⚙️ **File Encryption** - Use `FileHelper::encrypt()`
+- **Automatic:** path protection, header/input sanitization, prepared statements, file-name sanitization, cookie filtering  
+- **You call:** `define*Schema()`, `auth()` / `requireAuth()`, optional FileHelper / ImageHelper  
 
 ---
 
 ## APM Integration Architecture
 
-### **Automatic APM Tracing (Zero Configuration)**:
-1. ✅ **Root Trace** - Automatically created in Bootstrap/SwooleBootstrap
-   - Captures full request lifecycle
-   - Initialized early (before routing)
-   - Stored in `$request->apm` for trace context propagation
-2. ✅ **Exception Tracking** - All exceptions automatically recorded
-3. ✅ **Trace Context Propagation** - All spans share the same `traceId`
-   - Bootstrap → ApiService → Controller → Model → Table → UniversalQueryExecuter
-4. ✅ **Fire-and-Forget Pattern** - Traces sent after HTTP response (non-blocking)
+Contracts-first: library → **`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) → provider (`APM_NAME=…`). TraceKit is one provider.
 
-### **Environment-Controlled Tracing (Optional)**:
-1. ⚙️ **Controller Tracing** - Enable via `APM_TRACE_CONTROLLER=1`
-   - Use `callController()` in API services
-   - Automatic spans for controller method calls
-   - Captures method name, response code, execution time
-2. ⚙️ **Database Query Tracing** - Enable via `APM_TRACE_DB_QUERY=1`
-   - Use `createModel()` in controllers (sets Request on models)
-   - Automatic spans for all SQL queries
-   - Captures query type, execution time, rows affected, SQL statement
+- Root span: Bootstrap / SwooleBootstrap → `$request->apm`  
+- Controller spans: `APM_TRACE_CONTROLLER=1` + Apache `callController()`  
+- DB spans: `APM_TRACE_DB_QUERY=1` + `createModel()`  
 
-### **APM Architecture Flow**:
+Full guide: [apm.md](apm.md) · `vendor/gemvc/apm-contracts/README.md`.
+
 ```
-Bootstrap/SwooleBootstrap
-    ↓ (APM initialized, root trace started)
-    ↓ ($request->apm set)
-ApiService
-    ↓ (uses $request->apm)
-    ↓ (ApiService::callController() creates controller span if enabled — Apache/Nginx; Swoole: bare `new Controller`)
-Controller
-    ↓ (uses $request->apm)
-    ↓ (createModel() sets Request on model)
-Model
-    ↓ (Table-backed Model extends Table; composition forwards setRequest)
-Table → ConnectionManager → PdoQuery
-    ↓ (Request propagated through all layers)
-UniversalQueryExecuter
-    ↓ (uses $request->apm for query span if enabled)
-Database Query Executed
-    ↓
-Response Sent
-    ↓
-APM Traces Sent (fire-and-forget, non-blocking)
+Bootstrap → $request->apm
+  → ApiService (callController span if enabled; Swoole: bare new Controller)
+  → Controller → createModel() → Model/Table → UniversalQueryExecuter (query span if enabled)
+  → Response → provider flush (non-blocking where supported)
 ```
-
-### **APM Components**:
-- `Bootstrap.php` / `SwooleBootstrap.php` - Early APM initialization
-- `ApiService::callController()` - Controller tracing proxy
-- `Controller::createModel()` - Request propagation helper
-- `Table::setRequest()` - Request propagation to database layer
-- `UniversalQueryExecuter` - Database query tracing
-- `ApmTracingTrait` - Unified tracing methods for custom spans
-
-### **APM Provider Support**:
-- Works with any APM provider via `gemvc/apm-contracts` package
-- TraceKit (`gemvc/apm-tracekit`)
-- Datadog, New Relic, Elastic APM (custom providers)
-- Provider-agnostic design
-
-### **Performance**:
-- **Zero overhead when disabled** - Environment flags control tracing
-- **Minimal overhead when enabled** - ~0.25ms per request
-- **Non-blocking** - Traces sent after HTTP response
-- **Sample rate support** - Control trace volume via `TRACEKIT_SAMPLE_RATE`
 
 ---
 
 ## Performance Features
 
-### **OpenSwoole Optimizations**:
-- Connection pooling (database)
-- Persistent processes (no PHP bootstrap overhead)
-- Hot reload (development)
-- Async capabilities
-- WebSocket support
-
-### **Apache/Nginx Optimizations**:
-- Optional persistent PDO connections (`DB_ENHANCED_CONNECTION=1`)
-- Cached environment detection
-- Singleton patterns for managers
-- Prepared statement reuse
+- **OpenSwoole:** connection pooling, persistent workers, hot reload, WebSockets  
+- **Apache/Nginx:** optional persistent PDO (`DB_ENHANCED_CONNECTION=1`), cached env, prepared statement reuse  
 
 ---
 
 ## URL-to-Code Mapping
 
+**Apache/Nginx:** `/api/{Service}/{method}` (literal `api` hop).  
+**OpenSwoole:** `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults `1`/`2`) — no automatic `api` hop.
+
 ```
 URL: /api/User/create
-    ↓
+ ↓
 Extracts: Service = "User", Method = "create"
-    ↓
+ ↓
 Loads: app/api/User.php
-    ↓
+ ↓
 Calls: User::create()
-    ↓
+ ↓
 User::create() validates schema → delegates to UserController
-    ↓
+ ↓
 UserController::create() maps request → Model (createModel / map*ToObject)
-    ↓
+ ↓
 UserModel::createModel() (or domain method) applies business rules
-    ↓
+ ↓
 UserTable insert/update via Model (Table CRUD)
 ```
 
@@ -384,24 +318,10 @@ UserTable insert/update via Model (Table CRUD)
 
 ## CLI Commands
 
-### **Project Management**:
-- `gemvc init` - Initialize new project (select webserver)
-- `gemvc create:service` - Generate API service
-- `gemvc create:controller` - Generate controller
-- `gemvc create:model` - Generate model
-- `gemvc create:table` - Generate table class
-- `gemvc create:crud` - Generate full CRUD
+Library: `gemvc init`, `gemvc db:migrate`.  
+Dev (`gemvc/cli-dev`): `create:*`, most `db:*`, `admin:*`.  
 
-### **Database Management**:
-- `gemvc db:init` - Initialize database
-- `gemvc db:migrate` - Run migrations
-- `gemvc db:list` - List tables
-- `gemvc db:describe` - Describe table structure
-- `gemvc db:drop` - Drop table
-- `gemvc db:unique` - Add unique constraint
-
-### **Docker**:
-- `gemvc docker:init` - Generate docker-compose.yml
+Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 
 ---
 
@@ -429,19 +349,10 @@ UserTable insert/update via Model (Table CRUD)
 
 ## Summary
 
-**GEMVC is a production-ready, multi-platform PHP REST API framework** that:
+GEMVC is a server-agnostic PHP REST framework (`gemvc/library` + ecosystem packages):
 
-✅ **Automatically secures** 90% of common vulnerabilities  
-✅ **Works identically** on Apache, OpenSwoole, and Nginx  
-✅ **Generates code** via CLI commands  
-✅ **Prevents SQL injection** with 100% prepared statement coverage  
-✅ **Sanitizes all inputs** automatically (XSS prevention)  
-✅ **Provides JWT authentication** out of the box  
-✅ **Native APM integration** - Automatic performance monitoring with zero configuration  
-✅ **Supports WebSockets** on OpenSwoole  
-✅ **Includes hot reload** for development  
-✅ **Auto-generates API docs** from docblocks  
-✅ **Manages database** with migrations and schema generation  
-
-**Result**: Developers write clean, secure API code without worrying about webserver differences or most security concerns!
+- Automatic path / input / SQL hardening; schema + auth are developer calls ([security.md](security.md))
+- Same `app/` code on Apache, OpenSwoole, Nginx
+- APM via **`gemvc/apm-contracts`** + provider ([apm.md](apm.md))
+- Codegen / DB tooling via CLI ([cli.md](cli.md); **cli-dev** for `create:*`)
 

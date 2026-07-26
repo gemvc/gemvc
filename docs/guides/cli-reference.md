@@ -266,10 +266,10 @@ class InitSwoole extends AbstractInit
 **Purpose**: Central registry for all CLI commands, their categories, and examples.
 
 **Features**:
-- ✅ Command categories (Project Management, Code Generation, Database)
-- ✅ Command-to-class mapping
-- ✅ Command descriptions
-- ✅ Usage examples
+- Command categories (Project Management, Code Generation, Database)
+- Command-to-class mapping
+- Command descriptions
+- Usage examples
 
 **Usage**:
 ```php
@@ -297,11 +297,11 @@ $examples = CommandCategories::getExamples();
 **Purpose**: Centralized file and directory operations for all CLI commands (used heavily by `AbstractInit` and generators).
 
 **Features**:
-- ✅ Directory creation (`createDirectories()`)
-- ✅ File copying with overwrite confirmation (`copyFileWithConfirmation()`)
-- ✅ Template folder copying (`copyTemplatesFolder()`)
-- ✅ File content reading (`getFileContent()`)
-- ✅ Non-interactive mode support
+- Directory creation (`createDirectories()`)
+- File copying with overwrite confirmation (`copyFileWithConfirmation()`)
+- Template folder copying (`copyTemplatesFolder()`)
+- File content reading (`getFileContent()`)
+- Non-interactive mode support
 
 **Usage**:
 ```php
@@ -326,12 +326,12 @@ $fileSystem->copyTemplatesFolder($packagePath, $basePath);
 **Purpose**: Interactive Docker Compose setup wizard integrated into project initialization.
 
 **Features**:
-- ✅ Interactive service selection (Redis, phpMyAdmin, MySQL)
-- ✅ Dynamic `docker-compose.yml` generation
-- ✅ Development/Production mode selection
-- ✅ Docker volume cleanup
-- ✅ Service dependencies handling
-- ✅ Webserver-specific configuration
+- Interactive service selection (Redis, phpMyAdmin, MySQL)
+- Dynamic `docker-compose.yml` generation
+- Development/Production mode selection
+- Docker volume cleanup
+- Service dependencies handling
+- Webserver-specific configuration
 
 **How It Works**:
 ```php
@@ -430,12 +430,12 @@ networks:
 **Purpose**: Handles automatic Docker container building with comprehensive pre-flight checks.
 
 **Features**:
-- ✅ Docker Desktop status verification
-- ✅ Port availability checking (MySQL, phpMyAdmin, application port)
-- ✅ Existing container conflict detection
-- ✅ Automatic port conflict resolution with suggestions
-- ✅ Container name conflict handling
-- ✅ Interactive container building
+- Docker Desktop status verification
+- Port availability checking (MySQL, phpMyAdmin, application port)
+- Existing container conflict detection
+- Automatic port conflict resolution with suggestions
+- Container name conflict handling
+- Interactive container building
 
 **Pre-Flight Checks**:
 1. **Docker Desktop Status**: Verifies Docker Desktop is running
@@ -702,15 +702,16 @@ gemvc init --nginx --mysql --non-interactive
 ```
 
 **What It Does**:
-- ✅ Creates project directory structure (`app/api`, `app/controller`, `app/model`, `app/table`)
-- ✅ Copies webserver-specific files (`index.php`, `Dockerfile`, etc.)
-- ✅ Copies templates (`templates/cli/`) for code generation
-- ✅ Sets up `.env` file from `example.env`, rewritten for the selected database driver (`DB_DRIVER`, `DB_PORT`, `DB_USER`, `DB_CHARSET`; SQLite gets a `database/` folder instead of host/port/user)
-- ✅ Installs dependencies (`composer.json`)
-- ✅ **Automatically installs OpenSwoole-specific packages** (when OpenSwoole is selected: `gemvc/connection-openswoole` package, which includes all required Hyperf dependencies)
-- ✅ **Offers Docker setup** (interactive service selection via `DockerComposeInit`, driver-aware: MySQL+phpMyAdmin, PostgreSQL+pgAdmin, or no DB container for SQLite)
-- ✅ Offers PHPStan installation (optional)
-- ✅ Offers testing framework (optional)
+- Creates project directory structure (`app/api`, `app/controller`, `app/model`, `app/table`)
+- Copies webserver-specific files (`index.php`, `Dockerfile`, etc.)
+- Copies `library` `src/CLI/templates/` into `{project}/templates/` **if present** (often view assets only — **not** reliable for `create:*` stubs)
+- For codegen templates, use **`gemvc/cli-dev`** vendor fallback or copy once: see [templates.md](templates.md)
+- Sets up `.env` file from `example.env`, rewritten for the selected database driver (`DB_DRIVER`, `DB_PORT`, `DB_USER`, `DB_CHARSET`; SQLite gets a `database/` folder instead of host/port/user)
+- Installs dependencies (`composer.json`)
+- **Automatically installs OpenSwoole-specific packages** (when OpenSwoole is selected: `gemvc/connection-openswoole` package, which includes all required Hyperf dependencies)
+- **Offers Docker setup** (interactive service selection via `DockerComposeInit`, driver-aware: MySQL+phpMyAdmin, PostgreSQL+pgAdmin, or no DB container for SQLite)
+- Offers PHPStan installation (optional)
+- Offers testing framework (optional)
 
 **Note**: The `gemvc/connection-openswoole` package is only installed when OpenSwoole is selected. Apache and Nginx projects do not include this package, reducing default package size.
 
@@ -865,12 +866,12 @@ gemvc create:crud Product
 - `app/table/ProductTable.php`
 
 **What Gets Generated**:
-- ✅ Full CRUD methods: `create()`, `read()`, `update()`, `delete()`, `list()`
-- ✅ Schema validation + thin endpoints in **API** layer
-- ✅ Request mapping / orchestration in **Controller** layer
-- ✅ Business rules / transforms in **Model** layer (Table-backed or composition)
-- ✅ Database operations in **Table** layer
-- ✅ Helper methods (`selectById()`, `selectByName()`, etc.)
+- Full CRUD methods: `create()`, `read()`, `update()`, `delete()`, `list()`
+- Schema validation + thin endpoints in **API** layer
+- Request mapping / orchestration in **Controller** layer
+- Business rules / transforms in **Model** layer (Table-backed or composition)
+- Database operations in **Table** layer
+- Helper methods (`selectById()`, `selectByName()`, etc.)
 
 ---
 
@@ -894,7 +895,7 @@ gemvc db:init
 **Example**:
 ```bash
 gemvc db:init
-# Output: ✅ Database 'myapp' initialized successfully!
+# Output:  Database 'myapp' initialized successfully!
 ```
 
 **Environment Variables Required**:
@@ -939,13 +940,13 @@ gemvc db:migrate UserTable --default="Active"
 ```
 
 **What It Does**:
-- ✅ Creates table if it doesn't exist
-- ✅ Adds new columns for new properties
-- ✅ Updates column types if changed
-- ✅ Updates nullable status
-- ✅ Manages indexes
-- ✅ Applies schema constraints (unique, foreign keys)
-- ✅ Removes obsolete constraints (with `--sync-schema`)
+- Creates table if it doesn't exist
+- Adds new columns for new properties
+- Updates column types if changed
+- Updates nullable status
+- Manages indexes
+- Applies schema constraints (unique, foreign keys)
+- Removes obsolete constraints (with `--sync-schema`)
 
 **How It Works**:
 1. Reads your Table class (e.g., `UserTable.php`)
@@ -1016,7 +1017,7 @@ gemvc db:drop <TableName>
 gemvc db:drop users
 ```
 
-**⚠️ Warning**: This permanently deletes the table and all its data!
+**Warning**: This permanently deletes the table and all its data!
 
 ---
 
@@ -1038,11 +1039,11 @@ gemvc db:unique users/email,name
 ```
 
 **What It Does**:
-- ✅ Checks for duplicate values in the specified column(s)
-- ✅ If no duplicates, adds a unique constraint
-- ✅ If duplicates exist, aborts and lists the duplicates
+- Checks for duplicate values in the specified column(s)
+- If no duplicates, adds a unique constraint
+- If duplicates exist, aborts and lists the duplicates
 
-**⚠️ Warning**: This command will fail if duplicate values exist in the column(s). Clean up duplicates first.
+**Warning**: This command will fail if duplicate values exist in the column(s). Clean up duplicates first.
 
 ---
 
@@ -1057,10 +1058,10 @@ gemvc admin:setpassword
 ```
 
 **What It Does**:
-- ✅ Prompts for password (hidden on Unix/Linux, visible on Windows)
-- ✅ Confirms password entry
-- ✅ Updates `ADMIN_PASSWORD` in `.env` file
-- ✅ Stores password in plain text (acceptable for dev-only admin access)
+- Prompts for password (hidden on Unix/Linux, visible on Windows)
+- Confirms password entry
+- Updates `ADMIN_PASSWORD` in `.env` file
+- Stores password in plain text (acceptable for dev-only admin access)
 
 **Example**:
 ```bash
@@ -1083,12 +1084,12 @@ gemvc admin:setadmin
 ```
 
 **What It Does**:
-- ✅ Checks if database is initialized (offers to initialize if not)
-- ✅ Checks if UserTable is migrated (offers to migrate if not)
-- ✅ Validates that no users exist (security check)
-- ✅ Prompts for admin name, email, and password
-- ✅ Creates admin user with role 'admin'
-- ✅ Automatically handles Docker hostname to localhost conversion for CLI
+- Checks if database is initialized (offers to initialize if not)
+- Checks if UserTable is migrated (offers to migrate if not)
+- Validates that no users exist (security check)
+- Prompts for admin name, email, and password
+- Creates admin user with role 'admin'
+- Automatically handles Docker hostname to localhost conversion for CLI
 
 **Example**:
 ```bash
@@ -1101,10 +1102,10 @@ gemvc admin:setadmin
 ```
 
 **Security Features**:
-- ⚠️ Can only be used when database is empty (no existing users)
-- ✅ Validates email format
-- ✅ Requires password confirmation
-- ✅ Automatically sets user role to 'admin'
+- Can only be used when database is empty (no existing users)
+- Validates email format
+- Requires password confirmation
+- Automatically sets user role to 'admin'
 
 **Prerequisites**:
 - Database must be initialized (`gemvc db:init`)
@@ -1387,13 +1388,13 @@ gemvc create:crud user_profile
 
 GEMVC CLI provides:
 
-- ✅ **Project Management** - Initialize projects with different webservers
-- ✅ **Code Generation** - Generate Services, Controllers, Models, Tables
-- ✅ **Database Management** - Migrate, list, describe, drop tables, add constraints
-- ✅ **Admin Management** - Set admin password, create first admin user
-- ✅ **Docker Integration** - Automatic container building with pre-flight checks
-- ✅ **Template System** - Customizable code generation templates
-- ✅ **Non-Interactive Mode** - Suitable for CI/CD pipelines
+- **Project Management** - Initialize projects with different webservers
+- **Code Generation** - Generate Services, Controllers, Models, Tables
+- **Database Management** - Migrate, list, describe, drop tables, add constraints
+- **Admin Management** - Set admin password, create first admin user
+- **Docker Integration** - Automatic container building with pre-flight checks
+- **Template System** - Customizable code generation templates
+- **Non-Interactive Mode** - Suitable for CI/CD pipelines
 
 **Start Building**:
 ```bash
@@ -1402,8 +1403,7 @@ gemvc create:crud Product
 gemvc db:migrate ProductTable
 ```
 
-Happy coding! 🚀
-
+Happy coding!
 ---
 
 ## Architecture Deep Dive
@@ -1644,4 +1644,4 @@ CreateCrud::execute()
 - Factory (CommandCategories)
 - Facade (FileSystemManager)
 
-**Result**: Clean, maintainable, extensible CLI architecture! 🎯
+**Result**: Clean, maintainable, extensible CLI architecture!

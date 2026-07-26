@@ -25,26 +25,26 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 ```
 Request Arrives
     ↓
-1. Path Access Security (SecurityManager) ✅ AUTOMATIC
+1. Path Access Security (SecurityManager) AUTOMATIC
     ↓
-2. Header Sanitization (ApacheRequest/SwooleRequest) ✅ AUTOMATIC
+2. Header Sanitization (ApacheRequest/SwooleRequest) AUTOMATIC
     ↓
-3. Input Sanitization (XSS Prevention) ✅ AUTOMATIC
+3. Input Sanitization (XSS Prevention) AUTOMATIC
     ↓
-4. Schema Validation (Request Filtering) ⚙️ Developer Calls
+4. Schema Validation (Request Filtering) Developer calls
     ↓
-5. Authentication & Authorization (JWT) ⚙️ Developer Calls
+5. Authentication & Authorization (JWT) Developer calls
     ↓
-6. File Security (Name, MIME, Signature, Encryption) ✅ AUTOMATIC + ⚙️ Developer Calls
+6. File Security (Name, MIME, Signature, Encryption) AUTOMATIC + developer calls
     ↓
-7. Business Logic Protection ✅ AUTOMATIC
+7. Schema / mass-assignment boundary AUTOMATIC (after define*Schema)
     ↓
-8. Database Security (SQL Injection Prevention) ✅ AUTOMATIC
+8. Database Security (SQL Injection Prevention) AUTOMATIC
 ```
 
 **Legend**:
-- ✅ **AUTOMATIC**: Enabled by default, no developer action needed
-- ⚙️ **Developer Calls**: Available methods developers use in their code
+- **AUTOMATIC**: Enabled by default, no developer action needed
+- **Developer Calls**: Available methods developers use in their code
 
 ### How It Works
 
@@ -102,22 +102,22 @@ new SwooleBootstrap($sr->request); // All sanitization already done
 **Automatic Implementation**:
 ```php
 // OpenSwooleServer.php - Line 159
-// ✅ AUTOMATIC - Happens for EVERY request before processing
+// AUTOMATIC - Happens for EVERY request before processing
 if (!$this->security->isRequestAllowed($requestUri)) {
     $this->security->sendSecurityResponse($response); // Returns 403
     return;
 }
 
-// ✅ No developer code needed - Already protected!
+// No developer code needed — already protected
 ```
 
 **Attack Prevented**:
 ```
-❌ Attack: GET /app/api/User.php
-✅ Result: 403 Forbidden - "Direct file access is not permitted"
+Attack: GET /app/api/User.php
+Result: 403 Forbidden - "Direct file access is not permitted"
 
-❌ Attack: GET /.env
-✅ Result: 403 Forbidden - "Direct file access is not permitted"
+Attack: GET /.env
+Result: 403 Forbidden - "Direct file access is not permitted"
 ```
 
 ---
@@ -152,10 +152,10 @@ private function sanitizeAllServerHttpRequestHeaders(): void
 
 **Attack Prevented**:
 ```
-❌ Attack: 
+Attack: 
 Authorization: Bearer <script>alert('XSS')</script>
 
-✅ Sanitized:
+Sanitized:
 Authorization: Bearer &lt;script&gt;alert('XSS')&lt;/script&gt;
 ```
 
@@ -198,22 +198,22 @@ private function sanitizeInput(mixed $input): mixed
 ```
 
 **What Gets Sanitized**:
-- ✅ All POST data
-- ✅ All GET parameters
-- ✅ All PUT/PATCH data
-- ✅ All HTTP headers
-- ✅ Query strings
-- ✅ Request URIs
-- ✅ File names and MIME types
+- All POST data
+- All GET parameters
+- All PUT/PATCH data
+- All HTTP headers
+- Query strings
+- Request URIs
+- File names and MIME types
 
 **XSS Attack Prevention**:
 ```
-❌ Attack Input:
+Attack Input:
 <script>alert('XSS')</script>
 <img src=x onerror="alert('XSS')">
 javascript:alert('XSS')
 
-✅ Sanitized Output:
+Sanitized Output:
 &lt;script&gt;alert('XSS')&lt;/script&gt;
 &lt;img src=x onerror="alert('XSS')"&gt;
 javascript:alert('XSS')  // Special chars escaped
@@ -238,7 +238,7 @@ javascript:alert('XSS')  // Special chars escaped
 // Schema: ['email' => 'email', 'password' => 'string']
 // Request: {email: "...", password: "...", is_admin: true}
 
-❌ REJECTED: "Unwanted post field: is_admin"
+REJECTED: "Unwanted post field: is_admin"
 ```
 **Prevents**: Mass assignment attacks
 
@@ -247,7 +247,7 @@ javascript:alert('XSS')  // Special chars escaped
 // Schema: ['email' => 'email', 'password' => 'string']
 // Request: {email: "user@example.com"}
 
-❌ REJECTED: "Missing required field: password"
+REJECTED: "Missing required field: password"
 ```
 **Prevents**: Incomplete/malformed requests
 
@@ -256,7 +256,7 @@ javascript:alert('XSS')  // Special chars escaped
 // Schema: ['email' => 'email', 'age' => 'int']
 // Request: {email: "not-an-email", age: "twenty"}
 
-❌ REJECTED: 
+REJECTED: 
 "Invalid value for required field email, expected type: email"
 "Invalid value for required field age, expected type: int"
 ```
@@ -267,7 +267,7 @@ javascript:alert('XSS')  // Special chars escaped
 // Schema: ['email' => 'email', '?phone' => 'string']
 // Request: {email: "user@example.com", phone: 12345}
 
-❌ REJECTED: "Invalid value for optional field phone, expected type: string"
+REJECTED: "Invalid value for optional field phone, expected type: string"
 ```
 
 **Complete Example**:
@@ -294,7 +294,7 @@ public function create(): JsonResponse {
         return $this->request->returnResponse(); // 400 Bad Request
     }
     
-    // ✅ Only valid requests reach here!
+    // Only valid requests reach here
     return (new UserController($this->request))->create();
 }
 ```
@@ -310,23 +310,23 @@ public function create(): JsonResponse {
 Attack 1: Type Confusion
 Request: {"id": "1' OR '1'='1", "email": "admin@test.com"}
 Schema: ['id' => 'int', 'email' => 'email']
-Result: ❌ REJECTED - "Invalid value for field id, expected type: int"
+Result: REJECTED - "Invalid value for field id, expected type: int"
 
 Attack 2: SQL Injection via Type Mismatch
 Request: {"id": "1; DROP TABLE users; --", "name": "Hacker"}
 Schema: ['id' => 'int', 'name' => 'string']
-Result: ❌ REJECTED - "Invalid value for field id, expected type: int"
+Result: REJECTED - "Invalid value for field id, expected type: int"
 
 Attack 3: Mass Assignment
 Request: {"email": "user@test.com", "password": "pass", "is_admin": true}
 Schema: ['email' => 'email', 'password' => 'string']
-Result: ❌ REJECTED - "Unwanted post field: is_admin"
+Result: REJECTED - "Unwanted post field: is_admin"
 
 Attack 4: Buffer Overflow
 Request: {"name": "A" * 10000, "email": "user@test.com"}
 Schema: ['name' => 'string', 'email' => 'email']
 validateStringPosts: ['name' => '2|100']
-Result: ❌ REJECTED - "String length for post 'name' is 10000, outside range (2-100)"
+Result: REJECTED - "String length for post 'name' is 10000, outside range (2-100)"
 ```
 
 ---
@@ -394,7 +394,7 @@ public function create(): JsonResponse {
         return $this->request->returnResponse();
     }
     
-    // ✅ Authenticated and authorized
+    // Authenticated and authorized
     return $this->callController(new UserController($this->request))->create();
 }
 ```
@@ -406,26 +406,26 @@ public function create(): JsonResponse {
 | Valid JWT, role not allowed | **403** Forbidden |
 
 **Security Features**:
-- ✅ **HS256 Signature**: Uses `TOKEN_SECRET` from `.env`
-- ✅ **Expiration Validation**: Checks `exp > time()`
-- ✅ **User ID Validation**: Ensures `user_id > 0`
-- ✅ **Role-Based Access Control**: Multi-role support
-- ✅ **Token Renewal**: `renew()` method for extending tokens
+- **HS256 Signature**: Uses `TOKEN_SECRET` from `.env`
+- **Expiration Validation**: Checks `exp > time()`
+- **User ID Validation**: Ensures `user_id > 0`
+- **Role-Based Access Control**: Multi-role support
+- **Token Renewal**: `renew()` method for extending tokens
 
 **Attack Prevention**:
 ```
 Attack 1: Forged Token
 Token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.forged-payload.wrong-signature"
-Result: ❌ REJECTED - "Invalid JWT token. Authentication failed"
+Result: REJECTED - "Invalid JWT token. Authentication failed"
 
 Attack 2: Expired Token
 Token: Valid signature but exp < current_time
-Result: ❌ REJECTED - "Invalid JWT token. Authentication failed"
+Result: REJECTED - "Invalid JWT token. Authentication failed"
 
 Attack 3: Role Escalation
 Token: Valid token with role="user"
 Request: Requires role="admin"
-Result: ❌ REJECTED - "Role user not allowed to perform this action"
+Result: REJECTED - "Role user not allowed to perform this action"
 ```
 
 ---
@@ -435,9 +435,9 @@ Result: ❌ REJECTED - "Role user not allowed to perform this action"
 ### AUTOMATIC + Developer Calls
 
 **Status**: 
-- **File name/MIME sanitization**: ✅ AUTOMATIC (in Request constructors)
-- **File signature detection**: ⚙️ Use ImageHelper methods
-- **File encryption**: ⚙️ Use FileHelper/ImageHelper methods
+- **File name/MIME sanitization**: AUTOMATIC (in Request constructors)
+- **File signature detection**:  Use ImageHelper methods
+- **File encryption**:  Use FileHelper/ImageHelper methods
 
 ### AUTOMATIC - File Name & MIME Sanitization
 
@@ -462,11 +462,11 @@ private function normalizeFilesArray(array $files): array
 ```
 Attack: Path Traversal in Filename
 Filename: "../../../etc/passwd"
-Result: ✅ Sanitized - Dangerous characters escaped
+Result: Sanitized - Dangerous characters escaped
 
 Attack: MIME Type Injection
 MIME: "image/jpeg\r\nX-Injected: header"
-Result: ✅ Sanitized - Special characters escaped
+Result: Sanitized - Special characters escaped
 ```
 
 ### File Signature Detection (Magic Bytes)
@@ -499,16 +499,16 @@ public function convertToWebP(int $quality = 80): bool
 Attack 1: Double Extension
 File: malware.php.jpg
 MIME: image/jpeg
-Result: ❌ REJECTED - getimagesize() detects <?php signature (not JPEG)
+Result: REJECTED - getimagesize() detects <?php signature (not JPEG)
 
 Attack 2: MIME Spoofing
 File: malware.php
 MIME: image/jpeg (spoofed)
-Result: ❌ REJECTED - Actual file signature doesn't match
+Result: REJECTED - Actual file signature doesn't match
 
 Attack 3: PHP File Renamed
 File: evil.php renamed to image.jpg
-Result: ❌ REJECTED - Magic bytes show <?php, not image signature
+Result: REJECTED - Magic bytes show <?php, not image signature
 ```
 
 ### File Encryption
@@ -536,16 +536,16 @@ $decryptedPath = $file->decrypt();
 ```
 
 **Security Features**:
-- ✅ **AES-256-CBC**: Industry-standard encryption
-- ✅ **Random IV**: Each file encrypted uniquely
-- ✅ **HMAC-SHA256**: Detects file tampering
-- ✅ **Integrity Check**: `hash_equals()` prevents timing attacks
+- **AES-256-CBC**: Industry-standard encryption
+- **Random IV**: Each file encrypted uniquely
+- **HMAC-SHA256**: Detects file tampering
+- **Integrity Check**: `hash_equals()` prevents timing attacks
 
 **Tampering Detection**:
 ```
 Attack: Encrypted file modified
 File: document.pdf.enc (modified bytes)
-Result: ❌ DECRYPTION FAILED - "Cannot decrypt file - Secret is wrong"
+Result: DECRYPTION FAILED - "Cannot decrypt file - Secret is wrong"
          (Actually: HMAC mismatch detected!)
 ```
 
@@ -614,7 +614,7 @@ Database Execution:
 SELECT * FROM users WHERE email = 'admin\' OR \'1\'=\'1'
 // Database treats entire string as literal value!
 
-Result: ✅ SQL INJECTION PREVENTED
+Result: SQL injection prevented
 No matching user found (as expected)
 ```
 
@@ -647,10 +647,10 @@ $user->deleteSingleQuery();
    POST: {"name": "<script>alert('XSS')</script>", "email": "admin' OR '1'='1"}
    
 2. Path Access Check:
-   ✅ Path allowed (/api/Upload/upload)
+   Path allowed (/api/Upload/upload)
    
 3. Header Sanitization:
-   ✅ All headers sanitized
+   All headers sanitized
    
 4. Input Sanitization:
    name: &lt;script&gt;alert('XSS')&lt;/script&gt; (XSS prevented)
@@ -659,13 +659,13 @@ $user->deleteSingleQuery();
 5. Schema Validation:
    definePostSchema(['name' => 'string', 'email' => 'email'])
    ├─ Check email type: "admin' OR '1'='1" is NOT valid email
-   └─ ❌ REJECTED: 400 Bad Request
+   └─ REJECTED: 400 Bad Request
        "Invalid value for required field email, expected type: email"
    
 6. Request Stopped Here!
-   ✅ No file processing
-   ✅ No database queries
-   ✅ Attack blocked at entry point
+   No file processing
+   No database queries
+   Attack blocked at entry point
 ```
 
 ---
@@ -674,18 +674,18 @@ $user->deleteSingleQuery();
 
 | Layer | Protection | Technique | Status |
 |-------|-----------|-----------|--------|
-| Path Access | File access blocking | SecurityManager | ✅ Blocked |
-| Header Sanitization | Header injection | FILTER_SANITIZE | ✅ Protected |
-| Input Sanitization | XSS prevention | FILTER_SANITIZE_FULL_SPECIAL_CHARS | ✅ Protected |
-| Schema Validation | Request filtering | TypeChecker + defineSchema | ✅ Validated |
-| Type Validation | Type safety | TypeChecker::check() | ✅ Enforced |
-| Authentication | Token security | JWT (HS256) + expiration | ✅ Verified |
-| Authorization | Role-based access | Role checking | ✅ Enforced |
-| File Name Sanitization | Path traversal | sanitizeInput() | ✅ Protected |
-| File MIME Sanitization | MIME injection | sanitizeInput() | ✅ Protected |
-| File Signature Detection | Type spoofing | getimagesize() magic bytes | ✅ Verified |
-| File Encryption | Confidentiality | AES-256-CBC + HMAC | ✅ Encrypted |
-| Database | SQL injection | Prepared statements | ✅ Prevented |
+| Path Access | File access blocking | SecurityManager |  Blocked |
+| Header Sanitization | Header injection | FILTER_SANITIZE |  Protected |
+| Input Sanitization | XSS prevention | FILTER_SANITIZE_FULL_SPECIAL_CHARS |  Protected |
+| Schema Validation | Request filtering | TypeChecker + defineSchema |  Validated |
+| Type Validation | Type safety | TypeChecker::check() |  Enforced |
+| Authentication | Token security | JWT (HS256) + expiration |  Verified |
+| Authorization | Role-based access | Role checking |  Enforced |
+| File Name Sanitization | Path traversal | sanitizeInput() |  Protected |
+| File MIME Sanitization | MIME injection | sanitizeInput() |  Protected |
+| File Signature Detection | Type spoofing | getimagesize() magic bytes |  Verified |
+| File Encryption | Confidentiality | AES-256-CBC + HMAC |  Encrypted |
+| Database | SQL injection | Prepared statements |  Prevented |
 
 ---
 
@@ -704,9 +704,9 @@ $isValid = CryptHelper::passwordVerify($password, $hashedPassword);
 ```
 
 **Security Features**:
-- ✅ **Argon2i**: Memory-hard hashing algorithm
-- ✅ **Automatic Salt**: Unique salt per password
-- ✅ **No Plain Text**: Passwords never stored in plain text
+- **Argon2i**: Memory-hard hashing algorithm
+- **Automatic Salt**: Unique salt per password
+- **No Plain Text**: Passwords never stored in plain text
 
 ### Error Handling Security
 
@@ -725,19 +725,19 @@ echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
 
 | Attack Type | Attack Vector | GEMVC Protection | Result |
 |------------|--------------|------------------|--------|
-| **XSS** | `<script>alert('XSS')</script>` | Input sanitization | ✅ Prevented |
-| **SQL Injection** | `admin' OR '1'='1` | Prepared statements | ✅ Prevented |
-| **Path Traversal** | `../../../etc/passwd` | Path blocking + filename sanitization | ✅ Prevented |
-| **File Upload** | `malware.php.jpg` | Signature detection | ✅ Prevented |
-| **MIME Spoofing** | PHP file with `image/jpeg` MIME | Magic byte verification | ✅ Prevented |
-| **Mass Assignment** | `{is_admin: true}` | Schema validation | ✅ Prevented |
-| **Type Confusion** | `id: "1' OR '1'='1"` | Type validation | ✅ Prevented |
-| **Header Injection** | `\r\n` in headers | Header sanitization | ✅ Prevented |
-| **JWT Forgery** | Modified token | Signature verification | ✅ Prevented |
-| **Token Replay** | Expired token | Expiration check | ✅ Prevented |
-| **Role Escalation** | User accessing admin endpoint | Authorization check | ✅ Prevented |
-| **Buffer Overflow** | 10,000 char string | Length validation | ✅ Prevented |
-| **File Tampering** | Modified encrypted file | HMAC verification | ✅ Prevented |
+| **XSS** | `<script>alert('XSS')</script>` | Input sanitization |  Prevented |
+| **SQL Injection** | `admin' OR '1'='1` | Prepared statements |  Prevented |
+| **Path Traversal** | `../../../etc/passwd` | Path blocking + filename sanitization |  Prevented |
+| **File Upload** | `malware.php.jpg` | Signature detection |  Prevented |
+| **MIME Spoofing** | PHP file with `image/jpeg` MIME | Magic byte verification |  Prevented |
+| **Mass Assignment** | `{is_admin: true}` | Schema validation |  Prevented |
+| **Type Confusion** | `id: "1' OR '1'='1"` | Type validation |  Prevented |
+| **Header Injection** | `\r\n` in headers | Header sanitization |  Prevented |
+| **JWT Forgery** | Modified token | Signature verification |  Prevented |
+| **Token Replay** | Expired token | Expiration check |  Prevented |
+| **Role Escalation** | User accessing admin endpoint | Authorization check |  Prevented |
+| **Buffer Overflow** | 10,000 char string | Length validation |  Prevented |
+| **File Tampering** | Modified encrypted file | HMAC verification |  Prevented |
 
 ---
 
@@ -816,54 +816,54 @@ REDIS_PREFIX=gemvc:
 
 ### 1. Always Use Schema Validation
 ```php
-// ✅ GOOD - Validate before processing
+// Good - Validate before processing
 if (!$this->request->definePostSchema(['email' => 'email'])) {
     return $this->request->returnResponse();
 }
 
-// ❌ BAD - Process without validation
+// Bad - Process without validation
 $email = $this->request->post['email']; // No validation!
 ```
 
 ### 2. Always Use Type-Safe Getters
 ```php
-// ✅ GOOD - Type-safe
+// Good - Type-safe
 $id = $this->request->intValueGet('id');
 
-// ❌ BAD - No type checking
+// Bad - No type checking
 $id = $this->request->get['id']; // Could be anything!
 ```
 
 ### 3. Always Use Authentication
 ```php
-// ✅ GOOD - Check authentication
+// Good - Check authentication
 if (!$this->request->auth(['admin'])) {
     return $this->request->returnResponse();
 }
 
-// ❌ BAD - No authentication check
+// Bad - No authentication check
 // Anyone can access!
 ```
 
 ### 4. Prepared Statements (Automatic!)
 ```php
-// ✅ GOOD - Uses prepared statements automatically
+// Good - Uses prepared statements automatically
 $user->where('email', $email)->run();
 
-// ✅ AUTOMATIC - Framework enforces prepared statements
-// ❌ NOT POSSIBLE - GEMVC doesn't allow raw SQL concatenation
+// AUTOMATIC - Framework enforces prepared statements
+// Not possible - GEMVC doesn't allow raw SQL concatenation
 // All queries automatically use prepared statements!
 ```
 
 ### 5. Always Validate File Uploads
 ```php
-// ✅ GOOD - Validate file signature
+// Good - Validate file signature
 $image = new ImageHelper($uploadedFile);
 if ($image->convertToWebP()) {
     // File is valid image (signature verified)
 }
 
-// ❌ BAD - Trust file extension
+// Bad - Trust file extension
 if (pathinfo($file, PATHINFO_EXTENSION) === 'jpg') {
     // Dangerous! Extension can be spoofed!
 }
@@ -933,8 +933,8 @@ This security policy is regularly updated to reflect:
 - Best practice changes
 - Framework updates
 
-**Last Updated**: 2026-05-17  
-**Version**: 2.1.0 - Framework 5.6.7 (security baseline from 5.6.6: path normalization, input/URI sanitization; plus PHP 8.5 PDO compatibility and CLI terminal color fixes in 5.6.7)
+**Last Updated**: 2026-07-26
+**Version**: 5.9.1 — `requireAuth()`, contracts APM, multi-DB; automatic hardening baseline unchanged
 
 ---
 
@@ -944,21 +944,21 @@ This security policy is regularly updated to reflect:
 
 GEMVC provides **automatic protection** against:
 
-- ✅ **XSS (Cross-Site Scripting)** - ✅ AUTOMATIC (Input sanitization + output encoding)
-- ✅ **SQL Injection** - ✅ AUTOMATIC (Prepared statements - 100% coverage)
-- ✅ **Path Traversal** - ✅ AUTOMATIC (Path blocking + filename sanitization)
-- ✅ **Header Injection** - ✅ AUTOMATIC (Header sanitization)
-- ✅ **File Upload Attacks** - ✅ AUTOMATIC (File name/MIME sanitization)
-- ✅ **JWT Forgery** - ✅ AUTOMATIC (Signature verification + expiration)
+- **XSS (Cross-Site Scripting)** - AUTOMATIC (Input sanitization + output encoding)
+- **SQL Injection** - AUTOMATIC (Prepared statements - 100% coverage)
+- **Path Traversal** - AUTOMATIC (Path blocking + filename sanitization)
+- **Header Injection** - AUTOMATIC (Header sanitization)
+- **File Upload Attacks** - AUTOMATIC (File name/MIME sanitization)
+- **JWT Forgery** - AUTOMATIC (Signature verification + expiration)
 
 ### Developer-Enabled Protection (Simple Method Calls)
 
-- ⚙️ **Mass Assignment** - Call `definePostSchema()` (prevents unwanted fields)
-- ⚙️ **Type Confusion** - Call `definePostSchema()` (validates types)
-- ⚙️ **Authentication Bypass** - Call `$request->auth()` (JWT validation)
-- ⚙️ **Authorization Bypass** - Call `$request->auth(['role'])` (Role checking)
-- ⚙️ **File Signature Spoofing** - Use `ImageHelper::convertToWebP()` (Validates magic bytes)
-- ⚙️ **File Tampering** - Use `FileHelper::encrypt()` (HMAC integrity verification)
+- **Mass Assignment** - Call `definePostSchema()` (prevents unwanted fields)
+- **Type Confusion** - Call `definePostSchema()` (validates types)
+- **Authentication Bypass** - Call `$request->auth()` or service-wide `requireAuth()` (JWT validation)
+- **Authorization Bypass** - Call `$request->auth(['role'])` / `requireAuth(['role'])` (role checking)
+- **File Signature Spoofing** - Use `ImageHelper::convertToWebP()` (Validates magic bytes)
+- **File Tampering** - Use `FileHelper::encrypt()` (HMAC integrity verification)
 
 **Result**: 
 - **90% of security is AUTOMATIC** - No developer action needed!

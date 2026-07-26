@@ -57,6 +57,7 @@ interface RequestReference
     public function getPageNumber(): int;
     public function getPerPage(): int;
 
+    /** Manual map: key = request field (= property). Value ending in () calls method; otherwise value ignored. */
     public function mapPostToObject(object $object, ?array $manualMap = null): object|null;
     public function mapPutToObject(object $object, ?array $manualMap = null): object|null;
     public function mapPatchToObject(object $object, ?array $manualMap = null): object|null;
@@ -123,11 +124,16 @@ interface ControllerReference
 
 /**
  * Gemvc\Database\Table (+ CrudOperationsTrait, SoftDeleteOperationsTrait)
+ *
+ * Base Table only declares abstract getTable(). defineSchema() is a subclass
+ * convention (public) used by db:migrate / generators via method_exists — not
+ * declared on the base class.
  */
 interface TableReference
 {
     public function getTable(): string;
-    public function defineSchema(): array;
+    // Convention on subclasses (not on base Table):
+    // public function defineSchema(): array;
 
     public function select(?string $columns = null): self;
     public function where(string $column, mixed $value): self;

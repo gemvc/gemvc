@@ -4,7 +4,7 @@
 
 **Related:** [cli.md](cli.md) · [installation.md](installation.md) · [controller.md](controller.md) · [model.md](model.md)
 
-Customize codegen while still using CLI commands. After `gemvc init`, templates live under `{project}/templates/cli/`. Requires **`gemvc/cli-dev`** for create commands.
+Customize `gemvc create:*` output (needs **`gemvc/cli-dev`**). Overrides live under `{project}/templates/cli/`; if missing, codegen falls back to `vendor/gemvc/cli-dev/templates/cli/`. Init does **not** guarantee create stubs — see [How It Works](#how-it-works).
 
 ## Reading map (AI)
 
@@ -64,7 +64,7 @@ When generating code, GEMVC uses a **smart template lookup**:
 
 ```php
 // DevGenerator::getTemplate() (cli-dev)
-1. First checks: {projectRoot}/templates/cli/{templateName}.template ✅ (Custom)
+1. First checks: {projectRoot}/templates/cli/{templateName}.template  (Custom)
 2. Fallback: vendor/gemvc/cli-dev/templates/cli/{templateName}.template (Default)
 ```
 
@@ -275,12 +275,12 @@ Developer runs: gemvc create:crud Product
 AbstractBaseGenerator::getTemplate('service')
     ↓
 Check 1: {projectRoot}/templates/cli/service.template
-    ├─ ✅ EXISTS → Use custom template
-    └─ ❌ NOT FOUND → Continue to Check 2
+    ├─  EXISTS → Use custom template
+    └─  NOT FOUND → Continue to Check 2
         ↓
 Check 2: vendor/gemvc/cli-dev/templates/cli/service.template
-    ├─ ✅ EXISTS → Use default template (with warning)
-    └─ ❌ NOT FOUND → Throw error
+    ├─  EXISTS → Use default template (with warning)
+    └─  NOT FOUND → Throw error
         ↓
 Load template content
     ↓
@@ -449,11 +449,11 @@ If `{$serviceName}` appears in generated code:
 ## Summary
 
 **Key Benefits**:
-- ✅ **Customize code style** per project/team
-- ✅ **Maintain consistency** across generated code
-- ✅ **Version control** your templates
-- ✅ **Easy updates** - just edit template files
-- ✅ **Team alignment** - shared templates = shared style
+- **Customize code style** per project/team
+- **Maintain consistency** across generated code
+- **Version control** your templates
+- **Easy updates** - just edit template files
+- **Team alignment** - shared templates = shared style
 
 **Template Priority**:
 1. **Project root** templates (custom) ← Highest priority

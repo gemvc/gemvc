@@ -29,12 +29,12 @@ Same application code runs on **OpenSwoole**, **Apache**, and **Nginx**.
 - **Server-agnostic** — your code works the same on OpenSwoole, Nginx, and Apache
 - **4-layer** API → Controller → Model → Table — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
 - **Modular ecosystem** — **`gemvc/helper`** (types, crypto, paths) + **`gemvc/http-client`** (outbound HTTP) + connections, APM, CLI — not one monolith package
-- **No routes file** — `/api/{Service}/{method}` maps automatically
+- **No routes file** — Apache/Nginx: `/api/{Service}/{method}` maps automatically; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (see [architecture.md](docs/guides/architecture.md))
 - **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth
 - **Schema is documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export (types from **`gemvc/helper` → TypeChecker**)
-- **Powerful lists** — API allowlists (`findable` / `filterable` / `sortable`) + Controller `createList()` = type-safe filter / LIKE / sort / paginate without hand-rolled SQL
+- **Powerful lists** — API allowlists + Controller `createList()` (see below)
 - **Outbound HTTP** — **`gemvc/http-client`** sync/async/Swoole-aware (do not invent curl wrappers)
-- **Native APM** — `callController()` / `createModel()` + env flags
+- **Native APM** — **`gemvc/apm-contracts`** + provider (`APM_NAME`); app uses `callController()` / `createModel()` + `APM_*` flags
 - **Library or framework** — migrate gradually or `gemvc init` for a full app
 
 Not a Laravel/Symfony replacement — a focused scalpel for REST microservices.

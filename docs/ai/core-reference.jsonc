@@ -82,7 +82,10 @@
       "setPerPage": { "signature": "setPerPage(): bool" },
       "getPageNumber": { "signature": "getPageNumber(): int" },
       "getPerPage": { "signature": "getPerPage(): int" },
-      "mapPostToObject": { "signature": "mapPostToObject(object $object, ?array $manualMap = null): object|null" },
+      "mapPostToObject": {
+        "signature": "mapPostToObject(object $object, ?array $manualMap = null): object|null",
+        "note": "Manual map key = request field (= property). Value ending in () calls method; otherwise value ignored."
+      },
       "mapPutToObject": { "signature": "mapPutToObject(object $object, ?array $manualMap = null): object|null" },
       "mapPatchToObject": { "signature": "mapPatchToObject(object $object, ?array $manualMap = null): object|null" }
     }
@@ -137,7 +140,10 @@
   },
   "table_orm": {
     "namespace": "Gemvc\\Database\\Table",
-    "required_methods": ["getTable(): string", "defineSchema(): array"],
+    "required_methods": ["getTable(): string"],
+    "subclass_conventions": [
+      "public function defineSchema(): array — not on base Table; required for db:migrate via method_exists; must be public"
+    ],
     "required_properties": [{ "name": "_type_map", "type": "array" }],
     "query_builder_methods": {
       "select": { "signature": "select(?string $columns = null): self" },

@@ -64,8 +64,10 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 | Server | Apache / Nginx | OpenSwoole |
 | `callController()` | yes (APM proxy) | **no** |
 | Magic `$this->UserController` | yes | **no** |
-| Validation fail | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
+| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
 | `requireAuth()` | yes | yes |
+
+Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw).
 
 Same `app/` layering either way; only the API base class and how you invoke Controllers differ. Details: [http-lifecycle.md](http-lifecycle.md).
 

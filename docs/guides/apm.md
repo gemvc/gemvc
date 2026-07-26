@@ -100,7 +100,7 @@ app / library (Bootstrap, ApiService, Controller, UniversalQueryExecuter)
         ▼
 gemvc/apm-contracts   ← always required with library
   ApmInterface · AbstractApm · ApmFactory · toolkit contracts
-        │  APM_NAME=YourProvider → Gemvc\Core\Apm\Providers\YourProvider\YourProvider
+        │  APM_NAME=YourName → Gemvc\Core\Apm\Providers\YourName\YourNameProvider
         ▼
 gemvc/apm-tracekit (example) | Datadog | New Relic | … (your package)
 ```
@@ -109,7 +109,7 @@ Same pattern as DB connections: **contracts** + **swappable implementations**. N
 
 ### APM Provider Support
 
-Any package that implements `ApmInterface` (typically extends `AbstractApm`) and is autoloadable under `Gemvc\Core\Apm\Providers\{Name}\{Name}` works when `APM_NAME={Name}`:
+Any package that implements `ApmInterface` (typically extends `AbstractApm`) and is autoloadable as `Gemvc\Core\Apm\Providers\{Name}\{Name}Provider` works when `APM_NAME={Name}` (e.g. `APM_NAME=TraceKit` → `…\TraceKit\TraceKitProvider`):
 
 - **TraceKit** — `gemvc/apm-tracekit` (ships with library today; one provider among many)
 - Datadog / New Relic / Elastic / OpenTelemetry — custom packages following the same contracts
@@ -144,7 +144,7 @@ APM_TRACE_DB_QUERY=1
 
 | Variable | Values | Default | Description |
 |----------|--------|---------|-------------|
-| `APM_NAME` | Provider short name (`TraceKit`, `Datadog`, …) | unset (disabled) | Selects `Providers\{Name}\{Name}` via `ApmFactory` |
+| `APM_NAME` | Provider short name (`TraceKit`, `Datadog`, …) | unset (disabled) | Selects `Providers\{Name}\{Name}Provider` via `ApmFactory` |
 | `APM_ENABLED` | `true`, `1`, `false`, `0` | `true` | Master enable when `APM_NAME` is set |
 | `APM_SAMPLE_RATE` | `0.0`–`1.0` | `1.0` | Fraction of requests to sample (errors still recorded) |
 | `APM_TRACE_RESPONSE` | `true`/`1`/`false`/`0` | `false` | Include response payload attrs when supported |
@@ -591,13 +591,13 @@ class ProductController extends Controller
 
 ### 1. Always Set Request on Models
 
-**✅ Good:**
+** Good:**
 ```php
 // In Controller
 $model = $this->createModel(new UserModel());  // Request automatically set
 ```
 
-**❌ Bad:**
+** Bad:**
 ```php
 // Missing Request - database queries won't share traceId
 $model = new UserModel();
@@ -609,10 +609,10 @@ $model->select()->run();
 The `Controller::createModel()` helper automatically sets Request:
 
 ```php
-// ✅ Recommended
+//  Recommended
 $model = $this->createModel(new UserModel());
 
-// ❌ Manual (works but verbose)
+//  Manual (works but verbose)
 $model = new UserModel();
 $model->setRequest($this->request);
 ```
@@ -622,7 +622,7 @@ $model->setRequest($this->request);
 For operations that fit in a single method, use `traceApm()`:
 
 ```php
-// ✅ Simple and clean
+//  Simple and clean
 return $this->traceApm('operation-name', function() {
     return $this->doWork();
 }, ['attribute' => 'value']);
@@ -633,7 +633,7 @@ return $this->traceApm('operation-name', function() {
 For multi-step operations, use manual span management:
 
 ```php
-// ✅ Better for complex flows
+//  Better for complex flows
 $span1 = $this->startApmSpan('step-1');
 // ... do step 1 ...
 $this->endApmSpan($span1, [], 'OK');
@@ -648,14 +648,14 @@ $this->endApmSpan($span2, [], 'OK');
 Always add relevant attributes to spans:
 
 ```php
-// ✅ Good - meaningful attributes
+//  Good - meaningful attributes
 $span = $this->startApmSpan('user-registration', [
     'user.email' => $email,
     'registration.source' => 'web',
     'campaign.id' => $campaignId
 ]);
 
-// ❌ Bad - no context
+//  Bad - no context
 $span = $this->startApmSpan('operation');
 ```
 
@@ -664,7 +664,7 @@ $span = $this->startApmSpan('operation');
 Always record exceptions in spans:
 
 ```php
-// ✅ Good - exception recorded
+//  Good - exception recorded
 try {
     $result = $this->riskyOperation();
     $this->endApmSpan($span, [], 'OK');
@@ -674,7 +674,7 @@ try {
     throw $e;
 }
 
-// ❌ Bad - exception not recorded
+//  Bad - exception not recorded
 try {
     $result = $this->riskyOperation();
 } catch (\Throwable $e) {
@@ -795,21 +795,21 @@ APM_TRACE_DB_QUERY=1
 ### Issue: No Traces Appearing
 
 **Checklist:**
-1. ✅ APM provider installed? (`composer show gemvc/apm-tracekit`)
-2. ✅ `APM_NAME` set in `.env`?
-3. ✅ APM provider configured correctly?
-4. ✅ APM provider API key valid?
-5. ✅ Check APM provider logs/console
+1. APM provider installed? (`composer show gemvc/apm-tracekit`)
+2. `APM_NAME` set in `.env`?
+3. APM provider configured correctly?
+4. APM provider API key valid?
+5. Check APM provider logs/console
 
 ### Issue: Traces Missing Database Queries
 
 **Solution:** Ensure Request is set on models:
 
 ```php
-// ✅ Correct
+//  Correct
 $model = $this->createModel(new UserModel());
 
-// ❌ Missing Request
+//  Missing Request
 $model = new UserModel();
 ```
 
@@ -825,10 +825,10 @@ $model = new UserModel();
 ### Issue: Traces Not Sent
 
 **Check:**
-1. ✅ `register_shutdown_function` working? (check APM provider logs)
-2. ✅ `fastcgi_finish_request()` available? (Apache/Nginx)
-3. ✅ Background tasks working? (OpenSwoole)
-4. ✅ Network connectivity to APM provider?
+1. `register_shutdown_function` working? (check APM provider logs)
+2. `fastcgi_finish_request()` available? (Apache/Nginx)
+3. Background tasks working? (OpenSwoole)
+4. Network connectivity to APM provider?
 
 ### Issue: Performance Degradation
 
@@ -844,9 +844,9 @@ $model = new UserModel();
 ### Issue: Exceptions Not Recorded
 
 **Check:**
-1. ✅ Exception occurs after APM initialization?
-2. ✅ APM provider supports exception recording?
-3. ✅ Check APM provider logs for errors
+1. Exception occurs after APM initialization?
+2. APM provider supports exception recording?
+3. Check APM provider logs for errors
 
 ## Advanced Usage
 
@@ -855,10 +855,10 @@ $model = new UserModel();
 `gemvc/apm-contracts` is **already required** by `gemvc/library` — do not reinvent factory logic in the app.
 
 1. Create a Composer package that **requires** `gemvc/apm-contracts` and autoloads:
-   `Gemvc\Core\Apm\Providers\YourProvider\YourProvider`
+   `Gemvc\Core\Apm\Providers\YourName\YourNameProvider`
 2. Extend `AbstractApm` / implement `ApmInterface` (and toolkit contracts if needed) — follow `vendor/gemvc/apm-contracts/README.md`
-3. Install the package in the app; set `APM_NAME=YourProvider`
-4. **No** changes to `library` or `ApmFactory` — factory discovers by name
+3. Install the package in the app; set `APM_NAME=YourName`
+4. **No** changes to `library` or `ApmFactory` — factory discovers by name (`{Name}Provider`)
 
 App code stays on `callController` / `createModel` / `$request->apm` regardless of provider.
 

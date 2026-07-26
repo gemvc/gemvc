@@ -46,4 +46,4 @@ Optional machine/IDE mirrors (same content, not required):
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - Money/precision: `public string` + `$_type_map` `decimal` — never `float`
-- Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code — especially **`gemvc/helper`** and **`gemvc/http-client`**
+- Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code — especially **`gemvc/helper`**, **`gemvc/http-client`**, and **`gemvc/apm-contracts`** (providers via `APM_NAME`; never hardcode TraceKit in `app/`)

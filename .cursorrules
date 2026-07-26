@@ -14,10 +14,10 @@ API (app/api/) → Controller → Model (app/model/) → Table (app/table/)
 Runtime allows bypassing a layer; **do not** for normal HTTP services. Flexibility is inside layers, not skipping them.
 
 Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.  
-URL: `/api/{Service}/{method}`. No routes files.
+URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop). No routes files.
 
 - `_` properties ignored in CRUD (aggregations)
-- `protected` properties: still DB columns; hidden from typical list/API payloads / `createList` defaults — prefer explicit column lists
+- `protected` properties: still DB columns (still in SQL `SELECT *` hydration); hidden from typical list/API payloads / `createList` defaults — prefer explicit column lists
 - Property names = DB columns
 
 ## Hard Do / Don't
