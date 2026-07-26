@@ -57,13 +57,14 @@
 
 ---
 
-### Utilities — `gemvc/helper` (^1.1)
+### Utilities — `gemvc/helper` (^1.1) — **core package**
 
 | | |
 |--|--|
-| **Role** | Shared helpers used by the framework and your app |
+| **Role** | **Essential** shared helpers used by the framework and your app |
 | **Key classes** | `ProjectHelper` (paths, `.env`, URLs), `CryptHelper` (Argon2i), **`TypeChecker`** (schema types including `decimal`, `uuid`, `slug`, `hex`, `positive_int`, `timestamp`, `jsonb`), `FileHelper` / `ImageHelper`, `TypeHelper`, monitoring helpers |
 | **Installed with** | `gemvc/library` (do not treat as a standalone utility kit for non-GEMVC apps) |
+| **Library docs** | **[helper.md](helper.md)** |
 | **Docs in vendor** | `vendor/gemvc/helper/README.md`, `RELEASE_NOTES.md` |
 
 When validating HTTP input, types come from **helper**, not from inventing Laravel validation rules.
@@ -141,13 +142,14 @@ See the full stack in [database.md — Under the hood](database.md#under-the-hoo
 
 ---
 
-### HTTP outbound calls — `gemvc/http-client` (^1.2)
+### HTTP outbound calls — `gemvc/http-client` (^1.2) — **core package**
 
 | | |
 |--|--|
 | **Role** | Sync + async HTTP **client** (calling *other* APIs), environment-aware (native / Swoole coroutines) |
-| **Key classes** | `HttpClient`, `AsyncHttpClient`, typed exceptions |
-| **Also** | Usable outside GEMVC; library uses it for forwarding / APM shipping patterns |
+| **Key classes** | `HttpClient`, `AsyncHttpClient`, `SwooleHttpClient`, typed exceptions |
+| **Also** | Usable outside GEMVC; library `ApiCall` / `AsyncApiCall` use it internally |
+| **Library docs** | **[http-client.md](http-client.md)** |
 | **Docs** | `vendor/gemvc/http-client/README.md`, `CHANGELOG.md` |
 
 Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
@@ -201,17 +203,20 @@ Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
 
 1. **Read first:** `docs/ai/INDEX.md` → `CANONICAL.md` → `CORE_REFERENCE.md`, then this ecosystem guide.
 2. **GEMVC = ecosystem.** Never describe it as “a single PHP file framework” or “Laravel without routes.”
-3. **Prefer Composer packages** already required by `library` over copying helper/DB/APM code into `app/`.
-4. **Read package READMEs** under `vendor/gemvc/<pkg>/` when changing connection, APM, CLI, or TypeChecker behavior.
-5. **Contracts first:** new DB drivers or APM providers implement contracts packages; do not patch Table/Bootstrap with vendor-specific ifs when a package already exists.
-6. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.9.x**.
-7. **cli-dev is optional** in production apps — codegen is a *dev* dependency by design.
+3. **Core packages:** always prefer **`gemvc/helper`** and **`gemvc/http-client`** over inventing validators, crypto, or HTTP clients — [helper.md](helper.md) · [http-client.md](http-client.md).
+4. **Prefer Composer packages** already required by `library` over copying helper/DB/APM code into `app/`.
+5. **Read package READMEs** under `vendor/gemvc/<pkg>/` when changing connection, APM, CLI, TypeChecker, or outbound HTTP.
+6. **Contracts first:** new DB drivers or APM providers implement contracts packages; do not patch Table/Bootstrap with vendor-specific ifs when a package already exists.
+7. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.9.x**.
+8. **cli-dev is optional** in production apps — codegen is a *dev* dependency by design.
 
 ---
 
 ## Related library docs
 
 - [api.md](api.md) — API layer (schema, auth, call Controller)  
+- [helper.md](helper.md) — **`gemvc/helper`** (TypeChecker, CryptHelper, …)  
+- [http-client.md](http-client.md) — **`gemvc/http-client`** (outbound HTTP)  
 - [cli.md](cli.md) — CLI entry (package split / workflows); [cli-reference.md](cli-reference.md) for full flags  
 - [database.md](database.md) — Table ORM + dialects (uses connection packages under the hood)  
 - [apm.md](apm.md) — tracing env flags; `callController` (Apache) / `createModel`  

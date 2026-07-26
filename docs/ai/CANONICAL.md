@@ -3,26 +3,26 @@
 Framework hub: **gemvc/library 5.9.1**.  
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
-**Before inventing helpers, DB pools, APM, HTTP clients, or CLI codegen**, read **[guides/ecosystem.md](../guides/ecosystem.md)** and the package’s own `vendor/gemvc/<pkg>/README.md`.
-
 ---
 
 ## Ecosystem (short)
 
 | Package | Job |
 |---------|-----|
-| `gemvc/library` | Framework: Bootstrap, ApiService, Table, Request, `bin/gemvc` |
-| `gemvc/helper` | TypeChecker, CryptHelper, ProjectHelper, File/Image helpers |
+| `gemvc/library` | Framework hub: Bootstrap, ApiService, Table, Request, `bin/gemvc` |
+| **`gemvc/helper`** | **Core:** TypeChecker, CryptHelper, ProjectHelper, File/Image — [guides/helper.md](../guides/helper.md) |
+| **`gemvc/http-client`** | **Core:** outbound sync/async HTTP — [guides/http-client.md](../guides/http-client.md) |
 | `gemvc/connection-contracts` | DB interfaces |
 | `gemvc/connection-pdo` | PDO connections (Apache/Nginx/CLI); MySQL/Postgres/SQLite |
 | `gemvc/connection-openswoole` | OpenSwoole **pooled** connections |
 | `gemvc/apm-contracts` | ApmInterface / ApmFactory |
 | `gemvc/apm-tracekit` | TraceKit provider (default APM) |
-| `gemvc/http-client` | Outbound sync/async HTTP |
 | `gemvc/cli-base` | CLI Command foundation |
 | `gemvc/cli-dev` | **require-dev**: `create:*`, `db:list|describe|…`, `admin:*` |
 
-Apps install **`composer require gemvc/library`**; most packages arrive as dependencies. Install **`cli-dev`** only for codegen.
+Apps install **`composer require gemvc/library`**; **helper** and **http-client** arrive as dependencies. Install **`cli-dev`** only for codegen.
+
+**Before inventing** validators, crypto, curl wrappers, DB pools, APM, or CLI codegen — read **[guides/ecosystem.md](../guides/ecosystem.md)** and `vendor/gemvc/<pkg>/README.md`.
 
 ---
 
@@ -51,7 +51,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 **Properties**
 
 - `_prefix` → ignored in INSERT/UPDATE (aggregations: `$_profile`, `$_orders`)
-- `protected` → not selected into public payloads (e.g. password)
+- `protected` → still a DB column; excluded from typical list/API payloads / `createList` defaults (prefer explicit columns). Not the same as “absent from SQL SELECT *”.
 - Property names = column names exactly
 
 ---
@@ -207,19 +207,31 @@ public function selectByEmail(string $email): null|static {
 
 **Style note:** Models may return PHP types instead of `JsonResponse`; then Controller maps to `Response::*`. See [guides/model.md — Return style](../guides/model.md#return-style-jsonresponse-vs-php-types).
 
-List:
+---
+
+## Lists — flagship (`createList`)
+
+**Powerful and intentional:** API allowlists type-check GET params; Controller `createList()` applies filter / LIKE / sort / pagination, selects columns, returns JSON + total count, and wires APM via `createModel()`. Unlisted filter fields never become SQL.
 
 ```php
 // API
-$this->request->findable(['name' => 'string', 'email' => 'email']);
-$this->request->sortable(['id', 'name', 'created_at']);
+$this->request->findable(['name' => 'string', 'email' => 'email']);      // GET find_like=
+$this->request->filterable(['role' => 'string']);                       // GET filter_by=
+$this->request->sortable(['id', 'name', 'created_at']);                 // GET sort_by / sort_by_asc
 return $this->callController(new UserController($this->request))->list();
 
-// Controller
+// Controller — prefer explicit columns
 return $this->createList($this->createModel(new UserModel()), 'id,name,email,created_at');
 ```
 
-Full list params / `createList` vs columns: [guides/controller.md](../guides/controller.md).
+| GET | Allowlist | Applies |
+|-----|-----------|---------|
+| `find_like=` | `findable` | `whereLike` |
+| `filter_by=` | `filterable` | `where` (exact) |
+| `sort_by` / `sort_by_asc` | `sortable` | `orderBy` |
+| `page_number` | — | `setPage` + `getTotalCounts()` |
+
+Full params / `createList` vs `listJsonResponse` / column rules: [guides/controller.md](../guides/controller.md#lists-createlist) · [guides/api.md](../guides/api.md#list-allowlists).
 
 Magic controller access (ApiService only): `$this->UserController->create()` (same as `callController`).
 

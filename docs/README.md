@@ -39,7 +39,7 @@ URL mapping is automatic: `/api/{Service}/{method}` → `App\Api\{Service}::{met
 
 ### 1. API layer — [api.md](guides/api.md)
 
-**What it does:** Thin HTTP boundary. Schema (`definePostSchema` / `defineGetSchema`), auth (`auth()` / `requireAuth()`), list allowlists (`findable` / `sortable`), then `callController(...)` (Apache) or bare `new` (Swoole). No business rules here.
+**What it does:** Thin HTTP boundary. Schema, auth, **list allowlists** (`findable` / `filterable` / `sortable` — flagship with `createList`), then `callController(...)` (Apache) or bare `new` (Swoole). No business rules here.
 
 Covers: `ApiService` vs `SwooleApiService`; auth; schemas; list allowlists; Controller invoke; `@http` docs; CLI; Do/Don’t.
 
@@ -49,7 +49,7 @@ Deeper: [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/se
 
 ### 2. Controller layer — [controller.md](guides/controller.md)
 
-**What it does:** Orchestration only. Map POST/PUT/PATCH onto Model (`mapPostToObject`, …), wrap with `createModel()` for APM, call Model methods, or `createList()` for paginated lists. Apache uses `callController`; Swoole does not.
+**What it does:** Orchestration only. Map POST/PUT/PATCH onto Model, `createModel()` for APM, Model methods, or **flagship `createList()`** (filter / LIKE / sort / paginate from API allowlists). Apache uses `callController`; Swoole does not.
 
 Covers: 4-layer role; mapping; `createModel` / `createList` + list GET params; protected columns; errors; CLI templates; Do/Don’t.
 
@@ -82,7 +82,13 @@ Framework internals and request flow: `src/` tree; design principles; Apache vs 
 Empty folder → first API call: Composer, `gemvc init`, `.env`, Docker vs bare metal, sample User, Product CRUD, troubleshooting.
 
 ### [ecosystem.md](guides/ecosystem.md)
-Multi-package map under `vendor/gemvc/` (library, connections, APM, helper, http-client, cli-base / cli-dev). Read before inventing replacements.
+Multi-package map under `vendor/gemvc/`. **Core:** **`gemvc/helper`**, **`gemvc/http-client`**, plus connections, APM, cli-base / cli-dev. Read before inventing replacements.
+
+### [helper.md](guides/helper.md)
+**`gemvc/helper`** — TypeChecker (schema types), CryptHelper, ProjectHelper, File/Image helpers. Powers `define*Schema`. See also `vendor/gemvc/helper/README.md`.
+
+### [http-client.md](guides/http-client.md)
+**`gemvc/http-client`** — outbound sync/async/Swoole HTTP. Not inbound Request. See also `vendor/gemvc/http-client/README.md`.
 
 ### [cli.md](guides/cli.md) · [cli-reference.md](guides/cli-reference.md)
 CLI entry (package split, workflows) + full command catalog. **AI: start with cli.md**; open cli-reference only for a specific flag. **Do not assume `create:crud` without cli-dev.**
@@ -116,7 +122,8 @@ Keep-a-Changelog bullets for “is feature X in version Y?”
 
 ## Sibling packages (not duplicated here)
 
+- **`gemvc/helper`** — TypeChecker, CryptHelper, ProjectHelper, FileHelper, … → [guides/helper.md](guides/helper.md)
+- **`gemvc/http-client`** — outbound HttpClient / AsyncHttpClient → [guides/http-client.md](guides/http-client.md)
 - `gemvc/cli-dev` — `create:*`, `db:init|list|describe|drop|unique`, `admin:*`
-- `gemvc/helper` — TypeChecker, CryptHelper, FileHelper, …
 - `gemvc/cli-base` — `vendor/gemvc/cli-base/AI-Assistant.md`
 - `gemvc/connection-pdo` — runtime DB connections (`DB_DRIVER`)

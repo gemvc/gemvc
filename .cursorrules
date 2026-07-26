@@ -1,7 +1,7 @@
 # GEMVC Framework - AI Assistant Context
 
 **Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/CORE_REFERENCE.md`  
-**Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`), not a single library.
+**Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`). **Core:** `gemvc/helper`, `gemvc/http-client` (see `docs/guides/helper.md`, `docs/guides/http-client.md`).
 
 GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx). Version 5.9.1.
 
@@ -17,7 +17,7 @@ Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.
 URL: `/api/{Service}/{method}`. No routes files.
 
 - `_` properties ignored in CRUD (aggregations)
-- `protected` properties hidden from SELECT
+- `protected` properties: still DB columns; hidden from typical list/API payloads / `createList` defaults — prefer explicit column lists
 - Property names = DB columns
 
 ## Hard Do / Don't
@@ -29,7 +29,8 @@ URL: `/api/{Service}/{method}`. No routes files.
 - `callController()` in API + `createModel()` in Controller (Apache path / APM)
 - `requireAuth(['role'])` in service constructor to guard all methods
 - Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()`
-- Prepared statements via Table query builder only
+- Prefer `gemvc/helper` (TypeChecker, CryptHelper, …) and `gemvc/http-client` (outbound HTTP) — never invent Laravel validators or curl wrappers
+- Prefer `createList` + API `findable`/`filterable`/`sortable` for lists (not hand-rolled filter SQL)
 
 **DON'T**
 

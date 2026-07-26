@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/model` · AI assistants generating Model code.
 
-**Related:** [controller.md](controller.md) · [database.md](database.md) · [apm.md](apm.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [controller.md](controller.md) · [database.md](database.md) · [helper.md](helper.md) · [apm.md](apm.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 

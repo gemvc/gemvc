@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/api` · AI assistants generating API services.
 
-**Related:** [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [api-documentation.md](api-documentation.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [helper.md](helper.md) · [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [api-documentation.md](api-documentation.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
@@ -126,9 +126,9 @@ Inputs are **already sanitized** by the framework — do not re-sanitize.
 
 ---
 
-## List allowlists
+## List allowlists (flagship with `createList`)
 
-Declare in API **before** Controller `createList`:
+**One of GEMVC’s strongest features.** Declare allowlists here **before** Controller `createList` — only listed fields can filter/sort; values are type-checked. No free-form query SQL from the client.
 
 ```php
 public function list(): JsonResponse

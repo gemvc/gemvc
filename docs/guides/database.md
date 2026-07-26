@@ -76,7 +76,7 @@ class UserTable extends Table
     public string $name;
     public string $email;
     public ?string $description;
-    protected string $password; // stored, hidden from SELECT
+    protected string $password; // stored; hidden from list/API payloads, not from SQL SELECT *
 
     protected array $_type_map = [
         'id' => 'int',
@@ -121,11 +121,14 @@ Set `DB_*` in `.env` once. Pooling and driver selection stay invisible to this c
 
 ## Properties
 
-| Kind | In DB? | In SELECT? | In INSERT/UPDATE? |
-|------|--------|------------|-------------------|
-| `public` | yes | yes | yes |
-| `protected` / `private` | yes | no | yes |
-| `_foo` | **no** | no | no |
+| Kind | In DB? | In `SELECT *` / Table hydration? | In list JSON / `createList` default cols? | In INSERT/UPDATE? |
+|------|--------|-----------------------------------|-------------------------------------------|-------------------|
+| `public` (initialized) | yes | yes | yes | yes |
+| `public` (typed, uninitialized) | yes | yes via `SELECT *` | **often omitted** by `createList(null)` (`get_object_vars`) | yes once set |
+| `protected` / `private` | yes | **yes** (`SELECT *` + reflection hydrate) | **no** (not in `get_object_vars` / list mapping) | yes |
+| `_foo` | **no** | no | stripped from list payloads | no |
+
+`protected` secrets (e.g. password) are still columns and can appear in raw `select()` results on the object; they are hidden from typical **list/API** payloads and from `createList(null)` column defaults — not excluded from SQL `SELECT *`. Prefer explicit column lists for lists.
 
 ```php
 public string $email;

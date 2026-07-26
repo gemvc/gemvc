@@ -112,7 +112,8 @@ public function clearErrors(): void
 ```
 
 List GET params (API allowlists first): `find_like`, `filter_by`, `sort_by`, `sort_by_asc`, `page_number`.  
-Guide: [controller.md](../guides/controller.md).
+**Flagship:** `createList` applies those allowlists (filter / LIKE / sort / page + total count + APM).  
+`createList($model, null)` builds columns from `get_object_vars($model)` (initialized public props only) — **prefer an explicit column list**. Guide: [controller.md](../guides/controller.md#lists-createlist).
 
 App Models are **not** a framework base class. Usual shape: extend your Table (`UserModel extends UserTable`). Also valid: **composition** Models (plain class + other Models) — [model.md](../guides/model.md).
 
@@ -156,15 +157,49 @@ setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|
 
 ---
 
-## Helpers (`gemvc/helper`)
+## Helpers (`gemvc/helper`) — core package
+
+Powers schema types, passwords, paths. Guide: [helper.md](../guides/helper.md) · `vendor/gemvc/helper/README.md`.
 
 ```php
+// TypeChecker — same types as definePostSchema / findable
+TypeChecker::check(mixed $type, mixed $value, array $options = []): bool
+
 CryptHelper::hashPassword(string $password): string
 CryptHelper::passwordVerify(string $passwordToCheck, string $hash): bool
 CryptHelper::encryptString(string $string, string $key): false|string
 CryptHelper::decryptString(string $encryptedString, string $key): false|string
-TypeChecker::check(mixed $type, mixed $value, array $options = []): bool
+
+// Also: ProjectHelper, FileHelper, ImageHelper, TypeHelper, JsonHelper, …
 ```
+
+**Do not** invent Laravel Hash/Validator clones — use helper.
+
+---
+
+## HTTP client (`gemvc/http-client`) — core package
+
+**Outbound** HTTP (calling other APIs). Not inbound `Request`. Guide: [http-client.md](../guides/http-client.md) · `vendor/gemvc/http-client/README.md`.
+
+```php
+use Gemvc\Http\Client\HttpClient;
+use Gemvc\Http\Client\AsyncHttpClient;
+
+$client = new HttpClient();
+$client->get(string $url, array $query = []): string|false
+$client->post(string $url, array $data = []): string|false
+// put, patch, delete, setTimeouts, setRetries, throwExceptions, …
+
+$async = new AsyncHttpClient();
+$async->addGet($id, $url, $query = [])->addPost(...)->executeAll();
+$async->fireAndForget();  // non-blocking
+
+// OpenSwoole: SwooleHttpClient (coroutines)
+```
+
+Library facades: `Gemvc\Http\ApiCall`, `AsyncApiCall` (wrap http-client).
+
+**Do not** invent curl/Guzzle wrappers for microservice calls.
 
 ---
 

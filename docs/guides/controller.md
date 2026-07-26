@@ -56,7 +56,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 4. Apache/Nginx API: prefer **`callController(new XController($this->request))->method()`**.
 5. OpenSwoole API (`SwooleApiService`): **`(new XController($this->request))->method()`** — no `callController` / magic `$this->XController`.
 6. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.
-7. If the model has **`protected`** columns (e.g. password), pass an explicit column list to `createList`.
+7. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` (initialized public props only; skips `protected` and often uninitialized typed publics).
 8. Never invent routes or put SQL in the controller.
 
 ---
@@ -184,7 +184,9 @@ $model = $this->createModel(new UserModel());
 
 ---
 
-## Lists (`createList`)
+## Lists (`createList`) — flagship
+
+**Flagship DX + security:** API allowlists (`findable` / `filterable` / `sortable`) + one Controller call. Pipeline in source: `_handleSearchable` → `_handleFindable` → `_handleSortable` → `_handlePagination` → `select` → strip `_` props → `Response::success` + `getTotalCounts()`. Prefer explicit column lists.
 
 ### API side (required allowlists)
 
@@ -232,10 +234,10 @@ Page **size** comes from Table / `QUERY_LIMIT` (and related Table helpers), not 
 | | `createList` | `listJsonResponse` |
 |--|--------------|-------------------|
 | Calls `createModel` first | yes | via `_listObjects` also |
-| Default `$columns` | public object vars as quoted list | `*` inside `_listObjects` if null |
+| Default `$columns` | `get_object_vars` keys (initialized **public** only) | `*` inside `_listObjects` if null |
 | Typical use | Prefer for app lists | Alternate helper |
 
-Always pass columns when you must **exclude** `protected` fields from the SELECT list string used by `createList`.
+**Always prefer an explicit column string** for `createList`. Reasons: (1) uninitialized typed public props may be missing from the default list; (2) you choose the public subset; (3) `protected` fields are already omitted from the default list but you should not rely on that alone for clear APIs.
 
 List responses strip properties whose names start with `_`.
 
@@ -276,7 +278,7 @@ gemvc create:crud Product   # includes controller
 Generated template often uses `mapPostToObject(new …Model())` **without** `createModel()` and `createList($model)` **without** columns. Hand-edit:
 
 1. Wrap models with `createModel(...)`.
-2. Pass column lists when protected fields exist.
+2. Pass **explicit column lists** to `createList` (do not rely on `null` defaults).
 3. Keep API-layer `findable` / `sortable` in sync.
 
 Templates: [templates.md](templates.md).

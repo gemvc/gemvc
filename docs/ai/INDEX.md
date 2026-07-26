@@ -17,7 +17,10 @@ Optional machine/IDE mirrors (same content, not required):
 | Task | Open |
 |------|------|
 | **All gemvc/* packages (ecosystem)** | [../guides/ecosystem.md](../guides/ecosystem.md) |
+| **`gemvc/helper`** (TypeChecker, CryptHelper, …) | [../guides/helper.md](../guides/helper.md) |
+| **`gemvc/http-client`** (outbound HTTP) | [../guides/http-client.md](../guides/http-client.md) |
 | Migrations / Table / **connections** | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)) |
+| **Lists** `createList` + findable/filterable/sortable | [../guides/controller.md](../guides/controller.md#lists-createlist) (+ [api.md](../guides/api.md#list-allowlists)) |
 | **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
 | **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
 | **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types) | [../guides/model.md](../guides/model.md) |
@@ -40,6 +43,7 @@ Optional machine/IDE mirrors (same content, not required):
 - Never manually sanitize inputs (framework already does)
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)
 - Prefer `callController()` (Apache/`ApiService`) + `createModel()` for APM-ready code; Swoole uses bare `new` Controller — see [api.md](../guides/api.md)
+- **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - Money/precision: `public string` + `$_type_map` `decimal` — never `float`
-- Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code
+- Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code — especially **`gemvc/helper`** and **`gemvc/http-client`**

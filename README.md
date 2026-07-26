@@ -28,10 +28,12 @@ Same application code runs on **OpenSwoole**, **Apache**, and **Nginx**.
 
 - **Server-agnostic** — your code works the same on OpenSwoole, Nginx, and Apache
 - **4-layer** API → Controller → Model → Table — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
-- **Modular ecosystem** — contracts + implementations for DB, APM, HTTP client, helper, CLI (`cli-base` / `cli-dev`) — not one monolith package
+- **Modular ecosystem** — **`gemvc/helper`** (types, crypto, paths) + **`gemvc/http-client`** (outbound HTTP) + connections, APM, CLI — not one monolith package
 - **No routes file** — `/api/{Service}/{method}` maps automatically
 - **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth
-- **Schema is documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export
+- **Schema is documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export (types from **`gemvc/helper` → TypeChecker**)
+- **Powerful lists** — API allowlists (`findable` / `filterable` / `sortable`) + Controller `createList()` = type-safe filter / LIKE / sort / paginate without hand-rolled SQL
+- **Outbound HTTP** — **`gemvc/http-client`** sync/async/Swoole-aware (do not invent curl wrappers)
 - **Native APM** — `callController()` / `createModel()` + env flags
 - **Library or framework** — migrate gradually or `gemvc init` for a full app
 
@@ -81,6 +83,44 @@ Columns as typed properties, `$_type_map`, `defineSchema()`, query builder, inse
 
 Details: [database.md](docs/guides/database.md)
 
+### Flagship: lists (`createList`)
+
+One of GEMVC’s strongest DX + security features. **No free-form query SQL** — you allowlist fields in the API; the Controller applies them.
+
+```php
+// API — allowlist + type-check GET params
+$this->request->findable(['name' => 'string', 'email' => 'email']);   // find_like=
+$this->request->filterable(['role' => 'string']);                    // filter_by=
+$this->request->sortable(['id', 'name', 'created_at']);              // sort_by / sort_by_asc
+return $this->callController(new UserController($this->request))->list();
+
+// Controller — one call: filter + LIKE + sort + page + columns + total count + APM
+return $this->createList(
+    $this->createModel(new UserModel()),
+    'id,name,email,role,created_at'
+);
+```
+
+| GET param | API method | Effect |
+|-----------|------------|--------|
+| `find_like=name=ali` | `findable` | `WHERE … LIKE` |
+| `filter_by=role=admin` | `filterable` | exact `WHERE` |
+| `sort_by` / `sort_by_asc` | `sortable` | `ORDER BY` |
+| `page_number` | (built-in) | pagination + `getTotalCounts()` |
+
+Full detail: [controller.md — Lists](docs/guides/controller.md#lists-createlist) · [api.md — List allowlists](docs/guides/api.md#list-allowlists)
+
+### Core packages: `helper` + `http-client`
+
+Two of the most important GEMVC packages (required with `gemvc/library`):
+
+| Package | Job | Guide |
+|---------|-----|--------|
+| **`gemvc/helper`** | `TypeChecker` (schema types), `CryptHelper` (passwords), `ProjectHelper`, File/Image helpers | [helper.md](docs/guides/helper.md) · `vendor/gemvc/helper/README.md` |
+| **`gemvc/http-client`** | Outbound sync/async HTTP (Apache curl / Swoole coroutines) — **not** inbound Request | [http-client.md](docs/guides/http-client.md) · `vendor/gemvc/http-client/README.md` |
+
+**AI:** Prefer these packages over inventing validators, `password_hash` wrappers, or Guzzle/curl clones. Full map: [ecosystem.md](docs/guides/ecosystem.md).
+
 ---
 
 ## Documentation (all under `docs/`)
@@ -108,6 +148,8 @@ Open a guide only when you need that topic. Prefer the **layer order**: API → 
 | Layer / topic | Guide |
 |---------------|--------|
 | Ecosystem (not one package) | [ecosystem.md](docs/guides/ecosystem.md) |
+| **`gemvc/helper`** | [helper.md](docs/guides/helper.md) |
+| **`gemvc/http-client`** | [http-client.md](docs/guides/http-client.md) |
 | Internals / request flow | [architecture.md](docs/guides/architecture.md) |
 | Install → first API call | [installation.md](docs/guides/installation.md) |
 | **API** | [api.md](docs/guides/api.md) |
