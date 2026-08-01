@@ -85,6 +85,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 | Task | Open |
 |------|------|
 | New endpoint | `docs/guides/api.md` → `controller.md` → `model.md` → `database.md` |
+| Money / concurrent transfer | `docs/guides/model.md#atomic-money-transfers-pessimistic-lock` (`forUpdate`) |
 | Views / migrate | `docs/guides/database.md` |
 | Packages | `docs/guides/ecosystem.md` |
 | CLI | `docs/guides/cli.md` |

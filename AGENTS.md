@@ -71,6 +71,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - [ ] Views use `ViewTable`, not plain `Table`  
 - [ ] Codegen commands attributed to `gemvc/cli-dev` when needed  
 - [ ] Signatures match `CORE_REFERENCE.md` — not training-data Laravel APIs  
+- [ ] Money/transfers use `beginTransaction` + `forUpdate` + BCMath on `$this` — not raw PDO / not `float`  
 
 ## Rate limiting — global driver + overrides
 
@@ -102,6 +103,7 @@ Drivers: `apcu` | `redis` | `both` (dual check, not failover) | `none`. No auto 
 | Rate limit (global / service) | [`docs/guides/api.md`](docs/guides/api.md) · [`security.md`](docs/guides/security.md) |
 | Packages | [`docs/guides/ecosystem.md`](docs/guides/ecosystem.md) |
 | Table / ViewTable | [`docs/guides/database.md`](docs/guides/database.md) |
+| Atomic money / `forUpdate` | [`docs/guides/model.md#atomic-money-transfers-pessimistic-lock`](docs/guides/model.md#atomic-money-transfers-pessimistic-lock) |
 | API / Controller / Model | [`docs/guides/api.md`](docs/guides/api.md), [`controller.md`](docs/guides/controller.md), [`model.md`](docs/guides/model.md) |
 | Install | [`docs/guides/installation.md`](docs/guides/installation.md) |
 | Human + AI docs index | [`docs/README.md`](docs/README.md) |

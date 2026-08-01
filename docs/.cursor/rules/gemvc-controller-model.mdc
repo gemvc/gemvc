@@ -53,3 +53,15 @@ For `ViewTable` subclasses: Model usually extends the view Table. Implement `rea
 - Framework already blocks row insert/update/delete on `ViewTable` — do not call them from the Model.
 - If you still expose `createModel` / `updateModel` / `deleteModel`, return `Response::forbidden(...)` (or omit those methods from the API).
 - Nesting (e.g. user + payments list): load flat view rows and/or base Tables, then shape JSON in the Model — views stay flat.
+
+### Concurrent money / wallets
+
+Keep transfers in the **Model** on one Table instance:
+
+1. `beginTransaction()`
+2. `select(…)->whereIn(…)->orderBy('id')->forUpdate()->run()`
+3. BCMath (`bccomp` / `bcsub` / `bcadd`) on `string` + `$_type_map` `decimal` — never `float`
+4. Updates via **`$this->updateSingleQuery()`** (not on hydrated rows)
+5. `commit()` / `rollback()`
+
+Never grab raw PDO from `DatabaseManagerFactory`. Guide: `docs/guides/model.md#atomic-money-transfers-pessimistic-lock`.

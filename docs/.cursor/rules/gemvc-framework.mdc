@@ -41,7 +41,7 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 - **DON'T** point a plain `Table` at a view and migrate it — that creates a physical table; use `ViewTable`
 - **DON'T** invent Eloquent-style 1:n on views — views are flat; nest in the Model after select
 - **DON'T** edit `vendor/gemvc/**` — fix app code or bump Composer versions
-- Money: `string` + `$_type_map` `decimal` — never `float`
+- Money: `string` + `$_type_map` `decimal` — never `float`; concurrent: `beginTransaction` + `forUpdate` + BCMath on `$this` (not hydrated rows / not raw PDO) — `docs/guides/model.md#atomic-money-transfers-pessimistic-lock`
 
 ## Ecosystem map (`vendor/gemvc/`)
 

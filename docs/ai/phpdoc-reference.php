@@ -149,6 +149,11 @@ interface TableReference
     /** true = ASC; false or null = DESC; null column = primary key */
     public function orderBy(?string $columnName = null, ?bool $ascending = null): self;
     public function limit(int $limit): self;
+    /** SELECT … FOR UPDATE — use inside beginTransaction() (MySQL InnoDB / PostgreSQL) */
+    public function forUpdate(bool $enable = true): self;
+    public function beginTransaction(): bool;
+    public function commit(): bool;
+    public function rollback(): bool;
     public function run(): ?array;
 
     public function insertSingleQuery(): ?static;

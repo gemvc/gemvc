@@ -101,6 +101,7 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 ## Query path vs QueryBuilder
 
 - Normal app path: `Table::select()->where()->run()` → `UniversalQueryExecuter` (+ optional DB APM via Request)
+- Transactions / locks: same Table instance — `beginTransaction()` → `forUpdate()` on SELECT → updates on `$this` → `commit`/`rollback`. Never raw `DatabaseManagerFactory…->getPdo()` for multi-step money — [model.md — Atomic money transfers](../../../docs/guides/model.md#atomic-money-transfers-pessimistic-lock)
 - `QueryBuilder` (`src/database/QueryBuilder.php`): separate ad-hoc Select/Insert/Update/Delete; check `getError()` after build
 - Migrate DDL: `TableGenerator` + `ViewGenerator` + `SchemaGenerator` + `DialectResolver` (PDO driver → mysql/pgsql/sqlite; unknown/mock → Mysql)
 

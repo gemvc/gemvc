@@ -92,6 +92,25 @@ $this->deleteByIdQuery($id);
 $this->selectById($id);
 ```
 
+### Transactions / `forUpdate()` (money, concurrent rows)
+
+Use on the **same** Table instance (Model extends Table). MySQL InnoDB / PostgreSQL.
+
+```php
+$this->beginTransaction();
+$rows = $this->select('id,balance')
+    ->whereIn('id', [$a, $b])
+    ->orderBy('id', true)
+    ->forUpdate()
+    ->noLimit()
+    ->run();
+// BCMath on balances; then set $this->id / $this->balance and $this->updateSingleQuery()
+// — do NOT updateSingleQuery() on hydrated $rows (new instances / other connection)
+$this->commit(); // or rollback()
+```
+
+**Never** `DatabaseManagerFactory…->getPdo()` for multi-step money. Full pattern: `docs/guides/model.md#atomic-money-transfers-pessimistic-lock`.
+
 Or `Gemvc\Database\QueryBuilder` for ad-hoc selects. Always prepared statements — never concatenate SQL.
 
 - `_` prefixed properties: ignored in CRUD (aggregations)  

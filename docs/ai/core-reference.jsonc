@@ -156,7 +156,13 @@
       "join": { "signature": "join(string $table, string $condition, string $type = 'INNER'): self" },
       "orderBy": { "signature": "orderBy(?string $columnName = null, ?bool $ascending = null): self", "note": "true=ASC; false/null=DESC; null column=PK" },
       "limit": { "signature": "limit(int $limit): self" },
+      "forUpdate": { "signature": "forUpdate(bool $enable = true): self", "note": "SELECT … FOR UPDATE; use inside beginTransaction (MySQL InnoDB / PostgreSQL)" },
       "run": { "signature": "run(): ?array" }
+    },
+    "transaction_methods": {
+      "beginTransaction": { "signature": "beginTransaction(): bool" },
+      "commit": { "signature": "commit(): bool" },
+      "rollback": { "signature": "rollback(): bool" }
     },
     "crud_methods": {
       "insertSingleQuery": { "signature": "insertSingleQuery(): ?static" },
@@ -171,6 +177,11 @@
       "setError": { "signature": "setError(?string $error): void" }
     },
     "schema_helpers": ["primary", "autoIncrement", "unique", "foreignKey", "index", "check", "fullText"],
+    "atomic_money_transfers": {
+      "guide": "docs/guides/model.md#atomic-money-transfers-pessimistic-lock",
+      "pattern": "beginTransaction → select()->whereIn()->orderBy('id')->forUpdate()->run() → BCMath → updateSingleQuery on $this (not hydrated rows) → commit/rollback",
+      "dont": "Never DatabaseManagerFactory…->getPdo() for multi-step money; never float balances"
+    },
     "note": "No Table::offset() or Table::from() — do not invent them"
   },
   "view_table_orm": {
