@@ -168,14 +168,16 @@ HTTP Request
 - `SimplePdoDatabaseManager.php` - Standard PDO (Apache/Nginx)
 - `EnhancedPdoDatabaseManager.php` - Persistent PDO (optional)
 - `QueryBuilder.php` - Lower-level query builder
-- `Schema.php` / `SchemaGenerator.php` - Schema management
-- `TableGenerator.php` - Table class generation
+- `Schema.php` / `SchemaGenerator.php` - Schema management (`Schema::primary` **not** DDL today)
+- `TableGenerator.php` - Table create/sync (refuses `ViewTable`)
+- `ViewTable.php` / `ViewGenerator.php` - SQL views; `db:migrate` CREATE/REPLACE VIEW
+- `TableMigrateOrder.php` - FK + `viewDependsOn` order for `db:migrate --all`
 
 **Key Features**:
 - **100% SQL injection prevention** (all queries use prepared statements)
 - **Connection pooling** for OpenSwoole (performance)
 - **Environment-aware connection management**
-- **Migration system**
+- **Migration system** — tables + **ViewTable** views; `db:migrate --all`
 - **Schema generation**
 - **APM query tracing** - Automatic spans for all database queries (optional)
 
@@ -288,7 +290,7 @@ Dev OpenSwoole: request path `/` may route to `Developer` / `app` when `APP_ENV=
 
 ## CLI Commands
 
-Library: `gemvc init`, `gemvc db:migrate`.  
+Library: `gemvc init`, `gemvc db:migrate ClassName`, `gemvc db:migrate --all`.  
 Dev (`gemvc/cli-dev`): `create:*`, most `db:*`, `admin:*`.  
 
 Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
@@ -308,6 +310,8 @@ Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 - `src/core/OpenSwooleServer.php` - OpenSwoole server manager
 - `src/http/Request.php` - Unified request object
 - `src/database/Table.php` - Main ORM class
+- `src/database/ViewTable.php` - SQL VIEW read models
+- `src/database/ViewGenerator.php` - VIEW DDL for migrate
 
 ### **Security**:
 - `src/core/SecurityManager.php` - Path protection

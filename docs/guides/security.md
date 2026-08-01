@@ -947,8 +947,8 @@ This security policy is regularly updated to reflect:
 - Best practice changes
 - Framework updates
 
-**Last Updated**: 2026-07-26
-**Version**: 5.9.1 — `requireAuth()`, contracts APM, multi-DB; automatic hardening baseline unchanged
+**Last Updated**: 2026-08-01
+**Version**: 5.11.0 — `ViewTable`, `requireRateLimit()`, `requireAuth()`, contracts APM, multi-DB; automatic hardening baseline unchanged
 
 ---
 

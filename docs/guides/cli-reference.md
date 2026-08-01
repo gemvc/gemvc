@@ -963,11 +963,13 @@ See [database.md — SQL views via ViewTable](database.md#sql-views-via-viewtabl
 
 ### `db:list` - List Tables
 
-Show all tables in the database.
+Show **base tables** in the database (`gemvc/cli-dev`).
 
 ```bash
 gemvc db:list
 ```
+
+**Note (5.11):** `db:list` currently lists **BASE TABLE** only — SQL **VIEWs** created by `ViewTable` / `db:migrate` may **not** appear. Confirm views with the engine (`SHOW FULL TABLES`, `information_schema.views`, or dialect `viewExists`) or `db:describe` once supported for views. Migrate success does not require the view to show up in `db:list`.
 
 **Example Output**:
 ```
@@ -982,7 +984,7 @@ Tables in database 'myapp':
 
 ### `db:describe` - Describe Table Structure
 
-Show detailed structure of a table.
+Show detailed structure of a table (cli-dev). Prefer base **table** names from `db:list`. Describing a **VIEW** may work at the engine level but is not yet a first-class ViewTable workflow — see future cli-dev polish.
 
 ```bash
 gemvc db:describe <TableName>

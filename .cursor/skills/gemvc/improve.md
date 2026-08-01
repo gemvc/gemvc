@@ -42,17 +42,17 @@ If public behavior, signatures, env vars, CLI flags, or layer contracts change:
 
 ## Upstream backlog
 
-Real friction from building services on GEMVC: prefer P0/P1 over speculative features. Remaining work lives under [docs/improvements/](../../../docs/improvements/) (**Phase 2** trust/mesh). **Phase 1 (`ViewTable` / `db:migrate --all`) is shipped** — use [database.md](../../../docs/guides/database.md), not the phase-1 plan, for day-to-day coding.
+Real friction from building services on GEMVC: prefer P0/P1 over speculative features. Remaining work: [docs/improvements/](../../../docs/improvements/) (**Phase 2** trust/mesh). **ViewTable / `db:migrate --all` shipped in 5.11** — use [database.md](../../../docs/guides/database.md).
 
-| Phase | Doc | Status |
-|-------|-----|--------|
-| 1 — `ViewTable` + migrate | [phase-1-views-and-migrate.md](../../../docs/improvements/phase-1-views-and-migrate.md) | **Done** (historical) |
+| Item | Doc | Status |
+|------|-----|--------|
+| ViewTable + migrate | [database.md](../../../docs/guides/database.md#sql-views-via-viewtable-recommended) | **Done (5.11)** |
 | 2 — Trust mesh (2a before 2b) | [phase-2-trust-and-mesh.md](../../../docs/improvements/phase-2-trust-and-mesh.md) | Planned |
 
 Notable themes:
 
 1. **SQL views** — **shipped:** `ViewTable`, `ViewGenerator`, `db:migrate` / `--all`
-2. **Runtime PK from `Schema::primary`** — still open (Phase 1b stretch)
+2. **Runtime PK from `Schema::primary`** — still open (stretch)
 3. **Internal family trust** — Phase 2a: `GEMVC_INTERNAL_SECRET` + `requireInternalService()`
 
 When implementing backlog items: preserve Apache/Swoole dual bases, PHPStan 9, and existing auth status semantics (401 vs 403). Do Phase 2a before mesh DX.

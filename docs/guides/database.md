@@ -94,6 +94,8 @@ class UserTable extends Table
     public function defineSchema(): array
     {
         return [
+            // Documentational / future: Schema::primary is NOT migrate DDL today.
+            // Physical PK comes from property named `id` (see Primary keys section).
             Schema::primary('id'),
             Schema::autoIncrement('id'),
             Schema::unique('email'),
@@ -112,6 +114,7 @@ class UserTable extends Table
 ```bash
 gemvc db:migrate UserTable          # library CLI
 # optional: --force  --sync-schema
+# all tables + views: gemvc db:migrate --all
 # codegen: gemvc create:table Product   # needs gemvc/cli-dev
 ```
 
@@ -176,8 +179,8 @@ Constraints for **`gemvc db:migrate`**. Empty `[]` is allowed; real apps should 
 public function defineSchema(): array
 {
     return [
-        Schema::primary('id'),
-        Schema::autoIncrement('id'),
+        Schema::primary('id'),       // NOT migrate DDL today — PK from property `id`
+        Schema::autoIncrement('id'), // NOT migrate DDL today
         Schema::unique('email'),
         Schema::unique(['tenant_id', 'slug']),
         Schema::foreignKey('user_id', 'users.id')->onDeleteCascade(),
@@ -474,9 +477,9 @@ Do not `new PdoConnection()` from `app/`. Package READMEs live under `vendor/gem
 ## Checklist
 
 1. `.env` has `DB_*` (pooling chosen automatically)
-2. Class `extends Table`
-3. Properties + visibility correct
+2. Class `extends Table` **or** `extends ViewTable`
+3. Properties + visibility correct (view aliases = props)
 4. `$_type_map` complete
-5. `getTable()` + `defineSchema()`
-6. PK default or `setPrimaryKey` + `Schema::primary`
-7. `gemvc db:migrate YourTable`
+5. Tables: `getTable()` + `defineSchema()`; views: `getTable()` + `defineView()` (+ `viewDependsOn()` for `--all`)
+6. PK: property `id` and/or `setPrimaryKey(...)` after construct — **`Schema::primary` is not DDL today**
+7. `gemvc db:migrate YourTable` or `YourViewTable` (or `--all`)

@@ -306,7 +306,11 @@ Database 'gemvc_db' created successfully!
 ### Step 9: Migrate User Table (Example)
 ```bash
 php vendor/bin/gemvc db:migrate UserTable
+# All tables + ViewTable classes (FK-safe, views last):
+# php vendor/bin/gemvc db:migrate --all
 ```
+
+SQL **views** use `extends ViewTable` + `defineView()` — see [database.md — ViewTable](database.md#sql-views-via-viewtable-recommended). Do not point a plain `Table` at a view name and migrate it.
 
 **Expected Output:**
 ```

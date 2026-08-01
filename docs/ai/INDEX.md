@@ -33,7 +33,7 @@ Optional machine/IDE mirrors (same content, not required):
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |
 | Auto API docs (`@http`) | [../guides/api-documentation.md](../guides/api-documentation.md) |
-| What changed in 5.9.x (only if needed) | [../releases/README.md](../releases/README.md) |
+| What changed (releases) | [../releases/README.md](../releases/README.md) — **5.11** ViewTable; older notes as needed |
 
 ## Hard rules (never violate)
 

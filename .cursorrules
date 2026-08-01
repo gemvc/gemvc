@@ -3,28 +3,29 @@
 **Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/CORE_REFERENCE.md`  
 **Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`). **Core:** `gemvc/helper`, `gemvc/http-client` (see `docs/guides/helper.md`, `docs/guides/http-client.md`).
 
-GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx). Version 5.9.1.
+GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx). Version **5.11.0**.
 
 ## 4-Layer Pattern (strongly recommended)
 
 ```
-API (app/api/) → Controller → Model (app/model/) → Table (app/table/)
+API (app/api/) → Controller → Model (app/model/) → Table / ViewTable (app/table/)
 ```
 
 Runtime allows bypassing a layer; **do not** for normal HTTP services. Flexibility is inside layers, not skipping them.
 
 Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.  
+Views: `UserAccessTable extends ViewTable` (`defineView()`, flat column aliases).  
 URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop). No routes files.
 
 - `_` properties ignored in CRUD (aggregations)
 - `protected` properties: still DB columns (still in SQL `SELECT *` hydration); hidden from typical list/API payloads / `createList` defaults — prefer explicit column lists
-- Property names = DB columns
+- Property names = DB columns (or view SELECT aliases on `ViewTable`)
 
 ## Hard Do / Don't
 
 **DO**
 
-- Extend `ApiService` or `SwooleApiService`, `Controller`, `Table`
+- Extend `ApiService` or `SwooleApiService`, `Controller`, `Table` or **`ViewTable`**
 - `definePostSchema` / `defineGetSchema` before using post/get data
 - `callController()` in API + `createModel()` in Controller (Apache path / APM)
 - `requireAuth(['role'])` in service constructor to guard all methods
@@ -32,12 +33,14 @@ URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTI
 - Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()`
 - Prefer `gemvc/helper` (TypeChecker, CryptHelper, …) and `gemvc/http-client` (outbound HTTP) — never invent Laravel validators or curl wrappers
 - Prefer `createList` + API `findable`/`filterable`/`sortable` for lists (not hand-rolled filter SQL)
+- SQL views: **`ViewTable`** + `defineView()` / `viewDependsOn()`; migrate with `gemvc db:migrate` or `--all`
 
 **DON'T**
 
 - Skip layers on HTTP services (possible but strongly discouraged); invent routes; use Eloquent/Laravel conventions
 - Manual input sanitization or string-concat SQL
 - Use `float` for currency
+- Point a plain `Table` at a view name and `db:migrate` it — use `ViewTable` (never invent Eloquent 1:n on views)
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
 - Copy `callController` / `$this->UserController` into `SwooleApiService` (those are on `ApiService` only)
 
@@ -79,7 +82,7 @@ Optional field: `'?phone' => 'string'`.
 
 ## CLI
 
-- Library: `gemvc init`, `gemvc db:migrate`
+- Library: `gemvc init`, `gemvc db:migrate ClassName`, `gemvc db:migrate --all`
 - Dev (`gemvc/cli-dev`): `create:*`, `db:init|list|describe|drop|unique`, `admin:*`
 
 ## More detail

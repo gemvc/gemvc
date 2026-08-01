@@ -298,7 +298,7 @@ Templates: [templates.md](templates.md).
 
 - Put `definePostSchema` / `requireAuth` in Controller  
 - Copy `callController` into `SwooleApiService` subclasses  
-- Write JOINs/SQL in Controller (use Model/Table or [SQL views](database.md#sql-views-as-tables-recommended))  
+- Write JOINs/SQL in Controller (use Model / `ViewTable` — [SQL views](database.md#sql-views-via-viewtable-recommended))
 - Invent Laravel-style resource controllers / form requests  
 
 ---

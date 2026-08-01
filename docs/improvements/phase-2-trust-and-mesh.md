@@ -2,7 +2,7 @@
 
 **Status:** Not implemented (plan only). Confirmed absent from `src/` and `vendor/gemvc` (no `requireInternalService`, `GEMVC_INTERNAL_SECRET`, `ServiceCall`, or registry).  
 **Packages:** `gemvc/library` (API gate), then `gemvc/http-client` and/or thin library wrapper (caller DX).  
-**Backlog origin:** [make-gemvc-better.md](../../make-gemvc-better.md) P0 #3, P1 #5.
+**Backlog origin:** internal P0 (family trust / mesh DX). See [improvements README](README.md).
 
 **AI:** implement only when explicitly tasked with Phase 2. Do **2a before 2b**.
 

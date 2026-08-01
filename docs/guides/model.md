@@ -73,7 +73,7 @@ There is **no** required base class for Models. Most entity Models **extend** th
 5. Table-backed Models use inherited Table API / `QueryBuilder` — no string-concat SQL.
 6. Controllers should wrap with **`createModel(new XModel())`** when the Model (or its children) touch DB so Request/APM reach queries. Composition Models should call `setRequest` on child Table-backed Models (or implement `setRequest` and forward it).
 7. Map sensitive fields via setters (`'password' => 'setPassword()'`).
-8. Prefer **SQL views + Table** for JOIN-heavy reads ([database.md](database.md#sql-views-as-tables-recommended)); use composition Models for **cross-entity workflows** and controlled APIs.
+8. Prefer **`ViewTable`** for JOIN-heavy reads ([database.md](database.md#sql-views-via-viewtable-recommended)); use composition Models for **cross-entity workflows** and controlled APIs.
 9. On Table-backed Models, `_`-prefixed properties are aggregations — not columns.
 
 ---
@@ -368,7 +368,7 @@ There is **no** built-in Eloquent-style `with()` — write explicit loaders. For
 | **SQL VIEW + Table class** | Joins / aggregates / reporting |
 | **Composition Model** | Multi-entity workflows / façades / typed mixes ([below](#composition-models-no-table)) |
 
-GEMVC recommendation: push JOIN complexity into SQL views, then a simple Model/Table over the view — [SQL views as tables](database.md#sql-views-as-tables-recommended).
+GEMVC recommendation: push JOIN complexity into SQL views via **`ViewTable`**, then a Model over that view — [SQL views via ViewTable](database.md#sql-views-via-viewtable-recommended).
 
 ---
 
@@ -524,7 +524,7 @@ public function place(): JsonResponse
 | Need | Prefer |
 |------|--------|
 | CRUD on one table | Table-backed Model |
-| JOIN / report query | SQL view + Table ([database.md](database.md#sql-views-as-tables-recommended)) |
+| JOIN / report query | SQL view + **`ViewTable`** ([database.md](database.md#sql-views-via-viewtable-recommended)) |
 | Multi-step write across entities | **Composition Model** |
 | Hide dangerous Table methods from Controllers | **Composition Model** façade |
 | Single payload mixing several entities | Composition result DTO / Style B object |

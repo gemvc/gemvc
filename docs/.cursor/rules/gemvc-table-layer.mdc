@@ -25,7 +25,7 @@ protected array $_type_map = ['id' => 'int', 'email' => 'string', 'password' => 
 
 public function defineSchema(): array {
     return [
-        Schema::primary('id'),
+        Schema::primary('id'), // NOT migrate DDL today — prefer public int $id for PK
         Schema::autoIncrement('id'),
         Schema::unique('email')->name('uniq_email'),
         Schema::foreignKey('user_id', 'users.id')->onDeleteCascade(),
@@ -74,7 +74,7 @@ class UserAccessTable extends ViewTable
 
 ## Primary key at runtime
 
-`Schema::primary(...)` is for **migrate DDL** (table path). Runtime `selectById()` uses:
+`Schema::primary(...)` exists in the Schema API but **is not applied as migrate DDL today** (PK create prefers property named `id`). Runtime `selectById()` uses:
 
 1. Property named `id` if present, else  
 2. `$this->setPrimaryKey('column', 'int'|'string'|'uuid')` after `parent::__construct()`, else  

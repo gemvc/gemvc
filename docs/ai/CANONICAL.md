@@ -273,6 +273,7 @@ class UserTable extends Table {
 
     public function defineSchema(): array {
         return [
+            // Schema::primary / autoIncrement are NOT migrate DDL today — PK from property `id`
             Schema::primary('id'),
             Schema::autoIncrement('id'),
             Schema::unique('email'),
