@@ -1,6 +1,6 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.11.0**.
+Single entry point for humans and AI assistants. Framework version: **5.12.0**.
 
 ## For AI assistants (read first)
 
@@ -70,13 +70,13 @@ Covers: 4-layer role; mapping; `createModel` / `createList` + list GET params; p
 
 **What it does:** Where **logic** lives. Two shapes: **Table-backed** (`XModel extends XTable`) or **composition** (plain class holding other Models — inter-model workflows, façades, typed result objects). Simple vs domain; return Style A/B (`JsonResponse` or PHP types). Aggregations, views, APM.
 
-Covers: return style; composition Models; simple vs domain; CRUD; transforms; validation; `_` aggregations; SQL views; APM; Do/Don’t.
+Covers: return style; composition Models; simple vs domain; CRUD; transforms; validation; `_` aggregations; SQL views; APM; **atomic money transfers** (`beginTransaction` + `forUpdate` + BCMath); Do/Don’t.
 
 ---
 
 ### 4. Table layer — [database.md](guides/database.md)
 
-**What it does:** Database only. Properties = columns (or view aliases). Physical tables via `Table` + `defineSchema()`; **SQL views via `ViewTable`** + `defineView()` / `viewDependsOn()`. Fluent select; row CRUD on tables only (views are read-only). Migrate: `gemvc db:migrate ClassName` or `gemvc db:migrate --all`.
+**What it does:** Database only. Properties = columns (or view aliases). Physical tables via `Table` + `defineSchema()`; **SQL views via `ViewTable`** + `defineView()` / `viewDependsOn()`. Fluent select; transactions / `forUpdate`; row CRUD on tables only (views are read-only). Migrate: `gemvc db:migrate ClassName` or `gemvc db:migrate --all`.
 
 Covers: what `Table` / `ViewTable` abstract; skeleton; types/PKs; CRUD; soft delete; views; multi-DB; connection packages under the hood.
 
@@ -121,7 +121,7 @@ Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Pre
 When to open release notes vs changelog. **AI: skip unless version/migration task.**
 
 ### [releases/RELEASE_NOTES.md](releases/RELEASE_NOTES.md)
-Narrative notes (what/why/migration), including **5.11.0 ViewTable** / `db:migrate --all`, 5.10.x rate limiting, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
+Narrative notes (what/why/migration), including **5.12.0** rate-limit drivers / Protected API / `forUpdate`, **5.11.0 ViewTable** / `db:migrate --all`, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
 
 ### [releases/CHANGELOG.md](releases/CHANGELOG.md)
 Keep-a-Changelog bullets for “is feature X in version Y?”

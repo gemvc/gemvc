@@ -57,6 +57,7 @@ There is **no** required base class for Models. Most entity Models **extend** th
 | Heavy reads | [Complex reads](#complex-reads) |
 | Multi-step / APM | [Beyond CRUD](#beyond-crud) |
 | Models without Table | [Composition Models](#composition-models-no-table) |
+| Concurrent balance / wallets | [Atomic money transfers](#atomic-money-transfers-pessimistic-lock) |
 | Codegen | [CLI](#cli-codegen) |
 | Mistakes | [Do / Don’t](#do-dont) |
 
@@ -75,6 +76,7 @@ There is **no** required base class for Models. Most entity Models **extend** th
 7. Map sensitive fields via setters (`'password' => 'setPassword()'`).
 8. Prefer **`ViewTable`** for JOIN-heavy reads ([database.md](database.md#sql-views-via-viewtable-recommended)); use composition Models for **cross-entity workflows** and controlled APIs.
 9. On Table-backed Models, `_`-prefixed properties are aggregations — not columns.
+10. Concurrent money: `beginTransaction()` + `forUpdate()` + BCMath on **one** Table instance; updates via `$this` (not hydrated rows); never raw `DatabaseManagerFactory…->getPdo()` — [Atomic money transfers](#atomic-money-transfers-pessimistic-lock).
 
 ---
 
@@ -564,6 +566,124 @@ Templates: [templates.md](templates.md).
 
 ---
 
+## Atomic money transfers (pessimistic lock)
+
+For concurrent balance updates (accounting, wallets), keep work in the **Model** on a **Table-backed** class. Use GEMVC transactions + `FOR UPDATE` — do **not** grab a raw PDO from `DatabaseManagerFactory`.
+
+### Why not raw PDO?
+
+`Table::beginTransaction()` / `commit()` / `rollback()` go through `PdoQuery` → `UniversalQueryExecuter`, which marks the **pooled** connection as in-transaction (writes stay on that connection). A second PDO from the factory can begin a transaction on connection A while updates run on B → **not atomic**.
+
+### Rules
+
+| Rule | Detail |
+|------|--------|
+| Same Table instance | `beginTransaction` → lock SELECT → **updates on `$this`** → `commit`/`rollback` (hydrated rows are new instances — do not `updateSingleQuery()` on them) |
+| Lock | Prefer one `whereIn` + `forUpdate()` + `orderBy('id')` inside the transaction |
+| Lock order | Ascending id (`ORDER BY id` / lock min then max) to avoid deadlocks |
+| Money | `public string $balance` + `$_type_map` `decimal`; `bccomp` / `bcsub` / `bcadd` — never `float` |
+| Dialects | Row locks: **MySQL InnoDB / PostgreSQL**. Not a SQLite multi-writer recipe |
+
+API: `definePostSchema` with `amount` => `decimal`, then `decimalValuePost('amount')`. Controller only maps and calls the Model.
+
+### Example: `AccountModel::transfer`
+
+Hydrated rows from `run()` are **new** instances (their own connection). Lock and **update only via `$this`** (the instance that called `beginTransaction()`).
+
+```php
+<?php
+namespace App\Model;
+
+use App\Table\AccountTable;
+use Gemvc\Http\JsonResponse;
+use Gemvc\Http\Response;
+
+class AccountModel extends AccountTable
+{
+    public function transfer(int $fromAccountId, int $toAccountId, string $amount): JsonResponse
+    {
+        if ($fromAccountId === $toAccountId || bccomp($amount, '0', 2) <= 0) {
+            return Response::unprocessableEntity('Invalid transfer');
+        }
+
+        if (!$this->beginTransaction()) {
+            return Response::internalError($this->getError() ?? 'Could not start transaction');
+        }
+
+        try {
+            $firstId = min($fromAccountId, $toAccountId);
+            $secondId = max($fromAccountId, $toAccountId);
+
+            // One SELECT … FOR UPDATE — lock order by id (deadlock-safe)
+            $rows = $this->select('id,balance')
+                ->whereIn('id', [$firstId, $secondId])
+                ->orderBy('id', true)
+                ->forUpdate()
+                ->noLimit()
+                ->run();
+
+            if ($rows === null || count($rows) !== 2) {
+                $this->rollback();
+                return Response::notFound('Account not found');
+            }
+
+            $byId = [];
+            foreach ($rows as $row) {
+                $byId[$row->id] = $row->balance;
+            }
+
+            $fromBalance = $byId[$fromAccountId];
+            $toBalance = $byId[$toAccountId];
+
+            if (bccomp($fromBalance, $amount, 2) < 0) {
+                $this->rollback();
+                return Response::unprocessableEntity('Insufficient balance');
+            }
+
+            $newFrom = bcsub($fromBalance, $amount, 2);
+            $newTo = bcadd($toBalance, $amount, 2);
+
+            // Updates must use $this (same PdoQuery / open transaction)
+            $this->id = $fromAccountId;
+            $this->balance = $newFrom;
+            if ($this->updateSingleQuery() === null) {
+                $this->rollback();
+                return Response::internalError($this->getError() ?? 'Debit failed');
+            }
+
+            $this->id = $toAccountId;
+            $this->balance = $newTo;
+            if ($this->updateSingleQuery() === null) {
+                $this->rollback();
+                return Response::internalError($this->getError() ?? 'Credit failed');
+            }
+
+            if (!$this->commit()) {
+                $this->rollback();
+                return Response::internalError($this->getError() ?? 'Commit failed');
+            }
+
+            return Response::success([
+                'from_account_id' => $fromAccountId,
+                'to_account_id' => $toAccountId,
+                'amount' => $amount,
+                'from_balance' => $newFrom,
+                'to_balance' => $newTo,
+            ], 1, 'Transfer completed');
+        } catch (\Throwable $e) {
+            $this->rollback();
+            return Response::internalError($e->getMessage());
+        }
+    }
+}
+```
+
+`AccountTable`: `public string $balance` + `$_type_map['balance'] = 'decimal'`.
+
+Also: [`database.md` — Transactions & FOR UPDATE](database.md#transactions--for-update).
+
+---
+
 ## Do / Don’t
 
 **Do**
@@ -573,6 +693,7 @@ Templates: [templates.md](templates.md).
 - Keep business rules and transforms in Model (entity or composition)  
 - Choose Style A or Style B and stay consistent  
 - Use Table query API / views for data access; composition for cross-entity logic  
+- Money transfers: `beginTransaction` + `forUpdate` + BCMath on one Table instance  
 
 **Don’t**
 
@@ -582,6 +703,7 @@ Templates: [templates.md](templates.md).
 - Invent Eloquent relations / magic `with`  
 - Skip layers on HTTP services (API → Table) — possible, **strongly discouraged**
 - Use `float` for money (use `decimal` + string on Table)  
+- Grab `DatabaseManagerFactory…->getPdo()` for multi-step money ops  
 - Leak `protected` password into list payloads  
 - Expose raw child Models from a composition façade if you meant to limit their API  
 
@@ -596,6 +718,7 @@ Templates: [templates.md](templates.md).
 5. Composition: `setRequest` forwarded to children; public API limited intentionally
 6. Soft delete / views chosen intentionally
 7. Controller uses `createModel(new …)` when Models touch DB
+8. Concurrent money: same-instance tx + `forUpdate` + BCMath (not raw PDO)
 
 ---
 
@@ -605,3 +728,4 @@ Templates: [templates.md](templates.md).
 - Core composition (no Table): `src/core/Apm/ApmModel.php`
 - Controller wiring: [controller.md](controller.md)
 - Table / views / connections: [database.md](database.md)
+- Atomic transfers: [Atomic money transfers](#atomic-money-transfers-pessimistic-lock)

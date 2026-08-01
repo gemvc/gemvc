@@ -25,7 +25,7 @@ Optional machine/IDE mirrors (same content, not required):
 | **Lists** `createList` + findable/filterable/sortable | [../guides/controller.md](../guides/controller.md#lists-createlist) (+ [api.md](../guides/api.md#list-allowlists)) |
 | **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
 | **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
-| **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types) | [../guides/model.md](../guides/model.md) |
+| **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types; money transfers) | [../guides/model.md](../guides/model.md) |
 | HTTP Request lifecycle / adapters | [../guides/http-lifecycle.md](../guides/http-lifecycle.md) |
 | Install → first API call | [../guides/installation.md](../guides/installation.md) |
 | Framework internals | [../guides/architecture.md](../guides/architecture.md) |
@@ -35,12 +35,13 @@ Optional machine/IDE mirrors (same content, not required):
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |
 | Auto API docs (`@http`) | [../guides/api-documentation.md](../guides/api-documentation.md) |
-| What changed (releases) | [../releases/README.md](../releases/README.md) — **5.11** ViewTable; older notes as needed |
+| What changed (releases) | [../releases/README.md](../releases/README.md) — **5.12** rate-limit drivers / Protected API / `forUpdate`; **5.11** ViewTable; older notes as needed |
 
 ## Hard rules (never violate)
 
 - GEMVC is an **ecosystem** (`vendor/gemvc/*`) — not a single package; see [ecosystem.md](../guides/ecosystem.md)
 - Prefer **4 layers** for HTTP services: API → Controller → Model → Table/`ViewTable`. Bypassing a layer is possible but **strongly discouraged**
+- Authenticated CRUD: prefer **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (auth in base constructor). Public endpoints: `ApiService` / `SwooleApiService`
 - Prefer **`ViewTable`** for SQL views (`defineView` + migrate); never `db:migrate` a plain `Table` that points at a view name
 - Never invent Eloquent-style relations or nested 1:n on views — views are flat; reshape in Model
 - Never skip schema validation (`definePostSchema` / `defineGetSchema`)
@@ -49,6 +50,8 @@ Optional machine/IDE mirrors (same content, not required):
 - Prefer `callController()` (Apache/`ApiService`) + `createModel()` for APM-ready code; Swoole uses bare `new` Controller — see [api.md](../guides/api.md)
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
-- Use `requireRateLimit()` (APCu) for per-service/method limits; optional global `REQUEST_RATE_LIMIT_PER_SEC`
-- Money/precision: `public string` + `$_type_map` `decimal` — never `float`
+- **Global rate limit:** `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`) → Bootstrap `enforceFromEnv`
+- `requireRateLimit()` uses global driver; overrides: `requireRateLimitApcu|Redis|Both()` — **no auto-fallback** between stores
+- Unavailable chosen backend → fail-closed unless `REQUEST_RATE_LIMIT_FAIL_MODE=open`
+- Money/precision: `public string` + `$_type_map` `decimal` — never `float`; concurrent transfers: `beginTransaction` + `forUpdate` + BCMath (not raw PDO) — [model.md](../guides/model.md#atomic-money-transfers-pessimistic-lock)
 - Prefer existing `gemvc/*` packages over reinventing helper/DB/APM/CLI code — especially **`gemvc/helper`**, **`gemvc/http-client`**, and **`gemvc/apm-contracts`** (providers via `APM_NAME`; never hardcode TraceKit in `app/`)

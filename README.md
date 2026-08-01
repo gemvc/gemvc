@@ -9,7 +9,7 @@
 [![Nginx](https://img.shields.io/badge/Nginx-Supported-009639.svg?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.11.0 — **ViewTable** (SQL views + `db:migrate --all`), APCu rate limiting (`requireRateLimit`), MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
+**Latest:** 5.12.0 — rate-limit drivers (`apcu` / `redis` / `both` / `none`) + `requireRateLimit*()`, `ProtectedApiService` / `ProtectedSwooleApiService`, `forUpdate()` + atomic transfer docs. Also **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
 
 > **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
@@ -56,8 +56,8 @@ app/table/        → database (Table or ViewTable)
 
 Strong request sanitization lives here. As a developer you can:
 
-- Guard a whole service with `$this->requireAuth(['role'])` in the constructor, or call `$this->request->auth(['role'])` per method
-- Optional rate limit with `$this->requireRateLimit()` (APCu; IP and/or JWT → 429)
+- Guard a whole service with **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (preferred), or `$this->requireAuth(['role'])` on `ApiService`, or `$this->request->auth(['role'])` per method
+- Optional rate limit: global `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`), or `$this->requireRateLimit()` / `requireRateLimitApcu|Redis|Both()` (IP and/or JWT → 429). No automatic store fallback.
 - Define exact POST / GET / PUT / PATCH schemas on each endpoint with powerful types (`string`, `email`, `url`, `ip`, …)
 - Then call the Controller — Apache: `callController(...)`; OpenSwoole: `new XController($this->request)` — and pass the sanitized `Request`
 

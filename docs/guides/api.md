@@ -47,9 +47,9 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 ## Hard rules (AI)
 
 1. API classes live in `app/api/` as `User.php` → `App\Api\User`.
-2. Extend **`ApiService`** (Apache/Nginx) or **`SwooleApiService`** (OpenSwoole) — match the server.
+2. Extend **`ProtectedApiService`** / **`ProtectedSwooleApiService`** for authenticated CRUD; **`ApiService`** / **`SwooleApiService`** for public endpoints (login, register, health). Match Apache vs OpenSwoole.
 3. Always **`definePostSchema` / `defineGetSchema` / …** before using body/query data.
-4. Prefer **`requireAuth([...])`** in the constructor to guard the whole service.
+4. If using a public base, prefer **`requireAuth([...])`** in the constructor to guard the whole service.
 5. Apache/Nginx: prefer **`callController(new XController($this->request))->method()`**.
 6. OpenSwoole: **`(new XController($this->request))->method()`** — **no** `callController` / magic `$this->XController`.
 7. For lists: call `findable` / `filterable` / `sortable` **in API before** Controller `createList`.
@@ -59,14 +59,15 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 
 ## ApiService vs SwooleApiService
 
-| | `ApiService` | `SwooleApiService` |
+| | `ApiService` / `ProtectedApiService` | `SwooleApiService` / `ProtectedSwooleApiService` |
 |--|--------------|-------------------|
 | Server | Apache / Nginx | OpenSwoole |
-| `callController()` | yes (APM proxy) | **no** |
-| Magic `$this->UserController` | yes | **no** |
+| Auth by default | `Protected*` yes; plain `Api*` no | `Protected*` yes; plain `Swoole*` no |
+| `callController()` | yes (APM proxy) on both Apache bases | **no** |
+| Magic `$this->UserController` | yes on both Apache bases | **no** |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
 | `requireAuth()` | yes | yes |
-| `requireRateLimit()` | yes | yes |
+| `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | yes | yes |
 
 Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw).
 
@@ -76,7 +77,25 @@ Same `app/` layering either way; only the API base class and how you invoke Cont
 
 ## Authentication
 
-### Service-wide (preferred)
+### Protected base (preferred for authenticated CRUD)
+
+```php
+use Gemvc\Core\ProtectedApiService; // OpenSwoole: ProtectedSwooleApiService
+
+class User extends ProtectedApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request, ['admin']); // throws AuthException → 401 or 403
+    }
+}
+```
+
+- `parent::__construct($request, null)` or `[]` → any authenticated user  
+- `parent::__construct($request, ['admin','editor'])` → one of these roles  
+- Public endpoints: keep `extends ApiService` / `SwooleApiService`
+
+### Or `requireAuth()` on a public base
 
 ```php
 public function __construct(Request $request)
@@ -106,39 +125,43 @@ Full detail: [security.md](security.md).
 
 ---
 
-## Rate limiting (APCu)
+## Rate limiting
 
-Optional. Uses in-process APCu (no Redis). If APCu is off, traffic is allowed and a one-time warning is logged.
+Optional but important for production. Drivers: **`apcu`** (default, per PHP instance), **`redis`** (cluster-wide via `RedisManager`), **`both`** (simultaneous dual check — deny if either over), **`none`** (disables Bootstrap + default `requireRateLimit()`; overrides still work).
 
-### Service / method (preferred DX)
+**No automatic Redis↔APCu fallback** (would desync cluster quotas and add timeout traps). Prefer proxy/edge limits for multi-node as well.
 
-```php
-public function __construct(Request $request)
-{
-    parent::__construct($request);
-    $this->requireRateLimit();                 // 20/sec, IP + JWT
-    // $this->requireRateLimit(10, 'ip');      // IP only
-    // $this->requireRateLimit(5, 'token', 120);
-}
-```
+`REQUEST_RATE_LIMIT_DRIVER=both` ≠ `REQUEST_RATE_LIMIT_SCOPE=both` (IP+token). Driver `both` is simultaneous dual check (not failover) and requires **both** APCu and Redis to be available.
 
-Throws `RateLimitException` → HTTP **429**. On exceed, IP and/or token is temporarily blocked (default 60s) and a line is written to `error_log`.
-
-### Global (Bootstrap)
-
-Set in `.env` (only when you want every API request limited):
+### Global (Bootstrap) — automatic, no code
 
 ```env
+REQUEST_RATE_LIMIT_DRIVER=apcu
 REQUEST_RATE_LIMIT_PER_SEC=20
 REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
 REQUEST_RATE_LIMIT_SCOPE=both
+REQUEST_RATE_LIMIT_FAIL_MODE=closed
+# REDIS_* when DRIVER=redis or both
 ```
 
-Unset / `0` = off. Default recommendation when enabling: **20 requests/second**.
+Unset / `0` PER_SEC = off. `DRIVER=none` disables Bootstrap + default `requireRateLimit()` even if PER_SEC is set.
 
-If APCu is full: purge `gemvc:rl:*`, retry once; if still failing → **429** (fail-closed). If APCu is missing → allow + warning (fail-open).
+### Service / method DX
 
-Static helpers: `Gemvc\Core\RateLimiter::enforce()`, `::hit()`, `::block()`, `::unblock()`.
+```php
+$this->requireRateLimit();                 // uses REQUEST_RATE_LIMIT_DRIVER
+$this->requireRateLimitApcu(30, 'ip');     // force APCu (ignores global driver)
+$this->requireRateLimitRedis(5, 'ip', 120); // force Redis
+$this->requireRateLimitBoth(10);           // force dual check (not failover)
+```
+
+Explicit overrides still enforce when global `DRIVER=none` (opt-in for special endpoints). Throws `RateLimitException` → HTTP **429**.
+
+### Notes
+
+- **FAIL_MODE** applies when the chosen backend(s) are unavailable at the start of `enforce()`. Mid-request write failures still deny (429) and never switch drivers.
+- **SCOPE=token** with no JWT falls back to IP. On exceed with **SCOPE=both**, all buckets for that request are blocked.
+- APCu full: purge `gemvc:rl:*`, retry once, then deny.
 
 ---
 

@@ -87,8 +87,8 @@ Current test coverage focuses on:
 ### ✅ Completed
 - **Security Tests**: XSS prevention, input sanitization, path protection
 - **HTTP Layer**: Request sanitization, Response factory, JWT tokens
-- **Core Framework**: SecurityManager path blocking; RateLimiter (APCu)
-- **Database (5.11.0)**: `ViewTable` / `ViewGenerator` / dialect view DDL / `TableMigrateOrder` (`ViewTableTest`)
+- **Core Framework (5.12.0)**: SecurityManager path blocking; RateLimiter (apcu/redis/both/none drivers); Protected API bases
+- **Database**: `forUpdate()` (5.12.0); `ViewTable` / `ViewGenerator` / dialect view DDL / `TableMigrateOrder` (5.11.0, `ViewTableTest`)
 
 ### 🚧 In Progress
 - Core framework classes (ApiService, Controller)

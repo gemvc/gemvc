@@ -6,7 +6,7 @@ alwaysApply: false
 
 # API layer (`app/api/`)
 
-Extend `Gemvc\Core\ApiService`. Validate and authorize here; **no** business logic or SQL.
+Extend `Gemvc\Core\ApiService` (or `ProtectedApiService` for auth-by-default). Validate and authorize here; **no** business logic or SQL.
 
 URL (Apache): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403) and `RateLimitException` (429).
 
@@ -17,7 +17,7 @@ URL (Apache): `/api/{Service}/{method}` — convention routing only (no routes f
 public function __construct(Request $request) {
     parent::__construct($request);
     $this->requireAuth(['admin']);
-    // $this->requireRateLimit(); // optional APCu limit for whole service
+    // $this->requireRateLimit(); // optional — uses REQUEST_RATE_LIMIT_DRIVER
 }
 
 public function create(): JsonResponse {
@@ -42,15 +42,17 @@ if (!$this->request->auth(['admin'])) {
 
 `auth(['admin'])` / `requireAuth(['admin'])` match against the JWT **`role`** claim (comma-separated role names set when minting tokens, e.g. `$token->role = 'admin,developer'`). Empty `role` fails role checks.
 
-## Rate limits (APCu)
+## Rate limits
 
 ```php
-$this->requireRateLimit();              // 20/sec, IP + token; throws → 429
-$this->requireRateLimit(5, 'ip', 60);   // 5/sec, IP only, block 60s after exceed
-$this->requireRateLimit(10, 'token');   // per JWT
+$this->requireRateLimit();                  // global REQUEST_RATE_LIMIT_DRIVER → 429
+$this->requireRateLimit(5, 'ip', 60);
+$this->requireRateLimitApcu(30, 'ip');      // force APCu
+$this->requireRateLimitRedis(5, 'ip', 120); // force Redis
+$this->requireRateLimitBoth(10);            // dual check (not failover)
 ```
 
-Scopes: `both` (default), `ip`, `token`. Fail-open if APCu is missing (requests allowed + warning). Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_SCOPE`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`.
+Scopes: `both` (default), `ip`, `token`. Drivers: `apcu` | `redis` | `both` | `none`. **No auto-fallback** between stores. Unavailable chosen backend(s) → `REQUEST_RATE_LIMIT_FAIL_MODE` (`closed` = 429, `open` = allow). Global env: `REQUEST_RATE_LIMIT_DRIVER`, `PER_SEC`, `SCOPE`, `BLOCK_SECONDS`, `FAIL_MODE`.
 
 Apply on public auth/signup endpoints. If the same write also exists under another service (e.g. `User/create` vs `Auth/register`), rate-limit **both** or clients will bypass.
 

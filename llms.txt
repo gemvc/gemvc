@@ -2,7 +2,7 @@
 
 > Server-agnostic PHP REST API framework (Apache / Nginx / OpenSwoole). Four layers: API → Controller → Model → Table/ViewTable. Not Laravel or Symfony.
 
-Version: 5.11.0 (gemvc/library)
+Version: 5.12.0 (gemvc/library)
 
 ## AI must read first
 
@@ -18,13 +18,13 @@ Version: 5.11.0 (gemvc/library)
 
 - docs/README.md: Human + AI documentation index
 - docs/guides/ecosystem.md: gemvc/* package map
-- docs/guides/api.md: API layer
+- docs/guides/api.md: API layer + rate limit (DRIVER apcu/redis/both/none, requireRateLimit*)
 - docs/guides/controller.md: Controller + createList
-- docs/guides/model.md: Model layer
+- docs/guides/model.md: Model layer + atomic money transfers (forUpdate)
 - docs/guides/database.md: Table, ViewTable, migrate
-- docs/guides/installation.md: Install → first API
+- docs/guides/installation.md: Install → first API; APCu/Redis for rate-limit drivers
 - docs/guides/cli.md: CLI workflows
-- docs/guides/security.md: JWT / hardening
+- docs/guides/security.md: JWT, schema, rate-limit drivers + FAIL_MODE, hardening
 - docs/guides/apm.md: APM tracing
 - docs/guides/api-documentation.md: Auto @http docs
 

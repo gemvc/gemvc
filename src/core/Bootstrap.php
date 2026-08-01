@@ -110,7 +110,7 @@ class Bootstrap
             return;
         }
         try {
-            // Optional global rate limit from REQUEST_RATE_LIMIT_PER_SEC (APCu)
+            // Optional global rate limit from REQUEST_RATE_LIMIT_PER_SEC + DRIVER
             RateLimiter::enforceFromEnv($this->request);
 
             $service = 'App\\Api\\' . $serviceName;

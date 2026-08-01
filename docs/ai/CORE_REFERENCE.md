@@ -1,6 +1,6 @@
 # GEMVC Core Reference (AI)
 
-Version **5.11.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, `ViewTable`, schema types.
+Version **5.12.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, `ViewTable`, schema types.
 
 **Not** HTTP endpoint docs (that is [api-documentation.md](../guides/api-documentation.md) / `/api/index/document`).  
 **Not** the `app/api/` layer guide. Prefer this over inventing methods from training data.
@@ -78,10 +78,15 @@ $response->showSwoole($swooleResponse);
 
 ## `Gemvc\Core\ApiService`
 
+Public / optional-auth endpoints (login, register, health). For authenticated CRUD prefer {@see ProtectedApiService}.
+
 ```php
 public function __construct(Request $request)
 public function requireAuth(?array $roles = []): void   // throws AuthException
-public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void  // throws RateLimitException
+public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void  // global DRIVER; throws RateLimitException
+public function requireRateLimitApcu(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+public function requireRateLimitRedis(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+public function requireRateLimitBoth(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 protected function callController(Controller $c): ControllerTracingProxy
 // Magic: $this->UserController → ControllerTracingProxy
 public function index(): JsonResponse
@@ -89,14 +94,44 @@ protected function validatePosts(array $schema): void
 public static function mockResponse(string $method): array
 ```
 
+## `Gemvc\Core\ProtectedApiService`
+
+Extends `ApiService`. Constructor **always** calls `requireAuth($roles)` — use for authenticated services.
+
+```php
+public function __construct(Request $request, ?array $roles = null)  // throws AuthException
+// null|[] = any authenticated user; ['admin'] = role gate
+```
+
+```php
+class User extends ProtectedApiService {
+    public function __construct(Request $request) {
+        parent::__construct($request, ['admin']);
+    }
+}
+```
+
 ## `Gemvc\Core\SwooleApiService`
+
+Public / optional-auth on OpenSwoole. For authenticated CRUD prefer {@see ProtectedSwooleApiService}.
 
 ```php
 public function requireAuth(?array $roles = []): void
 public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+public function requireRateLimitApcu(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+public function requireRateLimitRedis(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+public function requireRateLimitBoth(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 protected function validatePosts(array $schema): ?JsonResponse
 protected function validateStringPosts(array $schema): ?JsonResponse
 // No callController / magic controllers — instantiate Controller yourself
+```
+
+## `Gemvc\Core\ProtectedSwooleApiService`
+
+Extends `SwooleApiService`. Same auth-in-constructor contract as `ProtectedApiService`.
+
+```php
+public function __construct(Request $request, ?array $roles = null)  // throws AuthException
 ```
 
 ## `Gemvc\Core\AuthException`
@@ -106,8 +141,13 @@ Thrown by `requireAuth()`. Response codes come from `Request::auth()`:
 
 ## `Gemvc\Core\RateLimitException` / `RateLimiter`
 
-APCu-backed. Thrown by `requireRateLimit()` or `RateLimiter::enforceFromEnv()`. HTTP **429**.
-Env: `REQUEST_RATE_LIMIT_PER_SEC` (optional global), `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE=both|ip|token`. Fail-open if APCu missing.
+HTTP **429**. Drivers: `apcu` | `redis` | `both` | `none` via `REQUEST_RATE_LIMIT_DRIVER` (default `apcu`). **No automatic fallback** between stores.
+
+**Global:** `enforceFromEnv()` when `REQUEST_RATE_LIMIT_PER_SEC` > 0. Env also: `BLOCK_SECONDS`, `SCOPE`, `FAIL_MODE`, `DRIVER`. `DRIVER=none` disables Bootstrap + default `requireRateLimit()`.
+
+**Per-service:** `requireRateLimit()` (global driver); overrides `requireRateLimitApcu()` / `requireRateLimitRedis()` / `requireRateLimitBoth()` (still enforce when global is `none`).
+
+**Fail modes:** chosen backend(s) unavailable → fail-closed unless `FAIL_MODE=open`.
 
 ## `Gemvc\Core\Controller`
 
@@ -146,7 +186,13 @@ whereIn(string $col, array $vals): self
 whereNotIn(string $col, array $vals): self
 orderBy(?string $col = null, ?bool $ascending = null): self  // true = ASC; false/null = DESC; null col = PK
 limit(int $n): self
+noLimit(): self
+forUpdate(bool $enable = true): self  // SELECT … FOR UPDATE (use inside beginTransaction)
 run(): ?array
+
+beginTransaction(): bool
+commit(): bool
+rollback(): bool
 
 insertSingleQuery(): ?static
 updateSingleQuery(): ?static
@@ -164,6 +210,8 @@ setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|
 **Schema helpers:** `Schema::unique`, `index`, `foreignKey`, `check`, `fullText` (MySQL). `primary` / `autoIncrement` exist in the API but **migrate does not emit PK DDL from them** — prefer property `id`.
 
 **Primary keys:** create-table PK from property **`id`**; runtime ORM via `setPrimaryKey` — see [database.md](../guides/database.md#primary-keys-ddl-runtime).
+
+**Transactions / money:** `beginTransaction` + `forUpdate` + updates on **`$this`** (not hydrated rows). Guide: [model.md — Atomic money transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock).
 
 **Dialects:** `DialectResolver::resolve(PDO)` → Mysql / Postgres / Sqlite for migrations (incl. view DDL).
 

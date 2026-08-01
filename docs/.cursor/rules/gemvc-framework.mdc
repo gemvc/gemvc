@@ -6,7 +6,7 @@ alwaysApply: false
 
 # GEMVC (not Laravel / Symfony)
 
-Installed: **`gemvc/library` 5.11.0** under `vendor/gemvc/`. Before inventing APIs, open:
+Installed: **`gemvc/library` 5.12.0** under `vendor/gemvc/`. Before inventing APIs, open:
 
 1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't
 2. `vendor/gemvc/library/README.md` — architecture + AI reading order
@@ -24,7 +24,7 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 
 | Layer | Extends | Job |
 |-------|---------|-----|
-| `app/api/` | `ApiService` | schema, `requireAuth` / `auth()`, `requireRateLimit()`, `callController()` |
+| `app/api/` | `ApiService` / `Protected*` | schema, `requireAuth` / `auth()`, `requireRateLimit*()`, `callController()` |
 | `app/controller/` | `Controller` | `createModel()`, `mapPostToObject()`, `createList()` |
 | `app/model/` | `*Table` / `*ViewTable` or composition | business rules; reshape flat view rows → JSON; `Response::*` |
 | `app/table/` | `Table` or `ViewTable` | columns/`$_type_map`; tables: `defineSchema()`; views: `defineView()` + `viewDependsOn()` |

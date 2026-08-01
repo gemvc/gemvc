@@ -1,6 +1,6 @@
 # GEMVC Canonical Guide for AI Assistants
 
-Framework hub: **gemvc/library 5.11.0**.
+Framework hub: **gemvc/library 5.12.0**.
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
 ---
@@ -41,7 +41,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 | Layer | File | Class |
 |-------|------|-------|
-| API | `User.php` | `User extends ApiService` (or `SwooleApiService`) |
+| API | `User.php` | `User extends ProtectedApiService` (auth) or `ApiService` (public); Swoole: `ProtectedSwooleApiService` / `SwooleApiService` |
 | Controller | `UserController.php` | `UserController extends Controller` |
 | Model | `UserModel.php` | `UserModel extends UserTable` **or** composition class (no Table) |
 | Table | `UserTable.php` | `UserTable extends Table` |
@@ -60,13 +60,13 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 ## Apache/Nginx vs OpenSwoole
 
-| | `ApiService` | `SwooleApiService` |
+| | `ApiService` / `ProtectedApiService` | `SwooleApiService` / `ProtectedSwooleApiService` |
 |--|--------------|-------------------|
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
 | APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
-| Auth whole service | `requireAuth()` in constructor | same |
-| Rate limit | `requireRateLimit()` in constructor/method | same |
+| Auth whole service | Prefer **`ProtectedApiService`** (auth in base ctor); or `requireAuth()` on `ApiService` | Prefer **`ProtectedSwooleApiService`**; or `requireAuth()` on `SwooleApiService` |
+| Rate limit | `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | same |
 
 Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw.
 
@@ -76,7 +76,25 @@ Use the matching base class for the target server.
 
 ## Authentication (5.9.1)
 
-### Prefer service-wide guard
+### Prefer protected base (authenticated CRUD)
+
+```php
+class User extends ProtectedApiService  // OpenSwoole: ProtectedSwooleApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request, ['admin']); // throws AuthException → 401 or 403
+    }
+
+    public function create(): JsonResponse { /* no per-method auth */ }
+}
+```
+
+- `parent::__construct($request, null)` or `[]` → any authenticated user
+- `parent::__construct($request, ['admin','editor'])` → must have one of these roles
+- Public endpoints (login, register, health): keep `extends ApiService` / `SwooleApiService`
+
+### Or call `requireAuth()` on a public base
 
 ```php
 class User extends ApiService
@@ -95,14 +113,30 @@ class User extends ApiService
 - `requireAuth(['admin','editor'])` → must have one of these roles
 - Throws `Gemvc\Core\AuthException` — Bootstrap converts to JSON; method body never runs if called from constructor
 
-### Rate limit (APCu, optional)
+### Rate limit
 
-```php
-$this->requireRateLimit();              // 20/sec, IP + token → 429
-$this->requireRateLimit(10, 'ip');
+**Global — automatic (no code):** if `.env` sets `REQUEST_RATE_LIMIT_PER_SEC` to a positive int, **every** request is limited by `Bootstrap` / `SwooleBootstrap` via `RateLimiter::enforceFromEnv()`. Unset or `0` = off. `DRIVER=none` disables this path and default `requireRateLimit()`.
+
+```env
+REQUEST_RATE_LIMIT_DRIVER=apcu
+REQUEST_RATE_LIMIT_PER_SEC=20
+REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
+REQUEST_RATE_LIMIT_SCOPE=both|ip|token
+REQUEST_RATE_LIMIT_FAIL_MODE=closed
+# REDIS_* when DRIVER=redis or both
 ```
 
-Global: `REQUEST_RATE_LIMIT_PER_SEC=20` (plus optional `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`). Needs APCu; fail-open + warning if missing.
+Drivers: `apcu` | `redis` | `both` (simultaneous dual check, **not** failover) | `none`. **No automatic Redis↔APCu fallback.** Unavailable chosen backend(s) → `FAIL_MODE` only.
+
+**Per-service / method (optional DX):**
+
+```php
+$this->requireRateLimit();                  // uses REQUEST_RATE_LIMIT_DRIVER
+$this->requireRateLimit(10, 'ip');
+$this->requireRateLimitApcu(30, 'ip');      // force APCu
+$this->requireRateLimitRedis(5, 'ip', 120); // force Redis
+$this->requireRateLimitBoth(10);            // force dual check
+```
 
 ### Per-method (still valid)
 
@@ -155,6 +189,8 @@ public string $price;
 protected array $_type_map = ['price' => 'decimal']; // or 'decimal:12,4'
 $price = $this->request->decimalValuePost('price'); // string|false
 ```
+
+**Concurrent balance transfers:** Model on one Table instance — `beginTransaction()` → `select(…)->whereIn(…)->orderBy('id')->forUpdate()->run()` → BCMath → `$this->updateSingleQuery()` (not on hydrated rows) → `commit()` / `rollback()`. **Never** `DatabaseManagerFactory…->getPdo()`. See [model.md — Atomic money transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock).
 
 **Responses**
 
@@ -379,7 +415,7 @@ Visit `/api/index/document`.
 
 ## DO
 
-- Extend `ApiService` / `SwooleApiService`, `Controller`, `Table` / `ViewTable`
+- Extend `ApiService` / `SwooleApiService` (public) or **`ProtectedApiService` / `ProtectedSwooleApiService`** (authenticated CRUD), plus `Controller`, `Table` / `ViewTable`
 - Use `callController` + `createModel` on Apache/Nginx path
 - Use `_` for relations; `protected` for secrets
 - PHPStan Level 9 types; nullable returns with null checks

@@ -14,20 +14,20 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 |------|----------|
 | `library/.cursorrules` | AI hard rules for GEMVC 5.x |
 | `library/README.md` | Ecosystem overview, layer guides index |
-| `library/src/core/ApiService.php` | `requireAuth`, `requireRateLimit`, `callController` |
-| `library/src/core/RateLimiter.php` | APCu limits, scopes `ip`/`token`/`both`, fail-open |
+| `library/src/core/ApiService.php` | `requireAuth`, `requireRateLimit*`, `callController` |
+| `library/src/core/RateLimiter.php` | Drivers apcu/redis/both/none; scopes ip/token/both; no auto-fallback; FAIL_MODE |
 | `library/src/core/AuthException.php` / `RateLimitException.php` | Thrown by require*; Bootstrap → 401/403/429 |
 | `library/src/core/Bootstrap.php` | Convention routing `/api/{Service}/{method}`, global rate env |
 | `library/src/core/Controller.php` | `createModel`, `createList` |
 | `library/src/http/Request.php` | schemas, auth, map*, findable/filterable/sortable |
 | `library/src/http/Response.php` | JSON response factories |
 | `library/src/http/JWTToken.php` | access/refresh/login tokens; set `$token->role` for `auth([...])` |
-| `library/src/database/Table.php` | query fluent API, `setPrimaryKey`, `selectById` |
+| `library/src/database/Table.php` | query fluent API, `setPrimaryKey`, `selectById`, `beginTransaction` / `forUpdate` |
 | `library/src/database/ViewTable.php` | SQL views: `defineView`, `viewDependsOn`, read-only row writes |
 | `library/src/database/ViewGenerator.php` | CREATE/REPLACE/DROP VIEW (used by migrate) |
 | `library/src/database/TableMigrateOrder.php` | FK + viewDependsOn order for `db:migrate --all` |
 | `library/src/database/Schema.php` | migration constraints (`primary`, `foreignKey`, …) |
-| `library/src/database/DatabaseManagerFactory.php` | PDO via factory when needed outside Table |
+| `library/src/database/DatabaseManagerFactory.php` | Connection manager selection — **not** for app-level multi-step money (use Table tx) |
 | `library/src/CLI/commands/DbMigrate.php` | `db:migrate ClassName` or `db:migrate --all` (tables + ViewTable) |
 | `helper/README.md` | CryptHelper, TypeChecker types |
 | `http-client/README.md` | outbound HTTP |

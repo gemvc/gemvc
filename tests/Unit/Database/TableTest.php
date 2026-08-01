@@ -770,6 +770,20 @@ class TableTest extends TestCase
         $this->assertNotNull($query);
         $this->assertStringContainsString('id', $query);
     }
+
+    public function testForUpdateAppendsClauseToBuiltSelect(): void
+    {
+        $table = new TestTable();
+        $table->select('id, balance')->whereEqual('id', 1)->limit(1)->forUpdate();
+
+        $method = new \ReflectionMethod(Table::class, 'buildCompleteSelectQuery');
+        $method->invoke($table);
+
+        $query = $table->getQuery();
+        $this->assertNotNull($query);
+        $this->assertStringContainsString('FOR UPDATE', $query);
+        $this->assertMatchesRegularExpression('/FOR UPDATE\s*$/', trim((string) $query));
+    }
     
     // ==========================================
     // Join Clause Variations

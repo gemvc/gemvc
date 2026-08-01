@@ -121,7 +121,8 @@ HTTP Request
 - `WebserverDetector.php` - Environment detection (cached)
 - `OpenSwooleServer.php` - OpenSwoole server lifecycle
 - `HotReloadManager.php` - Development hot reload (watches app dir only via ProjectHelper; dev-only; 5s interval)
-- `RedisManager.php` - Redis connection singleton
+- `RedisManager.php` - Redis connection singleton (also used by RateLimiter when `REQUEST_RATE_LIMIT_DRIVER=redis` or `both`)
+- `RateLimiter.php` - APCu / Redis / both / none drivers; Bootstrap `enforceFromEnv`; no auto-fallback
 - `ApiDocGenerator.php` - Auto-generate API documentation
 
 **Key Features**:

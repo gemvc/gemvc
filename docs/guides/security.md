@@ -15,6 +15,7 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 | What is automatic vs you call | [Multi-Layer Security Architecture](#multi-layer-security-architecture) |
 | Schema / `define*Schema` | [Layer 4: Schema Validation](#layer-4-schema-validation-request-filtering) |
 | JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication-authorization) |
+| **Global / service rate limit** | [Rate limiting](#rate-limiting-optional) — drivers `apcu`/`redis`/`both`/`none`; global = `.env`; overrides in API |
 | Production checklist | [Production Security Checklist](#production-security-checklist) |
 | API-layer how-to | [api.md](api.md) |
 
@@ -334,9 +335,20 @@ Result: REJECTED - "String length for post 'name' is 10000, outside range (2-100
 
 ### Developer Calls - JWT Token System
 
-**Status**: **Available methods** — prefer `$this->requireAuth()` on the API service (5.9.1), or call `$request->auth()` per method.
+**Status**: **Available methods** — prefer **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (auth in base constructor), or `$this->requireAuth()` on `ApiService`, or `$request->auth()` per method.
 
-**Service-wide guard (recommended)**:
+**Protected base (recommended for authenticated CRUD)**:
+```php
+class User extends ProtectedApiService  // OpenSwoole: ProtectedSwooleApiService
+{
+    public function __construct(Request $request)
+    {
+        parent::__construct($request, ['admin']); // AuthException → 401 or 403; all methods protected
+    }
+}
+```
+
+**Or service-wide guard on a public base**:
 ```php
 class User extends ApiService
 {
@@ -348,20 +360,34 @@ class User extends ApiService
 }
 ```
 
-### Rate limiting (APCu, optional)
+### Rate limiting (optional)
 
-Same DX as `requireAuth()`:
+Drivers via `REQUEST_RATE_LIMIT_DRIVER`: `apcu` (default, per instance), `redis` (cluster via `RedisManager` / `REDIS_*`), `both` (simultaneous dual check — **not** failover; both backends must be available), `none` (disables Bootstrap + default `requireRateLimit()`; explicit `requireRateLimitApcu|Redis|Both()` still enforce).
 
-```php
-$this->requireRateLimit();                 // 20/sec default, scope both (IP + JWT)
-$this->requireRateLimit(10, 'ip');         // IP only
-$this->requireRateLimit(5, 'token', 120);  // JWT only, block 120s
+**Why no auto-fallback:** silently switching Redis→APCu breaks cluster quotas and can wait on Redis timeouts before “recovering.” GEMVC uses **explicit driver + FAIL_MODE** only.
+
+#### 1. Global — `.env` only (automatic)
+
+```env
+REQUEST_RATE_LIMIT_DRIVER=apcu
+REQUEST_RATE_LIMIT_PER_SEC=20
+REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
+REQUEST_RATE_LIMIT_SCOPE=both|ip|token
+REQUEST_RATE_LIMIT_FAIL_MODE=closed
 ```
 
-- Storage: **APCu** (no Redis). If APCu is not enabled, requests are allowed and a one-time `error_log` warning asks you to activate it.
-- Exceed → temporary block of IP and/or token + `error_log` + HTTP **429** (`RateLimitException`).
-- If APCu is **full**: purge only `gemvc:rl:*` keys, retry once; if still failing → **fail-closed** (429) so limits cannot be bypassed. Increase `apc.shm_size` if you see that warning.
-- Global (Bootstrap): set `REQUEST_RATE_LIMIT_PER_SEC=20` (recommended default when enabling). Optional: `REQUEST_RATE_LIMIT_BLOCK_SECONDS=60`, `REQUEST_RATE_LIMIT_SCOPE=both|ip|token`.
+#### 2. Per-service / method (DX)
+
+```php
+$this->requireRateLimit();                  // global driver
+$this->requireRateLimitApcu(30, 'ip');      // force APCu
+$this->requireRateLimitRedis(5, 'ip', 120); // force Redis
+$this->requireRateLimitBoth(10);            // force dual check
+```
+
+- Exceed → block + `error_log` + HTTP **429**. With `SCOPE=both`, all buckets for that request are blocked on exceed.
+- Chosen backend(s) unavailable at start of enforce → **fail-closed** (429) unless `FAIL_MODE=open`. Mid-request write failures still deny (429); they do not switch to another driver.
+- Explicit overrides still run when global `DRIVER=none`.
 
 **Token Creation** (JWTToken.php):
 ```php
@@ -803,6 +829,13 @@ REDIS_PREFIX=gemvc:
 - [x] Role-based access control active
 - [x] Password hashing uses Argon2i
 
+### Rate limiting & storage
+- [ ] `REQUEST_RATE_LIMIT_DRIVER` matches infra (`apcu` / `redis` / `both` / `none`) — no reliance on auto-fallback
+- [ ] APCu and/or Redis (`ext-redis`, `REDIS_*`) available for the chosen driver
+- [ ] Global and/or service rate limits configured; use `requireRateLimitApcu|Redis|Both` for special cases
+- [ ] `REQUEST_RATE_LIMIT_FAIL_MODE` left at default `closed` in production (not `open`)
+- [ ] Multi-node: prefer `redis` or `both` + edge/proxy limits
+
 ### File Security
 - [x] File name sanitization active
 - [x] MIME type sanitization active
@@ -948,7 +981,7 @@ This security policy is regularly updated to reflect:
 - Framework updates
 
 **Last Updated**: 2026-08-01
-**Version**: 5.11.0 — `ViewTable`, `requireRateLimit()`, `requireAuth()`, contracts APM, multi-DB; automatic hardening baseline unchanged
+**Version**: 5.12.0 (rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
 
 ---
 

@@ -40,6 +40,7 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 | Indexes, FK, unique | [Schema](#schema-defineschema) |
 | UUID / string PK | [Primary keys](#primary-keys-ddl-runtime) |
 | select / insert / update / delete | [Queries & CRUD](#queries-crud) |
+| Transactions / `FOR UPDATE` | [Transactions & FOR UPDATE](#transactions--for-update) |
 | Soft delete | [Soft delete](#soft-delete) |
 | Complex joins → SQL views | [SQL views via ViewTable](#sql-views-via-viewtable-recommended) |
 | Drivers & `db:migrate` | [Multi-DB & migrate](#multi-db-migrate) |
@@ -53,7 +54,7 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 1. Extend **`Table`** (physical) or **`ViewTable`** (SQL view). Physical: `getTable()`, `defineSchema()`, `$_type_map`. Views: `getTable()`, `defineView()`, `$_type_map`, optional `viewDependsOn()`.
 2. Property names = column names (or view SELECT aliases). `protected` = secret columns; `_prefix` = not in DB.
 3. Money → `public string` + `$_type_map` `decimal` — never `float`.
-4. Use Table / ViewTable query builder / CRUD — **never** `new PDO` or custom pools in `app/`. Row writes on `ViewTable` hard-fail.
+4. Use Table / ViewTable query builder / CRUD — **never** `new PDO`, custom pools, or `DatabaseManagerFactory…->getPdo()` for multi-step money ops in `app/`. Row writes on `ViewTable` hard-fail.
 5. Soft delete with `deleted_at` → `safeDeleteQuery()` / `restoreQuery()` (**Table** only).
 6. Non-`id` PK → `setPrimaryKey(...)` after `parent::__construct()`; `Schema::primary` is **not** migrate DDL today.
 7. Same Table / ViewTable class on Apache, Nginx, and OpenSwoole — do not fork connection logic.
@@ -278,6 +279,30 @@ $rows = $this->select('id,name')
     ->run();                  // ?array of static
 ```
 
+### Transactions & FOR UPDATE
+
+```php
+$this->beginTransaction();
+try {
+    $rows = $this->select('id,balance')
+        ->whereEqual('id', $accountId)
+        ->limit(1)
+        ->forUpdate()   // SELECT … FOR UPDATE (MySQL InnoDB / PostgreSQL)
+        ->run();
+    // Hydrated $rows are new instances — apply writes on $this only:
+    // $this->id = …; $this->balance = …; $this->updateSingleQuery();
+    $this->commit();
+} catch (\Throwable $e) {
+    $this->rollback();
+    throw $e;
+}
+```
+
+- **Do** use `Table::beginTransaction()` / `commit()` / `rollback()` so the pooled connection stays in-transaction.
+- **Don’t** open a separate PDO via `DatabaseManagerFactory` for the same multi-step work (different connection → not atomic).
+- **Don’t** call `updateSingleQuery()` on hydrated row objects from `run()` — they are outside the open transaction.
+- Money / concurrent transfers: [model.md — Atomic money transfers](model.md#atomic-money-transfers-pessimistic-lock).
+
 Also: `where`, `whereOr`, `join($table, $condition, $type = 'INNER')`.
 
 | Method | Returns | Notes |
@@ -464,10 +489,12 @@ Do not `new PdoConnection()` from `app/`. Package READMEs live under `vendor/gem
 - Query via fluent API; check `getError()` after writes
 - Configure `DB_*` once
 - Use **SQL views + `ViewTable`** for complex multi-table SELECTs
+- Multi-step money: `beginTransaction` + `forUpdate` on the same Table instance
 
 **Don’t**
 
 - Reimplement pooling, PDO, or hydration in `app/`
+- Use `DatabaseManagerFactory…->getPdo()` for concurrent balance transfers
 - Use `float` for currency or skip `$_type_map`
 - Invent Eloquent-style relations or string-concat SQL / giant JOINs in PHP
 - Assume `create:table` without `gemvc/cli-dev`

@@ -1,6 +1,42 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.10.0...5.11.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.11.0...5.12.0
 # GEMVC Framework - Release Notes
+
+## Version 5.12.0 - Rate-limit drivers, Protected API bases, `forUpdate`
+
+**Release Date**: Saturday, 1 August 2026  
+**Type**: Minor Release (Backward Compatible)  
+**Tag**: `5.12.0`
+
+### Overview
+
+- **RateLimiter drivers:** `REQUEST_RATE_LIMIT_DRIVER=apcu|redis|both|none` (default `apcu`); Redis via `RedisManager`; `both` = simultaneous dual check (**not** failover); **no automatic Redis↔APCu fallback**
+- **FAIL_MODE:** unavailable chosen backend(s) → fail-closed **429** unless `REQUEST_RATE_LIMIT_FAIL_MODE=open`
+- **Overrides:** `requireRateLimitApcu()` / `requireRateLimitRedis()` / `requireRateLimitBoth()` on `ApiService` / `SwooleApiService`
+- **Protected API bases:** `ProtectedApiService` / `ProtectedSwooleApiService` (auth in constructor)
+- **`forUpdate()`:** `Table::forUpdate()` / `Select::forUpdate()` for pessimistic locks with `beginTransaction()` / `commit()` / `rollback()` on the same Table instance
+- Docs: atomic money transfers — [model.md](../guides/model.md#atomic-money-transfers-pessimistic-lock)
+
+```env
+REQUEST_RATE_LIMIT_DRIVER=apcu
+REQUEST_RATE_LIMIT_PER_SEC=20
+REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
+REQUEST_RATE_LIMIT_SCOPE=both
+REQUEST_RATE_LIMIT_FAIL_MODE=closed
+```
+
+```php
+$this->requireRateLimit();
+$this->requireRateLimitApcu(30, 'ip');
+$this->requireRateLimitRedis(5, 'ip', 120);
+$this->requireRateLimitBoth(10);
+
+$rows = $this->select('id,balance')->whereIn('id', [$a, $b])->orderBy('id', true)->forUpdate()->noLimit()->run();
+```
+
+See [api.md](../guides/api.md#rate-limiting), [security.md](../guides/security.md#rate-limiting-optional), [model.md — Atomic money transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock).
+
+---
 
 ## Version 5.11.0 - First-class SQL views (`ViewTable`) + `db:migrate --all`
 
@@ -85,15 +121,17 @@ See [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-re
 **Type**: Minor Release (Backward Compatible)  
 **Tag**: `5.10.0`
 
+> Later **5.12.0** adds `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`), Redis store, dual `both`, `requireRateLimitApcu|Redis|Both()`, and fail-closed + `FAIL_MODE`.
+
 ---
 
 ## Overview
 
-- Optional **APCu** rate limiting (no Redis) with a simple API-layer DX matching `requireAuth()`.
+- Optional **APCu** rate limiting with a simple API-layer DX matching `requireAuth()` (Redis / multi-driver / FAIL_MODE in **5.12.0**).
 - `requireRateLimit()` on `ApiService` / `SwooleApiService` — constructor (whole service) or single method.
 - Limits by **IP**, **JWT token**, or **both**; on exceed: temporary block, `error_log`, HTTP **429**.
 - Optional Bootstrap global via `REQUEST_RATE_LIMIT_PER_SEC` (recommended default when enabling: **20**/sec, block **60**s).
-- APCu missing → fail-open + warning. APCu full → purge `gemvc:rl:*`, retry, then fail-closed (429).
+- As shipped in 5.10.0: APCu missing → **fail-open** (allow + one-time warning). APCu full → purge `gemvc:rl:*`, retry, then fail-closed (429). Counters are per PHP instance.
 
 ---
 
@@ -113,7 +151,7 @@ class User extends ApiService
 ```
 
 ```env
-# Optional — every API request (Bootstrap)
+# Optional — every API request (Bootstrap); see 5.12.0 for DRIVER= / FAIL_MODE=
 REQUEST_RATE_LIMIT_PER_SEC=20
 REQUEST_RATE_LIMIT_BLOCK_SECONDS=60
 REQUEST_RATE_LIMIT_SCOPE=both
@@ -121,11 +159,11 @@ REQUEST_RATE_LIMIT_SCOPE=both
 
 | Piece | Role |
 |--------|------|
-| `RateLimiter` | Static APCu counters / blocks |
+| `RateLimiter` | Static APCu counters / blocks (per instance in 5.10) |
 | `RateLimitException` | Caught → 429 |
 | `Response::tooManyRequests()` | JSON 429 |
 
-Requires the **APCu** PHP extension in production. See [api.md](../guides/api.md#rate-limiting-apcu) and [security.md](../guides/security.md).
+Requires the **APCu** PHP extension in production. See [api.md](../guides/api.md#rate-limiting) and [security.md](../guides/security.md#rate-limiting-optional).
 
 ---
 

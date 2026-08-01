@@ -55,6 +55,9 @@ abstract class Table
     
     /** @var array<string> JOIN clauses */
     private array $_joins = [];
+
+    /** @var bool Append FOR UPDATE on the next SELECT (pessimistic lock) */
+    private bool $_forUpdate = false;
  
     /** @var array<string, string> Type mapping for property casting */
     protected array $_type_map = [];
@@ -326,6 +329,7 @@ abstract class Table
         if (!$this->_isSelectSet) {
             $this->_query = $columns ? "SELECT $columns " : "SELECT * ";
             $this->_isSelectSet = true;
+            $this->_forUpdate = false;
         } else {
             // If select is called again, append the new columns
             $this->_query .= $columns ? ", $columns" : "";
@@ -356,6 +360,19 @@ abstract class Table
     public function limit(int $limit): self
     {
         $this->getPaginationManager()->setLimit($limit);
+        return $this;
+    }
+
+    /**
+     * Append FOR UPDATE on the next SELECT (pessimistic row lock).
+     * Call inside beginTransaction() / commit() / rollback() on the same Table instance.
+     * Intended for MySQL InnoDB / PostgreSQL — not a SQLite row-lock recipe.
+     *
+     * @return self For method chaining
+     */
+    public function forUpdate(bool $enable = true): self
+    {
+        $this->_forUpdate = $enable;
         return $this;
     }
 
@@ -1129,6 +1146,10 @@ abstract class Table
             $this->_query .= $this->_orderBy . " LIMIT {$limit} OFFSET {$offset} ";
         } else {
             $this->_query .= $this->_orderBy;
+        }
+
+        if ($this->_forUpdate) {
+            $this->_query .= ' FOR UPDATE';
         }
 
         $this->_query = trim($this->_query);

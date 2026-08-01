@@ -26,6 +26,42 @@ class RateLimitGuardedApiService extends ApiService
     }
 }
 
+class RateLimitMethodGuardedApiService extends ApiService
+{
+    public function ping(): JsonResponse
+    {
+        $this->requireRateLimit(1, 'ip', 30);
+        return \Gemvc\Http\Response::success(['ok' => true]);
+    }
+}
+
+class RateLimitApcuOverrideApiService extends ApiService
+{
+    public function ping(): JsonResponse
+    {
+        $this->requireRateLimitApcu(1, 'ip', 30);
+        return \Gemvc\Http\Response::success(['ok' => true]);
+    }
+}
+
+class RateLimitRedisOverrideApiService extends ApiService
+{
+    public function ping(): JsonResponse
+    {
+        $this->requireRateLimitRedis(1, 'ip', 30);
+        return \Gemvc\Http\Response::success(['ok' => true]);
+    }
+}
+
+class RateLimitGlobalDriverApiService extends ApiService
+{
+    public function ping(): JsonResponse
+    {
+        $this->requireRateLimit(1, 'ip', 30);
+        return \Gemvc\Http\Response::success(['ok' => true]);
+    }
+}
+
 /**
  * @outputBuffering enabled
  */
@@ -38,15 +74,20 @@ class RateLimiterTest extends TestCase
         parent::setUp();
         $this->expectOutputString('');
         RateLimiter::useInMemoryStoreForTests(true);
+        RateLimiter::useRedisMemoryStoreForTests(false);
 
         unset(
             $_ENV['REQUEST_RATE_LIMIT_PER_SEC'],
             $_ENV['REQUEST_RATE_LIMIT_BLOCK_SECONDS'],
-            $_ENV['REQUEST_RATE_LIMIT_SCOPE']
+            $_ENV['REQUEST_RATE_LIMIT_SCOPE'],
+            $_ENV['REQUEST_RATE_LIMIT_FAIL_MODE'],
+            $_ENV['REQUEST_RATE_LIMIT_DRIVER']
         );
         putenv('REQUEST_RATE_LIMIT_PER_SEC');
         putenv('REQUEST_RATE_LIMIT_BLOCK_SECONDS');
         putenv('REQUEST_RATE_LIMIT_SCOPE');
+        putenv('REQUEST_RATE_LIMIT_FAIL_MODE');
+        putenv('REQUEST_RATE_LIMIT_DRIVER');
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/Test/list';
@@ -63,6 +104,9 @@ class RateLimiterTest extends TestCase
     protected function tearDown(): void
     {
         RateLimiter::useInMemoryStoreForTests(false);
+        RateLimiter::useRedisMemoryStoreForTests(false);
+        RateLimiter::forceApcuAvailabilityForTests(null);
+        RateLimiter::forceRedisAvailabilityForTests(null);
         parent::tearDown();
     }
 
@@ -170,17 +214,33 @@ class RateLimiterTest extends TestCase
         RateLimiter::enforceFromEnv($this->request);
     }
 
-    public function testFailOpenWhenStoreDisabled(): void
+    public function testFailClosedWhenStoreUnavailableByDefault(): void
     {
         RateLimiter::useInMemoryStoreForTests(false);
-        // Force "unavailable" path: no memory store and (typically) no APCu in CLI
-        if (RateLimiter::isAvailable()) {
-            $this->markTestSkipped('APCu is enabled — cannot assert fail-open on this host');
-        }
+        RateLimiter::forceAvailabilityForTests(false);
+
+        $this->expectException(RateLimitException::class);
+        $this->expectExceptionCode(429);
+        $this->expectExceptionMessage('APCu is not available');
+        RateLimiter::enforce($this->request, 1, RateLimiter::SCOPE_IP, 30, 'test');
+    }
+
+    public function testFailOpenWhenFailModeOpen(): void
+    {
+        RateLimiter::useInMemoryStoreForTests(false);
+        RateLimiter::forceAvailabilityForTests(false);
+        $_ENV['REQUEST_RATE_LIMIT_FAIL_MODE'] = 'open';
 
         RateLimiter::enforce($this->request, 1, RateLimiter::SCOPE_IP, 30, 'test');
         RateLimiter::enforce($this->request, 1, RateLimiter::SCOPE_IP, 30, 'test');
         $this->assertTrue(RateLimiter::hit('ip:failopen', 1, 30));
+    }
+
+    public function testResolveFailModeDefaultsToClosed(): void
+    {
+        $this->assertSame(RateLimiter::FAIL_MODE_CLOSED, RateLimiter::resolveFailMode());
+        $_ENV['REQUEST_RATE_LIMIT_FAIL_MODE'] = 'open';
+        $this->assertSame(RateLimiter::FAIL_MODE_OPEN, RateLimiter::resolveFailMode());
     }
 
     public function testFullCachePurgesAndRetriesSuccessfully(): void
@@ -217,13 +277,7 @@ class RateLimiterTest extends TestCase
 
     public function testRequireRateLimitOnApiServiceThrowsOnExceed(): void
     {
-        $service = new class ($this->request) extends ApiService {
-            public function ping(): JsonResponse
-            {
-                $this->requireRateLimit(1, 'ip', 30);
-                return \Gemvc\Http\Response::success(['ok' => true]);
-            }
-        };
+        $service = new RateLimitMethodGuardedApiService($this->request);
 
         $service->ping();
 
@@ -245,5 +299,147 @@ class RateLimiterTest extends TestCase
         $response = $service->create();
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(['created' => true], $response->data);
+    }
+
+    public function testResolveDriverDefaultsToApcu(): void
+    {
+        $this->assertSame(RateLimiter::DRIVER_APCU, RateLimiter::resolveDriver());
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'redis';
+        $this->assertSame(RateLimiter::DRIVER_REDIS, RateLimiter::resolveDriver());
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'both';
+        $this->assertSame(RateLimiter::DRIVER_BOTH, RateLimiter::resolveDriver());
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'none';
+        $this->assertSame(RateLimiter::DRIVER_NONE, RateLimiter::resolveDriver());
+    }
+
+    public function testDriverNoneNoOpsEvenWhenLimitConfigured(): void
+    {
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'none';
+        RateLimiter::enforce($this->request, 1, RateLimiter::SCOPE_IP, 30, 'test');
+        RateLimiter::enforce($this->request, 1, RateLimiter::SCOPE_IP, 30, 'test');
+        $this->assertTrue(true);
+    }
+
+    public function testEnforceFromEnvNoOpsWhenDriverNone(): void
+    {
+        $_ENV['REQUEST_RATE_LIMIT_PER_SEC'] = '1';
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'none';
+        RateLimiter::enforceFromEnv($this->request);
+        RateLimiter::enforceFromEnv($this->request);
+        $this->assertTrue(true);
+    }
+
+    public function testRedisDriverEnforcesWithMemoryStore(): void
+    {
+        RateLimiter::useRedisMemoryStoreForTests(true);
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_REDIS
+        );
+
+        $this->expectException(RateLimitException::class);
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_REDIS
+        );
+    }
+
+    public function testRedisUnavailableFailClosedNoApcuFallback(): void
+    {
+        RateLimiter::useRedisMemoryStoreForTests(false);
+        RateLimiter::forceRedisAvailabilityForTests(false);
+        // APCu memory store is still available — must NOT silently use it
+        $this->assertTrue(RateLimiter::isAvailable(RateLimiter::DRIVER_APCU));
+
+        $this->expectException(RateLimitException::class);
+        $this->expectExceptionMessage('Redis is not available');
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_REDIS
+        );
+    }
+
+    public function testBothDriverDeniesWhenEitherExceeds(): void
+    {
+        RateLimiter::useRedisMemoryStoreForTests(true);
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_BOTH
+        );
+
+        $this->expectException(RateLimitException::class);
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_BOTH
+        );
+    }
+
+    public function testBothUnavailableWhenRedisDown(): void
+    {
+        RateLimiter::forceRedisAvailabilityForTests(false);
+        $this->assertFalse(RateLimiter::isAvailable(RateLimiter::DRIVER_BOTH));
+
+        $this->expectException(RateLimitException::class);
+        $this->expectExceptionMessage('driver=both');
+        RateLimiter::enforce(
+            $this->request,
+            1,
+            RateLimiter::SCOPE_IP,
+            30,
+            'test',
+            RateLimiter::DRIVER_BOTH
+        );
+    }
+
+    public function testExplicitApcuOverrideWorksWhenGlobalDriverNone(): void
+    {
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'none';
+        $service = new RateLimitApcuOverrideApiService($this->request);
+
+        $service->ping();
+        $this->expectException(RateLimitException::class);
+        $service->ping();
+    }
+
+    public function testExplicitRedisOverrideWorksWhenGlobalDriverApcu(): void
+    {
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'apcu';
+        RateLimiter::useRedisMemoryStoreForTests(true);
+
+        $service = new RateLimitRedisOverrideApiService($this->request);
+
+        $service->ping();
+        $this->expectException(RateLimitException::class);
+        $service->ping();
+    }
+
+    public function testRequireRateLimitUsesGlobalNoneAsNoOp(): void
+    {
+        $_ENV['REQUEST_RATE_LIMIT_DRIVER'] = 'none';
+        $service = new RateLimitGlobalDriverApiService($this->request);
+
+        $service->ping();
+        $service->ping();
+        $this->assertTrue(true);
     }
 }

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [Unreleased]
+
+## [5.12.0] - 2026-08-01
+
+### Added
+
+- `Gemvc\Core\ProtectedApiService` — Apache/Nginx API base that calls `requireAuth($roles)` in the constructor (authenticated CRUD by default)
+- `Gemvc\Core\ProtectedSwooleApiService` — OpenSwoole twin
+- Unit tests: `tests/Unit/Core/ProtectedApiServiceTest.php`
+- `REQUEST_RATE_LIMIT_FAIL_MODE=closed|open` (default `closed`) for RateLimiter when storage is unavailable
+- `REQUEST_RATE_LIMIT_DRIVER=apcu|redis|both|none` (default `apcu`) — Redis via `RedisManager`; `both` = simultaneous dual check (not failover)
+- `ApiService` / `SwooleApiService`: `requireRateLimitApcu()`, `requireRateLimitRedis()`, `requireRateLimitBoth()` to override global driver per call
+- `Select::forUpdate()` / `Table::forUpdate()` — append `FOR UPDATE` for pessimistic locks (use with `beginTransaction()`)
+
+### Changed
+
+- RateLimiter: unavailable chosen backend(s) → **fail-closed** (HTTP 429) by default; `FAIL_MODE=open` for local/dev; **no automatic Redis↔APCu fallback**
+- Docs: drivers, explicit overrides, anti-fallback rationale, proxy guidance for multi-node; atomic money transfer pattern
+
+### Documentation
+
+- AI pack, `api.md`, front doors: prefer `Protected*` for authenticated services; keep `ApiService` / `SwooleApiService` for public endpoints
+- Rate-limit drivers, fail mode, overrides in api/security/installation/AI front doors
+- Atomic money transfers: [model.md](../guides/model.md#atomic-money-transfers-pessimistic-lock)
+
 ## [5.11.0] - 2026-08-01
 
 ### Added
@@ -34,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Gemvc\Core\RateLimiter` — optional APCu rate limiting (no Redis): IP and/or JWT scopes, temporary block after exceed, `error_log` on exceed
+- `Gemvc\Core\RateLimiter` — optional APCu rate limiting: IP and/or JWT scopes, temporary block after exceed, `error_log` on exceed
 - `ApiService::requireRateLimit()` / `SwooleApiService::requireRateLimit()` — same DX as `requireAuth()` (constructor or per-method); throws `RateLimitException` → HTTP **429**
 - `Gemvc\Core\RateLimitException` caught by `Bootstrap` / `SwooleBootstrap`
 - `Response::tooManyRequests()` / `JsonResponse::tooManyRequests()` (429)
@@ -42,9 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - APCu stubs (`src/stubs/Apcu.php`) for Intelephense / PHPStan
 - Unit tests for RateLimiter (including full-cache purge → retry → fail-closed)
 
-### Behavior
+### Behavior (as shipped in 5.10.0)
 
-- APCu missing: fail-open (allow) + one-time warning
+- APCu missing: fail-open (allow) + one-time warning — **superseded in 5.12.0** by fail-closed + `REQUEST_RATE_LIMIT_FAIL_MODE` / multi-driver
 - APCu full / write fail: purge `gemvc:rl:*` keys, retry once; if still failing → fail-closed (429)
 
 ### Documentation

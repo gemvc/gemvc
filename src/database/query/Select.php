@@ -35,6 +35,11 @@ class Select implements QueryBuilderInterface
     private ?string $_lastError = null;
 
     /**
+     * When true, append FOR UPDATE (pessimistic row lock). MySQL/PostgreSQL.
+     */
+    private bool $forUpdate = false;
+
+    /**
      * Reference to the query builder that created this select query
      */
     private ?QueryBuilder $queryBuilder = null;
@@ -98,9 +103,19 @@ class Select implements QueryBuilderInterface
             . ([] === $this->innerJoin ? '' : ' INNER JOIN ' . implode(' INNER JOIN ', $this->innerJoin))
             . ([] === $this->whereConditions ? '' : ' WHERE ' . implode(' AND ', $this->whereConditions))
             . ([] === $this->order ? '' : ' ORDER BY ' . implode(', ', $this->order))
-            . $this->limitMaker();
-        // echo $this->query;
+            . $this->limitMaker()
+            . ($this->forUpdate ? ' FOR UPDATE' : '');
         return $this->query;
+    }
+
+    /**
+     * Append FOR UPDATE for pessimistic row locking (use inside a transaction).
+     * Intended for MySQL InnoDB / PostgreSQL. Prefer Table::beginTransaction() first.
+     */
+    public function forUpdate(bool $enable = true): self
+    {
+        $this->forUpdate = $enable;
+        return $this;
     }
 
     public function select(string ...$select): self

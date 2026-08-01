@@ -19,8 +19,10 @@ Verified against `docs/` + source (2026-08).
 
 | Class | Path | Must know |
 |-------|------|-----------|
-| `ApiService` | `src/core/ApiService.php` | `requireAuth`, `requireRateLimit`, `callController`, magic `__get` |
-| `SwooleApiService` | `src/core/SwooleApiService.php` | No callController; validate* returns `?JsonResponse` |
+| `ApiService` | `src/core/ApiService.php` | Public endpoints; `requireAuth`, `requireRateLimit*`, `callController`, magic `__get` |
+| `ProtectedApiService` | `src/core/ProtectedApiService.php` | Authenticated CRUD — ctor calls `requireAuth($roles)` |
+| `SwooleApiService` | `src/core/SwooleApiService.php` | Public on Swoole; no callController; validate* returns `?JsonResponse` |
+| `ProtectedSwooleApiService` | `src/core/ProtectedSwooleApiService.php` | Authenticated CRUD on Swoole — ctor calls `requireAuth($roles)` |
 | `Controller` | `src/core/Controller.php` | `createModel`, `createList`, `listJsonResponse` |
 | `ControllerTracingProxy` | (in ApiService file) | Optional controller spans |
 
@@ -34,7 +36,8 @@ Verified against `docs/` + source (2026-08).
 | `JWTToken` | `src/http/JWTToken.php` | HS256 create/verify; roles, claims |
 | `Response` / `JsonResponse` | `src/http/` | Factories; `show` vs `showSwoole`; `tooManyRequests` (429) |
 | `AuthException` | `src/core/AuthException.php` | From `requireAuth` |
-| `RateLimiter` / `RateLimitException` | `src/core/` | APCu; 429; fail-open if missing; fail-closed after full-cache purge+retry |
+| `RateLimiter` / `RateLimitException` | `src/core/` | Drivers apcu/redis/both/none; 429; no auto-fallback; FAIL_MODE; dual check for both |
+| `Select::forUpdate` / `Table::forUpdate` | `src/database/` | `FOR UPDATE` + `beginTransaction` for money transfers; no raw PDO |
 | `ValidationException` | `src/core/ValidationException.php` | Apache validate* path → 400 |
 
 ## Security / errors
@@ -117,7 +120,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 4. `callController` / magic controllers = `ApiService` only
 5. `requireAuth` must **throw**; JsonResponse from constructor does not abort method
 6. Auth: missing token **401**; bad verify / wrong role **403**
-7. Rate limit fails open without APCu; full cache → purge `gemvc:rl:*` → retry → else 429
+7. Rate limit: DRIVER apcu/redis/both/none; no auto-fallback; FAIL_MODE when backend down; APCu full → purge `gemvc:rl:*` → retry → else 429
 8. Apache uploads: only field name **`file`**; raw (no MIME sanitize)
 9. Table `_` props skipped on write; call `setPrimaryKey` after `parent::__construct()`
 10. `Schema::primary` / `autoIncrement` ≠ migrate DDL today — prefer property `id`

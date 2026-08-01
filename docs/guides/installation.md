@@ -26,10 +26,13 @@ Before installing GEMVC, ensure you have:
 - **Composer** (latest version)
 - A database: **MySQL 8.0+**/**MariaDB 10.6+**, **PostgreSQL 13+**, or **SQLite** (embedded, no server needed) — pick one during `gemvc init`
 
-### Optional (Recommended):
+### Strongly recommended (production):
+- **APCu** (`ext-apcu`) — recommended for `REQUEST_RATE_LIMIT_DRIVER=apcu` or `both`. Missing APCu with those drivers → fail-closed (429) unless `FAIL_MODE=open`. Per-instance counters.
+
+### Optional:
 - **Docker & Docker Compose** (for containerized setup)
 - **OpenSwoole extension** (for high-performance async server)
-- **Redis** (for caching and sessions)
+- **Redis** (`ext-redis`, `REDIS_*` via `RedisManager`) — caching/sessions and rate-limit driver `redis` / `both`. Missing Redis with those drivers → fail-closed (429) unless `FAIL_MODE=open`
 
 ### Check Your PHP Version:
 ```bash

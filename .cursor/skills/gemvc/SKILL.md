@@ -24,7 +24,7 @@ GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Ap
 - **apm-contracts** + **apm-tracekit**; **http-client** (sync + `fireAndForget`)
 - More packages under github.com/gemvc; internal docs; **PHPStan level 9**
 
-This repository is **`gemvc/library` 5.11** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
+This repository is **`gemvc/library` 5.12** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
 
 **Protocol status:** Source under `src/` and all of `vendor/gemvc/{helper,http-client,apm-contracts,apm-tracekit,connection-*,cli-*}` examined (2026-08 re-learn). Skills [architecture.md](architecture.md) / [source-map.md](source-map.md) hold the grounded map.
 
@@ -58,8 +58,9 @@ Usual schema path is the same: `definePostSchema` / `defineGetSchema` → `bool`
 ## Auth / rate limit / money / uploads
 
 - `requireAuth(['admin'])` in constructor → throws `AuthException` (**401** no/unextractable token, **403** verify failed or wrong role); Bootstrap catches
-- `requireRateLimit()` — APCu; fail-open if missing; full cache → purge `gemvc:rl:*` + retry then fail-closed **429**
+- `requireRateLimit()` — global `REQUEST_RATE_LIMIT_DRIVER`; overrides `requireRateLimitApcu|Redis|Both()`; no auto-fallback; FAIL_MODE when backend down
 - Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()` — never `float`
+- Concurrent transfers: `beginTransaction` + `forUpdate` + BCMath on one Table instance; update via `$this` — [model.md](../../../docs/guides/model.md#atomic-money-transfers-pessimistic-lock)
 - Apache uploads: only `$_FILES['file']` → `$request->files`; Swoole sanitizes name/MIME
 
 ## Lists (flagship)
@@ -75,7 +76,7 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 
 ## Hard Do / Don't
 
-**DO:** Extend `ApiService`/`SwooleApiService`, `Controller`, `Table`/`ViewTable`; schema before input; `callController`+`createModel` on Apache; prefer `gemvc/helper`, `http-client`, `apm-contracts` (`APM_NAME`, never hardcode TraceKit in app).
+**DO:** Extend `ApiService`/`SwooleApiService` (public) or `ProtectedApiService`/`ProtectedSwooleApiService` (auth CRUD), `Controller`, `Table`/`ViewTable`; schema before input; `callController`+`createModel` on Apache; prefer `gemvc/helper`, `http-client`, `apm-contracts` (`APM_NAME`, never hardcode TraceKit in app).
 
 **DON'T:** Invent routes/Eloquent; skip layers on normal HTTP services; string-concat SQL; float money; assume `create:*` without `cli-dev`; copy `callController` into `SwooleApiService`; migrate a plain `Table` as a SQL view.
 

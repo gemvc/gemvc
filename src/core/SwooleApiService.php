@@ -12,6 +12,8 @@ use Gemvc\Core\AuthException;
  * 
  * This class replaces the Gemvc\Core\ApiService class to work with Swoole's
  * persistent process model by returning responses instead of using die()
+ *
+ * For authenticated CRUD services prefer {@see ProtectedSwooleApiService}.
  */
 class SwooleApiService
 {
@@ -70,7 +72,8 @@ class SwooleApiService
     }
 
     /**
-     * Require rate limit (APCu) — same DX as requireAuth().
+     * Require rate limit — uses REQUEST_RATE_LIMIT_DRIVER (no-op if none).
+     * Overrides: requireRateLimitApcu(), requireRateLimitRedis(), requireRateLimitBoth().
      *
      *   $this->requireRateLimit();
      *   $this->requireRateLimit(10, 'ip');
@@ -83,7 +86,70 @@ class SwooleApiService
         string $scope = RateLimiter::SCOPE_BOTH,
         int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
     ): void {
-        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api');
+        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api', null);
+    }
+
+    /**
+     * Force APCu for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
+     *
+     * @param 'both'|'ip'|'token'|string $scope
+     * @throws RateLimitException
+     */
+    public function requireRateLimitApcu(
+        int $perSec = RateLimiter::DEFAULT_PER_SEC,
+        string $scope = RateLimiter::SCOPE_BOTH,
+        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
+    ): void {
+        RateLimiter::enforce(
+            $this->request,
+            $perSec,
+            $scope,
+            $blockSeconds,
+            'api',
+            RateLimiter::DRIVER_APCU
+        );
+    }
+
+    /**
+     * Force Redis for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
+     *
+     * @param 'both'|'ip'|'token'|string $scope
+     * @throws RateLimitException
+     */
+    public function requireRateLimitRedis(
+        int $perSec = RateLimiter::DEFAULT_PER_SEC,
+        string $scope = RateLimiter::SCOPE_BOTH,
+        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
+    ): void {
+        RateLimiter::enforce(
+            $this->request,
+            $perSec,
+            $scope,
+            $blockSeconds,
+            'api',
+            RateLimiter::DRIVER_REDIS
+        );
+    }
+
+    /**
+     * Force simultaneous APCu + Redis for this call (deny if either over). Not failover.
+     *
+     * @param 'both'|'ip'|'token'|string $scope
+     * @throws RateLimitException
+     */
+    public function requireRateLimitBoth(
+        int $perSec = RateLimiter::DEFAULT_PER_SEC,
+        string $scope = RateLimiter::SCOPE_BOTH,
+        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
+    ): void {
+        RateLimiter::enforce(
+            $this->request,
+            $perSec,
+            $scope,
+            $blockSeconds,
+            'api',
+            RateLimiter::DRIVER_BOTH
+        );
     }
 
     /**

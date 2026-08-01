@@ -4,8 +4,8 @@
  * APCu stub for IDE / static analysis (Intelephense, PHPStan).
  *
  * Real implementation is the APCu PHP extension. RateLimiter uses these
- * when available; if the extension is missing it fails open. If APCu is
- * full it purges gemvc:rl:* keys, retries, then fails closed.
+ * when DRIVER=apcu or both. Missing APCu → FAIL_MODE (default fail-closed).
+ * If APCu is full it purges gemvc:rl:* keys, retries, then fails closed.
  *
  * Registered in phpstan.neon stubFiles and intelephense.environment.includePaths.
  */

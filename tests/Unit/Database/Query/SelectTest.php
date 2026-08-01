@@ -698,5 +698,26 @@ class SelectTest extends TestCase
         $this->assertStringContainsString('SELECT', $query);
         $this->assertStringContainsString('FROM users', $query);
     }
+
+    public function testForUpdateAppendsClause(): void
+    {
+        $this->select->from('accounts');
+        $this->select->whereEqual('id', 1);
+        $result = $this->select->forUpdate();
+        $this->assertSame($this->select, $result);
+
+        $query = (string) $this->select;
+        $this->assertStringContainsString('FOR UPDATE', $query);
+        $this->assertMatchesRegularExpression('/FOR UPDATE\s*$/', $query);
+    }
+
+    public function testForUpdateDisabledOmitsClause(): void
+    {
+        $this->select->from('accounts');
+        $this->select->forUpdate(true);
+        $this->select->forUpdate(false);
+        $query = (string) $this->select;
+        $this->assertStringNotContainsString('FOR UPDATE', $query);
+    }
 }
 

@@ -12,7 +12,9 @@ class Redis
     public function set(string $key, mixed $value): bool {}
     public function get(string $key): mixed {}
     public function del(string $key): int {}
-    public function exists(string $key): bool {}
+    public function exists(string $key): bool|int {}
+    public function incr(string $key): int|false {}
+    public function expire(string $key, int $ttl): bool {}
     public function ttl(string $key): int {}
     public function flushDB(): bool {}
     public function hSet(string $key, string $field, mixed $value): int {}

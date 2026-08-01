@@ -56,8 +56,9 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 |---------|--------------|-------------------|
 | File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` |
 | APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | **Absent** |
+| Auth default | Prefer `ProtectedApiService` for CRUD | Prefer `ProtectedSwooleApiService` for CRUD |
 | `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` |
-| `requireAuth` / `requireRateLimit` | both throw; Bootstrap catch | same throws; SwooleBootstrap catch |
+| `requireAuth` / `requireRateLimit*` | both throw; Bootstrap catch | same throws; SwooleBootstrap catch |
 
 Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that over validate* helpers for portable code.
 
@@ -75,7 +76,11 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 
 ## Rate limit
 
-`RateLimiter` + APCu keys `gemvc:rl:*`. `requireRateLimit($perSec, $scope, $blockSeconds)`. Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`. Fail-open without APCu; purge `gemvc:rl:*` + retry on full cache, then fail-closed (429).
+**Global (automatic):** `enforceFromEnv()` when `REQUEST_RATE_LIMIT_PER_SEC` > 0. Env: `DRIVER` (`apcu`|`redis`|`both`|`none`), `PER_SEC`, `BLOCK_SECONDS`, `SCOPE`, `FAIL_MODE`.
+
+**Per-service:** `requireRateLimit()` uses global driver; `requireRateLimitApcu|Redis|Both()` force a store. **No auto-fallback.** Unavailable chosen backend → FAIL_MODE (default closed / 429).
+
+**Production:** match `REQUEST_RATE_LIMIT_DRIVER` to infra; use `redis`/`both` for multi-node; keep `FAIL_MODE=closed`; prefer edge/proxy limits too.
 
 ## Uploads (Apache vs Swoole)
 

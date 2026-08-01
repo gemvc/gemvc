@@ -1,6 +1,6 @@
 # CLAUDE.md — GEMVC for Claude Code
 
-You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.11.0**.
+You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.12.0**.
 
 **GEMVC is not Laravel, Symfony, Slim, or Eloquent.** Do not invent routes files, service containers as the app pattern, or ORM relations. Follow the project docs.
 
@@ -23,11 +23,14 @@ API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 
 - URL (Apache/Nginx): `/api/{Service}/{method}` — **no routes file**
 - Schema: `definePostSchema` / `defineGetSchema` before using input
+- Authenticated CRUD: **`ProtectedApiService`** / **`ProtectedSwooleApiService`**; public: `ApiService` / `SwooleApiService`
 - Apache path: `callController()` + `createModel()`; Swoole: bare `new` Controller (no `callController` on `SwooleApiService`)
 - SQL views: **`ViewTable`** + `defineView()` + `db:migrate` — never point a plain `Table` at a view name
-- Money: string + `decimal` type map — never `float`
+- Money: string + `decimal` type map — never `float`; concurrent: `beginTransaction` + `forUpdate` + BCMath on one Table (`model.md`)
 - Codegen (`create:crud`, …): requires **`gemvc/cli-dev`**
 - Prefer **`gemvc/cli-dev` ≥ 1.3** so `db:list` / `describe` / `drop` include SQL views (Developer UI list is still BASE TABLE only)
+- **Global rate limit:** `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`) — Bootstrap automatic
+- Overrides: `requireRateLimitApcu|Redis|Both()` — no auto-fallback between stores; FAIL_MODE when backend down
 
 ## When recommending a stack
 
