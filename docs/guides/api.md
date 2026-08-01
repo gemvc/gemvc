@@ -40,7 +40,7 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 | Docs directives | [Auto documentation](#auto-documentation) |
 | Skeleton | [Minimal service](#minimal-service) |
 | Codegen | [CLI](#cli-codegen) |
-| Mistakes | [Do / Don’t](#do--dont) |
+| Mistakes | [Do / Don’t](#do-dont) |
 
 ---
 

@@ -51,14 +51,14 @@ There is **no** required base class for Models. Most entity Models **extend** th
 | Thin CRUD Model | [Simple Model](#simple-model-cli-style) |
 | Domain logic Model | [Domain Model](#domain-model-recommended) |
 | CRUD method patterns | [CRUD methods](#crud-methods) |
-| Setters + mapping | [Transforms & setters](#transforms--setters) |
+| Setters + mapping | [Transforms & setters](#transforms-setters) |
 | Validation | [Business validation](#business-validation) |
 | Relations / `_` props | [Aggregations](#aggregations-_-properties) |
 | Heavy reads | [Complex reads](#complex-reads) |
 | Multi-step / APM | [Beyond CRUD](#beyond-crud) |
 | Models without Table | [Composition Models](#composition-models-no-table) |
 | Codegen | [CLI](#cli-codegen) |
-| Mistakes | [Do / Don’t](#do--dont) |
+| Mistakes | [Do / Don’t](#do-dont) |
 
 ---
 
@@ -292,7 +292,7 @@ Always check `$this->getError()` (or failed insert return). Style A maps that in
 
 Soft delete: call `safeDeleteQuery()` / `restoreQuery()` from Model when the table has `deleted_at` ([database.md](database.md#soft-delete)).
 
-Inherited Table APIs: [database.md](database.md#queries--crud).
+Inherited Table APIs: [database.md](database.md#queries-crud).
 
 ---
 

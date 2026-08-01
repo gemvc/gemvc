@@ -27,7 +27,7 @@ Same application code runs on **OpenSwoole**, **Apache**, and **Nginx**.
 ## What GEMVC is
 
 - **Server-agnostic** — your code works the same on OpenSwoole, Nginx, and Apache
-- **4-layer** API → Controller → Model → Table — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
+- **4-layer** API → Controller → Model → Table / **ViewTable** — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
 - **Modular ecosystem** — **`gemvc/helper`** (types, crypto, paths) + **`gemvc/http-client`** (outbound HTTP) + connections, APM, CLI — not one monolith package
 - **No routes file** — Apache/Nginx: `/api/{Service}/{method}` maps automatically; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (see [architecture.md](docs/guides/architecture.md))
 - **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth

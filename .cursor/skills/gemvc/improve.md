@@ -47,13 +47,15 @@ Real friction from building services on GEMVC: prefer P0/P1 over speculative fea
 | Item | Doc | Status |
 |------|-----|--------|
 | ViewTable + migrate | [database.md](../../../docs/guides/database.md#sql-views-via-viewtable-recommended) | **Done (5.11)** |
+| cli-dev list/describe views | sibling `cli-dev/cli-dev-update.md` | **Next (cli-dev 1.3)** |
 | 2 — Trust mesh (2a before 2b) | [phase-2-trust-and-mesh.md](../../../docs/improvements/phase-2-trust-and-mesh.md) | Planned |
 
 Notable themes:
 
 1. **SQL views** — **shipped:** `ViewTable`, `ViewGenerator`, `db:migrate` / `--all`
-2. **Runtime PK from `Schema::primary`** — still open (stretch)
-3. **Internal family trust** — Phase 2a: `GEMVC_INTERNAL_SECRET` + `requireInternalService()`
+2. **cli-dev views in `db:list`/`describe`** — next in sibling package (`cli-dev-update.md` → 1.3)
+3. **Runtime PK from `Schema::primary`** — still open (stretch)
+4. **Internal family trust** — Phase 2a: `GEMVC_INTERNAL_SECRET` + `requireInternalService()`
 
 When implementing backlog items: preserve Apache/Swoole dual bases, PHPStan 9, and existing auth status semantics (401 vs 403). Do Phase 2a before mesh DX.
 

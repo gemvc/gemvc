@@ -295,7 +295,7 @@ $this->updateSingleQuery();
 $this->deleteByIdQuery($id);  // int|string id → returns id or null
 ```
 
-**Primary key (runtime):** default `id` (int). Prefer `public int $id` so migrate creates PK/AI. For UUID/string identity call `$this->setPrimaryKey('uuid', 'uuid')` after `parent::__construct()` — that is **ORM only**; `Schema::primary(...)` is **not** applied as DDL by current migrate. See [database.md — Primary keys](../guides/database.md#primary-keys-ddl--runtime).
+**Primary key (runtime):** default `id` (int). Prefer `public int $id` so migrate creates PK/AI. For UUID/string identity call `$this->setPrimaryKey('uuid', 'uuid')` after `parent::__construct()` — that is **ORM only**; `Schema::primary(...)` is **not** applied as DDL by current migrate. See [database.md — Primary keys](../guides/database.md#primary-keys-ddl-runtime).
 
 **Soft delete** (when table has `deleted_at` / soft-delete columns):
 
@@ -330,7 +330,7 @@ gemvc db:init | db:list | db:describe | db:drop | db:unique
 gemvc admin:setadmin
 ```
 
-Do not assume `create:*` exists without cli-dev.
+`db:list` / Developer UI table list = **BASE TABLE only** until `gemvc/cli-dev` ≥ 1.3 (views from `ViewTable` may not appear — confirm via engine / `viewExists`). Do not assume `create:*` exists without cli-dev.
 
 ---
 

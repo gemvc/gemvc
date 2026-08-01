@@ -16,7 +16,7 @@
 | `init` | [Project Management](#project-management) |
 | `create:*` / crud | [Code Generation](#code-generation) |
 | `db:*` | [Database Commands](#database-commands) |
-| Flags | [Flags & Options](#flags--options) |
+| Flags | [Flags & Options](#flags-options) |
 | Errors | [Troubleshooting](#troubleshooting) |
 | Custom commands | [Architecture Deep Dive](#architecture-deep-dive) |
 
@@ -961,6 +961,8 @@ See [database.md — SQL views via ViewTable](database.md#sql-views-via-viewtabl
 
 ---
 
+<a id="db-list"></a>
+
 ### `db:list` - List Tables
 
 Show **base tables** in the database (`gemvc/cli-dev`).
@@ -969,7 +971,7 @@ Show **base tables** in the database (`gemvc/cli-dev`).
 gemvc db:list
 ```
 
-**Note (5.11):** `db:list` currently lists **BASE TABLE** only — SQL **VIEWs** created by `ViewTable` / `db:migrate` may **not** appear. Confirm views with the engine (`SHOW FULL TABLES`, `information_schema.views`, or dialect `viewExists`) or `db:describe` once supported for views. Migrate success does not require the view to show up in `db:list`.
+**Note (5.11):** `db:list` currently lists **BASE TABLE** only — SQL **VIEWs** from `ViewTable` / `db:migrate` may **not** appear (Postgres/SQLite filter explicitly; MySQL may show names without a View label). Same filter applies to the **Developer Assistant** table list. Confirm with the engine (`SHOW FULL TABLES`, `information_schema.views`, dialect `viewExists`). Planned fix: sibling package **`gemvc/cli-dev` 1.3** — brief `cli-dev-update.md` in that repo. Migrate success does not require the view to show in `db:list`.
 
 **Example Output**:
 ```

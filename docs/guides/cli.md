@@ -92,7 +92,7 @@ What `create:crud` generates (layer roles):
 | `db:migrate` | library | Create/update **table** or **VIEW** (`Table` / `ViewTable`); supports `--all` |
 | `create:crud` | cli-dev | Full 4-layer scaffold |
 | `create:service\|controller\|model\|table` | cli-dev | Partial scaffold |
-| `db:init\|list\|describe\|drop\|unique` | cli-dev | DB introspection / constraints (`db:drop --force` skips confirm; `db:list` = **base tables only** — views may not appear) |
+| `db:init\|list\|describe\|drop\|unique` | cli-dev | DB introspection / constraints (`db:drop --force` skips confirm; **`db:list` = base tables only** until cli-dev 1.3 — see package `cli-dev-update.md`; Developer UI list is also BASE TABLE only) |
 | `admin:setpassword\|setadmin` | cli-dev | Bootstrap admin user |
 
 Flags, examples, troubleshooting, custom commands → **[cli-reference.md](cli-reference.md)**.
@@ -113,5 +113,5 @@ Flags, examples, troubleshooting, custom commands → **[cli-reference.md](cli-r
 - Assume `create:crud` exists without cli-dev  
 - Put business rules only in generated Controllers  
 - Skip reading [cli-reference.md](cli-reference.md) when debugging a specific flag  
-- Assume `db:list` shows views (cli-dev lists base tables only until updated)  
+- Assume `db:list` (or Developer UI table list) shows views — both are **BASE TABLE only** until cli-dev 1.3  
 - Migrate a plain `Table` that only points at a view name  

@@ -76,7 +76,7 @@ class CommandCategories
             'create:table' => 'Create a new table class (gemvc/cli-dev)',
             'create:crud' => 'Create full CRUD stack (gemvc/cli-dev)',
             'db:init' => 'Initialize database (gemvc/cli-dev)',
-            'db:list' => 'List database tables (gemvc/cli-dev)',
+            'db:list' => 'List database tables (gemvc/cli-dev; BASE TABLE only until cli-dev 1.3)',
             'db:describe' => 'Describe table structure (gemvc/cli-dev)',
             'db:drop' => 'Drop a table (gemvc/cli-dev)',
             'db:unique' => 'Add unique constraint (gemvc/cli-dev)',

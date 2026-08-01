@@ -38,25 +38,25 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 | Columns & visibility | [Properties](#properties) |
 | Types / decimal / money | [Type map](#type-map-_type_map) |
 | Indexes, FK, unique | [Schema](#schema-defineschema) |
-| UUID / string PK | [Primary keys](#primary-keys-ddl--runtime) |
-| select / insert / update / delete | [Queries & CRUD](#queries--crud) |
+| UUID / string PK | [Primary keys](#primary-keys-ddl-runtime) |
+| select / insert / update / delete | [Queries & CRUD](#queries-crud) |
 | Soft delete | [Soft delete](#soft-delete) |
 | Complex joins → SQL views | [SQL views via ViewTable](#sql-views-via-viewtable-recommended) |
-| Drivers & `db:migrate` | [Multi-DB & migrate](#multi-db--migrate) |
+| Drivers & `db:migrate` | [Multi-DB & migrate](#multi-db-migrate) |
 | Connection packages (advanced) | [Under the hood](#under-the-hood-connection-stack) |
-| Mistakes | [Do / Don’t](#do--dont) |
+| Mistakes | [Do / Don’t](#do-dont) |
 
 ---
 
 ## Hard rules (AI)
 
-1. Extend `Table`. Implement `getTable()`, `defineSchema()`, `$_type_map`.
-2. Property names = column names. `protected` = secret columns; `_prefix` = not in DB.
+1. Extend **`Table`** (physical) or **`ViewTable`** (SQL view). Physical: `getTable()`, `defineSchema()`, `$_type_map`. Views: `getTable()`, `defineView()`, `$_type_map`, optional `viewDependsOn()`.
+2. Property names = column names (or view SELECT aliases). `protected` = secret columns; `_prefix` = not in DB.
 3. Money → `public string` + `$_type_map` `decimal` — never `float`.
-4. Use Table query builder / CRUD — **never** `new PDO` or custom pools in `app/`.
-5. Soft delete with `deleted_at` → `safeDeleteQuery()` / `restoreQuery()`.
-6. Non-`id` PK → `setPrimaryKey(...)` after `parent::__construct()`; match `Schema::primary`.
-7. Same Table class on Apache, Nginx, and OpenSwoole — do not fork connection logic.
+4. Use Table / ViewTable query builder / CRUD — **never** `new PDO` or custom pools in `app/`. Row writes on `ViewTable` hard-fail.
+5. Soft delete with `deleted_at` → `safeDeleteQuery()` / `restoreQuery()` (**Table** only).
+6. Non-`id` PK → `setPrimaryKey(...)` after `parent::__construct()`; `Schema::primary` is **not** migrate DDL today.
+7. Same Table / ViewTable class on Apache, Nginx, and OpenSwoole — do not fork connection logic.
 8. Prefer **`ViewTable`** over complex JOINs in PHP ([SQL views via ViewTable](#sql-views-via-viewtable-recommended)).
 
 ---
@@ -396,6 +396,8 @@ $summaries = (new UserOrderSummaryTable())
 ```
 
 **Verify:** dialect `viewExists($pdo, 'user_order_summary')` (MySQL/Postgres information_schema; SQLite `sqlite_master`). SQLite replaces views via DROP + CREATE.
+
+**Listing caveat:** until `gemvc/cli-dev` ≥ 1.3, `db:list` and the Developer Assistant table list (`DeveloperTable::getAllTables`) show **BASE TABLE** only — migrated views may not appear there. Migrate UI still handles `ViewTable`; confirm views via the engine or `viewExists`. Implementation brief: sibling package `cli-dev/cli-dev-update.md`.
 
 **AI rule:** Prefer `ViewTable` for multi-table reads inside one service. Do **not** invent Eloquent-style `hasMany`. Across services, call HTTP APIs.
 

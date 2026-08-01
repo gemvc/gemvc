@@ -44,7 +44,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 | Errors | [Error bag](#error-bag) |
 | Optional spans | [APM inside controller](#apm-inside-controller) |
 | Codegen | [CLI](#cli-codegen) |
-| Mistakes | [Do / Don’t](#do--dont) |
+| Mistakes | [Do / Don’t](#do-dont) |
 
 ---
 

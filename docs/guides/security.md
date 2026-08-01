@@ -14,7 +14,7 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 |------|---------|
 | What is automatic vs you call | [Multi-Layer Security Architecture](#multi-layer-security-architecture) |
 | Schema / `define*Schema` | [Layer 4: Schema Validation](#layer-4-schema-validation-request-filtering) |
-| JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication--authorization) |
+| JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication-authorization) |
 | Production checklist | [Production Security Checklist](#production-security-checklist) |
 | API-layer how-to | [api.md](api.md) |
 
