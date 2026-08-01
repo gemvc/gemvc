@@ -1,0 +1,71 @@
+---
+description: GEMVC API layer — validation, auth, rate limits, docs annotations
+globs: app/api/**/*.php
+alwaysApply: false
+---
+
+# API layer (`app/api/`)
+
+Extend `Gemvc\Core\ApiService`. Validate and authorize here; **no** business logic or SQL.
+
+URL (Apache): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403) and `RateLimitException` (429).
+
+## Patterns
+
+```php
+// Guard whole service (throws AuthException → 401/403)
+public function __construct(Request $request) {
+    parent::__construct($request);
+    $this->requireAuth(['admin']);
+    // $this->requireRateLimit(); // optional APCu limit for whole service
+}
+
+public function create(): JsonResponse {
+    if (!$this->request->definePostSchema([
+        'email' => 'email',
+        'password' => 'string',
+        '?description' => 'string', // optional field
+    ])) {
+        return $this->request->returnResponse();
+    }
+    return $this->callController(new UserController($this->request))->create();
+}
+```
+
+Per-method auth (still valid; returns bool — you must return the response):
+
+```php
+if (!$this->request->auth(['admin'])) {
+    return Response::unauthorized('Invalid or missing token');
+}
+```
+
+`auth(['admin'])` / `requireAuth(['admin'])` match against the JWT **`role`** claim (comma-separated role names set when minting tokens, e.g. `$token->role = 'admin,developer'`). Empty `role` fails role checks.
+
+## Rate limits (APCu)
+
+```php
+$this->requireRateLimit();              // 20/sec, IP + token; throws → 429
+$this->requireRateLimit(5, 'ip', 60);   // 5/sec, IP only, block 60s after exceed
+$this->requireRateLimit(10, 'token');   // per JWT
+```
+
+Scopes: `both` (default), `ip`, `token`. Fail-open if APCu is missing (requests allowed + warning). Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_SCOPE`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`.
+
+Apply on public auth/signup endpoints. If the same write also exists under another service (e.g. `User/create` vs `Auth/register`), rate-limit **both** or clients will bypass.
+
+## Lists
+
+Allowlist GET params before `createList` in the controller:
+
+```php
+$this->request->findable(['name' => 'string']);
+$this->request->filterable(['role' => 'string']);
+$this->request->sortable(['id', 'name', 'created_at']);
+```
+
+## Docs PHPDoc
+
+Use `@http`, `@description`, `@example`; `@hidden` to exclude from `/api/Index/document`. Implement `mockResponse(string $method): array` for doc samples.
+
+Schema types: `string`, `int`, `float`, `bool`, `email`, `json`, `decimal`, `uuid`, `slug`, `positive_int`, `timestamp`, …

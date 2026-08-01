@@ -1,0 +1,104 @@
+# GEMVC architecture (code-grounded)
+
+Read after CANONICAL. Confirm in `src/` when changing behavior.
+
+## Request flows
+
+### Apache / Nginx
+
+```
+HTTP
+ → src/startup/apache|nginx/index.php
+ → ApacheRequest (sanitize headers/body → shared Request)
+ → Bootstrap (APM root; setRequestedService)
+ → load app/api/{Service}.php → App\Api\{Service} extends ApiService
+ → method (schema / requireAuth / requireRateLimit)
+ → callController → ControllerTracingProxy → Controller
+ → createModel → Model → Table (DB span if APM_TRACE_DB_QUERY=1)
+ → JsonResponse::show() → APM flush → die
+```
+
+Routing in `Bootstrap::setRequestedService()` (`src/core/Bootstrap.php`):
+
+- Segments from URL path; index = `SERVICE_IN_URL_SECTION` (default **1**)
+- If that segment is `"api"`: next = Service (`ucfirst`), then method → **API**
+- Else → **web** (`App\Web\…`)
+- Root `/` → `Index` / `index`
+
+Example: `/api/User/create` → `App\Api\User::create()`.
+
+### OpenSwoole
+
+```
+HTTP
+ → OpenSwooleServer
+ → SecurityManager::isRequestAllowed (path normalize; block /app, /vendor, .env, .php, …)
+ → SwooleRequest → SwooleBootstrap (APM; extractRouteInfo)
+ → processRequest() → App\Api\{Service} extends SwooleApiService
+ → bare new Controller (no callController)
+ → Model → Table (pooled connection)
+ → showSwoole() → APM flush
+```
+
+Routing in `SwooleBootstrap::extractRouteInfo()`:
+
+- **No** automatic `"api"` hop
+- Service = `SERVICE_IN_URL_SECTION` (default 1), method = `METHOD_IN_URL_SECTION` (default 2)
+- Dev root `/` → `Developer` / `app`
+- Missing service file → `Response::notFound` **return** (worker stays alive)
+
+## Dual bases (public API)
+
+| Concern | `ApiService` | `SwooleApiService` |
+|---------|--------------|-------------------|
+| File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` |
+| APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | **Absent** |
+| `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` |
+| `requireAuth` / `requireRateLimit` | both throw; Bootstrap catch | same throws; SwooleBootstrap catch |
+
+Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that over validate* helpers for portable code.
+
+## Auth status codes (`Request::auth`)
+
+| Situation | HTTP |
+|-----------|------|
+| No / unextractable `Authorization` | **401** |
+| Token present but invalid / expired | **403** |
+| Valid token, wrong role | **403** |
+
+Roles: comma-separated names on JWT; `requireAuth(['admin'])` needs one match. `requireAuth(null|[])` = any authenticated user.
+
+Constructor `requireAuth` works because Bootstrap wraps construct + invoke in try/catch. Returning a `JsonResponse` from the constructor does **not** stop the method — must throw.
+
+## Rate limit
+
+`RateLimiter` + APCu keys `gemvc:rl:*`. `requireRateLimit($perSec, $scope, $blockSeconds)`. Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`. Fail-open without APCu; fail-closed if APCu write fails after purge.
+
+## Table ORM (invariants)
+
+- `getTable(): string` required; columns = public properties; `$_type_map` for casting
+- Keys starting with `_` skipped on insert/update (aggregations)
+- `protected` still DB columns; often hidden from list/API defaults — prefer explicit `createList` columns
+- Runtime PK: detect `id` in constructor (`_detectPrimaryKey`); else `setPrimaryKey($col, 'int'|'string'|'uuid')` **after** `parent::__construct()`
+- `Schema::primary` is migrate/DSL-oriented — **not** automatically applied as runtime PK today (see make-gemvc-better P0)
+- SQL views: recommended for JOIN-heavy reads; **do not** `db:migrate` a view Table (creates physical table) until first-class views exist
+
+## APM
+
+- `ApmFactory` from **`gemvc/apm-contracts`** — `APM_NAME` → provider (e.g. TraceKit in `apm-tracekit`)
+- Root span: Bootstrap / SwooleBootstrap
+- Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (Apache)
+- DB spans: `APM_TRACE_DB_QUERY=1` via `createModel` → Request on Table / `UniversalQueryExecuter`
+- Never hardcode TraceKit in app or library app-facing APIs
+
+## Auto docs
+
+- `ApiDocGenerator` reflects `app/api`, reads `@http`, `@description`, `@example`, `@hidden`, regexes `define*Schema` / list allowlists
+- UI: `/api/index/document` via `Documentation`
+- Default HTTP method if `@http` missing: **POST**; generated paths may omit `/api` prefix — keep examples accurate
+
+## Further reading
+
+- [source-map.md](source-map.md) — class → file map + footguns
+- [docs/guides/architecture.md](../../../docs/guides/architecture.md) — full diagrams
+- [docs/guides/http-lifecycle.md](../../../docs/guides/http-lifecycle.md)

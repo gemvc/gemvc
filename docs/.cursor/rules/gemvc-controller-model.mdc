@@ -1,0 +1,51 @@
+---
+description: GEMVC Controller and Model orchestration patterns
+globs: app/controller/**/*.php,app/model/**/*.php
+alwaysApply: false
+---
+
+# Controller + Model
+
+## Controller (`app/controller/`)
+
+Extend `Gemvc\Core\Controller`. Thin orchestration only.
+
+```php
+$model = $this->createModel(new UserModel()); // prefers APM/request wiring
+$model = $this->request->mapPostToObject($model, [
+    'email' => 'email',
+    'name' => 'name',
+    'password' => 'setPassword()', // calls setter on model
+]);
+if (!$model instanceof UserModel) {
+    return $this->request->returnResponse();
+}
+return $model->createModel();
+```
+
+Lists: `return $this->createList($this->createModel(new UserModel()), 'id,email,role,created_at');`  
+Pass an explicit column list so `protected` fields (e.g. password) stay out of payloads.
+
+## Model (`app/model/`)
+
+Usually `UserModel extends UserTable`. Put hashing, uniqueness, login, workflows here.
+
+```php
+public function createModel(): JsonResponse {
+    $this->created_at = date('Y-m-d H:i:s');
+    if (!$this->insertSingleQuery()) { // insertSingleQuery(): ?static — null on failure
+        return Response::internalError('Failed: ' . $this->getError());
+    }
+    return Response::created($this, 1, 'User created successfully');
+}
+```
+
+Use `Gemvc\Helper\CryptHelper` for passwords; `Gemvc\Http\JWTToken` for tokens. Prefer `Response::success|created|updated|deleted|notFound|unauthorized|forbidden|internalError`.
+
+### Composition models
+
+Non-Table models (e.g. auth orchestration) may call other Models/Tables for multi-step workflows. Still return `JsonResponse` from the API-facing methods. Prefer going through a Model for domain reads (e.g. access map) instead of ad-hoc `QueryBuilder` in the composition class when a Table already exists.
+
+### Read-only view models
+
+For SQL-view Tables: implement `read` / `list` / select helpers only; make `createModel` / `updateModel` / `deleteModel` return `Response::forbidden(...)`.

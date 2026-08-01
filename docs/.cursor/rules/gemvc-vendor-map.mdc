@@ -1,0 +1,39 @@
+---
+description: How to navigate and use vendor/gemvc packages (do not edit)
+globs: vendor/gemvc/**
+alwaysApply: false
+---
+
+# `vendor/gemvc` — framework source map
+
+Treat as **read-only**. Change app code or Composer constraints; do not patch vendor.
+
+## Start here
+
+| Path | Use when |
+|------|----------|
+| `library/.cursorrules` | AI hard rules for GEMVC 5.x |
+| `library/README.md` | Ecosystem overview, layer guides index |
+| `library/src/core/ApiService.php` | `requireAuth`, `requireRateLimit`, `callController` |
+| `library/src/core/RateLimiter.php` | APCu limits, scopes `ip`/`token`/`both`, fail-open |
+| `library/src/core/AuthException.php` / `RateLimitException.php` | Thrown by require*; Bootstrap → 401/403/429 |
+| `library/src/core/Bootstrap.php` | Convention routing `/api/{Service}/{method}`, global rate env |
+| `library/src/core/Controller.php` | `createModel`, `createList` |
+| `library/src/http/Request.php` | schemas, auth, map*, findable/filterable/sortable |
+| `library/src/http/Response.php` | JSON response factories |
+| `library/src/http/JWTToken.php` | access/refresh/login tokens; set `$token->role` for `auth([...])` |
+| `library/src/database/Table.php` | query fluent API, `setPrimaryKey`, `selectById` |
+| `library/src/database/Schema.php` | migration constraints (`primary`, `foreignKey`, …) |
+| `library/src/database/DatabaseManagerFactory.php` | Rare raw PDO (e.g. CREATE VIEW) when Table DDL is not enough |
+| `library/src/CLI/commands/DbMigrate.php` | `db:migrate TableClassName` — one class at a time |
+| `helper/README.md` | CryptHelper, TypeChecker types |
+| `http-client/README.md` | outbound HTTP |
+| `cli-base/AI-Assistant.md` | CLI command / generator contracts |
+| `apm-contracts/`, `apm-tracekit/` | APM provider contracts |
+
+## Notes
+
+- Composer **dist** may omit `docs/ai/` and `docs/guides/` — rely on `.cursorrules`, README, and `src/`
+- This app runs **Apache** (`APP_ENV_SERVER=apache`); Swoole APIs (`SwooleApiService`) differ — do not copy `callController` magic onto Swoole services
+- Connection packages implement DB under `Table`; prefer Table/QueryBuilder over raw PDO in app code
+- No first-class SQL **view** migrate — use a read-only Table + optional PDO helper for `CREATE VIEW`

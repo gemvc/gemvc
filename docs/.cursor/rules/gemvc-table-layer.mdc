@@ -1,0 +1,68 @@
+---
+description: GEMVC Table layer — columns, Schema, views, queries, migrate
+globs: app/table/**/*.php
+alwaysApply: false
+---
+
+# Table layer (`app/table/`)
+
+Extend `Gemvc\Database\Table`. One class ≈ one table (or SQL view for JOIN-heavy reads).
+
+## Required pieces
+
+1. Typed public/`protected` properties matching DB columns  
+2. `$_type_map` for casting / migrations (`int`, `string`, `text`, `longText`, `datetime`, `decimal`, …)  
+3. `getTable(): string` → real table / view name  
+4. `defineSchema(): array` via `Gemvc\Database\Schema` (primary, unique, index, foreignKey, fullText, …)
+
+```php
+protected string $password; // still a DB column; hidden from typical list defaults
+protected array $_type_map = ['id' => 'int', 'email' => 'string', 'password' => 'string'];
+
+public function defineSchema(): array {
+    return [
+        Schema::primary('id'),
+        Schema::autoIncrement('id'),
+        Schema::unique('email')->name('uniq_email'),
+        Schema::foreignKey('user_id', 'users.id')->onDeleteCascade(),
+        // also: ->onDeleteRestrict()
+    ];
+}
+```
+
+## Primary key at runtime
+
+`Schema::primary(...)` is for **migrate DDL**. Runtime `selectById()` uses:
+
+1. Property named `id` if present, else  
+2. `$this->setPrimaryKey('column', 'int'|'string'|'uuid')` after `parent::__construct()`, else  
+3. Defaults to column `id`
+
+For views / non-`id` keys (e.g. `role_id`), call `setPrimaryKey` in the Table constructor. `defineSchema()` alone does **not** wire `selectById`.
+
+## SQL views (read-only Tables)
+
+GEMVC has **no** view generator / migrate for views.
+
+- `getTable()` returns the view name (e.g. `v_user_access`)
+- Prefer a Table + Model that only `select` / list / `selectById`
+- Forbid insert/update/delete in the Model (return `Response::forbidden`)
+- **Do not** run `php bin/gemvc db:migrate UserAccessTable` — migrate is per class name and would try to CREATE a physical table
+- Create/ensure the view via PDO (e.g. `DatabaseManagerFactory` + helper) if the project needs auto-DDL
+
+## Queries
+
+```php
+$this->select()->whereEqual('email', $email)->limit(1)->run();
+$this->insertSingleQuery();   // returns ?static (null on failure)
+$this->updateSingleQuery();
+$this->deleteByIdQuery($id);
+$this->selectById($id);
+```
+
+Or `Gemvc\Database\QueryBuilder` for ad-hoc selects. Always prepared statements — never concatenate SQL.
+
+- `_` prefixed properties: ignored in CRUD (aggregations)  
+- Prefer views-as-Table over inventing ORM relations  
+- Migrate: `php bin/gemvc db:migrate TableClassName` (explicit class; not “all tables”)
+- Prefer `gemvc/cli-dev` for `create:*` / introspection when needed

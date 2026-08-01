@@ -1,0 +1,53 @@
+---
+description: GEMVC framework rules — read vendor/gemvc before inventing patterns
+globs: app/**/*.php
+alwaysApply: false
+---
+
+# GEMVC (not Laravel / Symfony)
+
+Installed: **`gemvc/library` 5.10.0** under `vendor/gemvc/`. Before inventing APIs, open:
+
+1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't
+2. `vendor/gemvc/library/README.md` — architecture + AI reading order
+3. Source of truth for signatures: `vendor/gemvc/library/src/` (Request, Response, ApiService, Controller, Table)
+
+`docs/ai/` is **not** shipped in the Composer dist; use `.cursorrules` + `src/` + package READMEs instead.
+
+## 4 layers (mandatory for HTTP services)
+
+```
+API → Controller → Model → Table
+```
+
+Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php`.
+
+| Layer | Extends | Job |
+|-------|---------|-----|
+| `app/api/` | `ApiService` | schema, `requireAuth` / `auth()`, `requireRateLimit()`, `callController()` |
+| `app/controller/` | `Controller` | `createModel()`, `mapPostToObject()`, `createList()` |
+| `app/model/` | `*Table` or composition | business rules; `Response::*` or typed returns |
+| `app/table/` | `Table` | typed columns, `$_type_map`, `defineSchema()`, queries |
+
+## Hard rules
+
+- **DO** `definePostSchema` / `defineGetSchema` before using input; fail with `$this->request->returnResponse()`
+- **DO** Apache path: `$this->callController(new XController($this->request))->method()`
+- **DO** prefer `gemvc/helper` (`CryptHelper`, `TypeChecker`) and `gemvc/http-client` for outbound HTTP
+- **DO** set JWT `$token->role` (comma-separated names) when minting tokens if you rely on `auth(['admin'])`
+- **DO** use `setPrimaryKey('col')` after `parent::__construct()` when the Table has no `id` property (views / alternate PKs)
+- **DON'T** invent routes files, Eloquent, manual sanitization, or string-concat SQL
+- **DON'T** `db:migrate` a SQL-view Table class — migrate creates/updates physical tables only; views need PDO/`CREATE VIEW`
+- **DON'T** edit `vendor/gemvc/**` — fix app code or bump Composer versions
+- Money: `string` + `$_type_map` `decimal` — never `float`
+
+## Ecosystem map (`vendor/gemvc/`)
+
+| Package | Role |
+|---------|------|
+| `library` | HTTP, Bootstrap, ApiService, Controller, Table, JWT, CLI binary |
+| `helper` | CryptHelper, TypeChecker, ProjectHelper |
+| `http-client` | outbound sync/async HTTP |
+| `connection-pdo` / `connection-openswoole` | DB drivers |
+| `apm-contracts` / `apm-tracekit` | APM |
+| `cli-base` | CLI bases (`AI-Assistant.md` for CLI packages) |
