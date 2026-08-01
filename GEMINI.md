@@ -47,8 +47,8 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - SQL views: **`extends ViewTable`** + `defineView()` — never `db:migrate` a plain `Table` aimed at a view name
 - Money: `public string` + `$_type_map` `decimal` — never `float`
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today
-- `create:*` needs `composer require --dev gemvc/cli-dev`
-- `db:list` / Developer UI = **BASE TABLE only** until cli-dev 1.3
+- `create:*` needs `composer require --dev gemvc/cli-dev` (**^1.3** recommended for view-aware `db:list` / `describe` / `drop`)
+- Developer UI table list is still **BASE TABLE only** — use CLI `db:list` for views
 
 ## Antigravity behavior rules
 

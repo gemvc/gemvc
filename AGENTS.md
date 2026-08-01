@@ -57,7 +57,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Skip layers on normal HTTP services; invent Laravel/Symfony conventions
 - Manually sanitize inputs or concatenate SQL
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
-- Assume `db:list` shows SQL views (BASE TABLE only until cli-dev 1.3)
+- Assume the **Developer UI** list shows views (still BASE TABLE only; use `db:list` from cli-dev ≥ 1.3)
 - Copy `callController` into `SwooleApiService` (Apache `ApiService` only)
 
 ## Anti-hallucination checklist (verify before answering)

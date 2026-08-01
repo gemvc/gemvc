@@ -330,7 +330,7 @@ gemvc db:init | db:list | db:describe | db:drop | db:unique
 gemvc admin:setadmin
 ```
 
-`db:list` / Developer UI table list = **BASE TABLE only** until `gemvc/cli-dev` ≥ 1.3 (views from `ViewTable` may not appear — confirm via engine / `viewExists`). Do not assume `create:*` exists without cli-dev.
+`db:list` (cli-dev **≥ 1.3**) lists **tables and views**. The Developer UI table list is still **BASE TABLE only**. Do not assume `create:*` exists without cli-dev.
 
 ---
 

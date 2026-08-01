@@ -397,7 +397,7 @@ $summaries = (new UserOrderSummaryTable())
 
 **Verify:** dialect `viewExists($pdo, 'user_order_summary')` (MySQL/Postgres information_schema; SQLite `sqlite_master`). SQLite replaces views via DROP + CREATE.
 
-**Listing caveat:** until `gemvc/cli-dev` ≥ 1.3, `db:list` and the Developer Assistant table list (`DeveloperTable::getAllTables`) show **BASE TABLE** only — migrated views may not appear there. Migrate UI still handles `ViewTable`; confirm views via the engine or `viewExists`. Implementation brief: sibling package `cli-dev/cli-dev-update.md`.
+**Listing:** with **`gemvc/cli-dev` ≥ 1.3**, `db:list` shows **Tables** and **Views** (labeled). `db:describe` / `db:drop` accept views (`DROP VIEW` when kind is view). The **Developer Assistant** table list (`DeveloperTable::getAllTables`) is still **BASE TABLE** only — use CLI or the engine / `viewExists` there.
 
 **AI rule:** Prefer `ViewTable` for multi-table reads inside one service. Do **not** invent Eloquent-style `hasMany`. Across services, call HTTP APIs.
 

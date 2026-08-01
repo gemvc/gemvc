@@ -134,5 +134,5 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 ## Related
 
 - [architecture.md](architecture.md)
-- [improve.md](improve.md)
+- [docs/improvements/](../../../docs/improvements/) — shared backlog (shipped)
 - [docs/ai/CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)

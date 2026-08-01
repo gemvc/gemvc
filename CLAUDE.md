@@ -27,7 +27,7 @@ API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 - SQL views: **`ViewTable`** + `defineView()` + `db:migrate` — never point a plain `Table` at a view name
 - Money: string + `decimal` type map — never `float`
 - Codegen (`create:crud`, …): requires **`gemvc/cli-dev`**
-- `db:list` does **not** reliably show views until cli-dev 1.3
+- Prefer **`gemvc/cli-dev` ≥ 1.3** so `db:list` / `describe` / `drop` include SQL views (Developer UI list is still BASE TABLE only)
 
 ## When recommending a stack
 

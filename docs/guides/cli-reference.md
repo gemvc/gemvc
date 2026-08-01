@@ -963,38 +963,48 @@ See [database.md — SQL views via ViewTable](database.md#sql-views-via-viewtabl
 
 <a id="db-list"></a>
 
-### `db:list` - List Tables
+### `db:list` - List Tables and Views
 
-Show **base tables** in the database (`gemvc/cli-dev`).
+List **base tables and SQL views** (`gemvc/cli-dev` **^1.3**). Output has labeled **Tables** / **Views** sections (`Table:` / `View:`).
 
 ```bash
 gemvc db:list
 ```
 
-**Note (5.11):** `db:list` currently lists **BASE TABLE** only — SQL **VIEWs** from `ViewTable` / `db:migrate` may **not** appear (Postgres/SQLite filter explicitly; MySQL may show names without a View label). Same filter applies to the **Developer Assistant** table list. Confirm with the engine (`SHOW FULL TABLES`, `information_schema.views`, dialect `viewExists`). Planned fix: sibling package **`gemvc/cli-dev` 1.3** — brief `cli-dev-update.md` in that repo. Migrate success does not require the view to show in `db:list`.
+Requires **`gemvc/cli-dev` ≥ 1.3.0**. Older cli-dev listed BASE TABLE only. The **Developer Assistant** web UI table list is still BASE TABLE only (library) — use `db:list` or the engine to see views.
 
 **Example Output**:
 ```
-Tables in database 'myapp':
-  - users
-  - products
-  - orders
-  - categories
+Relations in database 'myapp':
+
+Tables:
+
+Table: users
+  Columns:
+    - id: int(11) NOT NULL (PRI)  auto_increment
+
+Views:
+
+View: user_order_summary
+  Columns:
+    - user_id: int
+    - order_total: decimal
 ```
 
 ---
 
-### `db:describe` - Describe Table Structure
+### `db:describe` - Describe Table or View
 
-Show detailed structure of a table (cli-dev). Prefer base **table** names from `db:list`. Describing a **VIEW** may work at the engine level but is not yet a first-class ViewTable workflow — see future cli-dev polish.
+Show detailed structure of a **table or view** (`gemvc/cli-dev` **^1.3**). Views get header `VIEW:` plus a **VIEW DEFINITION** section; indexes/FKs are typically empty for views.
 
 ```bash
-gemvc db:describe <TableName>
+gemvc db:describe <Name>
 ```
 
 **Examples**:
 ```bash
 gemvc db:describe users
+gemvc db:describe user_order_summary
 ```
 
 **Example Output**:
@@ -1012,21 +1022,22 @@ Indexes:
 
 ---
 
-### `db:drop` - Drop Table
+### `db:drop` - Drop Table or View
 
-Drop a database table.
+Drop a **table or view** (`gemvc/cli-dev` **^1.3**). Views use `DROP VIEW` (never `DROP TABLE` on a view). Confirms unless `--force`.
 
 ```bash
-gemvc db:drop <TableName> [--force]
+gemvc db:drop <Name> [--force]
 ```
 
 **Examples**:
 ```bash
 gemvc db:drop users
 gemvc db:drop users --force   # skip yes/no confirmation
+gemvc db:drop user_order_summary --force
 ```
 
-**Warning**: This permanently deletes the table and all its data!
+**Warning**: Permanently deletes the table/view (and all table data)!
 
 ---
 
@@ -1384,9 +1395,9 @@ gemvc create:crud user_profile
 | `create:crud` | Create complete CRUD | `gemvc create:crud Product` |
 | `db:init` | Initialize database | `gemvc db:init` |
 | `db:migrate` | Migrate table | `gemvc db:migrate ProductTable` |
-| `db:list` | List tables | `gemvc db:list` |
-| `db:describe` | Describe table | `gemvc db:describe products` |
-| `db:drop` | Drop table | `gemvc db:drop products` |
+| `db:list` | List tables **and** views | `gemvc db:list` |
+| `db:describe` | Describe table or view | `gemvc db:describe products` |
+| `db:drop` | Drop table or view | `gemvc db:drop products` |
 | `db:unique` | Add unique constraint | `gemvc db:unique users/email` |
 | `admin:setpassword` | Set admin password | `gemvc admin:setpassword` |
 | `admin:setadmin` | Create first admin user | `gemvc admin:setadmin` |

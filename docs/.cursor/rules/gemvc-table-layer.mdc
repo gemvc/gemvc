@@ -98,6 +98,6 @@ Or `Gemvc\Database\QueryBuilder` for ad-hoc selects. Always prepared statements 
 - Prefer `ViewTable` over inventing ORM relations  
 - Migrate: `php bin/gemvc db:migrate TableClassName` or `ViewTableClass`  
 - Migrate all: `php bin/gemvc db:migrate --all` (FK order, then views via `viewDependsOn`)  
-- `db:list` / Developer UI list = **BASE TABLE only** until cli-dev 1.3 — views may not appear after migrate  
+- `db:list` (cli-dev **≥ 1.3**) lists tables **and** views; Developer UI list is still **BASE TABLE only**  
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today  
 - Prefer `gemvc/cli-dev` for `create:*` / introspection when needed

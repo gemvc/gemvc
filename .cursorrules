@@ -44,7 +44,7 @@ URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTI
 - Use `float` for currency
 - Point a plain `Table` at a view name and `db:migrate` it — use `ViewTable` (never invent Eloquent 1:n on views)
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
-- Assume `db:list` shows SQL views (cli-dev / Developer UI = BASE TABLE only until cli-dev 1.3)
+- Assume the **Developer UI** list shows views (still BASE TABLE only; CLI `db:list` ≥ 1.3 shows them)
 - Copy `callController` / `$this->UserController` into `SwooleApiService` (those are on `ApiService` only)
 
 ## Auth (5.9.1)

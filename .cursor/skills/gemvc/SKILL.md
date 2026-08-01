@@ -36,9 +36,10 @@ Before answering architecture questions, writing code, or suggesting refactors:
 1. Examine **`vendor/gemvc/`** packages (helper, http-client, apm-*, connection-*, cli-*) — actual implementations, not training data
 2. Examine **`src/`** — Bootstrap / SwooleBootstrap, ApiService / SwooleApiService, Request/JWT, Table ORM, CLI, `startup/{apache,nginx,swoole}`
 3. [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) → [CANONICAL.md](../../../docs/ai/CANONICAL.md) → [CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)
-4. This skill’s depth: [architecture.md](architecture.md) → [source-map.md](source-map.md) → [improve.md](improve.md)
+4. This skill’s depth: [architecture.md](architecture.md) → [source-map.md](source-map.md)
 5. Task guides from INDEX (ecosystem, api, controller, model, database, security, apm, api-documentation, cli, helper, http-client)
-6. Re-verify the specific files you will change in `src/` and/or `vendor/gemvc/<pkg>/` before proposing diffs
+6. Shared backlog (shipped docs only): [docs/improvements/](../../../docs/improvements/)
+7. Re-verify the specific files you will change in `src/` and/or `vendor/gemvc/<pkg>/` before proposing diffs
 
 ## Apache vs Swoole (never confuse)
 
@@ -71,7 +72,6 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 2. Check [docs/improvements/](../../../docs/improvements/) for remaining work (Phase 2 trust/mesh; Schema PK stretch). **ViewTable is shipped** — use [database.md](../../../docs/guides/database.md)
 3. Keep PHPStan level 9 ([phpstan.neon](../../../phpstan.neon)); no casual `@phpstan-ignore`
 4. Preserve: 4 layers, no routes file, schema-before-input, Apache/Swoole dual bases
-5. Details: [improve.md](improve.md)
 
 ## Hard Do / Don't
 
@@ -84,5 +84,4 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 - [protocol.md](protocol.md) — mandatory ingestion protocol (verbatim)
 - [architecture.md](architecture.md) — request flows (code-grounded)
 - [source-map.md](source-map.md) — must-know classes + footguns (`src/` + `vendor/gemvc`)
-- [improve.md](improve.md) — package boundaries, verify, doc sync
 - [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [AGENTS.md](../../../AGENTS.md) · [CLAUDE.md](../../../CLAUDE.md) · [GEMINI.md](../../../GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [docs/improvements/](../../../docs/improvements/)

@@ -17,3 +17,6 @@ test-results.xml
 
 # IDE
 .vscode/
+
+# Local Cursor skill only (not published / not shared via git)
+.cursor/skills/gemvc/improve.md
