@@ -201,7 +201,7 @@ private function sanitizeInput(mixed $input): mixed
 - All POST / GET / PUT / PATCH data
 - All HTTP headers
 - Query strings / request URIs (as implemented per adapter)
-- **Upload name/MIME:** OpenSwoole `SwooleRequest` yes; **Apache `$_FILES` not auto-sanitized**
+- **Upload name/MIME:** OpenSwoole `SwooleRequest` yes; **Apache `$_FILES` not auto-sanitized**. Apache also only copies the upload field named **`file`** into `$request->files` (see `ApacheRequest`).
 - Dangerous cookies: filtered on **Swoole** only
 
 **XSS Attack Prevention**:

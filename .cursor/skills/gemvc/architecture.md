@@ -1,6 +1,7 @@
 # GEMVC architecture (code-grounded)
 
 Read after CANONICAL. Confirm in `src/` when changing behavior.
+Verified against `docs/` + `src/` / `vendor/gemvc/` (2026-08).
 
 ## Request flows
 
@@ -24,6 +25,7 @@ Routing in `Bootstrap::setRequestedService()` (`src/core/Bootstrap.php`):
 - If that segment is `"api"`: next = Service (`ucfirst`), then method → **API**
 - Else → **web** (`App\Web\…`)
 - Root `/` → `Index` / `index`
+- **`METHOD_IN_URL_SECTION` is ignored here** (Swoole-only)
 
 Example: `/api/User/create` → `App\Api\User::create()`.
 
@@ -46,6 +48,7 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 - Service = `SERVICE_IN_URL_SECTION` (default 1), method = `METHOD_IN_URL_SECTION` (default 2)
 - Dev root `/` → `Developer` / `app`
 - Missing service file → `Response::notFound` **return** (worker stays alive)
+- With defaults `1`/`2`, path `/User/create` is correct; `/api/User/create` wrongly resolves service=`Api`
 
 ## Dual bases (public API)
 
@@ -58,12 +61,12 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 
 Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that over validate* helpers for portable code.
 
-## Auth status codes (`Request::auth`)
+## Auth status codes (`Request::auth` → `authenticate` / `authorize`)
 
 | Situation | HTTP |
 |-----------|------|
 | No / unextractable `Authorization` | **401** |
-| Token present but invalid / expired | **403** |
+| Token present but `verify()` fails | **403** |
 | Valid token, wrong role | **403** |
 
 Roles: comma-separated names on JWT; `requireAuth(['admin'])` needs one match. `requireAuth(null|[])` = any authenticated user.
@@ -72,24 +75,49 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 
 ## Rate limit
 
-`RateLimiter` + APCu keys `gemvc:rl:*`. `requireRateLimit($perSec, $scope, $blockSeconds)`. Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`. Fail-open without APCu; fail-closed if APCu write fails after purge.
+`RateLimiter` + APCu keys `gemvc:rl:*`. `requireRateLimit($perSec, $scope, $blockSeconds)`. Global env: `REQUEST_RATE_LIMIT_PER_SEC`, `REQUEST_RATE_LIMIT_BLOCK_SECONDS`, `REQUEST_RATE_LIMIT_SCOPE`. Fail-open without APCu; purge `gemvc:rl:*` + retry on full cache, then fail-closed (429).
+
+## Uploads (Apache vs Swoole)
+
+- **Apache:** `$request->files` = `$_FILES['file']` only (field name must be `file`); name/MIME **not** sanitized
+- **Swoole:** `SwooleRequest` normalizes uploads into PHP-like shape and sanitizes name/MIME
+- Signatures / encryption: developer calls (`ImageHelper` / `FileHelper`)
 
 ## Table ORM (invariants)
 
 - `getTable(): string` required; columns = public properties; `$_type_map` for casting
 - Keys starting with `_` skipped on insert/update (aggregations)
 - `protected` still DB columns; often hidden from list/API defaults — prefer explicit `createList` columns
-- Runtime PK: detect `id` in constructor (`_detectPrimaryKey`); else `setPrimaryKey($col, 'int'|'string'|'uuid')` **after** `parent::__construct()`
-- `Schema::primary` is migrate/DSL-oriented — **not** automatically applied as runtime PK today (see make-gemvc-better P0)
+- **Create-table PK/AI:** property named **`id`** → dialect `idColumnDefinition()` (MySQL `INT… PRIMARY KEY`, Postgres `SERIAL PRIMARY KEY`)
+- **`Schema::primary` / `autoIncrement`:** API exists; `SchemaGenerator::applyPrimaryKeyConstraint` is a **no-op today** — not DDL
+- **Runtime ORM identity:** `_detectPrimaryKey()` prefers `id`; else call `setPrimaryKey($col, 'int'|'string'|'uuid')` **after** `parent::__construct()`
 - SQL views: recommended for JOIN-heavy reads; **do not** `db:migrate` a view Table (creates physical table) until first-class views exist
+
+## Query path vs QueryBuilder
+
+- Normal app path: `Table::select()->where()->run()` → `UniversalQueryExecuter` (+ optional DB APM via Request)
+- `QueryBuilder` (`src/database/QueryBuilder.php`): separate ad-hoc Select/Insert/Update/Delete; check `getError()` after build
+- Migrate DDL: `TableGenerator` + `SchemaGenerator` + `DialectResolver` (PDO driver → mysql/pgsql/sqlite; unknown/mock → Mysql)
 
 ## APM
 
-- `ApmFactory` from **`gemvc/apm-contracts`** — `APM_NAME` → provider (e.g. TraceKit in `apm-tracekit`)
+- `ApmFactory` from **`gemvc/apm-contracts`** — `APM_NAME` → `Gemvc\Core\Apm\Providers\{Name}\{Name}Provider`
+- TraceKit package autoloads that NS from `vendor/gemvc/apm-tracekit/src/` (`TraceKitProvider`)
+- Env: unified `APM_*`; TraceKit also `TRACEKIT_ENDPOINT` (not `TRACEKIT_API_URL`), `TRACEKIT_API_KEY`, …
 - Root span: Bootstrap / SwooleBootstrap
 - Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (Apache)
 - DB spans: `APM_TRACE_DB_QUERY=1` via `createModel` → Request on Table / `UniversalQueryExecuter`
 - Never hardcode TraceKit in app or library app-facing APIs
+
+## CLI + templates
+
+| | |
+|--|--|
+| Library | `init`, `db:migrate` (`--default <value>` space-separated, `--force`, `--sync-schema`, …) |
+| cli-dev | `create:*`, `db:init\|list\|describe\|drop\|unique`, `admin:*` |
+| Flags | `create:service User -cmt` (chars `c`/`m`/`t`); `create:crud` → `-cmt`; `db:drop --force`; `db:unique table/col` |
+| Templates | `{project}/templates/cli/*.template` then `vendor/gemvc/cli-dev/templates/cli/` |
+| Init copy | copies **library** `src/CLI/templates` (often views) — **not** create stubs; copy cli-dev templates once if needed |
 
 ## Auto docs
 
@@ -102,3 +130,5 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 - [source-map.md](source-map.md) — class → file map + footguns
 - [docs/guides/architecture.md](../../../docs/guides/architecture.md) — full diagrams
 - [docs/guides/http-lifecycle.md](../../../docs/guides/http-lifecycle.md)
+- [docs/guides/database.md](../../../docs/guides/database.md) — PK DDL vs runtime
+- [docs/guides/templates.md](../../../docs/guides/templates.md) — codegen template order

@@ -42,20 +42,22 @@ Before answering architecture questions, writing code, or suggesting refactors:
 
 | | Apache/Nginx (`ApiService` + `Bootstrap`) | OpenSwoole (`SwooleApiService` + `SwooleBootstrap`) |
 |--|--|--|
-| URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) |
+| URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
 | Controllers | `callController()` / magic `$this->XController` | Bare `new XController($this->request)` |
 | Validation helpers | `validatePosts` **throws** `ValidationException` | Returns `?JsonResponse` — must check |
 | Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` |
 | Root `/` | `Index`/`index` | Dev: `Developer`/`app` |
 | Early path deny | `.htaccess` | `SecurityManager::isRequestAllowed` |
+| Uploads | `$files` = `$_FILES['file']` only; no MIME sanitize | Normalized + name/MIME sanitize |
 
 Usual schema path is the same: `definePostSchema` / `defineGetSchema` → `bool` + `return $this->request->returnResponse()` (does not throw).
 
-## Auth / rate limit / money
+## Auth / rate limit / money / uploads
 
-- `requireAuth(['admin'])` in constructor → throws `AuthException` (**401** no token, **403** invalid/wrong role); Bootstrap catches
-- `requireRateLimit()` — APCu; fail-open if APCu missing; HTTP **429**
+- `requireAuth(['admin'])` in constructor → throws `AuthException` (**401** no/unextractable token, **403** verify failed or wrong role); Bootstrap catches
+- `requireRateLimit()` — APCu; fail-open if missing; full cache → purge `gemvc:rl:*` + retry then fail-closed **429**
 - Money: `public string` + `$_type_map` `decimal` + `decimalValuePost()` — never `float`
+- Apache uploads: only `$_FILES['file']` → `$request->files`; Swoole sanitizes name/MIME
 
 ## Lists (flagship)
 

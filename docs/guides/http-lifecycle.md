@@ -149,11 +149,12 @@ Webserver-Specific Output
 **Key Features**:
 - Sanitizes all HTTP headers (`$_SERVER['HTTP_*']`)
 - Sanitizes GET, POST, PUT, PATCH data
-- Handles file uploads (`$_FILES`)
+- Copies upload field named **`file`** only (`$_FILES['file']` → `$request->files`); other upload keys are not mapped
+- Does **not** sanitize upload name/MIME (unlike SwooleRequest) — validate with `ImageHelper` / your own checks
 - Extracts cookies and auth headers
 - Creates unified `Request` object
 
-**Implementation**:
+**Implementation** (simplified; see `src/http/ApacheRequest.php`):
 ```php
 <?php
 namespace Gemvc\Http;
@@ -164,24 +165,24 @@ class ApacheRequest
     
     public function __construct()
     {
-        // Sanitize all inputs BEFORE creating Request
+        // Sanitize headers + GET/POST/PUT/PATCH BEFORE creating Request
         $this->sanitizeAllServerHttpRequestHeaders();
         $this->sanitizeAllHTTPGetRequest();
         $this->sanitizeAllHTTPPostRequest();
         $put = $this->sanitizeAllHTTPPutRequest();
         $patch = $this->sanitizeAllHTTPPatchRequest();
         
-        // Create unified Request object
         $this->request = new Request();
         
-        // Populate with sanitized data
         $this->request->post = $_POST;
-        $this->request->get = $_GET;
+        $this->request->get = $getParams; // strips `_gemvc_url_path` rewrite param
         $this->request->put = $put;
         $this->request->patch = $patch;
-        $this->request->files = $_FILES;
+        $this->request->files = [];
+        if (isset($_FILES['file']) && is_array($_FILES['file'])) {
+            $this->request->files = $_FILES['file']; // field name must be "file"
+        }
         
-        // Extract headers
         $this->getAuthHeader();
     }
 }

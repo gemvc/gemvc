@@ -38,6 +38,7 @@ If public behavior, signatures, env vars, CLI flags, or layer contracts change:
 2. Update `docs/ai/CANONICAL.md` / `CORE_REFERENCE.md` / INDEX when rules or signatures shift
 3. Keep `.cursorrules` aligned with hard Do/Don't
 4. Update this skill’s [architecture.md](architecture.md) / [source-map.md](source-map.md) if routing, auth, or package boundaries change
+5. Prefer **source** when a guide drifts (example fixed 2026-08: `http-lifecycle.md` Apache `$_FILES` vs `ApacheRequest` only mapping `file`)
 
 ## Upstream backlog
 
