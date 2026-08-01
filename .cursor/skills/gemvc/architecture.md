@@ -109,6 +109,19 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 - DB spans: `APM_TRACE_DB_QUERY=1` via `createModel` → Request on Table / `UniversalQueryExecuter`
 - Never hardcode TraceKit in app or library app-facing APIs
 
+## Connections
+
+- `DatabaseManagerFactory::getManager()` picks PDO vs OpenSwoole pool via `WebserverDetector`
+- Table → `UniversalQueryExecuter` → getConnection(`default`) → always release
+- Apache/Nginx: `PdoConnection` (cached; persistent default on)
+- OpenSwoole: Hyperf pool (`MIN_DB_CONNECTION_POOL` / `MAX_DB_CONNECTION_POOL`); per-worker; must release
+
+## Helper / outbound HTTP
+
+- Validation types: **`Gemvc\Helper\TypeChecker`** (`decimal`, `uuid`, `slug`, `positive_int`, …)
+- Crypto: `CryptHelper::hashPassword` (Argon2i)
+- Outbound: `Gemvc\Http\Client\HttpClient` (sync), `AsyncHttpClient::fireAndForget` (FPM), `SwooleHttpClient` (Swoole)
+
 ## CLI + templates
 
 | | |

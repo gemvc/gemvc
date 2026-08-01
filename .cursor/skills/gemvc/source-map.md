@@ -90,6 +90,23 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 | `vendor/gemvc/cli-dev/src/Commands/` | `CreateCrud`, `Create*`, `DbList`/`DbDrop`/…, `Admin*` |
 | `vendor/gemvc/cli-dev/templates/cli/` | Default `*.template` for codegen |
 
+## Connections (vendor)
+
+| Piece | Path | Must know |
+|-------|------|-----------|
+| `DatabaseManagerFactory` | `src/database/DatabaseManagerFactory.php` | `WebserverDetector` → `SwooleConnection` or `PdoConnection` |
+| `WebserverDetector` | `src/core/WebserverDetector.php` | `APP_ENV_SERVER` / extension / `SERVER_SOFTWARE` → swoole\|apache\|nginx |
+| `PdoConnection` | `vendor/gemvc/connection-pdo/...` | Cached PDO (not a pool); `DB_PERSISTENT_CONNECTIONS` default **1** |
+| `SwooleConnection` | `vendor/gemvc/connection-openswoole/...` | Hyperf pool; `MIN/MAX_DB_CONNECTION_POOL`; always **release** |
+| Contracts | `vendor/gemvc/connection-contracts/...` | `ConnectionInterface` + `ConnectionManagerInterface` |
+
+## Helper / HTTP client (vendor)
+
+| Package | NS | Must know |
+|---------|-----|-----------|
+| `gemvc/helper` | `Gemvc\Helper\` | `TypeChecker` (decimal, uuid, slug, …); `CryptHelper` Argon2i; `ProjectHelper::loadEnv` |
+| `gemvc/http-client` | `Gemvc\Http\Client\` | `HttpClient` sync; `AsyncHttpClient::fireAndForget` (FPM); `SwooleHttpClient::fireAndForget` (coroutines) |
+
 ## Footguns (agent checklist)
 
 1. Apache expects `/api/...` + `api` hop; Swoole does **not** auto-skip `api` — configure sections or drop prefix
@@ -108,6 +125,9 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 14. Prefer contracts (`APM_NAME`, connection packages) over hardcoding TraceKit / PDO pools
 15. `create:*` needs **cli-dev**; templates: project `templates/cli/` then cli-dev vendor; init does **not** ship create stubs from library
 16. CLI: `--default <value>` (space, not `=`); `db:drop --force`; `db:unique table/column`; `create:service X -cmt`
+17. DB: never invent pools — use `DatabaseManagerFactory`; Swoole must `releaseConnection`; PDO persistent default on
+18. Outbound HTTP: use `gemvc/http-client`, not raw curl; FAF = Async (Apache) or SwooleHttpClient (Swoole)
+19. Schema types live in **helper** `TypeChecker` — money = string + `decimal`, never float
 
 ## Related
 
