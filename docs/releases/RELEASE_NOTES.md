@@ -1,6 +1,83 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.9.1...5.10.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.10.0...5.11.0
 # GEMVC Framework - Release Notes
+
+## Version 5.11.0 - First-class SQL views (`ViewTable`) + `db:migrate --all`
+
+**Release Date**: Saturday, 1 August 2026  
+**Type**: Minor Release (Backward Compatible)  
+**Tag**: `5.11.0`
+
+---
+
+## Overview
+
+- **`ViewTable`** — dedicated base for SQL **VIEW** read models (not a plain `Table` with a flag).
+- Compose views from other Table classes in `defineView()`; column props + `$_type_map` match SELECT **aliases** (flat).
+- **`db:migrate YourViewTable`** runs `CREATE OR REPLACE VIEW` (SQLite: DROP + CREATE). Never invents a physical table from view properties.
+- **`db:migrate --all`** migrates every `app/table/*Table.php` in FK-safe order, then views via `viewDependsOn()`.
+- Row insert/update/delete on `ViewTable` hard-fail — writes stay on base Tables; nest JSON in the Model if needed.
+
+---
+
+## Quick start
+
+```php
+use Gemvc\Database\ViewTable;
+
+class UserAccessTable extends ViewTable
+{
+    public int $user_id;
+    public string $email;
+    public string $role_name;
+
+    protected array $_type_map = [
+        'user_id' => 'int',
+        'email' => 'string',
+        'role_name' => 'string',
+    ];
+
+    public function getTable(): string
+    {
+        return 'user_access';
+    }
+
+    /** @return list<class-string<\Gemvc\Database\Table>> */
+    public function viewDependsOn(): array
+    {
+        return [UserTable::class, RoleTable::class];
+    }
+
+    public function defineView(): string
+    {
+        $u = (new UserTable())->getTable();
+        $r = (new RoleTable())->getTable();
+        return <<<SQL
+            SELECT u.id AS user_id, u.email, r.name AS role_name
+            FROM {$u} u
+            INNER JOIN {$r} r ON r.user_id = u.id
+        SQL;
+    }
+}
+```
+
+```bash
+gemvc db:migrate UserTable
+gemvc db:migrate RoleTable
+gemvc db:migrate UserAccessTable
+# or:
+gemvc db:migrate --all
+```
+
+| Piece | Role |
+|--------|------|
+| `ViewTable` | Read model + view lifecycle helpers |
+| `ViewGenerator` | VIEW DDL used by migrate |
+| `TableMigrateOrder` | Ordering for `--all` |
+
+See [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-recommended) and [cli-reference.md](../guides/cli-reference.md).
+
+---
 
 ## Version 5.10.0 - APCu rate limiting (`requireRateLimit`)
 

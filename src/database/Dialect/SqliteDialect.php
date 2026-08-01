@@ -347,4 +347,30 @@ class SqliteDialect implements SqlDialectInterface
         // index, dropIndexSql() should be used instead.
         return $this->dropIndexSql($table, $constraintName);
     }
+
+    public function viewExists(PDO $pdo, string $view): bool
+    {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'view' AND name = ?"
+        );
+        $stmt->execute([$view]);
+        return ((int) $stmt->fetchColumn()) > 0;
+    }
+
+    public function createOrReplaceViewSql(string $viewName, string $selectSql): array
+    {
+        // SQLite has no CREATE OR REPLACE VIEW — drop then create.
+        $q = $this->quoteIdentifier($viewName);
+        $body = trim($selectSql);
+        $body = rtrim($body, "; \t\n\r");
+        return [
+            $this->dropViewSql($viewName),
+            "CREATE VIEW {$q} AS {$body}",
+        ];
+    }
+
+    public function dropViewSql(string $viewName): string
+    {
+        return 'DROP VIEW IF EXISTS ' . $this->quoteIdentifier($viewName);
+    }
 }

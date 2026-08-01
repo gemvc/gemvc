@@ -155,4 +155,22 @@ interface SqlDialectInterface
     public function createFulltextIndexSql(string $table, string $indexName, array $columns): ?string;
 
     public function dropConstraintSql(string $table, string $constraintName): string;
+
+    /**
+     * Whether a VIEW with this name exists (not a base table).
+     */
+    public function viewExists(PDO $pdo, string $view): bool;
+
+    /**
+     * Statements to create or replace a VIEW. $selectSql is the SELECT body (or full SELECT).
+     * SQLite typically returns DROP + CREATE; MySQL/Postgres may use CREATE OR REPLACE.
+     *
+     * @return list<string>
+     */
+    public function createOrReplaceViewSql(string $viewName, string $selectSql): array;
+
+    /**
+     * DROP VIEW IF EXISTS …
+     */
+    public function dropViewSql(string $viewName): string;
 }

@@ -52,9 +52,11 @@ Verified against `docs/` + source (2026-08).
 | `Table` | `src/database/Table.php` | Fluent select/where/run; `_detectPrimaryKey`; `setPrimaryKey` after parent ctor |
 | `CrudOperationsTrait` | `src/database/TableComponents/` | insert/update/delete; skip `_` props |
 | `PropertyCaster` | `src/database/TableComponents/` | `$_type_map` incl. decimal-as-string |
+| `ViewTable` / `ViewGenerator` | `src/database/` | SQL views; read-only writes; migrate CREATE VIEW |
+| `TableMigrateOrder` | `src/database/` | FK + `viewDependsOn` for `db:migrate --all` |
 | `Schema` | `src/database/Schema.php` | Migrate constraints DSL |
 | `SchemaGenerator` | `src/database/SchemaGenerator.php` | Applies unique/index/FK/check; **`applyPrimaryKeyConstraint` is no-op** |
-| `TableGenerator` | `src/database/TableGenerator.php` | Create/sync columns; **`id` → `idColumnDefinition()`** |
+| `TableGenerator` | `src/database/TableGenerator.php` | Create/sync columns; refuses `ViewTable`; **`id` → `idColumnDefinition()`** |
 | `DialectResolver` + dialects | `src/database/Dialect/` | mysql / pgsql / sqlite; unknown → Mysql |
 | `UniversalQueryExecuter` | `src/database/UniversalQueryExecuter.php` | PDO exec + DB APM from Request |
 | `QueryBuilder` | `src/database/QueryBuilder.php` | Ad-hoc SQL builder (**not** Table fluent) |
@@ -119,7 +121,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 8. Apache uploads: only field name **`file`**; raw (no MIME sanitize)
 9. Table `_` props skipped on write; call `setPrimaryKey` after `parent::__construct()`
 10. `Schema::primary` / `autoIncrement` ≠ migrate DDL today — prefer property `id`
-11. Do not `db:migrate` SQL-view Tables (until first-class views ship)
+11. Prefer `ViewTable` + `db:migrate` for SQL views (never migrate a plain Table as a view)
 12. Money = string + decimal type_map
 13. Doc generator defaults `@http` to POST; URL examples may lack `/api`
 14. Prefer contracts (`APM_NAME`, connection packages) over hardcoding TraceKit / PDO pools

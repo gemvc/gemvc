@@ -4,7 +4,7 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "5.9.1",
+    "version": "5.11.0",
     "library_package": "gemvc/library",
     "ecosystem_doc": "docs/guides/ecosystem.md",
     "ai_docs": "docs/ai/INDEX.md",
@@ -16,13 +16,13 @@
         { "name": "API", "location": "app/api/", "purpose": "Schema validation, auth, call Controller" },
         { "name": "Controller", "location": "app/controller/", "purpose": "Orchestration: map request → Model, createList" },
         { "name": "Model", "location": "app/model/", "purpose": "Business rules, transforms, composition workflows" },
-        { "name": "Table", "location": "app/table/", "purpose": "Database operations only" }
+        { "name": "Table", "location": "app/table/", "purpose": "Database: Table (physical) or ViewTable (SQL view)" }
       ],
-      "note": "4-layer strongly recommended; bypass possible but discouraged"
+      "note": "4-layer strongly recommended; bypass possible but discouraged; ViewTable for JOIN-heavy reads"
     }
   },
   "packages": {
-    "gemvc/library": "Framework hub",
+    "gemvc/library": "Framework hub (incl. ViewTable, ViewGenerator, db:migrate --all)",
     "gemvc/helper": "^1.1 TypeChecker, CryptHelper, …",
     "gemvc/connection-contracts": "DB interfaces",
     "gemvc/connection-pdo": "^1.1 Apache/Nginx/CLI",
@@ -173,6 +173,28 @@
     "schema_helpers": ["primary", "autoIncrement", "unique", "foreignKey", "index", "check", "fullText"],
     "note": "No Table::offset() or Table::from() — do not invent them"
   },
+  "view_table_orm": {
+    "namespace": "Gemvc\\Database\\ViewTable",
+    "extends": "Gemvc\\Database\\Table",
+    "required_methods": [
+      "getTable(): string",
+      "defineView(): string"
+    ],
+    "optional_methods": [
+      "viewDependsOn(): list<class-string<Table>>",
+      "createViewQuery(?PDO $pdo = null): bool",
+      "replaceViewQuery(?PDO $pdo = null): bool",
+      "dropViewQuery(?PDO $pdo = null): bool"
+    ],
+    "related": ["ViewGenerator", "TableMigrateOrder"],
+    "rules": [
+      "Public props + $_type_map match SELECT aliases (flat)",
+      "Row insert/update/delete hard-fail — writes on base Tables",
+      "db:migrate ViewTableClass or db:migrate --all",
+      "Do not invent Eloquent 1:n on views — nest in Model"
+    ],
+    "guide": "docs/guides/database.md#sql-views-via-viewtable-recommended"
+  },
   "validation_types": {
     "from_TypeChecker": [
       "string", "int", "integer", "float", "number", "double", "bool", "boolean",
@@ -189,7 +211,7 @@
   "cli_commands": {
     "library": {
       "init": "gemvc init [--swoole|--apache|--nginx] [--db=mysql|postgres|sqlite] [--non-interactive]",
-      "db:migrate": "gemvc db:migrate TableClass [--force] [--sync-schema]"
+      "db:migrate": "gemvc db:migrate TableOrViewClass [--force] [--sync-schema] | gemvc db:migrate --all"
     },
     "cli_dev_require_dev": {
       "create:crud": "gemvc create:crud Name",

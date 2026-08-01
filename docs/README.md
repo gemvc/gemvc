@@ -1,6 +1,6 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.10.0**.
+Single entry point for humans and AI assistants. Framework version: **5.11.0**.
 
 ## For AI assistants (read first)
 
@@ -8,7 +8,7 @@ Mandatory path (3 files only):
 
 1. [`ai/INDEX.md`](ai/INDEX.md) — reading order and hard rules  
 2. [`ai/CANONICAL.md`](ai/CANONICAL.md) — 4-layer architecture, auth, CRUD, Do/Don’t  
-3. [`ai/CORE_REFERENCE.md`](ai/CORE_REFERENCE.md) — framework class signatures (Request / Response / Table / Controller)  
+3. [`ai/CORE_REFERENCE.md`](ai/CORE_REFERENCE.md) — framework class signatures (Request / Response / Table / ViewTable / Controller)  
 
 Then open topical guides only when needed.
 
@@ -19,10 +19,10 @@ Then open topical guides only when needed.
 Every HTTP request should walk the same stack. **Strongly recommended — do not skip layers** (runtime allows it; architecture does not benefit).
 
 ```
-HTTP → API → Controller → Model → Table → DB
-         ↑         ↑          ↑        ↑
-      schema    map +      rules +   SQL /
-      + auth    createList  types or   CRUD
+HTTP → API → Controller → Model → Table / ViewTable → DB
+         ↑         ↑          ↑              ↑
+      schema    map +      rules +      SQL / CRUD
+      + auth    createList  types or    or VIEW select
                             JsonResponse
 ```
 
@@ -31,7 +31,7 @@ HTTP → API → Controller → Model → Table → DB
 | **1. API** | `app/api/` | Validate input, authenticate/authorize, call Controller |
 | **2. Controller** | `app/controller/` | Orchestrate: map request → Model, call Model / `createList` |
 | **3. Model** | `app/model/` | Business rules / workflows; Table-backed **or** composition (no Table); `JsonResponse` **or** PHP types |
-| **4. Table** | `app/table/` | Columns, schema, queries, insert/update/delete only |
+| **4. Table** | `app/table/` | Physical tables (`Table`) or SQL views (`ViewTable`); columns, schema/view SQL, queries |
 
 URL mapping (Apache/Nginx): `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`.  
 OpenSwoole: configure `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop) — see [architecture.md](guides/architecture.md).
@@ -66,9 +66,9 @@ Covers: return style; composition Models; simple vs domain; CRUD; transforms; va
 
 ### 4. Table layer — [database.md](guides/database.md)
 
-**What it does:** Database only. Properties = columns, `defineSchema()`, query builder, CRUD helpers. Prefer **SQL views as Table classes** for JOIN-heavy reads instead of inventing ORM relations.
+**What it does:** Database only. Properties = columns (or view aliases). Physical tables via `Table` + `defineSchema()`; **SQL views via `ViewTable`** + `defineView()` / `viewDependsOn()`. Fluent select; row CRUD on tables only (views are read-only). Migrate: `gemvc db:migrate ClassName` or `gemvc db:migrate --all`.
 
-Covers: what `Table` abstracts; skeleton; types/PKs; CRUD; soft delete; views; multi-DB; connection packages under the hood.
+Covers: what `Table` / `ViewTable` abstract; skeleton; types/PKs; CRUD; soft delete; views; multi-DB; connection packages under the hood.
 
 ---
 
@@ -111,7 +111,7 @@ Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Pre
 When to open release notes vs changelog. **AI: skip unless version/migration task.**
 
 ### [releases/RELEASE_NOTES.md](releases/RELEASE_NOTES.md)
-Narrative notes (what/why/migration), including 5.10.x rate limiting, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
+Narrative notes (what/why/migration), including **5.11.0 ViewTable** / `db:migrate --all`, 5.10.x rate limiting, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
 
 ### [releases/CHANGELOG.md](releases/CHANGELOG.md)
 Keep-a-Changelog bullets for “is feature X in version Y?”

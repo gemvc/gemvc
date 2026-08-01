@@ -1,6 +1,6 @@
 # GEMVC Core Reference (AI)
 
-Version **5.10.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, schema types.
+Version **5.11.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, `ViewTable`, schema types.
 
 **Not** HTTP endpoint docs (that is [api-documentation.md](../guides/api-documentation.md) / `/api/index/document`).  
 **Not** the `app/api/` layer guide. Prefer this over inventing methods from training data.
@@ -165,7 +165,24 @@ setPrimaryKey(string $column = 'id', string $type = 'int'): self  // int|string|
 
 **Primary keys:** create-table PK from property **`id`**; runtime ORM via `setPrimaryKey` — see [database.md](../guides/database.md#primary-keys-ddl--runtime).
 
-**Dialects:** `DialectResolver::resolve(PDO)` → Mysql / Postgres / Sqlite for migrations.
+**Dialects:** `DialectResolver::resolve(PDO)` → Mysql / Postgres / Sqlite for migrations (incl. view DDL).
+
+---
+
+## `Gemvc\Database\ViewTable`
+
+Extends `Table`. SQL **VIEW** read models — migrate creates/replaces a view, never a physical table from props.
+
+```php
+abstract public function defineView(): string          // SELECT body; aliases = public props
+public function viewDependsOn(): array                // list<class-string<Table>> for db:migrate --all
+public function createViewQuery(?PDO $pdo = null): bool
+public function replaceViewQuery(?PDO $pdo = null): bool
+public function dropViewQuery(?PDO $pdo = null): bool
+// insert/update/delete / soft-delete → hard-fail (read-only)
+```
+
+Also: `ViewGenerator`, `TableMigrateOrder`. Guide: [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-recommended).
 
 ---
 
@@ -219,7 +236,8 @@ Library facades: `Gemvc\Http\ApiCall`, `AsyncApiCall` (wrap http-client).
 
 ```
 gemvc init [--swoole|--apache|--nginx] [--db=mysql|postgres|sqlite] [--non-interactive|-n]
-gemvc db:migrate TableClass [--force] [--sync-schema]
+gemvc db:migrate TableOrViewClass [--force] [--sync-schema]
+gemvc db:migrate --all [--force] [--sync-schema]
 ```
 
 ## CLI (`gemvc/cli-dev`, require-dev)

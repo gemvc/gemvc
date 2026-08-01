@@ -23,9 +23,12 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 | `library/src/http/Response.php` | JSON response factories |
 | `library/src/http/JWTToken.php` | access/refresh/login tokens; set `$token->role` for `auth([...])` |
 | `library/src/database/Table.php` | query fluent API, `setPrimaryKey`, `selectById` |
+| `library/src/database/ViewTable.php` | SQL views: `defineView`, `viewDependsOn`, read-only row writes |
+| `library/src/database/ViewGenerator.php` | CREATE/REPLACE/DROP VIEW (used by migrate) |
+| `library/src/database/TableMigrateOrder.php` | FK + viewDependsOn order for `db:migrate --all` |
 | `library/src/database/Schema.php` | migration constraints (`primary`, `foreignKey`, …) |
-| `library/src/database/DatabaseManagerFactory.php` | Rare raw PDO (e.g. CREATE VIEW) when Table DDL is not enough |
-| `library/src/CLI/commands/DbMigrate.php` | `db:migrate TableClassName` — one class at a time |
+| `library/src/database/DatabaseManagerFactory.php` | PDO via factory when needed outside Table |
+| `library/src/CLI/commands/DbMigrate.php` | `db:migrate ClassName` or `db:migrate --all` (tables + ViewTable) |
 | `helper/README.md` | CryptHelper, TypeChecker types |
 | `http-client/README.md` | outbound HTTP |
 | `cli-base/AI-Assistant.md` | CLI command / generator contracts |
@@ -35,5 +38,5 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 
 - Composer **dist** may omit `docs/ai/` and `docs/guides/` — rely on `.cursorrules`, README, and `src/`
 - This app runs **Apache** (`APP_ENV_SERVER=apache`); Swoole APIs (`SwooleApiService`) differ — do not copy `callController` magic onto Swoole services
-- Connection packages implement DB under `Table`; prefer Table/QueryBuilder over raw PDO in app code
-- No first-class SQL **view** migrate — use a read-only Table + optional PDO helper for `CREATE VIEW`
+- Connection packages implement DB under `Table`; prefer Table/`ViewTable`/QueryBuilder over raw PDO in app code
+- SQL views: extend **`ViewTable`**, migrate with `db:migrate` — do **not** invent PDO `CREATE VIEW` helpers unless bypassing the framework on purpose

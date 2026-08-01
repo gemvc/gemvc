@@ -356,4 +356,32 @@ class MysqlDialect implements SqlDialectInterface
         $n = $this->quoteIdentifier($constraintName);
         return "ALTER TABLE {$t} DROP CONSTRAINT {$n}";
     }
+
+    public function viewExists(PDO $pdo, string $view): bool
+    {
+        $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.VIEWS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$view]);
+        return ((int) $stmt->fetchColumn()) > 0;
+    }
+
+    public function createOrReplaceViewSql(string $viewName, string $selectSql): array
+    {
+        $q = $this->quoteIdentifier($viewName);
+        $body = self::normalizeViewSelect($selectSql);
+        return ["CREATE OR REPLACE VIEW {$q} AS {$body}"];
+    }
+
+    public function dropViewSql(string $viewName): string
+    {
+        return 'DROP VIEW IF EXISTS ' . $this->quoteIdentifier($viewName);
+    }
+
+    private static function normalizeViewSelect(string $selectSql): string
+    {
+        $body = trim($selectSql);
+        $body = rtrim($body, "; \t\n\r");
+        return $body;
+    }
 }

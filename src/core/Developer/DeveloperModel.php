@@ -677,10 +677,29 @@ class DeveloperModel extends DeveloperTable
                 if (!($table instanceof \Gemvc\Database\Table)) {
                     return Response::badRequest("Invalid table class: {$className}");
                 }
+
+                $tableName = $table->getTable();
+
+                if ($table instanceof \Gemvc\Database\ViewTable) {
+                    $viewGenerator = new \Gemvc\Database\ViewGenerator($pdo);
+                    if ($viewGenerator->replaceView($table)) {
+                        return Response::success([
+                            'message' => "View '{$tableName}' created/replaced successfully",
+                            'tableClassName' => $tableClassName,
+                            'tableName' => $tableName,
+                            'type' => 'view',
+                        ]);
+                    }
+                    $error = $viewGenerator->getError();
+                    return Response::unknownError([
+                        'message' => 'Failed to migrate view',
+                        'error' => $error !== '' ? $error : 'Unknown error',
+                    ], 'Migration failed');
+                }
+
                 $generator = new \Gemvc\Database\TableGenerator($pdo);
                 
                 // Check if table exists using INFORMATION_SCHEMA (more reliable)
-                $tableName = $table->getTable();
                 $dbName = isset($_ENV['DB_NAME']) && is_string($_ENV['DB_NAME']) ? $_ENV['DB_NAME'] : '';
                 if (empty($dbName)) {
                     return Response::unknownError([

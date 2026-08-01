@@ -23,7 +23,7 @@ You do **not** need to implement or worry about:
 | Which PDO vs pool implementation to use | Runtime detection — same Table code everywhere |
 
 **Your job:** model the table (or **view**), migrate base tables, call fluent queries / CRUD.  
-**Not your job:** invent pools, `new PDO()`, manual hydration, server-specific connection code, or giant JOINs in PHP — use [SQL views as tables](#sql-views-as-tables-recommended) for complex reads.
+**Not your job:** invent pools, `new PDO()`, manual hydration, server-specific connection code, or giant JOINs in PHP — use [SQL views via ViewTable](#sql-views-via-viewtable-recommended) for complex reads.
 
 Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-stack).
 
@@ -41,7 +41,7 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 | UUID / string PK | [Primary keys](#primary-keys-ddl--runtime) |
 | select / insert / update / delete | [Queries & CRUD](#queries--crud) |
 | Soft delete | [Soft delete](#soft-delete) |
-| Complex joins → SQL views | [SQL views as tables](#sql-views-as-tables-recommended) |
+| Complex joins → SQL views | [SQL views via ViewTable](#sql-views-via-viewtable-recommended) |
 | Drivers & `db:migrate` | [Multi-DB & migrate](#multi-db--migrate) |
 | Connection packages (advanced) | [Under the hood](#under-the-hood-connection-stack) |
 | Mistakes | [Do / Don’t](#do--dont) |
@@ -57,7 +57,7 @@ Deep wiring (only if you need it): [Under the hood](#under-the-hood-connection-s
 5. Soft delete with `deleted_at` → `safeDeleteQuery()` / `restoreQuery()`.
 6. Non-`id` PK → `setPrimaryKey(...)` after `parent::__construct()`; match `Schema::primary`.
 7. Same Table class on Apache, Nginx, and OpenSwoole — do not fork connection logic.
-8. Prefer **SQL views + a Table class on the view** over complex JOINs in PHP ([SQL views as tables](#sql-views-as-tables-recommended)).
+8. Prefer **`ViewTable`** over complex JOINs in PHP ([SQL views via ViewTable](#sql-views-via-viewtable-recommended)).
 
 ---
 
@@ -309,99 +309,92 @@ Also: `activateQuery($id)`, `deactivateQuery($id)`.
 
 ---
 
-## SQL views as tables (recommended)
+## SQL views via `ViewTable` (recommended)
 
-GEMVC is built for **microservice-style** data access: keep each service’s queries simple. For reports, dashboards, or denormalized reads that would need heavy JOINs in PHP:
+GEMVC is built for **microservice-style** data access. For JOIN-heavy read models:
 
-1. Create a **SQL VIEW** in the database (joins, aggregates, filters live in SQL).
-2. Create a **`Table` subclass** whose properties match the **view columns**.
-3. Point `getTable()` at the **view name** (same as a physical table from GEMVC’s point of view).
-4. Use the normal fluent `select` / `whereEqual` / `orderBy` / `limit` / `run()` API — complex SELECT becomes easy.
+1. Extend **`Gemvc\Database\ViewTable`** (not a plain `Table`).
+2. Declare **public properties + `$_type_map`** matching view column **aliases** (flat, 1:1).
+3. Implement **`defineView(): string`** — compose other Table classes via `getTable()`; use `AS` aliases freely.
+4. Optionally implement **`viewDependsOn(): list<class-string<Table>>`** for `db:migrate --all` ordering.
+5. Migrate with `gemvc db:migrate YourViewTable` or `gemvc db:migrate --all` — creates/replaces a **VIEW**, never a physical table from props.
 
-**Why**
-
-- Avoids sprawling JOINs and N+1 patterns in application code  
-- Lets the database optimizer own the heavy query  
-- Keeps PHP typed, filterable, and list-friendly (`createList`, `findable`, …)  
-- View definition can change without rewriting PHP JOIN trees  
-
-**Read-oriented:** treat view Tables as **SELECT-first**. Do not rely on `insertSingleQuery` / `updateSingleQuery` / `deleteByIdQuery` against a view unless your engine supports updatable views and you know the rules. Writes stay on the underlying base tables.
+**Read-only:** `insertSingleQuery` / `updateSingleQuery` / `deleteByIdQuery` (and soft-delete) hard-fail on `ViewTable`. Writes stay on base Tables. Nest collections (payments, etc.) in the **Model** after flat selects — views do not do 1:n.
 
 ### Example
-
-```sql
--- Run once in the DB (migration SQL / DBA script — not gemvc db:migrate on a view class)
-CREATE VIEW user_order_summary AS
-SELECT
-    u.id          AS user_id,
-    u.name        AS user_name,
-    u.email       AS email,
-    COUNT(o.id)   AS order_count,
-    COALESCE(SUM(o.total), 0) AS order_total
-FROM users u
-LEFT JOIN orders o ON o.user_id = u.id
-GROUP BY u.id, u.name, u.email;
-```
 
 ```php
 <?php
 namespace App\Table;
 
-use Gemvc\Database\Table;
+use Gemvc\Database\ViewTable;
 
-/**
- * Read model over view `user_order_summary`.
- * Properties = view output columns (exact names).
- */
-class UserOrderSummaryTable extends Table
+class UserOrderSummaryTable extends ViewTable
 {
     public int $user_id;
     public string $user_name;
     public string $email;
     public int $order_count;
-    public string $order_total; // decimal → string
+    public string $order_total;
 
     protected array $_type_map = [
         'user_id' => 'int',
         'user_name' => 'string',
         'email' => 'string',
         'order_count' => 'int',
-        'order_total' => 'decimal',
+        'order_total' => 'string',
     ];
 
     public function getTable(): string
     {
-        return 'user_order_summary'; // view name
+        return 'user_order_summary';
     }
 
-    public function defineSchema(): array
+    /** @return list<class-string<\Gemvc\Database\Table>> */
+    public function viewDependsOn(): array
     {
-        // Views are not created by db:migrate — return empty (or omit unused helpers)
-        return [];
+        return [UserTable::class, OrderTable::class];
     }
 
-    public function selectByEmail(string $email): null|static
+    public function defineView(): string
     {
-        $rows = $this->select()
-            ->whereEqual('email', $email)
-            ->limit(1)
-            ->run();
-        return $rows[0] ?? null;
+        $u = (new UserTable())->getTable();
+        $o = (new OrderTable())->getTable();
+
+        return <<<SQL
+            SELECT
+                u.id AS user_id,
+                u.name AS user_name,
+                u.email,
+                COUNT(o.id) AS order_count,
+                COALESCE(SUM(o.total), 0) AS order_total
+            FROM {$u} u
+            LEFT JOIN {$o} o ON o.user_id = u.id
+            GROUP BY u.id, u.name, u.email
+        SQL;
     }
 }
 ```
 
+```bash
+gemvc db:migrate UserTable
+gemvc db:migrate OrderTable
+gemvc db:migrate UserOrderSummaryTable
+# or:
+gemvc db:migrate --all
+```
+
 ```php
-// Complex reporting SELECT — still a simple Table query
 $summaries = (new UserOrderSummaryTable())
     ->select()
-    ->whereEqual('order_count', 0)      // or use findable from Request in a list endpoint
-    ->orderBy('order_total', false)     // DESC
+    ->orderBy('order_total', false)
     ->limit(50)
     ->run();
 ```
 
-**AI rule:** Prefer a view + Table for multi-table reads inside one service. Do **not** invent Eloquent-style `hasMany` / magic joins. Across services, call HTTP APIs instead of joining foreign databases.
+**Verify:** dialect `viewExists($pdo, 'user_order_summary')` (MySQL/Postgres information_schema; SQLite `sqlite_master`). SQLite replaces views via DROP + CREATE.
+
+**AI rule:** Prefer `ViewTable` for multi-table reads inside one service. Do **not** invent Eloquent-style `hasMany`. Across services, call HTTP APIs.
 
 ---
 
@@ -465,7 +458,7 @@ Do not `new PdoConnection()` from `app/`. Package READMEs live under `vendor/gem
 - Use `decimal` + string for money; `protected` for secrets; `_` for relations
 - Query via fluent API; check `getError()` after writes
 - Configure `DB_*` once
-- Use **SQL views + view Table classes** for complex multi-table SELECTs
+- Use **SQL views + `ViewTable`** for complex multi-table SELECTs
 
 **Don’t**
 
@@ -474,7 +467,7 @@ Do not `new PdoConnection()` from `app/`. Package READMEs live under `vendor/gem
 - Invent Eloquent-style relations or string-concat SQL / giant JOINs in PHP
 - Assume `create:table` without `gemvc/cli-dev`
 - Fork Table code per webserver
-- Run `db:migrate` expecting it to create views — manage view DDL in SQL separately
+- Call `db:migrate` on a plain `Table` that points at a view — use `ViewTable` instead
 
 ---
 

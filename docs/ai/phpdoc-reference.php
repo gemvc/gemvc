@@ -128,6 +128,9 @@ interface ControllerReference
  * Base Table only declares abstract getTable(). defineSchema() is a subclass
  * convention (public) used by db:migrate / generators via method_exists — not
  * declared on the base class.
+ *
+ * For SQL views use ViewTableReference (extends Table) — never migrate a plain
+ * Table that only points at a view name.
  */
 interface TableReference
 {
@@ -160,6 +163,24 @@ interface TableReference
     public function getError(): ?string;
     public function setError(?string $error): void;
     public function setRequest(?\Gemvc\Http\Request $request): void;
+}
+
+/**
+ * Gemvc\Database\ViewTable extends Table
+ *
+ * defineView() + flat column props/aliases. Row writes hard-fail.
+ * Migrate via ViewGenerator (db:migrate / --all).
+ */
+interface ViewTableReference
+{
+    public function getTable(): string;
+    public function defineView(): string;
+    /** @return list<class-string<\Gemvc\Database\Table>> */
+    public function viewDependsOn(): array;
+    public function createViewQuery(?\PDO $pdo = null): bool;
+    public function replaceViewQuery(?\PDO $pdo = null): bool;
+    public function dropViewQuery(?\PDO $pdo = null): bool;
+    // select/where/run inherited; insert/update/delete blocked
 }
 
 interface SchemaReference

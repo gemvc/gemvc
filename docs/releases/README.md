@@ -11,4 +11,6 @@ These files are large (~1–2k lines). They are **not** part of the AI mandatory
 
 **Env name note (APM):** older release text may have said `TRACEKIT_API_URL`; current TraceKit provider env is **`TRACEKIT_ENDPOINT`**. Prefer unified `APM_*` from `gemvc/apm-contracts` — see [apm.md](../guides/apm.md).
 
-Current framework version in docs: **5.10.0** — see root [README](../../README.md) and [docs/README](../README.md).
+Current framework version in docs: **5.11.0** — see root [README](../../README.md) and [docs/README](../README.md).
+
+**5.11.0:** first-class SQL views via **`ViewTable`** / `ViewGenerator`, `db:migrate` for views, and **`db:migrate --all`**. Guide: [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-recommended).

@@ -44,6 +44,10 @@ class TableGenerator {
      * @return bool True if the table was created successfully, false otherwise
      */
     public function createTableFromObject(object $object, ?string $tableName = null): bool {
+        if ($object instanceof ViewTable) {
+            $this->error = 'Refusing to CREATE TABLE for ViewTable. Use ViewGenerator / db:migrate on the ViewTable class.';
+            return false;
+        }
         if (!$tableName) {
             if (!method_exists($object, 'getTable')) {
                 $this->error = 'public function getTable() not found in object';
@@ -397,6 +401,10 @@ class TableGenerator {
         bool $enforceNotNull = false,
         $defaultValue = null
     ): bool {
+        if ($object instanceof ViewTable) {
+            $this->error = 'Refusing to update a physical table for ViewTable. Use ViewGenerator / db:migrate on the ViewTable class.';
+            return false;
+        }
         if (!$this->pdo) {
             $this->error = 'No PDO connection.';
             return false;

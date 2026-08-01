@@ -910,24 +910,32 @@ DB_NAME=myapp
 
 ### `db:migrate` - Run Migration
 
-Create or update database tables based on PHP class definitions.
+Create or update **tables** from `Table` classes, or **views** from `ViewTable` classes.
 
 ```bash
-gemvc db:migrate <TableClassName> [flags]
+gemvc db:migrate <TableOrViewClassName> [flags]
+gemvc db:migrate --all [flags]
 ```
 
-> **Multi-database support**: `db:migrate` generates correct, engine-specific DDL for **MySQL**, **PostgreSQL**, and **SQLite** — it auto-detects the engine from your `.env`'s `DB_DRIVER` (via `DialectResolver`) and requires no changes to your `Table` classes. Known limitation: SQLite cannot `ALTER` an existing column's type/nullability/default or drop a primary key without a full table rebuild (unsupported operations are skipped with a clear warning instead of emitting invalid SQL); adding/removing columns, new tables, and indexes work normally on all three engines.
+> **Multi-database support**: `db:migrate` generates engine-specific DDL for **MySQL**, **PostgreSQL**, and **SQLite** via `DialectResolver`. **ViewTable:** MySQL/Postgres use `CREATE OR REPLACE VIEW`; SQLite uses `DROP VIEW` + `CREATE VIEW`. Known table limitation: SQLite cannot fully `ALTER` column type/nullability without rebuild (skipped with warning).
 
 **Flags**:
-- `--force` - Remove columns not in class definition
-- `--enforce-not-null` - Enforce NOT NULL constraints
-- `--sync-schema` - Sync schema constraints (unique, indexes, foreign keys)
+- `--all` - Migrate every `app/table/*Table.php` (FK order for tables, then views via `viewDependsOn()`)
+- `--force` - Remove columns not in class definition (tables only)
+- `--enforce-not-null` - Enforce NOT NULL constraints (tables only)
+- `--sync-schema` - Sync schema constraints (tables only)
 - `--default <value>` - Set default value for new columns (space-separated; **not** `--default=value`)
 
 **Examples**:
 ```bash
 # Create/update table from class
 gemvc db:migrate UserTable
+
+# Create/replace SQL view from ViewTable for Example Table class extended from ViewTable and its name is UserAccessTable
+gemvc db:migrate UserAccessTable
+
+# All tables then views (safe order)
+gemvc db:migrate --all
 
 # Force sync (remove missing columns)
 gemvc db:migrate UserTable --force
@@ -940,20 +948,16 @@ gemvc db:migrate UserTable --default Active
 ```
 
 **What It Does**:
-- Creates table if it doesn't exist
-- Adds new columns for new properties
-- Updates column types if changed
-- Updates nullable status
-- Manages indexes
-- Applies schema constraints (unique, foreign keys)
-- Removes obsolete constraints (with `--sync-schema`)
+- **Table:** create/sync columns, indexes, schema constraints
+- **ViewTable:** `CREATE OR REPLACE VIEW` from `defineView()` (never invents a physical table from props)
+- `--all`: topological order by `Schema::foreignKey`, then `ViewTable` classes
 
 **How It Works**:
-1. Reads your Table class (e.g., `UserTable.php`)
-2. Analyzes properties and types
-3. Generates SQL schema
-4. Compares with existing database
-5. Creates/updates as needed
+1. Loads `app/table/{Class}.php` as `App\Table\{Class}`
+2. If `instanceof ViewTable` → `ViewGenerator`; else `TableGenerator`
+3. Compares/creates as needed
+
+See [database.md — SQL views via ViewTable](database.md#sql-views-via-viewtable-recommended).
 
 ---
 

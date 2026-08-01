@@ -1,6 +1,6 @@
 # GEMVC Canonical Guide for AI Assistants
 
-Framework hub: **gemvc/library 5.10.0**.
+Framework hub: **gemvc/library 5.11.0**.
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
 ---
@@ -9,7 +9,7 @@ Framework hub: **gemvc/library 5.10.0**.
 
 | Package | Job |
 |---------|-----|
-| `gemvc/library` | Framework hub: Bootstrap, ApiService, Table, Request, `bin/gemvc` |
+| `gemvc/library` | Framework hub: Bootstrap, ApiService, Table, ViewTable, Request, `bin/gemvc` |
 | **`gemvc/helper`** | **Core:** TypeChecker, CryptHelper, ProjectHelper, File/Image — [guides/helper.md](../guides/helper.md) |
 | **`gemvc/http-client`** | **Core:** outbound sync/async HTTP — [guides/http-client.md](../guides/http-client.md) |
 | `gemvc/connection-contracts` | DB interfaces |
@@ -32,7 +32,7 @@ Apps install **`composer require gemvc/library`**; **helper** and **http-client*
 API (app/api/)           → schema validation, auth, thin — [guides/api.md](../guides/api.md)
 Controller (app/controller/) → orchestration, map request → model — [guides/controller.md](../guides/controller.md)
 Model (app/model/)       → business rules / workflows; Table-backed (`extends XTable`) **or** composition (plain class + other Models); may return `JsonResponse` **or** PHP types — [guides/model.md](../guides/model.md)
-Table (app/table/)       → DB only (extends Table) — [guides/database.md](../guides/database.md)
+Table (app/table/)       → DB only: `extends Table` (physical) or `extends ViewTable` (SQL view) — [guides/database.md](../guides/database.md)
 ```
 
 The stack is **not** hard-enforced by the framework: you can call a Model from API, or put SQL in a Controller, and requests will still run. That is **strongly discouraged**. Use all four layers for HTTP services unless you have an exceptional, deliberate reason not to. Flexibility belongs *inside* each layer (e.g. composition Models, return styles) — not in skipping layers.
@@ -45,6 +45,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 | Controller | `UserController.php` | `UserController extends Controller` |
 | Model | `UserModel.php` | `UserModel extends UserTable` **or** composition class (no Table) |
 | Table | `UserTable.php` | `UserTable extends Table` |
+| View | `UserAccessTable.php` | `UserAccessTable extends ViewTable` |
 
 **URL (Apache/Nginx):** `/api/{Service}/{method}` → `App\Api\User::create()`  
 **OpenSwoole:** path segments come from `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults `1` / `2`) — there is no automatic `api` hop; configure sections so `{Service}` / `{method}` land correctly (see [architecture.md](../guides/architecture.md)).
@@ -252,7 +253,7 @@ Magic controller access (ApiService only): `$this->UserController->create()` (sa
 
 ## Table / database
 
-Extend `Table`. **You do not manage pooling, PDO, or row hydration** — Table + `connection-pdo` / `connection-openswoole` (via `DatabaseManagerFactory`) do that. Same Table code on Apache, Nginx, and OpenSwoole. Details: [database.md](../guides/database.md).
+Extend `Table` (physical) or `ViewTable` (SQL view). **You do not manage pooling, PDO, or row hydration** — Table + `connection-pdo` / `connection-openswoole` (via `DatabaseManagerFactory`) do that. Same Table/`ViewTable` code on Apache, Nginx, and OpenSwoole. Details: [database.md](../guides/database.md).
 
 ```php
 class UserTable extends Table {
@@ -305,7 +306,7 @@ $this->restoreQuery();     // restore
 **Multi-DB** (`DB_DRIVER=mysql|pgsql|sqlite`): DSN from connection packages; dialects auto-selected for `db:migrate`.  
 Limitations: SQLite cannot ALTER column type/null/default without rebuild (migrate skips); no FULLTEXT on Postgres/SQLite; type map SQL differs by dialect (see [database.md](../guides/database.md)).
 
-**Complex reads:** prefer a **SQL VIEW** + Table class on the view (`getTable()` = view name) instead of JOINs in PHP — [database.md — SQL views](../guides/database.md#sql-views-as-tables-recommended).
+**Complex reads — `ViewTable`:** extend `Gemvc\Database\ViewTable` (not a plain `Table`). Flat column props + `$_type_map` match SELECT aliases; `defineView(): string` composes other Tables via `getTable()`; optional `viewDependsOn()` for `--all`. Row insert/update/delete hard-fail. Nest JSON in the Model. Migrate: `gemvc db:migrate YourViewTable` or `--all`. Guide: [database.md — SQL views via ViewTable](../guides/database.md#sql-views-via-viewtable-recommended).
 
 ---
 
@@ -316,6 +317,8 @@ Limitations: SQLite cannot ALTER column type/null/default without rebuild (migra
 ```bash
 gemvc init --swoole|--apache|--nginx [--db=mysql|postgres|sqlite]
 gemvc db:migrate UserTable
+gemvc db:migrate UserAccessTable   # ViewTable → CREATE OR REPLACE VIEW
+gemvc db:migrate --all             # FK order, then views
 ```
 
 **Dev commands** — require `composer require --dev gemvc/cli-dev`:
@@ -375,16 +378,19 @@ Visit `/api/index/document`.
 
 ## DO
 
-- Extend `ApiService` / `SwooleApiService`, `Controller`, `Table`
+- Extend `ApiService` / `SwooleApiService`, `Controller`, `Table` / `ViewTable`
 - Use `callController` + `createModel` on Apache/Nginx path
 - Use `_` for relations; `protected` for secrets
 - PHPStan Level 9 types; nullable returns with null checks
-- Match `$_type_map` to columns
+- Match `$_type_map` to columns / view aliases
+- Use `ViewTable` + `db:migrate` for SQL views (never migrate a plain `Table` as a view)
 
 ## DON'T
 
-- Laravel routes / Eloquent / magic relations
+- Laravel routes / Eloquent / magic relations / view 1:n nesting in SQL
 - Skip layers on normal HTTP services (runtime allows; strongly discouraged) or invent routes files
 - Manual sanitization or string-concat SQL
+- Point a plain `Table` at a view name and run `db:migrate` (creates a physical table)
+- Invent PDO `CREATE VIEW` helpers when `ViewTable` exists
 - `float` for money
 - Copy `callController` / magic `$this->XController` into `SwooleApiService` subclasses without checking — those helpers are on `ApiService` only

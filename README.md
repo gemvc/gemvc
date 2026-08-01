@@ -9,7 +9,7 @@
 [![Nginx](https://img.shields.io/badge/Nginx-Supported-009639.svg?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.10.0 — APCu rate limiting (`requireRateLimit`), MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
+**Latest:** 5.11.0 — **ViewTable** (SQL views + `db:migrate --all`), APCu rate limiting (`requireRateLimit`), MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
 
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
 
@@ -47,7 +47,7 @@ After the request reaches the server, Bootstrap sanitizes the incoming request a
 app/api/          → endpoints + validation
 app/controller/   → orchestration
 app/model/        → business rules / workflows
-app/table/        → database
+app/table/        → database (Table or ViewTable)
 ```
 
 ### `app/api/` — endpoints + validation
@@ -80,7 +80,7 @@ Details: [model.md](docs/guides/model.md)
 
 ### `app/table/` — database
 
-Columns as typed properties, `$_type_map`, `defineSchema()`, query builder, insert/update/delete. Prefer **SQL views as Table classes** for JOIN-heavy reads instead of inventing ORM relations. Multi-DB via connection packages under the hood.
+Columns as typed properties, `$_type_map`. Physical tables: `extends Table` + `defineSchema()`. **SQL views: `extends ViewTable`** + `defineView()` / `viewDependsOn()` — migrate with `gemvc db:migrate` or `--all` (read-only for row writes). Multi-DB via connection packages under the hood.
 
 Details: [database.md](docs/guides/database.md)
 

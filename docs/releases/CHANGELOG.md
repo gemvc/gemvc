@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [5.11.0] - 2026-08-01
+
+### Added
+
+- `Gemvc\Database\ViewTable` — first-class SQL **VIEW** base class (`defineView()`, `viewDependsOn()`, `createViewQuery` / `replaceViewQuery` / `dropViewQuery`)
+- `Gemvc\Database\ViewGenerator` — CREATE/REPLACE/DROP VIEW (no column inference from PHP props)
+- `Gemvc\Database\TableMigrateOrder` — FK-safe table order + views last for `db:migrate --all`
+- Dialect view DDL: `viewExists()`, `createOrReplaceViewSql()`, `dropViewSql()` (MySQL / PostgreSQL / SQLite)
+- `gemvc db:migrate --all` — migrate all `app/table/*Table.php` classes in safe order
+- `gemvc db:migrate ViewTableClass` — creates/replaces a VIEW (never a physical table from view props)
+- Unit tests: `tests/Unit/Database/ViewTableTest.php`
+
+### Changed
+
+- `DbMigrate` routes `instanceof ViewTable` to `ViewGenerator`; normal `Table` path unchanged
+- `TableGenerator` refuses to CREATE/UPDATE physical tables for `ViewTable` instances
+- Developer assistant migrate UI migrates views via `ViewGenerator`
+- Row insert/update/delete (and soft-delete helpers) hard-fail on `ViewTable` (read-only)
+
+### Documentation
+
+- Guides (`database.md`, `cli-reference.md`), AI pack, `docs/.cursor/rules`, skills updated for ViewTable
+
 ## [5.10.0] - 2026-07-26
 
 ### Added

@@ -8,7 +8,13 @@ This directory contains the PHPUnit test suite for the GEMVC framework.
 tests/
 ├── Unit/                          # Unit tests (70%)
 │   ├── Core/                      # Core framework tests
-│   │   └── SecurityManagerTest.php
+│   │   ├── SecurityManagerTest.php
+│   │   └── RateLimiterTest.php
+│   ├── Database/                  # ORM / migrate / dialects
+│   │   ├── ViewTableTest.php      # ViewTable, ViewGenerator, --all order
+│   │   ├── SchemaGeneratorTest.php
+│   │   ├── SqliteIntegrationTest.php
+│   │   └── Dialect/
 │   └── Http/                      # HTTP layer tests
 │       ├── ApacheRequestTest.php
 │       ├── RequestTest.php
@@ -41,8 +47,9 @@ vendor/bin/phpunit tests/Unit
 # Integration tests only
 vendor/bin/phpunit tests/Integration
 
-# Security tests
-vendor/bin/phpunit tests/Integration/Security
+# Database tests
+vendor/bin/phpunit tests/Unit/Database
+vendor/bin/phpunit tests/Unit/Database/ViewTableTest.php
 ```
 
 ### Run Specific Test Class
@@ -80,12 +87,12 @@ Current test coverage focuses on:
 ### ✅ Completed
 - **Security Tests**: XSS prevention, input sanitization, path protection
 - **HTTP Layer**: Request sanitization, Response factory, JWT tokens
-- **Core Framework**: SecurityManager path blocking
+- **Core Framework**: SecurityManager path blocking; RateLimiter (APCu)
+- **Database (5.11.0)**: `ViewTable` / `ViewGenerator` / dialect view DDL / `TableMigrateOrder` (`ViewTableTest`)
 
 ### 🚧 In Progress
 - Core framework classes (ApiService, Controller)
-- Database layer tests
-- CLI command tests
+- Broader database layer / CLI command tests
 
 ## 🧪 Test Examples
 

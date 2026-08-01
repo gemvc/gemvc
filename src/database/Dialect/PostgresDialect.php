@@ -373,6 +373,28 @@ class PostgresDialect implements SqlDialectInterface
         return null;
     }
 
+    public function viewExists(PDO $pdo, string $view): bool
+    {
+        $sql = "SELECT COUNT(*) FROM information_schema.views
+                WHERE table_schema = current_schema() AND table_name = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$view]);
+        return ((int) $stmt->fetchColumn()) > 0;
+    }
+
+    public function createOrReplaceViewSql(string $viewName, string $selectSql): array
+    {
+        $q = $this->quoteIdentifier($viewName);
+        $body = trim($selectSql);
+        $body = rtrim($body, "; \t\n\r");
+        return ["CREATE OR REPLACE VIEW {$q} AS {$body}"];
+    }
+
+    public function dropViewSql(string $viewName): string
+    {
+        return 'DROP VIEW IF EXISTS ' . $this->quoteIdentifier($viewName);
+    }
+
     public function dropConstraintSql(string $table, string $constraintName): string
     {
         $t = $this->quoteIdentifier($table);

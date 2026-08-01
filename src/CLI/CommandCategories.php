@@ -13,7 +13,7 @@ class CommandCategories
             'init' => 'Initialize a new GEMVC project with server configuration (Apache/Swoole/Nginx)',
         ],
         'Database (production)' => [
-            'db:migrate' => 'Create or update a specific table (db:migrate TableClassName)',
+            'db:migrate' => 'Create/update a table or ViewTable (db:migrate ClassName | db:migrate --all)',
         ],
     ];
 
@@ -54,7 +54,11 @@ class CommandCategories
     {
         return [
             'init' => 'vendor/bin/gemvc init',
-            'db:migrate' => 'vendor/bin/gemvc db:migrate UserTable',
+            'db:migrate' => [
+                'vendor/bin/gemvc db:migrate UserTable',
+                'vendor/bin/gemvc db:migrate UserAccessTable',
+                'vendor/bin/gemvc db:migrate --all',
+            ],
         ];
     }
 

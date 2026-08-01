@@ -91,13 +91,13 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 - **Create-table PK/AI:** property named **`id`** → dialect `idColumnDefinition()` (MySQL `INT… PRIMARY KEY`, Postgres `SERIAL PRIMARY KEY`)
 - **`Schema::primary` / `autoIncrement`:** API exists; `SchemaGenerator::applyPrimaryKeyConstraint` is a **no-op today** — not DDL
 - **Runtime ORM identity:** `_detectPrimaryKey()` prefers `id`; else call `setPrimaryKey($col, 'int'|'string'|'uuid')` **after** `parent::__construct()`
-- SQL views: recommended for JOIN-heavy reads; **do not** `db:migrate` a view Table (creates physical table) until first-class views exist
+- SQL views: extend **`ViewTable`**, `defineView()` + column props; `db:migrate` / `--all` creates VIEW; row writes blocked
 
 ## Query path vs QueryBuilder
 
 - Normal app path: `Table::select()->where()->run()` → `UniversalQueryExecuter` (+ optional DB APM via Request)
 - `QueryBuilder` (`src/database/QueryBuilder.php`): separate ad-hoc Select/Insert/Update/Delete; check `getError()` after build
-- Migrate DDL: `TableGenerator` + `SchemaGenerator` + `DialectResolver` (PDO driver → mysql/pgsql/sqlite; unknown/mock → Mysql)
+- Migrate DDL: `TableGenerator` + `ViewGenerator` + `SchemaGenerator` + `DialectResolver` (PDO driver → mysql/pgsql/sqlite; unknown/mock → Mysql)
 
 ## APM
 
