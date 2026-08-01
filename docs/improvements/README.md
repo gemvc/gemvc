@@ -20,3 +20,4 @@ Do **Phase 2a (trust)** before **Phase 2b (mesh DX)**.
 - Security / auth: [guides/security.md](../guides/security.md)
 - HTTP client: [guides/http-client.md](../guides/http-client.md)
 - cli-dev view list brief (sibling repo): `cli-dev/cli-dev-update.md`
+- Cross-agent front doors: [`AGENTS.md`](../../AGENTS.md), [`CLAUDE.md`](../../CLAUDE.md), [`GEMINI.md`](../../GEMINI.md), [`llms.txt`](../../llms.txt)

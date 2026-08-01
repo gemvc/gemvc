@@ -4,6 +4,16 @@ Single entry point for humans and AI assistants. Framework version: **5.11.0**.
 
 ## For AI assistants (read first)
 
+**Tool front doors** (same truth; use the one your agent loads):
+
+| File | Audience |
+|------|----------|
+| [`../AGENTS.md`](../AGENTS.md) | Universal (Copilot, …) |
+| [`../CLAUDE.md`](../CLAUDE.md) | Claude Code |
+| [`../GEMINI.md`](../GEMINI.md) | Antigravity (overrides `AGENTS.md` on conflict) |
+| [`../.cursorrules`](../.cursorrules) | Cursor |
+| [`../llms.txt`](../llms.txt) | LLM / crawler map |
+
 Mandatory path (3 files only):
 
 1. [`ai/INDEX.md`](ai/INDEX.md) — reading order and hard rules  

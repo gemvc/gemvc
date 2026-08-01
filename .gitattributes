@@ -3,5 +3,3 @@
 phpunit.xml     export-ignore
 .github         export-ignore
 .gitattributes  export-ignore
-.cursor         export-ignore
-/.cursor        export-ignore

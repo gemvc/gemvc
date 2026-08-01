@@ -1,0 +1,34 @@
+# GEMVC
+
+> Server-agnostic PHP REST API framework (Apache / Nginx / OpenSwoole). Four layers: API → Controller → Model → Table/ViewTable. Not Laravel or Symfony.
+
+Version: 5.11.0 (gemvc/library)
+
+## AI must read first
+
+- docs/ai/INDEX.md: Mandatory AI reading order and hard rules
+- docs/ai/CANONICAL.md: Architecture, auth, CRUD, Do/Don't
+- docs/ai/CORE_REFERENCE.md: Framework class signatures
+- AGENTS.md: Universal agent front door (all tools)
+- CLAUDE.md: Claude Code entry
+- GEMINI.md: Antigravity entry (overrides AGENTS.md on conflict)
+- .cursorrules: Cursor short rules (same truth)
+
+## Docs
+
+- docs/README.md: Human + AI documentation index
+- docs/guides/ecosystem.md: gemvc/* package map
+- docs/guides/api.md: API layer
+- docs/guides/controller.md: Controller + createList
+- docs/guides/model.md: Model layer
+- docs/guides/database.md: Table, ViewTable, migrate
+- docs/guides/installation.md: Install → first API
+- docs/guides/cli.md: CLI workflows
+- docs/guides/security.md: JWT / hardening
+- docs/guides/apm.md: APM tracing
+- docs/guides/api-documentation.md: Auto @http docs
+
+## Optional mirrors
+
+- docs/ai/core-reference.jsonc
+- docs/ai/phpdoc-reference.php

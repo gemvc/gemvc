@@ -275,7 +275,35 @@ abstract class AbstractInit extends Command
         $this->createDirectories();
         $this->copyTemplatesFolder();
         $this->copyReadmeToRoot();
+        $this->copyAgentFrontDoorsToRoot();
         $this->info("✓ Project structure created");
+    }
+
+    /**
+     * Copy AGENTS.md / CLAUDE.md / GEMINI.md so Claude Code, Antigravity, etc. load GEMVC rules in the new app.
+     */
+    protected function copyAgentFrontDoorsToRoot(): void
+    {
+        $commonPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . 'common';
+        if (!is_dir($commonPath)) {
+            $commonPath = dirname(dirname(dirname(dirname(__DIR__))))
+                . DIRECTORY_SEPARATOR . 'vendor'
+                . DIRECTORY_SEPARATOR . 'gemvc'
+                . DIRECTORY_SEPARATOR . $this->packageName
+                . DIRECTORY_SEPARATOR . 'src'
+                . DIRECTORY_SEPARATOR . 'startup'
+                . DIRECTORY_SEPARATOR . 'common';
+        }
+
+        foreach (['AGENTS.md', 'CLAUDE.md', 'GEMINI.md'] as $file) {
+            $source = $commonPath . DIRECTORY_SEPARATOR . $file;
+            if (!is_file($source)) {
+                $this->warning("Agent front door not found: {$source}");
+                continue;
+            }
+            $dest = $this->basePath . DIRECTORY_SEPARATOR . $file;
+            $this->fileSystem->copyFileWithConfirmation($source, $dest, $file);
+        }
     }
     
     /**

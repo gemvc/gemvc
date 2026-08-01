@@ -11,6 +11,8 @@
 
 **Latest:** 5.11.0 — **ViewTable** (SQL views + `db:migrate --all`), APCu rate limiting (`requireRateLimit`), MySQL / PostgreSQL / SQLite, `requireAuth()`, decimal types, modular CLI (`gemvc/cli-dev`).
 
+> **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
+
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
 
 ## Start in 30 seconds
@@ -132,13 +134,21 @@ Two of the most important GEMVC packages (required with `gemvc/library`):
 
 GEMVC is **not** Laravel or Symfony. Do **not** invent routes files or Eloquent patterns.
 
-Read these three files in order (mandatory):
+**Front doors (pick your tool, then the same pack):**
+
+| Tool | Start here |
+|------|------------|
+| Any agent | [`AGENTS.md`](AGENTS.md) |
+| Claude Code | [`CLAUDE.md`](CLAUDE.md) |
+| Antigravity | [`GEMINI.md`](GEMINI.md) (overrides `AGENTS.md` on conflict) |
+| Cursor | [`.cursorrules`](.cursorrules) |
+| Catalog / crawlers | [`llms.txt`](llms.txt) |
+
+Then read these three files in order (mandatory):
 
 1. [docs/ai/INDEX.md](docs/ai/INDEX.md) — reading order and hard rules  
 2. [docs/ai/CANONICAL.md](docs/ai/CANONICAL.md) — 4-layer architecture, `requireAuth()`, CRUD patterns, decimal, multi-DB, CLI split, Do/Don’t  
-3. [docs/ai/CORE_REFERENCE.md](docs/ai/CORE_REFERENCE.md) — framework class signatures (Request/Response/Table/Controller) — not HTTP endpoint docs  
-
-Cursor also loads [`.cursorrules`](.cursorrules), which points at the same AI pack.
+3. [docs/ai/CORE_REFERENCE.md](docs/ai/CORE_REFERENCE.md) — framework class signatures (Request/Response/Table/ViewTable/Controller) — not HTTP endpoint docs  
 
 Optional mirrors: [docs/ai/core-reference.jsonc](docs/ai/core-reference.jsonc), [docs/ai/phpdoc-reference.php](docs/ai/phpdoc-reference.php).
 

@@ -85,4 +85,4 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 - [architecture.md](architecture.md) — request flows (code-grounded)
 - [source-map.md](source-map.md) — must-know classes + footguns (`src/` + `vendor/gemvc`)
 - [improve.md](improve.md) — package boundaries, verify, doc sync
-- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [docs/improvements/](../../../docs/improvements/)
+- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [AGENTS.md](../../../AGENTS.md) · [CLAUDE.md](../../../CLAUDE.md) · [GEMINI.md](../../../GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [docs/improvements/](../../../docs/improvements/)
