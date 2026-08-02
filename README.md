@@ -17,7 +17,8 @@ GEMVC is an opinionated framework.
 
 Before evaluating the framework or reading the API documentation, read:
 
- **ARCHITECTURE.md**
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
+- [`docs/guides/architecture.md`](docs/guides/architecture.md) — *how* requests flow through the code
 
 Understanding the architectural assumptions behind GEMVC is essential.
 

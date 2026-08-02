@@ -1,6 +1,6 @@
 # The Architecture of GEMVC
 
-> **Version:** 1.0 (Draft)
+> **Version:** 5.12.0 (philosophy document)
 >
 > This document defines the architectural philosophy behind GEMVC.
 >
@@ -11,6 +11,8 @@
 > API documentation explains *how*.
 >
 > This document explains *why*.
+>
+> How-to / request flow: [`docs/guides/architecture.md`](docs/guides/architecture.md)
 
 ---
 
@@ -18,26 +20,16 @@
 
 ```mermaid
 flowchart TD
-
-Goal["Maintainable Backend Microservices"]
-
-Goal --> Microservice["Microservice First"]
-
-Goal --> Consistency["Architectural Consistency"]
-
-Microservice --> Database["One Service → One Database"]
-
-Database --> Runtime["Runtime Independence"]
-
-Runtime --> Contracts["Contracts"]
-
-Contracts --> Components["Small Focused Components"]
-
-Components --> Layers["Four Layer Architecture"]
-
-Layers --> Security["Security by Principle"]
-
-Security --> Maintainability["Long-term Maintainability"]
+    Goal["Maintainable Backend Microservices"]
+    Goal --> Microservice["Microservice First"]
+    Goal --> Consistency["Architectural Consistency"]
+    Microservice --> Database["One Service → One Database"]
+    Database --> Runtime["Runtime Independence"]
+    Runtime --> Contracts["Contracts"]
+    Contracts --> Components["Small Focused Components"]
+    Components --> Layers["Four Layer Architecture"]
+    Layers --> Security["Security by Principle"]
+    Security --> Maintainability["Long-term Maintainability"]
 ```
 
 GEMVC is an opinionated backend framework.
@@ -81,21 +73,11 @@ This document describes those architectural assumptions.
 
 ```mermaid
 flowchart LR
-
-General["General Purpose Framework"]
-
-General --> Flexibility
-
-Flexibility --> ManyArchitectures["Many Architectural Styles"]
-
-
-Opinionated["Opinionated Framework"]
-
-Opinionated --> Consistency
-
-Consistency --> GEMVC
-
-GEMVC --> Backend["Backend Microservices"]
+    General["General Purpose Framework"] --> Flexibility
+    Flexibility --> ManyArchitectures["Many Architectural Styles"]
+    Opinionated["Opinionated Framework"] --> Consistency
+    Consistency --> GEMVC
+    GEMVC --> Backend["Backend Microservices"]
 ```
 
 General-purpose frameworks maximize flexibility.
@@ -118,28 +100,17 @@ It is designed to solve one problem exceptionally well:
 
 ```mermaid
 flowchart TD
-
-Goal["Maintainable Backend Microservices"]
-
-Goal --> P1["Microservice First"]
-
-Goal --> P2["Opinionated Architecture"]
-
-Goal --> P3["Architectural Constraints"]
-
-P1 --> Runtime
-
-P1 --> Database
-
-P2 --> Layers
-
-P2 --> Security
-
-P3 --> ViewTable
-
-P3 --> SmallORM
-
-P3 --> Contracts
+    Goal["Maintainable Backend Microservices"]
+    Goal --> P1["Microservice First"]
+    Goal --> P2["Opinionated Architecture"]
+    Goal --> P3["Architectural Constraints"]
+    P1 --> Runtime
+    P1 --> Database
+    P2 --> Layers
+    P2 --> Security
+    P3 --> ViewTable
+    P3 --> SmallORM
+    P3 --> Contracts
 ```
 
 Every major architectural decision inside GEMVC originates from a single question:
@@ -158,24 +129,7 @@ Everything else follows from that answer.
 
 ```mermaid
 flowchart TD
-
-Application
-
-↓
-
-Service
-
-↓
-
-API
-
-↓
-
-Business Logic
-
-↓
-
-Database
+    Application --> Service --> API --> BusinessLogic["Business Logic"] --> Database
 ```
 
 Every GEMVC application is assumed to be an independent backend microservice.
@@ -196,18 +150,9 @@ This assumption simplifies the entire architecture.
 
 ```mermaid
 flowchart LR
-
-UserService["User Service"]
-
---> UserDB[(User Database)]
-
-OrderService["Order Service"]
-
---> OrderDB[(Order Database)]
-
-PaymentService["Payment Service"]
-
---> PaymentDB[(Payment Database)]
+    UserService["User Service"] --> UserDB[(User Database)]
+    OrderService["Order Service"] --> OrderDB[(Order Database)]
+    PaymentService["Payment Service"] --> PaymentDB[(Payment Database)]
 ```
 
 Each service owns exactly one database.
@@ -231,28 +176,7 @@ This principle provides:
 
 ```mermaid
 flowchart TD
-
-Frontend
-
-↓
-
-API
-
-↓
-
-Controller
-
-↓
-
-Model
-
-↓
-
-Table
-
-↓
-
-Database
+    Frontend --> API --> Controller --> Model --> Table --> Database
 ```
 
 Frontend applications communicate only with Services.
@@ -271,28 +195,7 @@ This separation protects clients from internal refactoring.
 
 ```mermaid
 flowchart TD
-
-Client
-
-↓
-
-API
-
-↓
-
-Controller
-
-↓
-
-Model
-
-↓
-
-Table
-
-↓
-
-Database
+    Client --> API --> Controller --> Model --> Table --> Database
 ```
 
 | Layer | Responsibility |
@@ -312,26 +215,11 @@ Responsibilities never overlap.
 
 ```mermaid
 flowchart TD
-
-Application
-
-↓
-
-Contracts
-
-↓
-
-Runtime Implementation
-
-↓
-
-PHP-FPM
-
-Apache
-
-OpenSwoole
-
-FrankenPHP
+    Application --> Contracts
+    Contracts --> RuntimeImpl["Runtime Implementation"]
+    RuntimeImpl --> PHPFPM["PHP-FPM / Apache / Nginx"]
+    RuntimeImpl --> OpenSwoole
+    RuntimeImpl --> FrankenPHP["FrankenPHP (future)"]
 ```
 
 Business code never depends on runtime implementations.
@@ -348,36 +236,12 @@ Changing the runtime should not require application changes.
 
 ```mermaid
 flowchart TD
-
-HTTP Request
-
-↓
-
-API Boundary
-
-↓
-
-Authentication
-
-↓
-
-Authorization
-
-↓
-
-Validation
-
-↓
-
-Rate Limiting
-
-↓
-
-Controller
-
-↓
-
-Model
+    HTTPRequest["HTTP Request"] --> APIBoundary["API Boundary"]
+    APIBoundary --> Authentication
+    Authentication --> Authorization
+    Authorization --> Validation
+    Validation --> RateLimiting["Rate Limiting"]
+    RateLimiting --> Controller --> Model
 ```
 
 Security belongs at the service boundary.
@@ -391,7 +255,7 @@ Whenever possible:
 
 should execute before business logic.
 
-Secure behaviour should be the default.
+Secure behaviour should be the default (`ProtectedApiService` / `requireAuth()`, schema validation, rate-limit drivers).
 
 ---
 
@@ -399,20 +263,7 @@ Secure behaviour should be the default.
 
 ```mermaid
 flowchart LR
-
-Developer
-
--->
-
-Code
-
--->
-
-Architecture
-
--->
-
-Behaviour
+    Developer --> Code --> Architecture --> Behaviour
 ```
 
 Hidden behaviour increases complexity.
@@ -427,26 +278,15 @@ Developers should understand application behaviour by reading the source code.
 
 ```mermaid
 flowchart TD
-
-GEMVC
-
---> Runtime
-
---> Database
-
---> Security
-
---> HTTP
-
---> CLI
-
---> Templates
-
---> APM
-
---> Contracts
-
---> ViewTable
+    GEMVC --> Runtime
+    GEMVC --> Database
+    GEMVC --> Security
+    GEMVC --> HTTP
+    GEMVC --> CLI
+    GEMVC --> Templates
+    GEMVC --> APM
+    GEMVC --> Contracts
+    GEMVC --> ViewTable
 ```
 
 Every component solves one problem.
@@ -469,24 +309,11 @@ Examples include:
 
 ```mermaid
 flowchart TD
-
-Application
-
-↓
-
-Connection Contract
-
-↓
-
-Runtime Package
-
-↓
-
-connection-pdo
-
-connection-openswoole
-
-future-runtime
+    Application --> ConnectionContract["Connection Contract"]
+    ConnectionContract --> RuntimePackage["Runtime Package"]
+    RuntimePackage --> ConnectionPdo["connection-pdo"]
+    RuntimePackage --> ConnectionSwoole["connection-openswoole"]
+    RuntimePackage --> FutureRuntime["future-runtime"]
 ```
 
 The runtime decides **how** connections are managed.
@@ -505,26 +332,11 @@ Application code remains identical.
 
 ```mermaid
 flowchart TD
-
-One Service
-
-↓
-
-One Database
-
-↓
-
-One Connection Coordinator
-
-↓
-
-Runtime
-
-↓
-
-PDO
-
-OpenSwoole Pool
+    OneService["One Service"] --> OneDatabase["One Database"]
+    OneDatabase --> Coordinator["One Connection Coordinator"]
+    Coordinator --> Runtime
+    Runtime --> PDO
+    Runtime --> OpenSwoolePool["OpenSwoole Pool"]
 ```
 
 Connection management follows architectural assumptions.
@@ -544,20 +356,11 @@ This design keeps application code independent from infrastructure.
 
 ```mermaid
 flowchart TD
-
-Constraints
-
-↓
-
-Backend Only
-
-Small Services
-
-Small ORM
-
-Read Models
-
-Runtime Independence
+    Constraints --> BackendOnly["Backend Only"]
+    Constraints --> SmallServices["Small Services"]
+    Constraints --> SmallORM["Small ORM"]
+    Constraints --> ReadModels["Read Models"]
+    Constraints --> RuntimeIndependence["Runtime Independence"]
 ```
 
 GEMVC intentionally accepts constraints.
@@ -592,40 +395,14 @@ Read operations and write operations are intentionally separated.
 
 ```mermaid
 flowchart TD
-
-Microservice First
-
-↓
-
-One Database
-
-↓
-
-Simple Runtime
-
-↓
-
-Simple Connections
-
-↓
-
-Small ORM
-
-↓
-
-ViewTable
-
-↓
-
-Fast CRUD Generation
-
-↓
-
-Predictable Architecture
-
-↓
-
-Long-term Maintainability
+    MicroserviceFirst["Microservice First"] --> OneDatabase["One Database"]
+    OneDatabase --> SimpleRuntime["Simple Runtime"]
+    SimpleRuntime --> SimpleConnections["Simple Connections"]
+    SimpleConnections --> SmallORM["Small ORM"]
+    SmallORM --> ViewTable
+    ViewTable --> FastCRUD["Fast CRUD Generation"]
+    FastCRUD --> Predictable["Predictable Architecture"]
+    Predictable --> Maintainability["Long-term Maintainability"]
 ```
 
 This diagram summarizes the philosophy of GEMVC.
@@ -640,24 +417,7 @@ They are consequences of earlier architectural assumptions.
 
 ```mermaid
 flowchart TD
-
-Architecture
-
-↓
-
-Principles
-
-↓
-
-Decisions
-
-↓
-
-Features
-
-↓
-
-Implementation
+    Architecture --> Principles --> Decisions --> Features --> Implementation
 ```
 
 Features do not define GEMVC.
@@ -680,24 +440,7 @@ If the answer is no, the feature should be reconsidered.
 
 ```mermaid
 flowchart TD
-
-Philosophy
-
-↓
-
-Architecture
-
-↓
-
-Framework
-
-↓
-
-Application
-
-↓
-
-Maintainable Backend Microservices
+    Philosophy --> Architecture --> Framework --> Application --> Goal["Maintainable Backend Microservices"]
 ```
 
 GEMVC is not a general-purpose PHP framework.
