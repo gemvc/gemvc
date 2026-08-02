@@ -11,6 +11,16 @@
 
 **Latest:** 5.12.0 — rate-limit drivers (`apcu` / `redis` / `both` / `none`) + `requireRateLimit*()`, `ProtectedApiService` / `ProtectedSwooleApiService`, `forUpdate()` + atomic transfer docs. Also **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
 
+## Before You Continue
+
+GEMVC is an opinionated framework.
+
+Before evaluating the framework or reading the API documentation, read:
+
+ **ARCHITECTURE.md**
+
+Understanding the architectural assumptions behind GEMVC is essential.
+
 > **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
