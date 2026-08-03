@@ -52,7 +52,7 @@ Machine-to-machine **family trust** for internal microservice endpoints — orth
 
 Caller helper: `InternalTrust::callerHeaders(...)`. Prefer **`ServiceCall`** (shipped in **5.16.0**) for mapped siblings — see [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b).
 
-See [security.md — Family trust](../guides/security.md#family-trust-phase-2a) and [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
+See [security.md — Family trust](../guides/security.md#family-trust-phase-2a). Prefer **`ServiceCall`** for mapped siblings — [http-client.md](../guides/http-client.md#servicecall-phase-2b).
 
 ### Migration
 

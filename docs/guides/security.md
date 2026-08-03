@@ -411,7 +411,7 @@ Caller helper: `InternalTrust::callerHeaders($method, $path, $rawBody)` (uses `G
 
 Outbound low-level example: [http-client.md — Family trust](http-client.md#family-trust-outbound-hmac).
 
-**Does not** replace private networking / mTLS. User JWT alone never satisfies this gate. Full plan: [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
+**Does not** replace private networking / mTLS. User JWT alone never satisfies this gate. Caller DX: [http-client.md — ServiceCall](http-client.md#servicecall-phase-2b).
 
 ### Rate limiting (optional)
 

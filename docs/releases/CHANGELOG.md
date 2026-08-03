@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b); plan [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md)
+- [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b); [security.md](../guides/security.md#family-trust-phase-2a)
 
 ## [5.15.0] - 2026-08-03
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- Locked design: [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md); guides [api.md](../guides/api.md) · [security.md](../guides/security.md)
+- Guides: [api.md](../guides/api.md) · [security.md](../guides/security.md#family-trust-phase-2a)
 
 ## [5.14.0] - 2026-08-03
 

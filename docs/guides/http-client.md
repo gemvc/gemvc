@@ -159,7 +159,7 @@ ServiceCall::to('billing')->async()->post('/api/Billing/log', $payload)->without
 | `sync()` / `async()` | Force `ApiCall` / `AsyncApiCall` |
 | `fireAndForget()` | Async only |
 
-Receiver still uses `$this->requireInternalService()`. Details: [security.md](security.md#family-trust-phase-2a) · [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md)
+Receiver still uses `$this->requireInternalService()`. Details: [security.md](security.md#family-trust-phase-2a).
 
 ---
 

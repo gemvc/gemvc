@@ -1,3 +1,7 @@
+![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
+
+# GEMVC Framework - Release Notes
+
 ## ServiceCall mesh DX (Phase 2b)
 
 Caller-side mesh DX on top of Phase 2a family trust (`5.15.0`).
@@ -42,5 +46,30 @@ Receiver still uses `$this->requireInternalService()`.
 
 - https://github.com/gemvc/gemvc/blob/main/docs/guides/http-client.md#servicecall-phase-2b
 - https://github.com/gemvc/gemvc/blob/main/docs/guides/security.md#family-trust-phase-2a
-- https://github.com/gemvc/gemvc/blob/main/docs/improvements/phase-2-trust-and-mesh.md
 - https://github.com/gemvc/gemvc/blob/main/docs/releases/CHANGELOG.md
+- https://github.com/gemvc/gemvc/blob/main/docs/releases/RELEASE_NOTES.md
+
+---
+
+## Links
+
+- **Documentation**: https://gemvc.de
+- **GitHub**: https://github.com/gemvc/gemvc
+- **Issues**: https://github.com/gemvc/gemvc/issues
+
+---
+
+**Upgrade Command**:
+```bash
+composer update gemvc/library
+```
+
+**Breaking Changes**: None  
+**Deprecations**: None  
+**Minimum PHP Version**: 8.2+  
+**Recommended PHP Version**: 8.4+
+
+---
+
+## [Gemvc PHP Framework built for Microservices](https://gemvc.de)
+### Made with ❤️ by Ali Khorsandfard

@@ -148,5 +148,5 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 ## Related
 
 - [architecture.md](architecture.md)
-- [docs/improvements/](../../../docs/improvements/) — shared backlog (shipped)
+- [docs/improvements/](../../../docs/improvements/) — **active backlog only** (not shipped history)
 - [docs/ai/CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)

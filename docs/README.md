@@ -126,6 +126,9 @@ Narrative notes (what/why/migration), including **5.16.0** ServiceCall mesh DX, 
 ### [releases/CHANGELOG.md](releases/CHANGELOG.md)
 Keep-a-Changelog bullets for “is feature X in version Y?”
 
+### [improvements/README.md](improvements/README.md)
+**Active backlog only** (Schema PK stretch, UI views, gRPC, mesh stretch). Shipped work is in guides / RELEASE_NOTES — do not re-implement.
+
 ---
 
 ## Sibling packages (not duplicated here)
