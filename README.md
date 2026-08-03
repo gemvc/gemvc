@@ -26,15 +26,19 @@ It ships **multi-runtime execution**, **JWT auth**, **built-in RateLimiter** wit
 
 | Capability | What you get |
 |------------|----------------|
-| **Four-layer architecture** | **API → Controller → Model → Table / ViewTable** (not MVC). Hard separation of concerns — not optional “folders.” Naming: `User` / `UserController` / `UserModel` / `UserTable`. Philosophy: [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| **Backend microservices only** | Opinionated for **REST API services** — not monoliths, CMS, Blade/Twig apps, or traditional MVC sites. Consistency over “do everything.” [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| **Four-layer architecture** | **API → Controller → Model → Table / ViewTable** (**not** MVC). Hard separation — not optional “folders.” Naming: `User` / `UserController` / `UserModel` / `UserTable`. |
 | **API = public service contract** | Owns **Authentication**, **Authorization**, **Validation**, **Rate Limiting**, and **Documentation** — then `callController`. No business rules here. [api.md](docs/guides/api.md) |
+| **Explicit over magic** | Behaviour is readable from `app/` source — schemas, allowlists, explicit queries — not hidden Eloquent-style relation graphs. |
 | **Composition Models** | Table-backed Models **or** plain classes that hold other Models (workflows, façades, typed results) — return `JsonResponse` or PHP types. [model.md](docs/guides/model.md) |
 | **Designed for microservices** | Independent backend services, HTTP between services, **one service owns one database** — no shared-DB monolith habits. |
 | **True multi-runtime** | **One codebase** on **Apache, Nginx, FrankenPHP classic/worker, and OpenSwoole**. Unified `ApiService` / `ProtectedApiService`; bootstraps + adapters per runtime (`Bootstrap`, `FrankenPhpBootstrap`, `SwooleBootstrap`). [openswoole.md](docs/guides/openswoole.md) · [frankenphp.md](docs/guides/frankenphp.md) |
+| **OpenSwoole WebSockets** | First-class **`SwooleWebSocketHandler`** on the OpenSwoole runtime — not a bolt-on afterthought. |
 | **Unified Request / Response** | One cross-server `Request`; `Response::*` factory (incl. **209** updated, **210** deleted, **429** rate limit); `JsonResponse` / `HtmlResponse`. |
 | **Zero routes file** | `/api/{Service}/{method}` auto-maps (Apache/Nginx/FrankenPHP). OpenSwoole: `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop). |
 | **Controller DX** | `callController(...)` **or** magic `$this->UserController->…`; always prefer `createModel()` so APM / Request reach DB work. |
 | **Easy install** | `composer require gemvc/library` → **`gemvc init --swoole\|--apache\|--nginx\|--frankenphp`** (+ `--db=…`, Docker Compose options). [installation.md](docs/guides/installation.md) |
+| **AI-ready** | Root [`.cursorrules`](.cursorrules), [`llms.txt`](llms.txt), and `docs/ai/*` so coding agents follow GEMVC — not invent Laravel. |
 
 ### Security & edge
 
@@ -42,7 +46,7 @@ It ships **multi-runtime execution**, **JWT auth**, **built-in RateLimiter** wit
 |------------|----------------|
 | **JWT built in** | **`JWTToken`** create / verify / renew (access / refresh / login); `requireAuth()` / **`ProtectedApiService`** — 401 vs 403. [security.md](docs/guides/security.md) |
 | **Schema validation** | `definePostSchema` / `defineGetSchema` / **`validateOrFail`** — mass-assignment safe; rich TypeChecker types (`email`, `uuid`, `decimal:p,s`, `json`/`jsonb`, …). |
-| **Built-in RateLimiter** | Global `.env` (`REQUEST_RATE_LIMIT_PER_SEC`, scope ip\|token\|both, block / fail-closed) and/or `requireRateLimit*()`. Drivers: **`apcu`** \| **`redis`** \| **`both`** \| **`none`**. No silent store fallback. |
+| **Built-in RateLimiter** | Global via `.env` only (`REQUEST_RATE_LIMIT_PER_SEC` + driver) — **Bootstrap applies automatically** — and/or per-service `requireRateLimit*()`. Scope ip\|token\|both; block / fail-closed. Drivers: **`apcu`** \| **`redis`** \| **`both`** \| **`none`**. No silent store fallback. |
 | **Native Redis + APCu** | **`RedisManager`** (`REDIS_*`) and **APCu** — first-class backends for rate limiting and cache-style workloads. |
 | **Family trust (m2m)** | `requireInternalService()` — HMAC gate **orthogonal to end-user JWT** (`GEMVC_INTERNAL_SECRET`, rotation / skew supported). |
 | **Security by default** | Input sanitization, prepared statements, path deny (~**90% automatic**): Apache `.htaccess` · Nginx `nginx.conf` · FrankenPHP **Caddyfile** · OpenSwoole `SecurityManager`. |
@@ -52,7 +56,7 @@ It ships **multi-runtime execution**, **JWT auth**, **built-in RateLimiter** wit
 
 | Capability | What you get |
 |------------|----------------|
-| **Typed ORM + SQL views** | Properties = columns; fluent query builder; **`ViewTable`** + `defineView()` / `viewDependsOn()`; `gemvc db:migrate` / `--all`. Dialects via `DialectResolver`. |
+| **Typed ORM + SQL views** | **Small ORM by design** — properties = columns; fluent queries; **no Eloquent-style relation graphs**. **`ViewTable`** = first-class **SQL read models** (`defineView()` / `viewDependsOn()`); `gemvc db:migrate` / `--all`. Dialects via `DialectResolver`. |
 | **Multi-engine database** | **MySQL, MariaDB, PostgreSQL, and SQLite** — **same application code**, **zero Table/Model rewrites**. Flip `DB_DRIVER` / `.env` (`mysql` \| `pgsql` \| `sqlite`) or `gemvc init --db=…`. MariaDB uses the MySQL driver path. [database.md](docs/guides/database.md) |
 | **Soft delete** | `safeDeleteQuery()` / `restoreQuery()` (`deleted_at`) alongside hard delete. |
 | **Money-safe transfers** | `decimal` as `string` (never `float`); `decimalValuePost/Get`; `beginTransaction` + `forUpdate` + BCMath. |
@@ -60,15 +64,15 @@ It ships **multi-runtime execution**, **JWT auth**, **built-in RateLimiter** wit
 | **Built-in API documentation** | **No Swagger, no OpenAPI package, no third-party doc server.** Schemas + `@http` / `@description` / `@example` / `@hidden` + optional `mockResponse()` generate live HTML docs **and one-click Postman export** at `/api/index/document`. Your API contract *is* the docs. [api-documentation.md](docs/guides/api-documentation.md) |
 | **Async + mesh HTTP** | Sync **`ApiCall`**; **`AsyncApiCall`** / fire-and-forget; batch `AsyncHttpClient::executeAll()`; **`ServiceCall`** mesh (`GEMVC_SERVICES_JSON`, `->withInternalTrust()` / `->async()` / `->fireAndForget()`). [http-client.md](docs/guides/http-client.md) |
 | **Safe connection pooling** | **Contracts first:** `gemvc/connection-contracts` → runtime picks the manager. Classic SAPIs: **`gemvc/connection-pdo`** (safe PDO / optional persistent). OpenSwoole: **`gemvc/connection-openswoole`** — **true get/release pooling powered internally by Hyperf’s pool**. Same Table API either way. [ecosystem.md](docs/guides/ecosystem.md) · [openswoole.md](docs/guides/openswoole.md) |
-| **Worker memory safety** | Per-request object graph; no `die`/`exit` in the loop; recycle via `SWOOLE_MAX_REQUEST` / `FRANKENPHP_MAX_REQUESTS`. Hot reload in OpenSwoole **dev**. |
+| **Worker isolation** | Long-lived OpenSwoole / FrankenPHP workers: **new request object graph every hit**; identity/payload live on that `Request` — **not** worker globals or `Coroutine::getContext()`. No `die`/`exit` in the loop; recycle via `SWOOLE_MAX_REQUEST` / `FRANKENPHP_MAX_REQUESTS`. Hot reload in OpenSwoole **dev**. |
 
 ### Ops, APM & tooling
 
 | Capability | What you get |
 |------------|----------------|
-| **Native / pluggable APM** | `gemvc/apm-contracts` (`ApmFactory` / `ApmInterface`) + provider (`APM_NAME`); `callController` / `createModel` / `ApmTracingTrait`; flags `APM_TRACE_CONTROLLER`, `APM_TRACE_DB_QUERY`, sample rate. |
+| **Native / pluggable APM** | **Root span automatic** in Bootstrap / SwooleBootstrap — **no app code** required. `gemvc/apm-contracts` (`ApmFactory` / `ApmInterface`); swap providers via `APM_NAME` + package (e.g. TraceKit) **without rewriting `app/`**. `callController` / `createModel` / `ApmTracingTrait`; flags `APM_TRACE_CONTROLLER`, `APM_TRACE_DB_QUERY`. [apm.md](docs/guides/apm.md) |
 | **CLI + codegen** | Library: `gemvc init`, `db:migrate` / `--all`. Optional **`gemvc/cli-dev`**: `create:crud|service|controller|model|table`, `db:init|list|describe|…`, `admin:*`; customizable `{project}/templates/cli/`. [cli.md](docs/guides/cli.md) |
-| **Dev surfaces** | Built-in **Developer** / **GemvcAssistant** UI (dev); OpenSwoole **WebSocket** helper; **`NoCors`** CORS helper. |
+| **Dev surfaces** | Built-in **Developer** / **GemvcAssistant** UI (dev); **`NoCors`** CORS helper. |
 | **Modular ecosystem** | **`gemvc/helper`**, **`gemvc/http-client`**, **`connection-contracts` + `connection-pdo` + `connection-openswoole`**, APM, `cli-base` / `cli-dev` — contracts + implementations, not one monolith to fork. [ecosystem.md](docs/guides/ecosystem.md) |
 | **PHPStan level 9** | Strict typing — assistants must use [`docs/ai/CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md), not training-data Laravel APIs. PHP **≥ 8.2**. |
 
@@ -146,7 +150,7 @@ Details: [model.md](docs/guides/model.md)
 
 ### `app/table/` — database
 
-Columns as typed properties, `$_type_map` (`_` prefix ignored in CRUD; `protected` hidden from default SELECT). Physical tables: `extends Table` + `defineSchema()` (`Schema::unique|index|foreignKey|check|fullText`, …). **SQL views: `extends ViewTable`** + `defineView()` / `viewDependsOn()` — migrate with `gemvc db:migrate` or `--all` (views are read-only for row writes). Soft delete: `safeDeleteQuery()` / `restoreQuery()`.
+Columns as typed properties, `$_type_map` (`_` prefix ignored in CRUD; `protected` hidden from default SELECT). Physical tables: `extends Table` + `defineSchema()` (`Schema::unique|index|foreignKey|check|fullText`, …). **SQL views: `extends ViewTable`** + `defineView()` / `viewDependsOn()` — first-class **read models** (not Eloquent relations); migrate with `gemvc db:migrate` or `--all` (views are read-only for row writes). Soft delete: `safeDeleteQuery()` / `restoreQuery()`.
 
 **Engines:** **MySQL, MariaDB, PostgreSQL, SQLite** — write Table/Model once; switch engine with `.env` / `DB_DRIVER` only (no app code change). **Connections:** `connection-contracts` → **`connection-pdo`** (Apache / Nginx / FrankenPHP / CLI) or **`connection-openswoole`** (OpenSwoole **Hyperf** get/release pool). Same Table API either way.
 
