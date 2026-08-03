@@ -1,15 +1,26 @@
 # Releases & changelog
 
-**Audience:** humans checking what changed in a version. **AI assistants: skip unless the task is about a specific version or migration.**
+**Audience:** humans checking what changed in a version (framework users and maintainers). **AI assistants: skip unless the task is about a specific version or migration.**
+
+## File roles
 
 | File | Use when |
 |------|----------|
-| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Narrative what/why/migration for a release |
-| [CHANGELOG.md](CHANGELOG.md) | Short “is feature X in version Y?” |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Narrative what/why/migration. Top banner (logo + Full Changelog compare) points at the **latest** tag range. |
+| [CHANGELOG.md](CHANGELOG.md) | Short Keep-a-Changelog “is feature X in version Y?” |
+| `github-X.Y.Z.md` | **Ephemeral** paste body for the GitHub Release UI. Create before publish; **delete after** the release is live. Not an archive — GitHub + RELEASE_NOTES/CHANGELOG are canonical. |
 
-These files are large (~1–2k lines). They are **not** part of the AI mandatory path (`INDEX` → `CANONICAL` → `CORE_REFERENCE`). Do not load them for ordinary coding tasks.
+These narrative files are large (~1–2k lines). They are **not** part of the AI mandatory path (`INDEX` → `CANONICAL` → `CORE_REFERENCE`). Do not load them for ordinary coding tasks.
 
 **Env name note (APM):** older release text may have said `TRACEKIT_API_URL`; current TraceKit provider env is **`TRACEKIT_ENDPOINT`**. Prefer unified `APM_*` from `gemvc/apm-contracts` — see [apm.md](../guides/apm.md).
+
+## Release doc checklist
+
+1. Bump version mentions: root [README](../../README.md), [docs/README](../README.md), this file, front doors / `llms.txt` / `ARCHITECTURE.md` / `docs/ai/*` as needed
+2. Prepend [CHANGELOG](CHANGELOG.md) + [RELEASE_NOTES](RELEASE_NOTES.md); refresh RELEASE_NOTES banner compare (`prev...new`)
+3. Update topical guides + AI pack if APIs / env / CLI changed
+4. Drop finished rows from [`.cursor/improvements/`](../../.cursor/improvements/) (maintainer backlog); document shipped work in guides
+5. Optionally draft `github-X.Y.Z.md` → paste into GitHub Release → **delete the file** after publish
 
 Current framework version in docs: **5.16.0** — see root [README](../../README.md) and [docs/README](../README.md).
 

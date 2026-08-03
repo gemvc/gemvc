@@ -38,7 +38,7 @@ Before answering architecture questions, writing code, or suggesting refactors:
 3. [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) → [CANONICAL.md](../../../docs/ai/CANONICAL.md) → [CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)
 4. This skill’s depth: [architecture.md](architecture.md) → [source-map.md](source-map.md)
 5. Task guides from INDEX (ecosystem, api, controller, model, database, **openswoole**, **frankenphp**, security, apm, api-documentation, cli, helper, http-client)
-6. Shared backlog (active only): [docs/improvements/](../../../docs/improvements/)
+6. Maintainer backlog (active only): [../improvements/](../improvements/) — not for app developers
 7. Re-verify the specific files you will change in `src/` and/or `vendor/gemvc/<pkg>/` before proposing diffs
 
 ## Apache vs Swoole (never confuse)
@@ -73,7 +73,7 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 ## Improve GEMVC
 
 1. Change the right package (`library` `src/` vs helper / http-client / connection-* / apm-* / cli-*)
-2. Check [docs/improvements/](../../../docs/improvements/) for remaining work (Schema PK stretch; Phase 2 Redis/nonce stretch). **ViewTable / family trust / ServiceCall are shipped** — use guides.
+2. Check [../improvements/](../improvements/) for remaining library work (Schema PK stretch; mesh Redis/nonce). **ViewTable / family trust / ServiceCall are shipped** — use guides.
 3. Keep PHPStan level 9 ([phpstan.neon](../../../phpstan.neon)); no casual `@phpstan-ignore`
 4. Preserve: 4 layers, no routes file, schema-before-input, multi-runtime (`ApiService` / `ProtectedApiService`)
 
@@ -88,4 +88,4 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 - [protocol.md](protocol.md) — mandatory ingestion protocol (verbatim)
 - [architecture.md](architecture.md) — request flows (code-grounded)
 - [source-map.md](source-map.md) — must-know classes + footguns (`src/` + `vendor/gemvc`)
-- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [AGENTS.md](../../../AGENTS.md) · [CLAUDE.md](../../../CLAUDE.md) · [GEMINI.md](../../../GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [docs/improvements/](../../../docs/improvements/)
+- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [AGENTS.md](../../../AGENTS.md) · [CLAUDE.md](../../../CLAUDE.md) · [GEMINI.md](../../../GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [../improvements/](../improvements/) (maintainers)
