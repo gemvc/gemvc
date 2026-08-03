@@ -4,15 +4,16 @@ Single entry point for humans and AI assistants. Framework version: **5.16.0**.
 
 ## For AI assistants (read first)
 
-**Tool front doors** (same truth; use the one your agent loads):
+**Tool front doors** (full briefs under `docs/`; root stubs exist for tool auto-load / Packagist):
 
 | File | Audience |
 |------|----------|
-| [`../AGENTS.md`](../AGENTS.md) | Universal (Copilot, …) |
-| [`../CLAUDE.md`](../CLAUDE.md) | Claude Code |
-| [`../GEMINI.md`](../GEMINI.md) | Antigravity (overrides `AGENTS.md` on conflict) |
+| [`AGENTS.md`](AGENTS.md) | Universal (full brief) — root stub: [`../AGENTS.md`](../AGENTS.md) |
+| [`CLAUDE.md`](CLAUDE.md) | Claude Code — root stub: [`../CLAUDE.md`](../CLAUDE.md) |
+| [`GEMINI.md`](GEMINI.md) | Antigravity (overrides `AGENTS.md` on conflict) — root stub: [`../GEMINI.md`](../GEMINI.md) |
 | [`../.cursorrules`](../.cursorrules) | Cursor |
 | [`../llms.txt`](../llms.txt) | LLM / crawler map |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Philosophy (*why*) — not how-to |
 
 Mandatory path (3 files only):
 
@@ -85,6 +86,9 @@ Covers: what `Table` / `ViewTable` abstract; skeleton; types/PKs; CRUD; soft del
 ## Supporting guides
 
 Use after the layer guides, or when onboarding / ops / tooling.
+
+### [ARCHITECTURE.md](ARCHITECTURE.md)
+Philosophical *why* (constraints, microservice assumptions). Not request-flow how-to — use [architecture.md](guides/architecture.md) for `src/` internals.
 
 ### [architecture.md](guides/architecture.md)
 Framework internals and request flow: `src/` tree; design principles; Apache vs OpenSwoole diagrams; Bootstrap, ApiService, Controller, Security, Request/Response, Table; URL mapping. *Where code lives* — not Table schemas or JWT deep-dives.

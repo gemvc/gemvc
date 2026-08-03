@@ -12,7 +12,7 @@
 >
 > This document explains *why*.
 >
-> How-to / request flow: [`docs/guides/architecture.md`](docs/guides/architecture.md)
+> How-to / request flow: [`guides/architecture.md`](guides/architecture.md)
 
 ---
 
@@ -230,7 +230,7 @@ Runtime packages implement those contracts.
 
 Changing the runtime should not require application changes.
 
-FrankenPHP: classic mode by default (`StandardHttpRequest` + `Bootstrap` + PDO); worker mode is opt-in. Edge path security lives in the **Caddyfile** (not `.htaccess`). See [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
+FrankenPHP: classic mode by default (`StandardHttpRequest` + `Bootstrap` + PDO); worker mode is opt-in. Edge path security lives in the **Caddyfile** (not `.htaccess`). See [guides/frankenphp.md](guides/frankenphp.md).
 
 ---
 

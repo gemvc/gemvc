@@ -88,4 +88,4 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 - [protocol.md](protocol.md) — mandatory ingestion protocol (verbatim)
 - [architecture.md](architecture.md) — request flows (code-grounded)
 - [source-map.md](source-map.md) — must-know classes + footguns (`src/` + `vendor/gemvc`)
-- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [AGENTS.md](../../../AGENTS.md) · [CLAUDE.md](../../../CLAUDE.md) · [GEMINI.md](../../../GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [../improvements/](../improvements/) (maintainers)
+- [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) · [docs/AGENTS.md](../../../docs/AGENTS.md) · [docs/CLAUDE.md](../../../docs/CLAUDE.md) · [docs/GEMINI.md](../../../docs/GEMINI.md) · [docs/guides/ecosystem.md](../../../docs/guides/ecosystem.md) · [../improvements/](../improvements/) (maintainers)

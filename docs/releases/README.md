@@ -16,7 +16,7 @@ These narrative files are large (~1–2k lines). They are **not** part of the AI
 
 ## Release doc checklist
 
-1. Bump version mentions: root [README](../../README.md), [docs/README](../README.md), this file, front doors / `llms.txt` / `ARCHITECTURE.md` / `docs/ai/*` as needed
+1. Bump version mentions: root [README](../../README.md), [docs/README](../README.md), this file, front doors / `llms.txt` / [ARCHITECTURE.md](../ARCHITECTURE.md) / `docs/ai/*` as needed
 2. Prepend [CHANGELOG](CHANGELOG.md) + [RELEASE_NOTES](RELEASE_NOTES.md); refresh RELEASE_NOTES banner compare (`prev...new`)
 3. Update topical guides + AI pack if APIs / env / CLI changed
 4. Drop finished rows from [`.cursor/improvements/`](../../.cursor/improvements/) (maintainer backlog); document shipped work in guides

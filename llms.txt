@@ -9,14 +9,17 @@ Version: 5.16.0 (gemvc/library)
 - docs/ai/INDEX.md: Mandatory AI reading order and hard rules
 - docs/ai/CANONICAL.md: Architecture, auth, CRUD, Do/Don't
 - docs/ai/CORE_REFERENCE.md: Framework class signatures
-- AGENTS.md: Universal agent front door (all tools)
-- CLAUDE.md: Claude Code entry
-- GEMINI.md: Antigravity entry (overrides AGENTS.md on conflict)
+- docs/AGENTS.md: Universal agent front door (full brief)
+- docs/CLAUDE.md: Claude Code entry (full)
+- docs/GEMINI.md: Antigravity entry (overrides AGENTS.md on conflict)
+- AGENTS.md / CLAUDE.md / GEMINI.md: Root stubs (tool auto-load; Packagist when docs/ omitted)
 - .cursorrules: Cursor short rules (same truth)
+- docs/ARCHITECTURE.md: Philosophy (*why*)
 
 ## Docs
 
 - docs/README.md: Human + AI documentation index
+- docs/guides/architecture.md: Internals / request flow (*how*)
 - docs/guides/ecosystem.md: gemvc/* package map
 - docs/guides/api.md: API layer + rate limit (DRIVER apcu/redis/both/none, requireRateLimit*)
 - docs/guides/controller.md: Controller + createList

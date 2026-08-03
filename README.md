@@ -18,12 +18,12 @@ GEMVC is an opinionated framework.
 
 Before evaluating the framework or reading the API documentation, read:
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
 - [`docs/guides/architecture.md`](docs/guides/architecture.md) — *how* requests flow through the code
 
 Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md). For FrankenPHP (classic + worker, Caddyfile security), read [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md).
 
-> **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
+> **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** root stubs [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) / [`GEMINI.md`](GEMINI.md) auto-load; **full briefs** live under [`docs/AGENTS.md`](docs/AGENTS.md) (etc.). Then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
 
@@ -150,11 +150,12 @@ GEMVC is **not** Laravel or Symfony. Do **not** invent routes files or Eloquent 
 
 | Tool | Start here |
 |------|------------|
-| Any agent | [`AGENTS.md`](AGENTS.md) |
-| Claude Code | [`CLAUDE.md`](CLAUDE.md) |
-| Antigravity | [`GEMINI.md`](GEMINI.md) (overrides `AGENTS.md` on conflict) |
+| Any agent | [`docs/AGENTS.md`](docs/AGENTS.md) (root stub: [`AGENTS.md`](AGENTS.md)) |
+| Claude Code | [`docs/CLAUDE.md`](docs/CLAUDE.md) (root stub: [`CLAUDE.md`](CLAUDE.md)) |
+| Antigravity | [`docs/GEMINI.md`](docs/GEMINI.md) (overrides `AGENTS` on conflict; root stub: [`GEMINI.md`](GEMINI.md)) |
 | Cursor | [`.cursorrules`](.cursorrules) |
 | Catalog / crawlers | [`llms.txt`](llms.txt) |
+| Philosophy (*why*) | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 
 Then read these three files in order (mandatory):
 

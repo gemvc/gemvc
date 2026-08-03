@@ -1,6 +1,6 @@
 # GEMVC Framework - AI Assistant Context
 
-**Universal front door:** [`AGENTS.md`](AGENTS.md) · Claude Code: [`CLAUDE.md`](CLAUDE.md) · Antigravity: [`GEMINI.md`](GEMINI.md) · map: [`llms.txt`](llms.txt)  
+**Universal front door:** [`docs/AGENTS.md`](docs/AGENTS.md) (root stub [`AGENTS.md`](AGENTS.md)) · Claude: [`docs/CLAUDE.md`](docs/CLAUDE.md) · Antigravity: [`docs/GEMINI.md`](docs/GEMINI.md) · map: [`llms.txt`](llms.txt)  
 **Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/CORE_REFERENCE.md`  
 **Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`). **Core:** `gemvc/helper`, `gemvc/http-client` (see `docs/guides/helper.md`, `docs/guides/http-client.md`).
 

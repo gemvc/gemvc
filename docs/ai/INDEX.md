@@ -2,7 +2,7 @@
 
 **GEMVC is NOT Laravel or Symfony.** Do not invent routes files, Eloquent, or magic relations.
 
-**How you got here:** root [`AGENTS.md`](../../AGENTS.md) / [`CLAUDE.md`](../../CLAUDE.md) / [`GEMINI.md`](../../GEMINI.md) / [`.cursorrules`](../../.cursorrules) / [`llms.txt`](../../llms.txt) all point at this pack. Keep using **this** hierarchy for depth — do not invent from training data.
+**How you got here:** full briefs [`../AGENTS.md`](../AGENTS.md) / [`../CLAUDE.md`](../CLAUDE.md) / [`../GEMINI.md`](../GEMINI.md); root stubs [`../../AGENTS.md`](../../AGENTS.md) / [`../../CLAUDE.md`](../../CLAUDE.md) / [`../../GEMINI.md`](../../GEMINI.md); Cursor [`.cursorrules`](../../.cursorrules); map [`../../llms.txt`](../../llms.txt). Keep using **this** hierarchy for depth — do not invent from training data.
 
 ## Mandatory reading (in order)
 
