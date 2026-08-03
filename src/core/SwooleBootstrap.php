@@ -146,6 +146,9 @@ class SwooleBootstrap
         } catch (\Gemvc\Core\RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
+        } catch (\Gemvc\Core\ValidationException $e) {
+            $this->recordExceptionInApm($e);
+            return Response::badRequest($e->getMessage());
         } catch (\Throwable $e) {
             return Response::notFound($e->getMessage());
         }
@@ -165,6 +168,10 @@ class SwooleBootstrap
         } catch (\Gemvc\Core\RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
+        } catch (\Gemvc\Core\ValidationException $e) {
+            // validateOrFail() / throw-style validation in the method body
+            $this->recordExceptionInApm($e);
+            return Response::badRequest($e->getMessage());
         } catch (\Throwable $e) {
             // Record exception in APM if available (via Request object)
             $this->recordExceptionInApm($e);

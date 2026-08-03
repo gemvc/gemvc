@@ -57,10 +57,11 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 | File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` |
 | APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | **Absent** |
 | Auth default | Prefer `ProtectedApiService` for CRUD | Prefer `ProtectedSwooleApiService` for CRUD |
-| `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` |
+| `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` (legacy) |
+| `validateOrFail` / `validateStringOrFail` | throws `ValidationException` | throws (SwooleBootstrap → 400) |
 | `requireAuth` / `requireRateLimit*` | both throw; Bootstrap catch | same throws; SwooleBootstrap catch |
 
-Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that over validate* helpers for portable code.
+Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that, or `validateOrFail()`, for portable code.
 
 ## Auth status codes (`Request::auth` → `authenticate` / `authorize`)
 

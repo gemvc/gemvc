@@ -65,11 +65,12 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 | Auth by default | `Protected*` yes; plain `Api*` no | `Protected*` yes; plain `Swoole*` no |
 | `callController()` | yes (APM proxy) on both Apache bases | **no** |
 | Magic `$this->UserController` | yes on both Apache bases | **no** |
-| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` |
+| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` (legacy) |
+| Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` | same (SwooleBootstrap → 400) |
 | `requireAuth()` | yes | yes |
 | `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | yes | yes |
 
-Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw).
+Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw). Prefer that, or `validateOrFail()` for throw-style on **both** servers. Do not rely on Swoole’s legacy `validatePosts()` return style for new code.
 
 Same `app/` layering either way; only the API base class and how you invoke Controllers differ. Details: [http-lifecycle.md](http-lifecycle.md).
 
@@ -181,6 +182,13 @@ if (!$this->request->definePostSchema([
 ```
 
 Also: `defineGetSchema`, `definePutSchema`, `definePatchSchema`, `validateStringPosts(['name' => '2|100'])`.
+
+Throw-style (both Apache/Nginx and OpenSwoole):
+
+```php
+$this->validateOrFail(['name' => 'string', 'email' => 'email']);
+$this->validateStringOrFail(['name' => '2|100']);
+```
 
 Types: `string`, `int`, `email`, `url`, `ip`, `decimal`, `uuid`, … — [CORE_REFERENCE](../ai/CORE_REFERENCE.md).
 

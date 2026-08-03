@@ -100,6 +100,10 @@ interface ApiServiceReference
     /** @return \Gemvc\Core\ControllerTracingProxy */
     public function callController(\Gemvc\Core\Controller $controller);
     public function index(): \Gemvc\Http\JsonResponse;
+    /** @throws \Gemvc\Core\ValidationException */
+    public function validateOrFail(array $post_schema): void;
+    /** @throws \Gemvc\Core\ValidationException */
+    public function validateStringOrFail(array $post_string_schema): void;
     public function validatePosts(array $post_schema): void;
     public static function mockResponse(string $method): array;
 }
@@ -109,6 +113,10 @@ interface SwooleApiServiceReference
     public function __construct(\Gemvc\Http\Request $request);
     /** @throws \Gemvc\Core\AuthException */
     public function requireAuth(?array $roles = []): void;
+    /** @throws \Gemvc\Core\ValidationException */
+    public function validateOrFail(array $post_schema): void;
+    /** @throws \Gemvc\Core\ValidationException */
+    public function validateStringOrFail(array $post_string_schema): void;
     public function validatePosts(array $post_schema): ?\Gemvc\Http\JsonResponse;
     public function validateStringPosts(array $post_string_schema): ?\Gemvc\Http\JsonResponse;
     // No callController / magic $this->XController

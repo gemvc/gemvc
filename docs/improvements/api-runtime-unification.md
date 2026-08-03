@@ -1,7 +1,7 @@
 # Unified `ApiService` (runtime) — plan of record
 
-**Status:** Planned (docs-first; no inheritance merge yet).  
-**AI:** implement only when explicitly tasked. Do **validation consistency before** `SwooleApiService extends ApiService`.
+**Status:** Phase 0 done · **Phase 1 done** (validation consistency) · Phase 2–3 planned.  
+**AI:** implement Phase 2+ only when explicitly tasked. Do **not** merge inheritance until Phase 2 shared behavior is extracted.
 
 ## Goals
 
@@ -24,7 +24,7 @@
 
 There is **no** `NginxRequest` and none is needed.
 
-Canonical validation already works on both servers:
+Canonical validation (unchanged, works on both servers):
 
 ```php
 if (!$this->request->definePostSchema([...])) {
@@ -32,7 +32,15 @@ if (!$this->request->definePostSchema([...])) {
 }
 ```
 
-Legacy helper mismatch (do **not** unify parents until reconciled):
+Cross-runtime throw helpers (**Phase 1 — shipped**):
+
+```php
+$this->validateOrFail(['email' => 'email']);           // throws ValidationException
+$this->validateStringOrFail(['name' => '2|100']);      // throws ValidationException
+// Bootstrap + SwooleBootstrap catch → HTTP 400
+```
+
+Legacy helper mismatch (still present; do **not** unify parents until Phase 2+):
 
 ```php
 // ApiService
@@ -49,12 +57,13 @@ protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 
 - State Nginx = shared `ApacheRequest` / PHP-FPM path; remove “NginxRequest coming soon”.
 - Document `Table::noLimit()`, `Table::all()`, `Response::tooManyRequests()`.
 
-### Phase 1 — Validation consistency (keep both bases)
+### Phase 1 — Validation consistency (**done**)
 
-1. Add shared `validateOrFail(array $schema): void` that always throws `ValidationException`.
-2. Catch `ValidationException` in `SwooleBootstrap` → `Response::badRequest(...)`.
-3. Point templates + guides at `definePostSchema` / `validateOrFail`; leave existing `validatePosts` signatures unchanged for one cycle.
-4. Optional: keep `safeValidatePosts()` as return-style shim for old Swoole call sites.
+1. Added `validateOrFail()` / `validateStringOrFail()` on `ApiService` and `SwooleApiService` (always throw `ValidationException`).
+2. `SwooleBootstrap` catches `ValidationException` → `Response::badRequest(...)` (constructor + method).
+3. Docs/AI pack prefer `definePostSchema` / `validateOrFail`; legacy `validatePosts` signatures left unchanged.
+4. Kept `safeValidatePosts()` / `safeValidateStringPosts()` as return-style shims on Swoole.
+5. Tests: `tests/Unit/Core/ValidateOrFailTest.php`.
 
 ### Phase 2 — Shared behavior
 
@@ -71,7 +80,7 @@ protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 
 
 - Only Apache/Nginx bootstrap may terminate after sending output.
 - OpenSwoole bootstrap always returns `JsonResponse` / `ResponseInterface`; convert exceptions there.
-- Do not change `validatePosts()` behavior silently — introduce `validateOrFail()` first.
+- Do not change `validatePosts()` behavior silently — `validateOrFail()` is the shared throw API.
 
 ## Related
 

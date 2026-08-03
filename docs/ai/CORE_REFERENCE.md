@@ -90,7 +90,9 @@ public function requireRateLimitBoth(int $perSec = 20, string $scope = 'both', i
 protected function callController(Controller $c): ControllerTracingProxy
 // Magic: $this->UserController → ControllerTracingProxy
 public function index(): JsonResponse
-protected function validatePosts(array $schema): void
+protected function validateOrFail(array $schema): void          // throws ValidationException (preferred throw helper)
+protected function validateStringOrFail(array $schema): void    // throws ValidationException
+protected function validatePosts(array $schema): void           // throws; same as validateOrFail on this class
 public static function mockResponse(string $method): array
 ```
 
@@ -121,8 +123,11 @@ public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $
 public function requireRateLimitApcu(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 public function requireRateLimitRedis(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 public function requireRateLimitBoth(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
-protected function validatePosts(array $schema): ?JsonResponse
+protected function validateOrFail(array $schema): void              // throws; preferred (SwooleBootstrap → 400)
+protected function validateStringOrFail(array $schema): void        // throws
+protected function validatePosts(array $schema): ?JsonResponse      // legacy return style
 protected function validateStringPosts(array $schema): ?JsonResponse
+protected function safeValidatePosts(array $schema): ?JsonResponse  // alias of validatePosts
 // No callController / magic controllers — instantiate Controller yourself
 ```
 

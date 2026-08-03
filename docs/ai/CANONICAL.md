@@ -64,11 +64,12 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 |--|--------------|-------------------|
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
 | APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
-| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` |
+| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` (legacy) |
+| Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` → `ValidationException` (Bootstrap **and** SwooleBootstrap → 400) | same |
 | Auth whole service | Prefer **`ProtectedApiService`** (auth in base ctor); or `requireAuth()` on `ApiService` | Prefer **`ProtectedSwooleApiService`**; or `requireAuth()` on `SwooleApiService` |
 | Rate limit | `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | same |
 
-Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw.
+Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw. Cross-runtime throw helpers: `validateOrFail()` / `validateStringOrFail()` (caught by Bootstrap and SwooleBootstrap → 400).
 
 Use the matching base class for the target server.
 

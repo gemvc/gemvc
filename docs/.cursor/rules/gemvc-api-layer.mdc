@@ -8,7 +8,7 @@ alwaysApply: false
 
 Extend `Gemvc\Core\ApiService` (or `ProtectedApiService` for auth-by-default). Validate and authorize here; **no** business logic or SQL.
 
-URL (Apache): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403) and `RateLimitException` (429).
+URL (Apache/Nginx): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403), `RateLimitException` (429), and `ValidationException` (400). OpenSwoole: same exceptions via `SwooleBootstrap` (use `SwooleApiService` / `ProtectedSwooleApiService`).
 
 ## Patterns
 
@@ -21,6 +21,7 @@ public function __construct(Request $request) {
 }
 
 public function create(): JsonResponse {
+    // Preferred: bool path (works on Apache/Nginx and OpenSwoole)
     if (!$this->request->definePostSchema([
         'email' => 'email',
         'password' => 'string',
@@ -28,6 +29,7 @@ public function create(): JsonResponse {
     ])) {
         return $this->request->returnResponse();
     }
+    // Or throw-style (both bases): $this->validateOrFail([...]);
     return $this->callController(new UserController($this->request))->create();
 }
 ```

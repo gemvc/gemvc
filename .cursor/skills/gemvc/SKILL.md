@@ -47,13 +47,13 @@ Before answering architecture questions, writing code, or suggesting refactors:
 |--|--|--|
 | URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
 | Controllers | `callController()` / magic `$this->XController` | Bare `new XController($this->request)` |
-| Validation helpers | `validatePosts` **throws** `ValidationException` | Returns `?JsonResponse` — must check |
+| Validation helpers | `validatePosts` **throws**; prefer `validateOrFail()` | Legacy `validatePosts` returns `?JsonResponse`; prefer `validateOrFail()` (SwooleBootstrap → 400) |
 | Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` |
 | Root `/` | `Index`/`index` | Dev: `Developer`/`app` |
 | Early path deny | `.htaccess` | `SecurityManager::isRequestAllowed` |
 | Uploads | `$files` = `$_FILES['file']` only; no MIME sanitize | Normalized + name/MIME sanitize |
 
-Usual schema path is the same: `definePostSchema` / `defineGetSchema` → `bool` + `return $this->request->returnResponse()` (does not throw).
+Usual schema path is the same: `definePostSchema` / `defineGetSchema` → `bool` + `return $this->request->returnResponse()` (does not throw). Cross-runtime throw helpers: `validateOrFail()` / `validateStringOrFail()`.
 
 ## Auth / rate limit / money / uploads
 

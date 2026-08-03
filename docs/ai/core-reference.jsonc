@@ -119,13 +119,17 @@
     "ApiService": {
       "requireAuth": "requireAuth(?array $roles = []): void  // throws AuthException",
       "callController": "callController(Controller $c): ControllerTracingProxy",
+      "validateOrFail": "validateOrFail(array $schema): void  // throws ValidationException",
+      "validateStringOrFail": "validateStringOrFail(array $schema): void",
       "validatePosts": "validatePosts(array $schema): void",
       "mockResponse": "mockResponse(string $method): array",
       "magic_controllers": true
     },
     "SwooleApiService": {
       "requireAuth": "requireAuth(?array $roles = []): void",
-      "validatePosts": "validatePosts(array $schema): ?JsonResponse",
+      "validateOrFail": "validateOrFail(array $schema): void  // throws; SwooleBootstrap → 400",
+      "validateStringOrFail": "validateStringOrFail(array $schema): void",
+      "validatePosts": "validatePosts(array $schema): ?JsonResponse  // legacy return style",
       "validateStringPosts": "validateStringPosts(array $schema): ?JsonResponse",
       "callController": false,
       "magic_controllers": false

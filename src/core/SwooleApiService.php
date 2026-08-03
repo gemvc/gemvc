@@ -6,6 +6,7 @@ use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Core\AuthException;
+use Gemvc\Core\ValidationException;
 
 /**
  * SwooleApiService - OpenSwoole-compatible API service base class
@@ -165,8 +166,46 @@ class SwooleApiService
     }
 
     /**
-     * Validates POST data against a schema
-     * 
+     * Validates POST data against a schema; always throws on failure (cross-runtime).
+     *
+     * Use this instead of {@see validatePosts()} when you want the same throw-style
+     * behavior as Apache/Nginx ApiService. SwooleBootstrap catches ValidationException → 400.
+     *
+     * Canonical alternative: definePostSchema() + returnResponse().
+     *
+     * @param array<string> $post_schema Validation schema
+     * @return void
+     * @throws ValidationException If validation fails (HTTP 400)
+     */
+    protected function validateOrFail(array $post_schema): void
+    {
+        if (!$this->request->definePostSchema($post_schema)) {
+            $errorMessage = $this->request->error ?? 'Validation failed';
+            throw new ValidationException($errorMessage, 400);
+        }
+    }
+
+    /**
+     * Validates string lengths; always throws on failure (cross-runtime).
+     *
+     * @param array<string> $post_string_schema 'field' => 'min|max'
+     * @return void
+     * @throws ValidationException If validation fails (HTTP 400)
+     */
+    protected function validateStringOrFail(array $post_string_schema): void
+    {
+        if (!$this->request->validateStringPosts($post_string_schema)) {
+            $errorMessage = $this->request->error ?? 'String validation failed';
+            throw new ValidationException($errorMessage, 400);
+        }
+    }
+
+    /**
+     * Validates POST data against a schema (legacy OpenSwoole return style).
+     *
+     * Prefer {@see validateOrFail()} or definePostSchema() + returnResponse().
+     * Kept for one cycle so existing `if ($err = $this->validatePosts(...)) return $err;` still works.
+     *
      * @param array<string> $post_schema Validation schema
      * @return JsonResponse|null Error response or null if validation passes
      */
@@ -179,8 +218,10 @@ class SwooleApiService
     }
 
     /**
-     * Validates string lengths in POST data
-     * 
+     * Validates string lengths in POST data (legacy OpenSwoole return style).
+     *
+     * Prefer {@see validateStringOrFail()}.
+     *
      * @param array<string> $post_string_schema Validation schema with min/max lengths
      * @return JsonResponse|null Error response or null if validation passes
      */
@@ -201,7 +242,6 @@ class SwooleApiService
      */
     protected function safeValidatePosts(array $post_schema): ?JsonResponse
     {
-        // Use our non-die version
         return $this->validatePosts($post_schema);
     }
 
@@ -214,7 +254,6 @@ class SwooleApiService
      */
     protected function safeValidateStringPosts(array $post_string_schema): ?JsonResponse
     {
-        // Use our non-die version
         return $this->validateStringPosts($post_string_schema);
     }
 

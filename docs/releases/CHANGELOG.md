@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ApiService` / `SwooleApiService`: `validateOrFail()` / `validateStringOrFail()` — throw `ValidationException` on both runtimes
+- `SwooleBootstrap` catches `ValidationException` → `Response::badRequest()` (constructor + method)
+- Unit tests: `tests/Unit/Core/ValidateOrFailTest.php`
+
+### Documentation
+
+- Phase 1 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / api.md prefer `definePostSchema` or `validateOrFail` over legacy Swoole return-style `validatePosts`
+
 ## [5.12.0] - 2026-08-01
 
 ### Added

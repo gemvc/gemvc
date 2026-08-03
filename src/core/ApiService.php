@@ -312,6 +312,36 @@ class ApiService
     }
 
     /**
+     * Validates POST data against a schema.
+     *
+     * Preferred cross-runtime helper (Apache/Nginx and OpenSwoole): throws on failure.
+     * Prefer {@see Request::definePostSchema()} + {@see Request::returnResponse()} for the
+     * canonical bool path, or this method when you want throw-style like requireAuth().
+     *
+     * @param array<string> $post_schema Define Post Schema to validation
+     * @return void
+     * @throws ValidationException If validation fails (HTTP 400)
+     *
+     * @example $this->validateOrFail(['email'=>'email' , 'id'=>'int' , '?name' => 'string']);
+     */
+    protected function validateOrFail(array $post_schema): void
+    {
+        $this->validatePosts($post_schema);
+    }
+
+    /**
+     * Validates string lengths in POST data; throws on failure (cross-runtime).
+     *
+     * @param array<string> $post_string_schema 'field' => 'min|max'
+     * @return void
+     * @throws ValidationException If validation fails (HTTP 400)
+     */
+    protected function validateStringOrFail(array $post_string_schema): void
+    {
+        $this->validateStringPosts($post_string_schema);
+    }
+
+    /**
      * Validates POST data against a schema
      * 
      * @param array<string> $post_schema Define Post Schema to validation
