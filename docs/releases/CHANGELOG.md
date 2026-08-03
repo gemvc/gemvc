@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.13.0] - 2026-08-03
+
 ### Added
 
 - `ApiServiceSharedTrait` — shared `requireAuth`, `requireRateLimit*`, `callController`, magic `$this->XController`
@@ -18,14 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Phase 3 runtime unification:** prefer `ApiService` / `ProtectedApiService` on **all** servers (including OpenSwoole)
+- **Unified API runtime (Phases 0–3):** prefer `ApiService` / `ProtectedApiService` on **all** servers (including OpenSwoole)
 - `SwooleApiService` is now a **deprecated** thin subclass of `ApiService` (keeps `safeValidatePosts` / `safeValidateStringPosts` for legacy return style)
 - `ProtectedSwooleApiService` is now a **deprecated** thin subclass of `ProtectedApiService`
 - On the Swoole subclass path, `validatePosts()` / `validateStringPosts()` now **throw** `ValidationException` (same as `ApiService`); migrate `if ($err = $this->validatePosts(...)) return $err` → `safeValidatePosts()` or `validateOrFail()` / `definePostSchema()`
 
 ### Documentation
 
-- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases
+- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases; Nginx = shared `ApacheRequest` (no `NginxRequest`)
 
 ## [5.12.0] - 2026-08-01
 

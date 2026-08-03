@@ -1,6 +1,6 @@
 # Unified `ApiService` (runtime) — plan of record
 
-**Status:** Phase 0–3 **done**.  
+**Status:** Phase 0–3 **done** — shipped in **5.13.0**.  
 **AI:** no further runtime-unification work unless a new plan is written.
 
 ## Goals (achieved)

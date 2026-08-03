@@ -223,7 +223,7 @@ Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
 4. **Prefer Composer packages** already required by `library` over copying helper/DB/APM code into `app/`.
 5. **Read package READMEs** under `vendor/gemvc/<pkg>/` when changing connection, APM, CLI, TypeChecker, or outbound HTTP.
 6. **Contracts first:** new DB drivers or APM providers implement contracts packages; do not patch Table/Bootstrap with vendor-specific ifs when a package already exists.
-7. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.12.x** (rate-limit drivers, Protected API, `forUpdate`, `ViewTable`, multi-DB).
+7. **Versions matter:** e.g. helper `^1.1` for new schema types; connection-pdo `^1.1` for Postgres/SQLite DSNs; library docs track **5.13.x** (unified `ApiService`, rate-limit drivers, Protected API, `forUpdate`, `ViewTable`, multi-DB).
 8. **cli-dev is optional** in production apps — codegen is a *dev* dependency by design.
 
 ---

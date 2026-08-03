@@ -9,7 +9,7 @@
 [![Nginx](https://img.shields.io/badge/Nginx-Supported-009639.svg?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.12.0 — rate-limit drivers (`apcu` / `redis` / `both` / `none`) + `requireRateLimit*()`, `ProtectedApiService` / `ProtectedSwooleApiService`, `forUpdate()` + atomic transfer docs. Also **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
+**Latest:** 5.13.0 — unified `ApiService` / `ProtectedApiService` for all servers (`validateOrFail`, `ApiServiceSharedTrait`, deprecated `Swoole*` aliases). Also **5.12** rate-limit drivers + `Protected*` + `forUpdate()`, **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
 
 ## Before You Continue
 

@@ -11,7 +11,9 @@ These files are large (~1–2k lines). They are **not** part of the AI mandatory
 
 **Env name note (APM):** older release text may have said `TRACEKIT_API_URL`; current TraceKit provider env is **`TRACEKIT_ENDPOINT`**. Prefer unified `APM_*` from `gemvc/apm-contracts` — see [apm.md](../guides/apm.md).
 
-Current framework version in docs: **5.12.0** — see root [README](../../README.md) and [docs/README](../README.md).
+Current framework version in docs: **5.13.0** — see root [README](../../README.md) and [docs/README](../README.md).
+
+**5.13.0:** Unified `ApiService` / `ProtectedApiService` for Apache, Nginx, and OpenSwoole; `validateOrFail`; `ApiServiceSharedTrait` (`requireAuth`, rate limits, `callController`); `SwooleApiService` / `ProtectedSwooleApiService` deprecated thin subclasses. See [RELEASE_NOTES](RELEASE_NOTES.md) and [api-runtime-unification.md](../improvements/api-runtime-unification.md).
 
 **5.12.0:** RateLimiter drivers `apcu` | `redis` | `both` | `none`, `requireRateLimitApcu|Redis|Both()`, fail-closed + `FAIL_MODE` (no auto store fallback); `ProtectedApiService` / `ProtectedSwooleApiService`; `Table`/`Select::forUpdate()` + atomic transfer docs. See [RELEASE_NOTES](RELEASE_NOTES.md) and [model.md — Atomic money transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock).
 

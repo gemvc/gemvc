@@ -24,7 +24,7 @@ GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Ap
 - **apm-contracts** + **apm-tracekit**; **http-client** (sync + `fireAndForget`)
 - More packages under github.com/gemvc; internal docs; **PHPStan level 9**
 
-This repository is **`gemvc/library` 5.12** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
+This repository is **`gemvc/library` 5.13** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
 
 **Protocol status:** Source under `src/` and all of `vendor/gemvc/{helper,http-client,apm-contracts,apm-tracekit,connection-*,cli-*}` examined (2026-08 re-learn). Skills [architecture.md](architecture.md) / [source-map.md](source-map.md) hold the grounded map.
 

@@ -981,7 +981,7 @@ This security policy is regularly updated to reflect:
 - Framework updates
 
 **Last Updated**: 2026-08-01
-**Version**: 5.12.0 (rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
+**Version**: 5.13.0 (unified `ApiService`; rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
 
 ---
 

@@ -87,7 +87,7 @@ Current test coverage focuses on:
 ### ✅ Completed
 - **Security Tests**: XSS prevention, input sanitization, path protection
 - **HTTP Layer**: Request sanitization, Response factory, JWT tokens
-- **Core Framework (5.12.0)**: SecurityManager path blocking; RateLimiter (apcu/redis/both/none drivers); Protected API bases
+- **Core Framework (5.13.0)**: SecurityManager path blocking; RateLimiter (apcu/redis/both/none); Protected / unified API bases; `validateOrFail` / `ApiServiceSharedTrait`
 - **Database**: `forUpdate()` (5.12.0); `ViewTable` / `ViewGenerator` / dialect view DDL / `TableMigrateOrder` (5.11.0, `ViewTableTest`)
 
 ### 🚧 In Progress

@@ -1,6 +1,65 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.11.0...5.12.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.12.0...5.13.0
 # GEMVC Framework - Release Notes
+
+## Version 5.13.0 - Unified `ApiService` for all servers
+
+**Release Date**: Monday, 3 August 2026  
+**Type**: Minor Release (mostly backward compatible; see migration for legacy Swoole `validatePosts`)  
+**Tag**: `5.13.0`
+
+### Overview
+
+One developer-facing API base for Apache, Nginx, and OpenSwoole. Auth, rate-limit, validation throw helpers, and `callController` / magic `$this->XController` share one implementation. Old Swoole class names remain as **deprecated** thin subclasses.
+
+- **Phases 0–3** of [api-runtime-unification.md](../improvements/api-runtime-unification.md) — shipped
+- **`ApiServiceSharedTrait`:** `requireAuth`, `requireRateLimit*`, `callController`, magic controllers
+- **`validateOrFail()` / `validateStringOrFail()`** on both paths; `SwooleBootstrap` catches `ValidationException` → 400
+- **Recommended:** `extends ApiService` / `ProtectedApiService` on **all** servers
+- **Deprecated aliases:** `SwooleApiService extends ApiService`; `ProtectedSwooleApiService extends ProtectedApiService`
+- **Nginx fact:** shared `ApacheRequest` + `Bootstrap` (PHP-FPM) — no `NginxRequest`
+- Docs/AI pack updated to recommend the unified bases
+
+### Recommended usage
+
+```php
+class User extends ProtectedApiService  // or ApiService for public endpoints
+{
+    public function create(): JsonResponse
+    {
+        if (!$this->request->definePostSchema(['email' => 'email'])) {
+            return $this->request->returnResponse();
+        }
+        // or: $this->validateOrFail(['email' => 'email']);
+        return $this->callController(new UserController($this->request))->create();
+    }
+}
+```
+
+### Migration (OpenSwoole)
+
+1. Prefer renaming bases to `ApiService` / `ProtectedApiService` (optional — aliases still work).
+2. If you used return-style validation:
+
+```php
+// Before (legacy)
+if ($err = $this->validatePosts([...])) {
+    return $err;
+}
+
+// After — either throw helpers / definePostSchema, or:
+if ($err = $this->safeValidatePosts([...])) {
+    return $err;
+}
+```
+
+`validatePosts()` / `validateStringPosts()` on `SwooleApiService` now **throw** `ValidationException` (same as `ApiService`).
+
+Bootstrap delivery is unchanged: Apache/Nginx may terminate after send; OpenSwoole always returns from `SwooleBootstrap`.
+
+See [api.md](../guides/api.md), [apm.md](../guides/apm.md), [http-lifecycle.md](../guides/http-lifecycle.md).
+
+---
 
 ## Version 5.12.0 - Rate-limit drivers, Protected API bases, `forUpdate`
 
