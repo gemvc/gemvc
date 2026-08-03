@@ -1,6 +1,6 @@
 # GEMVC Canonical Guide for AI Assistants
 
-Framework hub: **gemvc/library 5.14.0**.
+Framework hub: **gemvc/library 5.15.0**.
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
 ---
@@ -74,6 +74,8 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 Usual schema API: `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()`. Throw helpers: `validateOrFail()` / `validateStringOrFail()`.
 
 Prefer **`ApiService` / `ProtectedApiService`** on every server.
+
+**Family trust (machine):** `$this->requireInternalService()` — HMAC headers; env `GEMVC_INTERNAL_SECRET`; orthogonal to JWT. See [security.md](../guides/security.md#family-trust-phase-2a).
 
 **OpenSwoole isolation, pooling, no-`die()`, production FAQ:** [openswoole.md](../guides/openswoole.md).  
 **FrankenPHP classic + worker:** [frankenphp.md](../guides/frankenphp.md).

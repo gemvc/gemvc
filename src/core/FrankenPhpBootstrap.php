@@ -125,6 +125,9 @@ class FrankenPhpBootstrap
         } catch (AuthException $e) {
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (InternalServiceException $e) {
+            $this->recordExceptionInApm($e);
+            return $this->internalServiceExceptionToResponse($e);
         } catch (RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
@@ -145,6 +148,9 @@ class FrankenPhpBootstrap
         } catch (AuthException $e) {
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (InternalServiceException $e) {
+            $this->recordExceptionInApm($e);
+            return $this->internalServiceExceptionToResponse($e);
         } catch (RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
@@ -162,6 +168,14 @@ class FrankenPhpBootstrap
         $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
         return $httpCode === 403
             ? Response::forbidden($e->getMessage())
+            : Response::unauthorized($e->getMessage());
+    }
+
+    private function internalServiceExceptionToResponse(InternalServiceException $e): JsonResponse
+    {
+        $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
+        return $httpCode === 500
+            ? Response::internalError($e->getMessage())
             : Response::unauthorized($e->getMessage());
     }
 

@@ -6,7 +6,7 @@
  * Not executed — IDE/AI annotations only.
  *
  * @package Gemvc
- * @version 5.14.0
+ * @version 5.15.0
  * @see docs/ai/CORE_REFERENCE.md
  * @see docs/guides/ecosystem.md
  */

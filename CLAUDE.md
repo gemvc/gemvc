@@ -1,6 +1,6 @@
 # CLAUDE.md — GEMVC for Claude Code
 
-You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.14.0**.
+You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.15.0**.
 
 **GEMVC is not Laravel, Symfony, Slim, or Eloquent.** Do not invent routes files, service containers as the app pattern, or ORM relations. Follow the project docs.
 
@@ -25,6 +25,7 @@ API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 - Schema: `definePostSchema` / `defineGetSchema` before using input
 - Authenticated CRUD: **`ProtectedApiService`**; public: `ApiService` (all servers). Deprecated: `Swoole*` aliases
 - `callController()` + `createModel()` on all servers (`ApiService` / `ProtectedApiService`)
+- Family-only: `requireInternalService()` + `GEMVC_INTERNAL_SECRET` (not JWT)
 - SQL views: **`ViewTable`** + `defineView()` + `db:migrate` — never point a plain `Table` at a view name
 - Money: string + `decimal` type map — never `float`; concurrent: `beginTransaction` + `forUpdate` + BCMath on one Table (`model.md`)
 - Codegen (`create:crud`, …): requires **`gemvc/cli-dev`**

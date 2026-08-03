@@ -2,7 +2,7 @@
 
 > Server-agnostic PHP REST API framework (Apache / Nginx / FrankenPHP / OpenSwoole). Four layers: API → Controller → Model → Table/ViewTable. Not Laravel or Symfony.
 
-Version: 5.14.0 (gemvc/library)
+Version: 5.15.0 (gemvc/library)
 
 ## AI must read first
 

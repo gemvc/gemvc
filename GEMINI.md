@@ -3,7 +3,7 @@
 **Audience:** Google Antigravity (Gemini) agents.  
 **Precedence:** In Antigravity, this file **overrides** conflicting lines in [`AGENTS.md`](AGENTS.md). Keep shared truth in `AGENTS.md`; keep Antigravity emphasis here.
 
-You are in **`gemvc/library`** version **5.14.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / FrankenPHP / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
+You are in **`gemvc/library`** version **5.15.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / FrankenPHP / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
 
 ## Session start (mandatory)
 
@@ -66,6 +66,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Schema **before** using request data: `definePostSchema` / `defineGetSchema`
 - Authenticated CRUD: **`ProtectedApiService`** (auth in base ctor). Public: `ApiService` (all servers). Deprecated: `Swoole*` aliases
 - `callController()` + `createModel()` on all servers (`ApiService` / `ProtectedApiService`)
+- Family-only: `requireInternalService()` + `GEMVC_INTERNAL_SECRET` (HMAC; not end-user JWT)
 - SQL views: **`extends ViewTable`** + `defineView()` — never `db:migrate` a plain `Table` aimed at a view name
 - Money: `public string` + `$_type_map` `decimal` — never `float`; concurrent transfers: `beginTransaction` + `forUpdate` + BCMath on `$this` — not raw PDO
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today

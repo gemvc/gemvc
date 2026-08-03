@@ -6,7 +6,7 @@
 
 GEMVC is architected with **security-by-design**: multi-layered defense from request arrival to database operations.
 
-> **Key point:** Much security is automatic on inbound requests (header/input sanitization; SQL via prepared statements in the Table path). **You must still call** `define*Schema()` and `auth()` / `requireAuth()`. Path blocking via `SecurityManager` runs on **OpenSwoole** (`OpenSwooleServer`) — not on Apache/Nginx/FrankenPHP Bootstrap. Apache uses `.htaccess`; Nginx uses `nginx.conf`; FrankenPHP uses the **`Caddyfile`** (never `.htaccess`). File signature checks and encryption are **developer calls** (`ImageHelper` / `FileHelper`).
+> **Key point:** Much security is automatic on inbound requests (header/input sanitization; SQL via prepared statements in the Table path). **You must still call** `define*Schema()` and `auth()` / `requireAuth()` (and `requireInternalService()` for family-only routes). Path blocking via `SecurityManager` runs on **OpenSwoole** (`OpenSwooleServer`) — not on Apache/Nginx/FrankenPHP Bootstrap. Apache uses `.htaccess`; Nginx uses `nginx.conf`; FrankenPHP uses the **`Caddyfile`** (never `.htaccess`). File signature checks and encryption are **developer calls** (`ImageHelper` / `FileHelper`).
 
 ## Reading map (AI)
 
@@ -16,6 +16,7 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 | Edge path deny matrix | [Path protection by runtime](#path-protection-by-runtime) |
 | Schema / `define*Schema` | [Layer 4: Schema Validation](#layer-4-schema-validation-request-filtering) |
 | JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication-authorization) |
+| **Family trust** (`requireInternalService`) | [Family trust (Phase 2a)](#family-trust-phase-2a) |
 | **Global / service rate limit** | [Rate limiting](#rate-limiting-optional) — drivers `apcu`/`redis`/`both`/`none`; global = `.env`; overrides in API |
 | Production checklist | [Production Security Checklist](#production-security-checklist) |
 | API-layer how-to | [api.md](api.md) |
@@ -372,6 +373,43 @@ class User extends ApiService
     }
 }
 ```
+
+### Family trust (Phase 2a)
+
+Machine-to-machine gate for **internal** service calls. Orthogonal to end-user JWT (`requireAuth` / `ProtectedApiService`).
+
+```php
+public function oauthLogin(): JsonResponse
+{
+    $this->requireInternalService(); // throws InternalServiceException
+    // …
+}
+```
+
+```env
+GEMVC_INTERNAL_SECRET=...long random...
+# GEMVC_INTERNAL_SECRET_PREVIOUS=...      # optional rotation window
+# GEMVC_INTERNAL_TRUST_SKEW_SECONDS=60    # default 60
+# GEMVC_SERVICE_NAME=aggregator           # optional (logs / future)
+```
+
+| Header | Role |
+|--------|------|
+| `X-Gemvc-Internal-Timestamp` | Unix seconds |
+| `X-Gemvc-Internal-Signature` | Hex HMAC-SHA256 |
+
+Canonical string: `{METHOD}\n{path}\n{timestamp}\n{body_hash}` where `body_hash` = hex SHA-256 of **raw** body, `path` has **no** query string. Compare with `hash_equals()`. Skew default 60s.
+
+| Failure | HTTP | `service_message` prefix |
+|---------|------|--------------------------|
+| Bad / missing / expired signature | **401** | `ERR_INTERNAL_TRUST_FAILED` |
+| Secret missing when gate is used (fail-closed) | **500** | `ERR_INTERNAL_TRUST_MISCONFIGURED` |
+
+Caller helper: `InternalTrust::callerHeaders($method, $path, $rawBody)` (uses `GEMVC_INTERNAL_SECRET`). Caught by `Bootstrap` / `SwooleBootstrap` / `FrankenPhpBootstrap`.
+
+Outbound example with `HttpClient`: [http-client.md — Family trust](http-client.md#family-trust-outbound-hmac).
+
+**Does not** replace private networking / mTLS. User JWT alone never satisfies this gate. Full plan: [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
 
 ### Rate limiting (optional)
 
@@ -841,6 +879,7 @@ REDIS_PREFIX=gemvc:
 - [x] Token expiration enforced
 - [x] Role-based access control active
 - [x] Password hashing uses Argon2i
+- [ ] Internal routes use `requireInternalService()` + shared `GEMVC_INTERNAL_SECRET` (family HMAC)
 
 ### Rate limiting & storage
 - [ ] `REQUEST_RATE_LIMIT_DRIVER` matches infra (`apcu` / `redis` / `both` / `none`) — no reliance on auto-fallback
@@ -993,8 +1032,8 @@ This security policy is regularly updated to reflect:
 - Best practice changes
 - Framework updates
 
-**Last Updated**: 2026-08-01
-**Version**: 5.14.0 (unified `ApiService`; rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
+**Last Updated**: 2026-08-03
+**Version**: 5.15.0 (family trust `requireInternalService` / HMAC; FrankenPHP; unified `ApiService`; rate-limit drivers / `Protected*`, `forUpdate`; ViewTable); automatic hardening baseline unchanged
 
 ---
 

@@ -52,6 +52,11 @@ class Request
     public string $userMachine;
     public ?string $requestMethod;
     /**
+     * Raw request body bytes as received (before JSON/form parse).
+     * Used by {@see \Gemvc\Core\InternalTrust} body hash. Empty string when no body.
+     */
+    public string $rawBody = '';
+    /**
      * HTTP headers normalized to lowercase keys (PSR-7 compatible)
      * Populated by StandardHttpRequest (or deprecated ApacheRequest) or SwooleRequest adapters
      * 

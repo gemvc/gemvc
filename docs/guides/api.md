@@ -124,6 +124,37 @@ Full detail: [security.md](security.md).
 
 ---
 
+## Family trust (machine-to-machine)
+
+For **internal** endpoints that only Aggregator / sibling services / workers may call — **not** end-user JWT.
+
+```php
+public function oauthLogin(): JsonResponse
+{
+    $this->requireInternalService(); // HMAC family gate → 401 or 500
+    // …
+}
+```
+
+```env
+GEMVC_INTERNAL_SECRET=...long random...          # required on every family member
+# GEMVC_INTERNAL_SECRET_PREVIOUS=...             # optional rotation
+# GEMVC_INTERNAL_TRUST_SKEW_SECONDS=60           # default 60
+# GEMVC_SERVICE_NAME=noam-auth                   # optional
+```
+
+Headers (caller): `X-Gemvc-Internal-Timestamp` + `X-Gemvc-Internal-Signature`  
+Scheme: HMAC-SHA256 over `METHOD\npath\ntimestamp\nsha256(rawBody)` — see [security.md — Family trust](security.md#family-trust-phase-2a).
+
+| Situation | HTTP | Code in `service_message` |
+|-----------|------|---------------------------|
+| Bad / missing / expired HMAC | **401** | `ERR_INTERNAL_TRUST_FAILED` |
+| Secret not configured when gate used | **500** | `ERR_INTERNAL_TRUST_MISCONFIGURED` |
+
+Helper for callers: `InternalTrust::callerHeaders($method, $path, $rawBody)`. Orthogonal to `requireAuth()`.
+
+---
+
 ## Rate limiting
 
 Optional but important for production. Drivers: **`apcu`** (default, per PHP instance), **`redis`** (cluster-wide via `RedisManager`), **`both`** (simultaneous dual check — deny if either over), **`none`** (disables Bootstrap + default `requireRateLimit()`; overrides still work).

@@ -4,7 +4,7 @@ alwaysApply: false
 ---
 # GEMVC (not Laravel / Symfony)
 
-Installed: **`gemvc/library` 5.14.0** under `vendor/gemvc/`. Before inventing APIs, open:
+Installed: **`gemvc/library` 5.15.0** under `vendor/gemvc/`. Before inventing APIs, open:
 
 1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't
 2. `vendor/gemvc/library/README.md` — architecture + AI reading order

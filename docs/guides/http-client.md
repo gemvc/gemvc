@@ -128,6 +128,37 @@ Prefer the package classes directly when writing new microservice clients; facad
 
 ---
 
+## Family trust (outbound HMAC)
+
+Until Phase 2b `ServiceCall`, attach family HMAC headers with `InternalTrust::callerHeaders()` and **`postRaw` / `get` using the same path and raw body you sign**.
+
+```php
+use Gemvc\Core\InternalTrust;
+use Gemvc\Http\Client\HttpClient;
+
+$path = '/api/Auth/oauthLogin';
+$rawBody = json_encode(['code' => $code], JSON_THROW_ON_ERROR);
+$base = rtrim($_ENV['AUTH_SERVICE_URL'] ?? 'http://noam-auth', '/');
+
+$client = new HttpClient();
+$client->header = array_merge(
+    $client->header,
+    InternalTrust::callerHeaders('POST', $path, $rawBody),
+    ['Content-Type' => 'application/json']
+);
+$body = $client->postRaw($base . $path, $rawBody, 'application/json');
+```
+
+Rules that break signatures if ignored:
+
+- Sign the **exact** raw body bytes you send (not a re-encoded array)
+- Path **without** query string; must match what the receiver sees in `requestedUrl`
+- Same `GEMVC_INTERNAL_SECRET` on caller and callee
+
+Receiver: `$this->requireInternalService()` — [security.md](security.md#family-trust-phase-2a) · [api.md](api.md#family-trust-machine-to-machine)
+
+---
+
 ## Do / Don’t
 
 **Do**

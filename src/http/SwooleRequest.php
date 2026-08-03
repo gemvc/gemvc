@@ -33,6 +33,12 @@ class SwooleRequest
             
             $this->request->requestMethod = $swooleRequest->server['request_method'] ?? 'GET';
             $this->request->requestedUrl = $this->sanitizeRequestURI($swooleRequest->server['request_uri']);
+            $rawBody = '';
+            if (is_callable([$swooleRequest, 'rawContent'])) {
+                $content = $swooleRequest->rawContent();
+                $rawBody = is_string($content) ? $content : '';
+            }
+            $this->request->rawBody = $rawBody;
             $this->request->queryString = isset($swooleRequest->server['query_string']) ? 
                 $this->sanitizeInput((string) $swooleRequest->server['query_string']) : null;
             $remoteAddr = $swooleRequest->server['remote_addr'] ?? '';

@@ -4,7 +4,7 @@
 **Read first:** `docs/ai/INDEX.md` → `docs/ai/CANONICAL.md` → `docs/ai/CORE_REFERENCE.md`  
 **Packages:** `docs/guides/ecosystem.md` — GEMVC is a multi-package ecosystem (`vendor/gemvc/*`). **Core:** `gemvc/helper`, `gemvc/http-client` (see `docs/guides/helper.md`, `docs/guides/http-client.md`).
 
-GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx / FrankenPHP). Version **5.14.0**.
+GEMVC is NOT Laravel or Symfony. IT IS GEMVC (NOT MVC) 4 Layer Architect Server-agnostic PHP REST API (Apache / OpenSwoole / Nginx / FrankenPHP). Version **5.15.0**.
 
 ## 4-Layer Pattern (strongly recommended)
 
@@ -29,6 +29,7 @@ URL (Apache/Nginx/FrankenPHP): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_I
 - Extend `ApiService` (public) or **`ProtectedApiService`** (authenticated — all servers). Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - `definePostSchema` / `defineGetSchema` before using post/get data
 - `callController()` in API + `createModel()` in Controller (all servers)
+- `requireInternalService()` for family-only routes (`GEMVC_INTERNAL_SECRET` HMAC)
 - Prefer `Protected*` over manually forgetting `$this->requireAuth()` on CRUD services
 - `requireAuth(['role'])` still valid on public bases when you need a custom constructor flow
 - `requireRateLimit()` uses global `REQUEST_RATE_LIMIT_DRIVER`; overrides: `requireRateLimitApcu|Redis|Both()` (no auto-fallback)

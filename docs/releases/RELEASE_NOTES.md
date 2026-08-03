@@ -1,6 +1,36 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.13.0...5.14.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.14.0...5.15.0
 # GEMVC Framework - Release Notes
+
+## Version 5.15.0 - Family trust (Phase 2a)
+
+**Release Date**: Monday, 3 August 2026  
+**Type**: Minor Release (backward compatible)  
+**Tag**: `5.15.0`
+
+### Overview
+
+Machine-to-machine **family trust** for internal microservice endpoints — orthogonal to end-user JWT.
+
+- Call `$this->requireInternalService()` on family-only API methods
+- HMAC-SHA256 over `METHOD\npath\ntimestamp\nsha256(rawBody)` with a 60s skew window
+- Headers: `X-Gemvc-Internal-Timestamp`, `X-Gemvc-Internal-Signature`
+- Fail-closed when `GEMVC_INTERNAL_SECRET` is missing (**500** `ERR_INTERNAL_TRUST_MISCONFIGURED`); bad trust → **401** `ERR_INTERNAL_TRUST_FAILED`
+- Works on Apache, Nginx, FrankenPHP, and OpenSwoole via shared trait + all bootstraps
+
+Caller helper: `InternalTrust::callerHeaders(...)`. Mesh DX (`ServiceCall`) remains Phase **2b**.
+
+See [security.md — Family trust](../guides/security.md#family-trust-phase-2a) and [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
+
+### Migration
+
+1. Set the same `GEMVC_INTERNAL_SECRET` on every family member
+2. Guard internal methods with `requireInternalService()`
+3. Attach HMAC headers on outbound calls (`InternalTrust::callerHeaders` until 2b `ServiceCall`)
+
+No change required for public JWT-only endpoints.
+
+---
 
 ## Version 5.14.0 - FrankenPHP runtime + `StandardHttpRequest`
 

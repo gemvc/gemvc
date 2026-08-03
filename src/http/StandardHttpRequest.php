@@ -27,6 +27,7 @@ class StandardHttpRequest
         $patch = $this->sanitizeAllHTTPPatchRequest();
         $this->sanitizeQueryString();
         $this->request = new Request();
+        $this->request->rawBody = $this->rawInput;
         $this->request->requestedUrl = $this->sanitizeRequestURI();
         $this->request->requestMethod = $this->getRequestMethod();
         $this->request->userMachine = $this->getUserAgent();

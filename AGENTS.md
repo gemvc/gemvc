@@ -1,6 +1,6 @@
 # GEMVC — instructions for AI coding agents
 
-**Version:** 5.14.0 (`gemvc/library`)  
+**Version:** 5.15.0 (`gemvc/library`)  
 **This file is the universal front door** for Claude Code, Antigravity, Cursor, Copilot, and any other agent. Do **not** invent Laravel, Symfony, Slim, or Eloquent patterns.
 
 ## Before writing any code — mandatory read order
@@ -48,6 +48,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Extend `ApiService` / **`ProtectedApiService`** (all servers). Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - Call `definePostSchema` / `defineGetSchema` before using request data
 - `callController()` in API + `createModel()` in Controller (all servers)
+- `requireInternalService()` on family-only endpoints (`GEMVC_INTERNAL_SECRET` HMAC — not JWT)
 - Prefer `gemvc/helper` and `gemvc/http-client` over inventing validators/curl wrappers
 - Prefer `createList` + API list allowlists for filtered lists
 - Migrate views with `gemvc db:migrate YourViewTable` or `--all`

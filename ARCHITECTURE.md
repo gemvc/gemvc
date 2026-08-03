@@ -1,6 +1,6 @@
 # The Architecture of GEMVC
 
-> **Version:** 5.14.0 (philosophy document)
+> **Version:** 5.15.0 (philosophy document)
 >
 > This document defines the architectural philosophy behind GEMVC.
 >

@@ -143,6 +143,9 @@ class SwooleBootstrap
             // reached, and the persistent Swoole worker is not disturbed.
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (\Gemvc\Core\InternalServiceException $e) {
+            $this->recordExceptionInApm($e);
+            return $this->internalServiceExceptionToResponse($e);
         } catch (\Gemvc\Core\RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
@@ -165,6 +168,9 @@ class SwooleBootstrap
             // requireAuth() failed inside the method body itself.
             $this->recordExceptionInApm($e);
             return $this->authExceptionToResponse($e);
+        } catch (\Gemvc\Core\InternalServiceException $e) {
+            $this->recordExceptionInApm($e);
+            return $this->internalServiceExceptionToResponse($e);
         } catch (\Gemvc\Core\RateLimitException $e) {
             $this->recordExceptionInApm($e);
             return Response::tooManyRequests($e->getMessage());
@@ -189,6 +195,14 @@ class SwooleBootstrap
         $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
         return $httpCode === 403
             ? Response::forbidden($e->getMessage())
+            : Response::unauthorized($e->getMessage());
+    }
+
+    private function internalServiceExceptionToResponse(\Gemvc\Core\InternalServiceException $e): JsonResponse
+    {
+        $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
+        return $httpCode === 500
+            ? Response::internalError($e->getMessage())
             : Response::unauthorized($e->getMessage());
     }
     

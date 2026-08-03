@@ -75,6 +75,20 @@ trait ApiServiceSharedTrait
     }
 
     /**
+     * Require family (machine-to-machine) trust before continuing.
+     *
+     * Verifies HMAC headers — orthogonal to end-user JWT ({@see requireAuth()}).
+     * Throws InternalServiceException — Bootstrap / SwooleBootstrap / FrankenPhpBootstrap
+     * catch → 401 (bad trust) or 500 (secret misconfigured).
+     *
+     * @throws InternalServiceException
+     */
+    public function requireInternalService(): void
+    {
+        InternalTrust::enforce($this->request);
+    }
+
+    /**
      * Require rate limit before continuing — same DX as requireAuth().
      *
      * Uses REQUEST_RATE_LIMIT_DRIVER (no-op if driver=none).

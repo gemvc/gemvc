@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [5.15.0] - 2026-08-03
+
+### Added
+
+- **Family trust (Phase 2a)** — `ApiService::requireInternalService()` / `InternalTrust` HMAC-SHA256 (`METHOD\npath\ntimestamp\nbody_hash`) with skew window; headers `X-Gemvc-Internal-Timestamp` / `X-Gemvc-Internal-Signature`
+- `InternalServiceException` — **401** `ERR_INTERNAL_TRUST_FAILED` / **500** `ERR_INTERNAL_TRUST_MISCONFIGURED` (fail-closed when secret missing); caught by `Bootstrap`, `SwooleBootstrap`, `FrankenPhpBootstrap`
+- Env: `GEMVC_INTERNAL_SECRET`, optional `GEMVC_INTERNAL_SECRET_PREVIOUS`, `GEMVC_INTERNAL_TRUST_SKEW_SECONDS` (default 60)
+- `Request::$rawBody` for body hashing (set by `StandardHttpRequest` / `SwooleRequest`)
+- `InternalTrust::callerHeaders()` / `sign()` for outbound family calls
+- Unit tests: `tests/Unit/Core/InternalTrustTest.php`
+
+### Documentation
+
+- Locked design: [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md); guides [api.md](../guides/api.md) · [security.md](../guides/security.md)
+
 ## [5.14.0] - 2026-08-03
 
 ### Added

@@ -1,6 +1,6 @@
 # GEMVC Core Reference (AI)
 
-Version **5.14.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, `ViewTable`, schema types.
+Version **5.15.0**. Compact **framework class signatures** for assistants — `Request`, `Response`, `ApiService`, `Controller`, `Table`, `ViewTable`, schema types.
 
 **Not** HTTP endpoint docs (that is [api-documentation.md](../guides/api-documentation.md) / `/api/index/document`).  
 **Not** the `app/api/` layer guide. Prefer this over inventing methods from training data.
@@ -84,6 +84,7 @@ Uses `ApiServiceSharedTrait`. Deprecated subclass: {@see SwooleApiService}.
 ```php
 public function __construct(Request $request)
 public function requireAuth(?array $roles = []): void   // throws AuthException
+public function requireInternalService(): void          // family HMAC; throws InternalServiceException (401/500)
 public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void  // global DRIVER; throws RateLimitException
 public function requireRateLimitApcu(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 public function requireRateLimitRedis(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
@@ -126,7 +127,11 @@ protected function safeValidateStringPosts(array $schema): ?JsonResponse
 
 ## `Gemvc\Core\ApiServiceSharedTrait`
 
-Internal trait used by `ApiService` (inherited by deprecated `SwooleApiService`): `requireAuth`, `requireRateLimit*`, `callController`, magic `__get` controllers.
+Internal trait used by `ApiService` (inherited by deprecated `SwooleApiService`): `requireAuth`, `requireInternalService`, `requireRateLimit*`, `callController`, magic `__get` controllers.
+
+## `Gemvc\Core\InternalTrust` / `InternalServiceException`
+
+Family HMAC gate. Env `GEMVC_INTERNAL_SECRET`. Headers `X-Gemvc-Internal-Timestamp` / `X-Gemvc-Internal-Signature`. See [security.md](../guides/security.md#family-trust-phase-2a).
 
 ## `Gemvc\Core\ProtectedSwooleApiService` (deprecated)
 

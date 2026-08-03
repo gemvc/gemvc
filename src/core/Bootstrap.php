@@ -228,6 +228,11 @@ class Bootstrap
             $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
             // Record exception in APM if available (via Request object)
             $this->recordExceptionInApm($e);
+        } catch (\Gemvc\Core\InternalServiceException $e) {
+            // requireInternalService() — family HMAC trust (401) or misconfigured secret (500)
+            $httpCode = $e->getCode() > 0 ? $e->getCode() : 401;
+            $this->errors[] = new GemvcError($e->getMessage(), $httpCode, $e->getFile(), $e->getLine());
+            $this->recordExceptionInApm($e);
         } catch (\Gemvc\Core\RateLimitException $e) {
             // requireRateLimit() / REQUEST_RATE_LIMIT_PER_SEC → HTTP 429
             $this->errors[] = new GemvcError($e->getMessage(), 429, $e->getFile(), $e->getLine());

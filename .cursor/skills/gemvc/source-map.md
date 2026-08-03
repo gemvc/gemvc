@@ -26,7 +26,9 @@ Verified against `docs/` + source (2026-08).
 | Class | Path | Must know |
 |-------|------|-----------|
 | `ApiService` | `src/core/ApiService.php` | **Recommended** public base for all servers; uses `ApiServiceSharedTrait` |
-| `ApiServiceSharedTrait` | `src/core/ApiServiceSharedTrait.php` | Shared: `requireAuth`, `requireRateLimit*`, `callController`, magic `__get` |
+| `ApiServiceSharedTrait` | `src/core/ApiServiceSharedTrait.php` | Shared: `requireAuth`, `requireInternalService`, `requireRateLimit*`, `callController`, magic `__get` |
+| `InternalTrust` | `src/core/InternalTrust.php` | Family HMAC gate; `GEMVC_INTERNAL_SECRET` |
+| `InternalServiceException` | `src/core/InternalServiceException.php` | 401 failed / 500 misconfigured |
 | `ProtectedApiService` | `src/core/ProtectedApiService.php` | **Recommended** authenticated CRUD — ctor calls `requireAuth($roles)` |
 | `SwooleApiService` | `src/core/SwooleApiService.php` | **Deprecated** thin subclass of `ApiService`; `safeValidate*` for legacy return style |
 | `ProtectedSwooleApiService` | `src/core/ProtectedSwooleApiService.php` | **Deprecated** thin subclass of `ProtectedApiService` |
