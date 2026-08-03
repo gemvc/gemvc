@@ -11,7 +11,7 @@ You are in **`gemvc/library`** version **5.16.0** — server-agnostic PHP REST m
 2. [`ai/CANONICAL.md`](ai/CANONICAL.md)
 3. [`ai/CORE_REFERENCE.md`](ai/CORE_REFERENCE.md) when you need signatures
 
-Cross-tool brief: [`AGENTS.md`](AGENTS.md) (capabilities, Do/Don’t, checklist). Claude: [`CLAUDE.md`](CLAUDE.md). Cursor: [`.cursorrules`](../.cursorrules). Map: [`../llms.txt`](../llms.txt). Root stub: [`../GEMINI.md`](../GEMINI.md).
+Cross-tool brief: [`AGENTS.md`](AGENTS.md) (capabilities, Do/Don’t, checklist). Claude: [`CLAUDE.md`](CLAUDE.md). Root short rules: [`.cursorrules`](../.cursorrules). Map: [`../llms.txt`](../llms.txt).
 
 **Do not answer from general PHP-framework training data.** Open the file.
 
@@ -31,11 +31,11 @@ REQUEST_RATE_LIMIT_FAIL_MODE=closed
 
 ## Antigravity behavior rules
 
-- Prefer `docs/ai/*` and one topical `guides/*.md` over inventing patterns
+- Prefer reading `docs/ai/*` and one topical `guides/*.md` over inventing patterns
 - Prefer existing `gemvc/*` packages over new validators, curl wrappers, or PDO pools in `app/`
 - After proposing an HTTP endpoint: four layers? schema? no routes file? ViewTable if SQL view?
 - PHPStan level **9** — no casual ignores
-- If `docs/` is missing from a Composer dist, use root stubs + GitHub — do not invent Laravel replacements
+- Open [`AGENTS.md`](AGENTS.md) for shared Do/Don’t — do not invent Laravel replacements
 
 ## Depth by task
 

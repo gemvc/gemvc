@@ -23,7 +23,7 @@ Before evaluating the framework or reading the API documentation, read:
 
 Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md). For FrankenPHP (classic + worker, Caddyfile security), read [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md).
 
-> **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** root stubs [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) / [`GEMINI.md`](GEMINI.md) auto-load; **full briefs** live under [`docs/AGENTS.md`](docs/AGENTS.md) (etc.). Then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
+> **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`.cursorrules`](.cursorrules) (root AI front door). Full briefs: [`docs/AGENTS.md`](docs/AGENTS.md); Claude [`docs/CLAUDE.md`](docs/CLAUDE.md); Antigravity [`docs/GEMINI.md`](docs/GEMINI.md). Then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
 **GEMVC is an ecosystem** of Composer packages (`gemvc/library` + connection, APM, helper, HTTP client, CLI modules). See [docs/guides/ecosystem.md](docs/guides/ecosystem.md).
 
@@ -150,10 +150,10 @@ GEMVC is **not** Laravel or Symfony. Do **not** invent routes files or Eloquent 
 
 | Tool | Start here |
 |------|------------|
-| Any agent | [`docs/AGENTS.md`](docs/AGENTS.md) (root stub: [`AGENTS.md`](AGENTS.md)) |
-| Claude Code | [`docs/CLAUDE.md`](docs/CLAUDE.md) (root stub: [`CLAUDE.md`](CLAUDE.md)) |
-| Antigravity | [`docs/GEMINI.md`](docs/GEMINI.md) (overrides `AGENTS` on conflict; root stub: [`GEMINI.md`](GEMINI.md)) |
-| Cursor | [`.cursorrules`](.cursorrules) |
+| Root / Cursor | [`.cursorrules`](.cursorrules) |
+| Any agent (full brief) | [`docs/AGENTS.md`](docs/AGENTS.md) |
+| Claude Code | [`docs/CLAUDE.md`](docs/CLAUDE.md) |
+| Antigravity | [`docs/GEMINI.md`](docs/GEMINI.md) (overrides `docs/AGENTS.md` on conflict) |
 | Catalog / crawlers | [`llms.txt`](llms.txt) |
 | Philosophy (*why*) | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 
@@ -164,6 +164,15 @@ Then read these three files in order (mandatory):
 3. [docs/ai/CORE_REFERENCE.md](docs/ai/CORE_REFERENCE.md) — framework class signatures (Request/Response/Table/ViewTable/Controller) — not HTTP endpoint docs  
 
 Optional mirrors: [docs/ai/core-reference.jsonc](docs/ai/core-reference.jsonc), [docs/ai/phpdoc-reference.php](docs/ai/phpdoc-reference.php).
+
+**After `gemvc init` (application projects):** AI tools should open the library pack under Composer — do not invent Laravel-shaped code:
+
+1. `vendor/gemvc/library/docs/ai/INDEX.md` → `CANONICAL.md` → `CORE_REFERENCE.md`
+2. `vendor/gemvc/library/docs/AGENTS.md` — full brief  
+3. `vendor/gemvc/library/.cursorrules` — short hard rules  
+4. Claude: `vendor/gemvc/library/docs/CLAUDE.md` · Antigravity: `vendor/gemvc/library/docs/GEMINI.md`
+
+Truth lives in `docs/` (and `.cursorrules`). App scaffolds no longer ship separate root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`.
 
 ### Guides (humans + deep dives)
 

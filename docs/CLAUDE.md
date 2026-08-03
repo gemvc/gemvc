@@ -11,7 +11,7 @@ You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.1
 3. [`ai/CORE_REFERENCE.md`](ai/CORE_REFERENCE.md)
 
 Full agent brief (strengths, Do/Don’t, checklist, rate limit): [`AGENTS.md`](AGENTS.md).  
-Root stub (tool auto-load / Packagist): [`../CLAUDE.md`](../CLAUDE.md). Antigravity: [`GEMINI.md`](GEMINI.md). Cursor: [`.cursorrules`](../.cursorrules).
+Antigravity: [`GEMINI.md`](GEMINI.md). Root short rules: [`.cursorrules`](../.cursorrules).
 
 ## Non-negotiables
 

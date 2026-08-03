@@ -6,11 +6,10 @@ alwaysApply: false
 
 Installed: **`gemvc/library` 5.16.0** under `vendor/gemvc/`. Before inventing APIs, open:
 
-1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't
+1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't (root AI front door)
 2. `vendor/gemvc/library/README.md` — architecture + AI reading order
-3. Source of truth for signatures: `vendor/gemvc/library/src/` (Request, Response, ApiService, Controller, Table, ViewTable)
-
-`docs/ai/` is **not** shipped in the Composer dist; use `.cursorrules` + `src/` + package READMEs instead.
+3. `vendor/gemvc/library/docs/ai/` — INDEX → CANONICAL → CORE_REFERENCE (ships with Composer)
+4. Source of truth for signatures: `vendor/gemvc/library/src/` (Request, Response, ApiService, Controller, Table, ViewTable)
 
 ## 4 layers (mandatory for HTTP services)
 

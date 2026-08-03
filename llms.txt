@@ -6,14 +6,13 @@ Version: 5.16.0 (gemvc/library)
 
 ## AI must read first
 
+- .cursorrules: Root AI front door (short hard rules)
 - docs/ai/INDEX.md: Mandatory AI reading order and hard rules
 - docs/ai/CANONICAL.md: Architecture, auth, CRUD, Do/Don't
 - docs/ai/CORE_REFERENCE.md: Framework class signatures
-- docs/AGENTS.md: Universal agent front door (full brief)
-- docs/CLAUDE.md: Claude Code entry (full)
-- docs/GEMINI.md: Antigravity entry (overrides AGENTS.md on conflict)
-- AGENTS.md / CLAUDE.md / GEMINI.md: Root stubs (tool auto-load; Packagist when docs/ omitted)
-- .cursorrules: Cursor short rules (same truth)
+- docs/AGENTS.md: Universal agent full brief
+- docs/CLAUDE.md: Claude Code entry
+- docs/GEMINI.md: Antigravity entry (overrides docs/AGENTS.md on conflict)
 - docs/ARCHITECTURE.md: Philosophy (*why*)
 
 ## Docs

@@ -1,17 +1,26 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.16.0**.
+Single entry point for humans and AI assistants. Framework version: **5.16.0**.  
+**`docs/` ships in the Composer package** (~616 KB) — available under `vendor/gemvc/library/docs/` after install.
+
+## Docs ownership
+
+| Path | Audience | In Composer dist |
+|------|----------|------------------|
+| `docs/ai`, `docs/guides`, `docs/releases`, `docs/ARCHITECTURE.md`, `docs/AGENTS.md`, `docs/CLAUDE.md`, `docs/GEMINI.md` | Framework users + AI | Yes |
+| Root `.cursorrules`, `llms.txt` | Root AI front door / crawler map | Yes |
+| `.cursor/improvements/` | Framework maintainers only | N/A — not product docs |
 
 ## For AI assistants (read first)
 
-**Tool front doors** (full briefs under `docs/`; root stubs exist for tool auto-load / Packagist):
+**Root front door:** [`.cursorrules`](../.cursorrules). Depth briefs under `docs/`:
 
 | File | Audience |
 |------|----------|
-| [`AGENTS.md`](AGENTS.md) | Universal (full brief) — root stub: [`../AGENTS.md`](../AGENTS.md) |
-| [`CLAUDE.md`](CLAUDE.md) | Claude Code — root stub: [`../CLAUDE.md`](../CLAUDE.md) |
-| [`GEMINI.md`](GEMINI.md) | Antigravity (overrides `AGENTS.md` on conflict) — root stub: [`../GEMINI.md`](../GEMINI.md) |
-| [`../.cursorrules`](../.cursorrules) | Cursor |
+| [`../.cursorrules`](../.cursorrules) | Root AI SSoT (short hard rules) |
+| [`AGENTS.md`](AGENTS.md) | Universal full brief |
+| [`CLAUDE.md`](CLAUDE.md) | Claude Code |
+| [`GEMINI.md`](GEMINI.md) | Antigravity (overrides `AGENTS.md` on conflict) |
 | [`../llms.txt`](../llms.txt) | LLM / crawler map |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Philosophy (*why*) — not how-to |
 

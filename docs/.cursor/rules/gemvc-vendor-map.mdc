@@ -38,8 +38,7 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 
 ## Notes
 
-- Composer **dist** may omit `docs/ai/` and `docs/guides/` — rely on `.cursorrules`, README, and `src/`
 - Prefer `ApiService` / `ProtectedApiService` on all servers; OpenSwoole `Swoole*` names are deprecated thin subclasses
-
+- Library `docs/` (ai pack + guides) ships with the Composer package — use `vendor/gemvc/library/docs/`
 - Connection packages implement DB under `Table`; prefer Table/`ViewTable`/QueryBuilder over raw PDO in app code
 - SQL views: extend **`ViewTable`**, migrate with `db:migrate` — do **not** invent PDO `CREATE VIEW` helpers unless bypassing the framework on purpose
