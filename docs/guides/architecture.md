@@ -307,7 +307,7 @@ Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 - `bin/gemvc` - CLI entry point
 
 ### **Core Classes**:
-- `src/core/Bootstrap.php` - Apache request router
+- `src/core/Bootstrap.php` - Apache/Nginx request router
 - `src/core/SwooleBootstrap.php` - OpenSwoole request router
 - `src/core/OpenSwooleServer.php` - OpenSwoole server manager
 - `src/http/Request.php` - Unified request object
