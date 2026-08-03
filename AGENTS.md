@@ -1,6 +1,6 @@
 # GEMVC — instructions for AI coding agents
 
-**Version:** 5.15.0 (`gemvc/library`)  
+**Version:** 5.16.0 (`gemvc/library`)  
 **This file is the universal front door** for Claude Code, Antigravity, Cursor, Copilot, and any other agent. Do **not** invent Laravel, Symfony, Slim, or Eloquent patterns.
 
 ## Before writing any code — mandatory read order

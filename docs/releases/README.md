@@ -11,7 +11,9 @@ These files are large (~1–2k lines). They are **not** part of the AI mandatory
 
 **Env name note (APM):** older release text may have said `TRACEKIT_API_URL`; current TraceKit provider env is **`TRACEKIT_ENDPOINT`**. Prefer unified `APM_*` from `gemvc/apm-contracts` — see [apm.md](../guides/apm.md).
 
-Current framework version in docs: **5.15.0** — see root [README](../../README.md) and [docs/README](../README.md).
+Current framework version in docs: **5.16.0** — see root [README](../../README.md) and [docs/README](../README.md).
+
+**5.16.0:** ServiceCall + `GEMVC_SERVICES_JSON` (Phase 2b mesh DX). See [RELEASE_NOTES](RELEASE_NOTES.md) and [http-client.md](../guides/http-client.md#servicecall-phase-2b).
 
 **5.15.0:** Family trust — `requireInternalService()` / HMAC (`InternalTrust`). See [RELEASE_NOTES](RELEASE_NOTES.md) and [security.md](../guides/security.md#family-trust-phase-2a).
 

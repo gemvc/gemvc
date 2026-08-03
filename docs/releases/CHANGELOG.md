@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [5.16.0] - 2026-08-03
+
+### Added
+
+- **Phase 2b Mesh DX** — `Gemvc\Http\ServiceCall` over `ApiCall` / `AsyncApiCall` (no second HTTP stack)
+- `Gemvc\Core\ServiceMap` — parse `GEMVC_SERVICES_JSON` (name → base URL); unknown service fails loudly
+- `withInternalTrust()` / `withoutInternalTrust()`; production requires one of them for mapped siblings
+- Single-encode JSON pipeline (sign the exact bytes sent on the wire)
+- Default transport sync (`ApiCall`); explicit `->async()` / `->fireAndForget()`
+- Unit tests: `tests/Unit/Http/ServiceCallTest.php`
+
+### Documentation
+
+- [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b); plan [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md)
+
 ## [5.15.0] - 2026-08-03
 
 ### Added

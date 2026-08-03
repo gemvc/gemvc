@@ -27,6 +27,7 @@ Verified against `docs/` + source (2026-08).
 |-------|------|-----------|
 | `ApiService` | `src/core/ApiService.php` | **Recommended** public base for all servers; uses `ApiServiceSharedTrait` |
 | `ApiServiceSharedTrait` | `src/core/ApiServiceSharedTrait.php` | Shared: `requireAuth`, `requireInternalService`, `requireRateLimit*`, `callController`, magic `__get` |
+| `ServiceCall` / `ServiceMap` | `src/http/ServiceCall.php`, `src/core/ServiceMap.php` | Mesh DX; `GEMVC_SERVICES_JSON`; wraps ApiCall/AsyncApiCall |
 | `InternalTrust` | `src/core/InternalTrust.php` | Family HMAC gate; `GEMVC_INTERNAL_SECRET` |
 | `InternalServiceException` | `src/core/InternalServiceException.php` | 401 failed / 500 misconfigured |
 | `ProtectedApiService` | `src/core/ProtectedApiService.php` | **Recommended** authenticated CRUD — ctor calls `requireAuth($roles)` |

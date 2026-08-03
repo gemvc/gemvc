@@ -1,6 +1,38 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.14.0...5.15.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.15.0...5.16.0
 # GEMVC Framework - Release Notes
+
+## Version 5.16.0 - ServiceCall mesh DX (Phase 2b)
+
+**Release Date**: Monday, 3 August 2026  
+**Type**: Minor Release (backward compatible)  
+**Tag**: `5.16.0`
+
+### Overview
+
+Caller-side mesh DX on top of Phase 2a family trust:
+
+- `ServiceCall::to('auth')` resolves base URLs from `GEMVC_SERVICES_JSON`
+- Default sync via **`ApiCall`**; explicit `->async()` / `->fireAndForget()` via **`AsyncApiCall`**
+- `withInternalTrust()` attaches HMAC; production mapped calls require `withInternalTrust()` or `withoutInternalTrust()`
+- JSON payload encoded **once** — same bytes signed and sent
+
+```php
+ServiceCall::to('auth')
+    ->post('/api/Auth/oauthLogin', $payload)
+    ->withInternalTrust()
+    ->run();
+```
+
+See [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b).
+
+### Migration
+
+1. Add `GEMVC_SERVICES_JSON` alongside existing `GEMVC_INTERNAL_SECRET`
+2. Prefer `ServiceCall` over hand-rolled `callerHeaders` + `ApiCall`
+3. In production, always call `withInternalTrust()` or `withoutInternalTrust()`
+
+---
 
 ## Version 5.15.0 - Family trust (Phase 2a)
 

@@ -407,7 +407,9 @@ Canonical string: `{METHOD}\n{path}\n{timestamp}\n{body_hash}` where `body_hash`
 
 Caller helper: `InternalTrust::callerHeaders($method, $path, $rawBody)` (uses `GEMVC_INTERNAL_SECRET`). Caught by `Bootstrap` / `SwooleBootstrap` / `FrankenPhpBootstrap`.
 
-Outbound example with `HttpClient`: [http-client.md — Family trust](http-client.md#family-trust-outbound-hmac).
+**Preferred caller (5.16+):** `ServiceCall::to('auth')->post(...)->withInternalTrust()->run()` — [http-client.md — ServiceCall](http-client.md#servicecall-phase-2b).
+
+Outbound low-level example: [http-client.md — Family trust](http-client.md#family-trust-outbound-hmac).
 
 **Does not** replace private networking / mTLS. User JWT alone never satisfies this gate. Full plan: [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
 
@@ -1033,7 +1035,7 @@ This security policy is regularly updated to reflect:
 - Framework updates
 
 **Last Updated**: 2026-08-03
-**Version**: 5.15.0 (family trust `requireInternalService` / HMAC; FrankenPHP; unified `ApiService`; rate-limit drivers / `Protected*`, `forUpdate`; ViewTable); automatic hardening baseline unchanged
+**Version**: 5.16.0 (ServiceCall mesh DX; family trust HMAC; FrankenPHP; unified ApiService); automatic hardening baseline unchanged
 
 ---
 

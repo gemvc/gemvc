@@ -4,7 +4,7 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "5.15.0",
+    "version": "5.16.0",
     "library_package": "gemvc/library",
     "ecosystem_doc": "docs/guides/ecosystem.md",
     "ai_docs": "docs/ai/INDEX.md",

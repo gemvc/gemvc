@@ -87,7 +87,7 @@ Current test coverage focuses on:
 ### ✅ Completed
 - **Security Tests**: XSS prevention, input sanitization, path protection
 - **HTTP Layer**: Request sanitization, Response factory, JWT tokens
-- **Core Framework (5.15.0)**: Family trust (`requireInternalService` / `InternalTrust`); SecurityManager path blocking; RateLimiter (apcu/redis/both/none); Protected / unified API bases; `validateOrFail` / `ApiServiceSharedTrait`
+- **Core Framework (5.16.0)**: ServiceCall mesh DX; family trust (`requireInternalService` / `InternalTrust`); SecurityManager; RateLimiter; Protected / unified API bases; `validateOrFail` / `ApiServiceSharedTrait`
 - **Database**: `forUpdate()` (5.12.0); `ViewTable` / `ViewGenerator` / dialect view DDL / `TableMigrateOrder` (5.11.0, `ViewTableTest`)
 
 ### 🚧 In Progress

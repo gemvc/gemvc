@@ -151,7 +151,7 @@ Scheme: HMAC-SHA256 over `METHOD\npath\ntimestamp\nsha256(rawBody)` — see [sec
 | Bad / missing / expired HMAC | **401** | `ERR_INTERNAL_TRUST_FAILED` |
 | Secret not configured when gate used | **500** | `ERR_INTERNAL_TRUST_MISCONFIGURED` |
 
-Helper for callers: `InternalTrust::callerHeaders($method, $path, $rawBody)`. Orthogonal to `requireAuth()`.
+Helper for callers: `InternalTrust::callerHeaders($method, $path, $rawBody)` or prefer **`ServiceCall::to(...)->withInternalTrust()->run()`** ([http-client.md](http-client.md#servicecall-phase-2b)). Orthogonal to `requireAuth()`.
 
 ---
 

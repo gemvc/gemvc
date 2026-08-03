@@ -128,6 +128,41 @@ Prefer the package classes directly when writing new microservice clients; facad
 
 ---
 
+## ServiceCall (Phase 2b)
+
+Family discovery + trust on top of `ApiCall` / `AsyncApiCall` (no second HTTP stack).
+
+```env
+GEMVC_SERVICES_JSON={"auth":"http://noam-auth","billing":"http://billing"}
+GEMVC_INTERNAL_SECRET=...long-random...
+```
+
+```php
+use Gemvc\Http\ServiceCall;
+
+// Default = sync ApiCall. Production requires withInternalTrust() or withoutInternalTrust().
+$body = ServiceCall::to('auth')
+    ->post('/api/Auth/oauthLogin', ['code' => $code]) // JSON encoded once; same bytes signed + sent
+    ->withInternalTrust()
+    ->withTimeout(2.0)
+    ->run();
+
+ServiceCall::to('billing')->async()->get('/api/Billing/ping')->withInternalTrust()->run();
+ServiceCall::to('billing')->async()->post('/api/Billing/log', $payload)->withoutInternalTrust()->fireAndForget();
+```
+
+| Method | Role |
+|--------|------|
+| `to('auth')` | Resolve base URL from `GEMVC_SERVICES_JSON` |
+| `withInternalTrust()` | Attach HMAC headers (`InternalTrust`) |
+| `withoutInternalTrust()` | Explicit skip (required alternative in production) |
+| `sync()` / `async()` | Force `ApiCall` / `AsyncApiCall` |
+| `fireAndForget()` | Async only |
+
+Receiver still uses `$this->requireInternalService()`. Details: [security.md](security.md#family-trust-phase-2a) · [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md)
+
+---
+
 ## Family trust (outbound HMAC)
 
 Until Phase 2b `ServiceCall`, attach family HMAC headers with `InternalTrust::callerHeaders()` and **`postRaw` / `get` using the same path and raw body you sign**.

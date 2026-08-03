@@ -10,7 +10,7 @@
 [![FrankenPHP](https://img.shields.io/badge/FrankenPHP-Supported-000000.svg?style=flat-square)](https://frankenphp.dev/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.15.0 — Family trust (`requireInternalService` / HMAC). Also **5.14** FrankenPHP + `StandardHttpRequest`, **5.13** unified `ApiService`, **5.12** rate-limit / `Protected*` / `forUpdate()`, **ViewTable**, multi-DB, modular CLI.
+**Latest:** 5.16.0 — ServiceCall mesh DX (Phase 2b). Also **5.15** family trust HMAC, **5.14** FrankenPHP, **5.13** unified ApiService.
 
 ## Before You Continue
 

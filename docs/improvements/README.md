@@ -9,17 +9,16 @@ Done work is recorded in [guides/](../guides/) and [RELEASE_NOTES](../releases/R
 
 | Item | Status | Where to read |
 |------|--------|----------------|
-| **Phase 2b** — Mesh DX (`ServiceCall`) | Planned (after 2a) | [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md) |
 | Schema `primary` → runtime/DDL | Stretch (not done) | [database.md — Primary keys](../guides/database.md#primary-keys-ddl-runtime) |
 | Developer UI table list views | Future (library) | Still **BASE TABLE** only in `DeveloperTable::getAllTables` |
 | gRPC (optional future runtime) | Not started | Candidate for a later minor |
-
-Do **Phase 2a (trust)** before **Phase 2b (mesh DX)** — **2a is shipped in 5.15.0**.
+| Phase 2 stretch (Redis registry / per-service HMAC / nonce) | Not started | [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md) |
 
 ## Shipped (do not re-implement)
 
 | Item | Shipped in | Canonical guide / notes |
 |------|------------|-------------------------|
+| Mesh DX (`ServiceCall` / `GEMVC_SERVICES_JSON`) | **5.16.0** | [http-client.md](../guides/http-client.md#servicecall-phase-2b); [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md) |
 | Family trust (`requireInternalService` / HMAC) | **5.15.0** | [security.md](../guides/security.md#family-trust-phase-2a); [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md) |
 | Unified `ApiService` (runtime) | **5.13.0** | [api.md](../guides/api.md); [RELEASE_NOTES](../releases/RELEASE_NOTES.md) |
 | FrankenPHP classic + worker + `StandardHttpRequest` | **5.14.0** | [frankenphp.md](../guides/frankenphp.md); [RELEASE_NOTES](../releases/RELEASE_NOTES.md) |

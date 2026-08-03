@@ -3,7 +3,7 @@
 **Audience:** Google Antigravity (Gemini) agents.  
 **Precedence:** In Antigravity, this file **overrides** conflicting lines in [`AGENTS.md`](AGENTS.md). Keep shared truth in `AGENTS.md`; keep Antigravity emphasis here.
 
-You are in **`gemvc/library`** version **5.15.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / FrankenPHP / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
+You are in **`gemvc/library`** version **5.16.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / FrankenPHP / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
 
 ## Session start (mandatory)
 

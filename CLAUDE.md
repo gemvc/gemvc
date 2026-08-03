@@ -1,6 +1,6 @@
 # CLAUDE.md — GEMVC for Claude Code
 
-You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.15.0**.
+You are working in **`gemvc/library`** (GEMVC PHP REST framework), version **5.16.0**.
 
 **GEMVC is not Laravel, Symfony, Slim, or Eloquent.** Do not invent routes files, service containers as the app pattern, or ORM relations. Follow the project docs.
 

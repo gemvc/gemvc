@@ -1,10 +1,8 @@
 # Phase 2 — Trust and mesh
 
-**Status:** **2a implemented** (library). **2b** not started.  
-**Packages:** `gemvc/library` (API gate + `InternalTrust`). **2b:** `gemvc/http-client` and/or thin library wrapper.  
-**Backlog origin:** internal P0 (family trust / mesh DX). See [improvements README](README.md).
-
-**AI:** implement **2b** only when explicitly tasked. Do **2a before 2b**.
+**Status:** **2a + 2b implemented** (library). Stretch (Redis registry, etc.) not started.  
+**Packages:** `gemvc/library` only (`InternalTrust`, `ServiceMap`, `ServiceCall`).  
+**Shipped:** 2a in **5.15.0**; 2b in **5.16.0**.
 
 ---
 
@@ -16,10 +14,11 @@
 - `ApiService::requireInternalService()` — same DX as `requireAuth()` / `requireRateLimit()` (throw; Bootstrap catches).
 - Separate from end-user JWT.
 
-### 2b — Mesh DX (after 2a)
+### 2b — Mesh DX (after 2a) — **design locked; not implemented**
 
-- Resolve sibling base URLs (static map first).
-- `ServiceCall` (name TBD) built on **`gemvc/http-client`**, attaches internal trust headers automatically.
+- Resolve sibling base URLs (`GEMVC_SERVICES_JSON` static map).
+- `ServiceCall` facade over existing **`ApiCall` / `AsyncApiCall`** (not a new HTTP stack); injects `InternalTrust` headers.
+- Default transport = sync `ApiCall`; explicit `->sync()` / `->async()` / `->fireAndForget()`.
 - Redis/etcd registry = later stretch, not required for v1.
 
 ---
@@ -94,7 +93,16 @@ $sig = InternalTrust::sign('POST', '/api/Auth/oauthLogin', $ts, $rawBody, $secre
 
 ---
 
-## Phase 2b — Design (depends on 2a; not implemented)
+## Phase 2b — Locked design (depends on 2a; **shipped in 5.16.0**)
+
+**Package:** `gemvc/library` facade `ServiceCall` (name locked) that **delegates** to existing outbound facades — **no second HTTP stack**.
+
+| Existing facade | Role |
+|-----------------|------|
+| `Gemvc\Http\ApiCall` | Sync outbound (wraps `HttpClient` / Swoole client via `WebserverDetector`) |
+| `Gemvc\Http\AsyncApiCall` | Concurrent batches / fire-and-forget |
+
+There is **no** class named `SyncApiCall`; sync = `ApiCall`.
 
 ### Static discovery (v1)
 
@@ -104,47 +112,79 @@ GEMVC_SERVICE_NAME=aggregator
 GEMVC_SERVICES_JSON={"auth":"http://noam-auth","billing":"http://billing"}
 ```
 
-### Caller DX (conceptual)
+Missing name in map → fail loudly (exception / clear error). No Redis for v1.
+
+### Caller DX
 
 ```php
+// Default transport: runtime-safe (see table below)
 $result = ServiceCall::to('auth')
     ->post('/api/Auth/oauthLogin', $payload)
-    ->withInternalTrust()
+    ->withInternalTrust()   // required for family routes in prod; injects InternalTrust::callerHeaders
     ->withTimeout(2.0)
     ->run();
+
+// Explicit transport
+ServiceCall::to('auth')->sync()->post(...)->withInternalTrust()->run();
+ServiceCall::to('auth')->async()->post(...)->withInternalTrust()->run();
+ServiceCall::to('auth')->async()->post(...)->withInternalTrust()->fireAndForget();
 ```
+
+### Transport selection (locked)
+
+| Mode | Behavior |
+|------|----------|
+| **Default** (developer says nothing) | Use **`ApiCall`** — sync wait-for-response. On OpenSwoole, `ApiCall` already picks the Swoole-aware client via detector. |
+| `->sync()` | Force **`ApiCall`** |
+| `->async()` | Force **`AsyncApiCall`** (batches / non-default semantics) |
+| `->fireAndForget()` | Only valid on async path; non-blocking telemetry-style |
+
+**Automatic ≠ always async.** Silent async on FPM surprises developers (response timing, error handling). Default is sync; async is opt-in.
+
+### Feature rules
 
 | Feature | Notes |
 |---------|--------|
-| Transport | Reuse `HttpClient` / async / Swoole client — no second HTTP stack |
-| Trust | Always attach HMAC headers when `withInternalTrust()` |
+| Transport | **Only** via `ApiCall` / `AsyncApiCall` → `gemvc/http-client` (**library only** — do not change `http-client` for 2b) |
+| Trust | **Opt-in** `withInternalTrust()`; explicit bypass `withoutInternalTrust()`. In **`APP_ENV=production`**, calling a mapped sibling **requires** one of the two (omit → throw). Non-prod: omit allowed (no HMAC). |
 | Discovery | `to('auth')` → `GEMVC_SERVICES_JSON` |
-| Tracing | Propagate APM / correlation id when APM enabled |
-| JWT | Do **not** forward end-user Bearer unless explicitly requested |
+| Body | Encode payload to JSON **exactly once**; store raw string; pass same bytes to `InternalTrust::sign` / `callerHeaders` and to transport (`postRaw` / async raw). Never re-encode after signing. |
+| Tracing | Propagate APM / correlation id when APM enabled (stretch-ok if thin in v1) |
+| JWT | Do **not** forward end-user Bearer unless explicitly requested (e.g. `->withUserToken(...)`) |
+| Package | **`gemvc/library` only** |
 
-### Stretch (not v1)
+### Assessor lock (approved)
+
+1. Default-sync + explicit-async — **yes**
+2. Trust opt-in + prod require with/without — **yes**
+3. Single-encode pipeline — **yes**
+4. Name `ServiceCall` — **yes**
+5. Live in `gemvc/library` only — **yes**
+
+### Stretch (not 2b v1)
 
 - Redis-backed registry + heartbeat TTL
 - Per-service HMAC identity
 - Nonce store for replay inside skew window
+- Default-async heuristics beyond explicit `->async()`
 
 ---
 
 ## Work packages
 
-**2a** (done)
+**2a** (done — shipped **5.15.0**)
 
 1. ~~Secret loading + HMAC + constant-time verify (`InternalTrust`)~~
 2. ~~`requireInternalService()` + `InternalServiceException` + Bootstrap catches~~
 3. ~~Unit tests~~
-4. ~~Security + API + AI docs~~
+4. ~~Security + API + AI docs + HttpClient caller example~~
 
-**2b**
+**2b** (done — shipped **5.16.0**)
 
-1. Static service map parser.
-2. `ServiceCall` facade over http-client with trust header injection.
-3. Integration test: caller + stub receiver with secret.
-4. Docs: ecosystem + http-client + security.
+1. ~~Parse/validate `GEMVC_SERVICES_JSON`.~~
+2. ~~`ServiceCall` facade → `ApiCall` / `AsyncApiCall` + `withInternalTrust()` / `withoutInternalTrust()` / `sync()` / `async()`.~~
+3. ~~Unit tests (map resolve, trust headers, sync default, prod trust policy).~~
+4. ~~Docs: http-client, security, api, AI pack, RELEASE_NOTES.~~
 
 ---
 
@@ -160,9 +200,14 @@ $result = ServiceCall::to('auth')
 
 ### 2b
 
-- [ ] `ServiceCall::to('auth')->…->withInternalTrust()->run()` hits configured base URL with trust headers.
-- [ ] Missing secret in prod fails loudly for trusted calls.
-- [ ] No Redis required for v1.
+- [x] `ServiceCall::to('auth')->post(...)->withInternalTrust()->run()` builds mapped URL + valid HMAC headers.
+- [x] Default path uses **`ApiCall`** (sync); `->async()` uses **`AsyncApiCall`**.
+- [x] Missing secret when `withInternalTrust()` → fail loudly (`InternalTrust`).
+- [x] Unknown service name in map → fail loudly.
+- [x] Production: omit trust mode → throw unless `withInternalTrust()` or `withoutInternalTrust()`.
+- [x] Single-encode: signed body bytes === wire body bytes.
+- [x] No Redis required for v1.
+- [x] PHPStan 9; no duplicate HTTP client stack; no `http-client` package changes.
 
 ---
 
@@ -177,6 +222,6 @@ $result = ServiceCall::to('auth')
 
 ## Suggested implementation order
 
-1. **2a** — done (HMAC + `requireInternalService` + tests + docs)
-2. **2b** static map + `ServiceCall` + trust headers
+1. **2a** — done (HMAC + `requireInternalService` + tests + docs) — **5.15.0**
+2. **2b** — static map + `ServiceCall` on `ApiCall`/`AsyncApiCall` + trust — **5.16.0**
 3. Stretch: nonce store, Redis registry, per-service HMAC
