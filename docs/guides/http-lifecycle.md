@@ -73,6 +73,7 @@ Webserver-Specific Output
 3. **Response Abstraction** - Consistent responses
    - `JsonResponse` - JSON responses with `show()` and `showSwoole()`
    - `Response` - Response factory (includes `Response::tooManyRequests()` → HTTP **429**)
+
 ---
 
 ## Request Life Cycle
@@ -104,7 +105,7 @@ Webserver-Specific Output
     ↓
 10. JsonResponse returned
     ↓
-11. JsonResponse->show() outputs to Apache
+11. JsonResponse->show() outputs to PHP-FPM / Apache/Nginx
 ```
 
 ### OpenSwoole Life Cycle

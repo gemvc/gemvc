@@ -44,7 +44,7 @@ protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 
 
 ## Phases
 
-### Phase 0 — Documentation (done / in progress)
+### Phase 0 — Documentation (**done**)
 
 - State Nginx = shared `ApacheRequest` / PHP-FPM path; remove “NginxRequest coming soon”.
 - Document `Table::noLimit()`, `Table::all()`, `Response::tooManyRequests()`.

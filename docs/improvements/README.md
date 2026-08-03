@@ -1,7 +1,7 @@
 # GEMVC improvements
 
 **Audience:** maintainers implementing remaining framework work.  
-**AI: skip unless implementing Phase 2 (trust/mesh) or Schema PK stretch.**
+**AI: skip unless implementing Phase 2 (trust/mesh), Schema PK stretch, or [ApiService runtime unification](api-runtime-unification.md).**
 
 ## Status
 

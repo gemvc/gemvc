@@ -71,7 +71,7 @@ See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](h
 ### Apache/Nginx Flow:
 ```
 HTTP Request
- → startup/apache/index.php → ApacheRequest (sanitize headers/body)
+ → startup/apache|nginx/index.php → ApacheRequest (sanitize headers/body)
  → Bootstrap (APM root) → route /api/{Service}/{method}
  → ApiService (schema + auth) → callController → Controller
  → Model → Table (DB span if APM_TRACE_DB_QUERY=1)
@@ -301,7 +301,8 @@ Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 ## Key Files Reference
 
 ### **Entry Points**:
-- `startup/apache/index.php` - Apache entry
+- `startup/apache/index.php` - Apache entry (`ApacheRequest` + `Bootstrap`)
+- `startup/nginx/index.php` - Nginx entry (same `ApacheRequest` + `Bootstrap` PHP-FPM path)
 - `startup/swoole/index.php` - OpenSwoole entry
 - `bin/gemvc` - CLI entry point
 
