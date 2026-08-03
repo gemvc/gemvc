@@ -353,33 +353,61 @@ GEMVC is built for **microservice-style** data access. For JOIN-heavy read model
 
 **Read-only:** `insertSingleQuery` / `updateSingleQuery` / `deleteByIdQuery` (and soft-delete) hard-fail on `ViewTable`. Writes stay on base Tables. Nest collections (payments, etc.) in the **Model** after flat selects — views do not do 1:n.
 
+**Full copy-paste example set:** [`examples/README.md`](../examples/README.md) — [`table/`](../examples/table/) · [`model/`](../examples/model/) · [`controller/`](../examples/controller/) · [`api/`](../examples/api/) (`User`, `Order`, `UserOrderSummary` VIEW).
+
 ### Example
 
 ```php
 <?php
+
+declare(strict_types=1);
+
 namespace App\Table;
 
 use Gemvc\Database\ViewTable;
 
+/**
+ * SQL VIEW read model — flat aliases only; writes stay on UserTable / OrderTable.
+ */
 class UserOrderSummaryTable extends ViewTable
 {
     public int $user_id;
     public string $user_name;
     public string $email;
+    public ?string $role;
     public int $order_count;
+    /** Money: string + type map decimal — never float. */
     public string $order_total;
+    public ?string $last_order_at;
 
+    /** Not a DB column — nest in Model after load. */
+    public array $_recent_orders = [];
+
+    /** @var array<string, string> */
     protected array $_type_map = [
         'user_id' => 'int',
         'user_name' => 'string',
         'email' => 'string',
+        'role' => 'string',
         'order_count' => 'int',
-        'order_total' => 'string',
+        'order_total' => 'decimal',
+        'last_order_at' => 'datetime',
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        // No property `id` — logical key is user_id (selectById / PK helpers).
+        $this->setPrimaryKey('user_id', 'int');
+        $this->role = null;
+        $this->last_order_at = null;
+        $this->order_count = 0;
+        $this->order_total = '0.00';
+    }
 
     public function getTable(): string
     {
-        return 'user_order_summary';
+        return 'user_order_summary'; // VIEW name
     }
 
     /** @return list<class-string<\Gemvc\Database\Table>> */
@@ -390,20 +418,38 @@ class UserOrderSummaryTable extends ViewTable
 
     public function defineView(): string
     {
-        $u = (new UserTable())->getTable();
-        $o = (new OrderTable())->getTable();
+        $users = (new UserTable())->getTable();
+        $orders = (new OrderTable())->getTable();
 
         return <<<SQL
             SELECT
                 u.id AS user_id,
                 u.name AS user_name,
                 u.email,
+                u.role AS role,
                 COUNT(o.id) AS order_count,
-                COALESCE(SUM(o.total), 0) AS order_total
-            FROM {$u} u
-            LEFT JOIN {$o} o ON o.user_id = u.id
-            GROUP BY u.id, u.name, u.email
+                COALESCE(SUM(o.total), 0) AS order_total,
+                MAX(o.created_at) AS last_order_at
+            FROM {$users} u
+            LEFT JOIN {$orders} o ON o.user_id = u.id
+            GROUP BY u.id, u.name, u.email, u.role
         SQL;
+    }
+
+    public function selectByUserId(int $userId): ?static
+    {
+        $rows = $this->select()->whereEqual('user_id', $userId)->limit(1)->run();
+        return $rows[0] ?? null;
+    }
+
+    /** @return list<static>|null */
+    public function selectTopSpenders(int $limit = 50): ?array
+    {
+        return $this->select()
+            ->whereBiggerThan('order_count', 0)
+            ->orderBy('order_total', false)
+            ->limit($limit)
+            ->run();
     }
 }
 ```
@@ -422,6 +468,9 @@ $summaries = (new UserOrderSummaryTable())
     ->orderBy('order_total', false)
     ->limit(50)
     ->run();
+
+$row = (new UserOrderSummaryTable())->selectById(1); // uses setPrimaryKey('user_id')
+// $row->insertSingleQuery(); // hard-fail — read-only
 ```
 
 **Verify:** dialect `viewExists($pdo, 'user_order_summary')` (MySQL/Postgres information_schema; SQLite `sqlite_master`). SQLite replaces views via DROP + CREATE.

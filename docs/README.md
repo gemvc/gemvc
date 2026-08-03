@@ -89,6 +89,8 @@ Covers: return style; composition Models; simple vs domain; CRUD; transforms; va
 
 **What it does:** Database only. Properties = columns (or view aliases). Physical tables via `Table` + `defineSchema()`; **SQL views via `ViewTable`** + `defineView()` / `viewDependsOn()`. Fluent select; transactions / `forUpdate`; row CRUD on tables only (views are read-only). Migrate: `gemvc db:migrate ClassName` or `gemvc db:migrate --all`.
 
+**Full 4-layer example set:** [`examples/README.md`](examples/README.md) — `api/` · `controller/` · `model/` · `table/` (`User`, `Order`, `UserOrderSummary` VIEW)
+
 Covers: what `Table` / `ViewTable` abstract; skeleton; types/PKs; CRUD; soft delete; views; multi-DB; connection packages under the hood.
 
 ---

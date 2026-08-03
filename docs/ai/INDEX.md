@@ -21,7 +21,7 @@ Optional machine/IDE mirrors (same content, not required):
 | **All gemvc/* packages (ecosystem)** | [../guides/ecosystem.md](../guides/ecosystem.md) |
 | **`gemvc/helper`** (TypeChecker, CryptHelper, …) | [../guides/helper.md](../guides/helper.md) |
 | **`gemvc/http-client`** (outbound HTTP / ServiceCall) | [../guides/http-client.md](../guides/http-client.md) |
-| Migrations / Table / **ViewTable** / connections | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)) |
+| Migrations / Table / **ViewTable** / connections | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)); 4-layer samples: [../examples/README.md](../examples/README.md) |
 | **Lists** `createList` + findable/filterable/sortable | [../guides/controller.md](../guides/controller.md#lists-createlist) (+ [api.md](../guides/api.md#list-allowlists)) |
 | **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
 | **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
