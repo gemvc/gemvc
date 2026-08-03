@@ -16,7 +16,7 @@ Cursor also loads [`.cursorrules`](.cursorrules) (same rules, shorter). Claude C
 
 | Capability | Reality |
 |------------|---------|
-| Servers | **Same app code** on Apache, Nginx, FrankenPHP (classic), and OpenSwoole ([openswoole.md](docs/guides/openswoole.md); [frankenphp.md](docs/guides/frankenphp.md)) |
+| Servers | **Same app code** on Apache, Nginx, FrankenPHP (classic or worker), and OpenSwoole ([openswoole.md](docs/guides/openswoole.md); [frankenphp.md](docs/guides/frankenphp.md)) |
 | Architecture | **4 layers** (not MVC): API → Controller → Model → Table / ViewTable |
 | Routing | **Automatic** — `/api/{Service}/{method}` — **no routes file** |
 | Security | Input sanitization + prepared SQL built-in; JWT `requireAuth()`; **global rate limit via `.env`** (`REQUEST_RATE_LIMIT_PER_SEC` + `DRIVER`); optional `requireRateLimit()` / `requireRateLimitApcu|Redis|Both()` |
@@ -104,6 +104,8 @@ Drivers: `apcu` | `redis` | `both` (dual check, not failover) | `none`. No auto 
 | Packages | [`docs/guides/ecosystem.md`](docs/guides/ecosystem.md) |
 | Table / ViewTable | [`docs/guides/database.md`](docs/guides/database.md) |
 | Atomic money / `forUpdate` | [`docs/guides/model.md#atomic-money-transfers-pessimistic-lock`](docs/guides/model.md#atomic-money-transfers-pessimistic-lock) |
+| OpenSwoole isolation / pool / FAQ | [`docs/guides/openswoole.md`](docs/guides/openswoole.md) |
+| FrankenPHP classic / worker | [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md) |
 | API / Controller / Model | [`docs/guides/api.md`](docs/guides/api.md), [`controller.md`](docs/guides/controller.md), [`model.md`](docs/guides/model.md) |
 | Install | [`docs/guides/installation.md`](docs/guides/installation.md) |
 | Human + AI docs index | [`docs/README.md`](docs/README.md) |

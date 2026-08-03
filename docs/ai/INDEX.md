@@ -28,7 +28,7 @@ Optional machine/IDE mirrors (same content, not required):
 | **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types; money transfers) | [../guides/model.md](../guides/model.md) |
 | HTTP Request lifecycle / adapters | [../guides/http-lifecycle.md](../guides/http-lifecycle.md) |
 | **OpenSwoole isolation / pool / memory / FAQ** | **[../guides/openswoole.md](../guides/openswoole.md)** |
-| **FrankenPHP classic / Caddyfile security** | **[../guides/frankenphp.md](../guides/frankenphp.md)** |
+| **FrankenPHP classic / worker / Caddyfile** | **[../guides/frankenphp.md](../guides/frankenphp.md)** |
 | Install → first API call | [../guides/installation.md](../guides/installation.md) |
 | Framework internals | [../guides/architecture.md](../guides/architecture.md) |
 | Codegen templates | [../guides/templates.md](../guides/templates.md) |
@@ -37,7 +37,7 @@ Optional machine/IDE mirrors (same content, not required):
 | APM `callController` / `createModel` | [../guides/apm.md](../guides/apm.md) |
 | JWT / security | [../guides/security.md](../guides/security.md) |
 | Auto API docs (`@http`) | [../guides/api-documentation.md](../guides/api-documentation.md) |
-| What changed (releases) | [../releases/README.md](../releases/README.md) — **5.13** unified `ApiService`; **5.12** rate-limit drivers / Protected API / `forUpdate`; **5.11** ViewTable; older notes as needed |
+| What changed (releases) | [../releases/README.md](../releases/README.md) — **5.14** FrankenPHP + `StandardHttpRequest`; **5.13** unified `ApiService`; **5.12** rate-limit drivers / Protected API / `forUpdate`; **5.11** ViewTable; older notes as needed |
 
 ## Hard rules (never violate)
 

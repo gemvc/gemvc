@@ -13,18 +13,18 @@ description: >-
 
 # GEMVC
 
-GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Apache / Nginx / FrankenPHP classic / OpenSwoole):
+GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Apache / Nginx / FrankenPHP / OpenSwoole):
 
 - **4 layers** — API → Controller → Model → Table / **ViewTable** (not Laravel/Symfony MVC)
 - **Automatic routing** — no route file; URL → `app/api/{Service}.php`::{method}
 - **Integrated JWT**, in-house ORM (`Table` + **`ViewTable`**), CLI (`bin/gemvc`)
 - **Automatic API docs** via `@http` PHPDoc → `/api/index/document` (no Swagger)
-- **Bootstrap** (Apache/Nginx/FrankenPHP classic, may `die`) and **SwooleBootstrap** (return responses; never kill worker)
+- **Bootstrap** (Apache/Nginx/FrankenPHP classic, may `die`); **FrankenPhpBootstrap** + worker (no `die`); **SwooleBootstrap** (return responses; never kill worker)
 - **Early security** — Apache `.htaccess`; Nginx `nginx.conf`; FrankenPHP **`Caddyfile`** (never `.htaccess`); Swoole `SecurityManager` before bootstrap
 - **apm-contracts** + **apm-tracekit**; **http-client** (sync + `fireAndForget`)
 - More packages under github.com/gemvc; internal docs; **PHPStan level 9**
 
-This repository is **`gemvc/library` 5.13** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
+This repository is **`gemvc/library` 5.14** — engine lives in `src/`. Ecosystem packages are installed under `vendor/gemvc/` (there is no top-level `packages/` directory here). **No guessing / no Laravel-Symfony defaults** — follow [protocol.md](protocol.md).
 
 **Protocol status:** Source under `src/` and all of `vendor/gemvc/{helper,http-client,apm-contracts,apm-tracekit,connection-*,cli-*}` examined (2026-08 re-learn). Skills [architecture.md](architecture.md) / [source-map.md](source-map.md) hold the grounded map.
 
@@ -34,27 +34,27 @@ Before answering architecture questions, writing code, or suggesting refactors:
 
 0. **[protocol.md](protocol.md)** — Mandatory Source Code Ingestion & Deep Learning Protocol (zero-assumption, PHPStan 9, scan `vendor/gemvc` + `src/`)
 1. Examine **`vendor/gemvc/`** packages (helper, http-client, apm-*, connection-*, cli-*) — actual implementations, not training data
-2. Examine **`src/`** — Bootstrap / SwooleBootstrap, ApiService / SwooleApiService, Request/JWT, Table ORM, CLI, `startup/{apache,nginx,swoole}`
+2. Examine **`src/`** — Bootstrap / SwooleBootstrap / FrankenPhp*, ApiService, Request/JWT, Table ORM, CLI, `startup/{apache,nginx,frankenphp,swoole}`
 3. [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) → [CANONICAL.md](../../../docs/ai/CANONICAL.md) → [CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)
 4. This skill’s depth: [architecture.md](architecture.md) → [source-map.md](source-map.md)
-5. Task guides from INDEX (ecosystem, api, controller, model, database, **openswoole**, security, apm, api-documentation, cli, helper, http-client)
-6. Shared backlog (shipped docs only): [docs/improvements/](../../../docs/improvements/)
+5. Task guides from INDEX (ecosystem, api, controller, model, database, **openswoole**, **frankenphp**, security, apm, api-documentation, cli, helper, http-client)
+6. Shared backlog (active only): [docs/improvements/](../../../docs/improvements/)
 7. Re-verify the specific files you will change in `src/` and/or `vendor/gemvc/<pkg>/` before proposing diffs
 
 ## Apache vs Swoole (never confuse)
 
-Canonical deep guide: [docs/guides/openswoole.md](../../../docs/guides/openswoole.md) (isolation, pool, no-die, FAQ).
+Canonical deep guides: [openswoole.md](../../../docs/guides/openswoole.md) · [frankenphp.md](../../../docs/guides/frankenphp.md).
 
-| | Apache/Nginx/FrankenPHP (`Bootstrap`) | OpenSwoole (`SwooleBootstrap`) |
-|--|--|--|
-| URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
-| API base | Prefer `ApiService` / `ProtectedApiService` | **same** (deprecated: `SwooleApiService` extends `ApiService`) |
-| Controllers | `callController()` / magic `$this->XController` | same |
-| Validation | `validatePosts` **throws**; prefer `validateOrFail()` / `definePostSchema` | same; legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
-| Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` — see [openswoole.md](../../../docs/guides/openswoole.md) |
-| Root `/` | `Index`/`index` | Dev: `Developer`/`app` |
-| Early path deny | `.htaccess` | `SecurityManager::isRequestAllowed` |
-| Uploads | `$files` = `$_FILES['file']` only; no MIME sanitize | Normalized + name/MIME sanitize |
+| | Apache/Nginx/FrankenPHP classic (`Bootstrap`) | FrankenPHP worker | OpenSwoole (`SwooleBootstrap`) |
+|--|--|--|--|
+| URL | `/api/{Service}/{method}` — segment `"api"` hops to next | same hop via `FrankenPhpBootstrap` | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
+| API base | Prefer `ApiService` / `ProtectedApiService` | same | **same** (deprecated: `SwooleApiService` extends `ApiService`) |
+| Controllers | `callController()` / magic `$this->XController` | same | same |
+| Validation | `validatePosts` **throws**; prefer `validateOrFail()` / `definePostSchema` | same | same; legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
+| Lifecycle | `JsonResponse::show()` then `die` | no `die` — worker loop | `processRequest()` → `showSwoole()` — **never** `die`/`exit` |
+| Root `/` | `Index`/`index` | same | Dev: `Developer`/`app` |
+| Early path deny | `.htaccess` / `nginx.conf` / **Caddyfile** | **Caddyfile** + `SecurityManager` | `SecurityManager::isRequestAllowed` |
+| Uploads | `$files` = `$_FILES['file']` only; no MIME sanitize | same as classic SAPI | Normalized + name/MIME sanitize |
 
 Usual schema path is the same: `definePostSchema` / `defineGetSchema` → `bool` + `return $this->request->returnResponse()` (does not throw). Cross-runtime throw helpers: `validateOrFail()` / `validateStringOrFail()`.
 
@@ -75,7 +75,7 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 1. Change the right package (`library` `src/` vs helper / http-client / connection-* / apm-* / cli-*)
 2. Check [docs/improvements/](../../../docs/improvements/) for remaining work (Phase 2 trust/mesh; Schema PK stretch). **ViewTable is shipped** — use [database.md](../../../docs/guides/database.md)
 3. Keep PHPStan level 9 ([phpstan.neon](../../../phpstan.neon)); no casual `@phpstan-ignore`
-4. Preserve: 4 layers, no routes file, schema-before-input, Apache/Swoole dual bases
+4. Preserve: 4 layers, no routes file, schema-before-input, multi-runtime (`ApiService` / `ProtectedApiService`)
 
 ## Hard Do / Don't
 

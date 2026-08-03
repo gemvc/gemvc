@@ -15,7 +15,7 @@ Current framework version in docs: **5.14.0** — see root [README](../../README
 
 **5.14.0:** FrankenPHP classic + worker; `StandardHttpRequest` (deprecated `ApacheRequest` alias); Caddyfile path security. See [RELEASE_NOTES](RELEASE_NOTES.md) and [frankenphp.md](../guides/frankenphp.md).
 
-**5.13.0:** Unified `ApiService` / `ProtectedApiService` for Apache, Nginx, and OpenSwoole; `validateOrFail`; `ApiServiceSharedTrait` (`requireAuth`, rate limits, `callController`); `SwooleApiService` / `ProtectedSwooleApiService` deprecated thin subclasses. See [RELEASE_NOTES](RELEASE_NOTES.md) and [api-runtime-unification.md](../improvements/api-runtime-unification.md).
+**5.13.0:** Unified `ApiService` / `ProtectedApiService` for Apache, Nginx, and OpenSwoole; `validateOrFail`; `ApiServiceSharedTrait` (`requireAuth`, rate limits, `callController`); `SwooleApiService` / `ProtectedSwooleApiService` deprecated thin subclasses. See [RELEASE_NOTES](RELEASE_NOTES.md) and [api.md](../guides/api.md).
 
 **5.12.0:** RateLimiter drivers `apcu` | `redis` | `both` | `none`, `requireRateLimitApcu|Redis|Both()`, fail-closed + `FAIL_MODE` (no auto store fallback); `ProtectedApiService` / `ProtectedSwooleApiService`; `Table`/`Select::forUpdate()` + atomic transfer docs. See [RELEASE_NOTES](RELEASE_NOTES.md) and [model.md — Atomic money transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock).
 

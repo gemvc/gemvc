@@ -3,7 +3,7 @@
 **Audience:** production evaluators, architects, and developers running GEMVC under OpenSwoole / Swoole workers.  
 **Purpose:** answer recurring questions about request isolation, memory, pooling, and app constraints — once, in one place.
 
-**Related:** [http-lifecycle.md](http-lifecycle.md) · [architecture.md](architecture.md) · [database.md](database.md) · [ecosystem.md](ecosystem.md) · [apm.md](apm.md) · [api.md](api.md) · [frankenphp.md](frankenphp.md) · [api-runtime-unification.md](../improvements/api-runtime-unification.md)
+**Related:** [http-lifecycle.md](http-lifecycle.md) · [architecture.md](architecture.md) · [database.md](database.md) · [ecosystem.md](ecosystem.md) · [apm.md](apm.md) · [api.md](api.md) · [frankenphp.md](frankenphp.md)
 
 **Framework version:** 5.13+ (unified `ApiService` / `ProtectedApiService` on all servers).
 
@@ -186,7 +186,7 @@ Heavy queries can block the worker for their duration. Mitigate with query desig
 
 ### “Why both `ApiService` and `SwooleApiService`?”
 
-Historically dual bases; **5.13** unifies on `ApiService` / `ProtectedApiService`. `Swoole*` names remain **deprecated** thin subclasses for BC. See [api-runtime-unification.md](../improvements/api-runtime-unification.md).
+Historically dual bases; **5.13** unifies on `ApiService` / `ProtectedApiService`. `Swoole*` names remain **deprecated** thin subclasses for BC. See [api.md](api.md).
 
 ### “Nginx needs NginxRequest.”
 

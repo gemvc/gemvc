@@ -16,7 +16,7 @@ Runtime allows bypassing a layer; **do not** for normal HTTP services. Flexibili
 
 Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`.  
 Views: `UserAccessTable extends ViewTable` (`defineView()`, flat column aliases).  
-URL (Apache/Nginx/FrankenPHP classic): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop). No routes files. FrankenPHP path deny = **Caddyfile** (not `.htaccess`) — [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
+URL (Apache/Nginx/FrankenPHP): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop). No routes files. FrankenPHP path deny = **Caddyfile** (not `.htaccess`) — [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
 
 - `_` properties ignored in CRUD (aggregations)
 - `protected` properties: still DB columns (still in SQL `SELECT *` hydration); hidden from typical list/API payloads / `createList` defaults — prefer explicit column lists

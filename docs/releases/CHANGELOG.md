@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases; Nginx = shared `StandardHttpRequest` (no `NginxRequest`)
+- Phases 0–3 of ApiService runtime unification; AI pack / guides recommend unified bases; Nginx = shared `StandardHttpRequest` (no `NginxRequest`). See [api.md](../guides/api.md).
 
 ## [5.12.0] - 2026-08-01
 

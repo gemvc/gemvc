@@ -18,5 +18,8 @@ test-results.xml
 # IDE
 .vscode/
 
+# Local / machine-only helpers (not published)
+install-pcov.ps1
+
 # Local Cursor skill only (not published / not shared via git)
 .cursor/skills/gemvc/improve.md

@@ -7,7 +7,7 @@ Verified against `docs/` + source (2026-08).
 
 | Class | Path | Must know |
 |-------|------|-----------|
-| `Bootstrap` | `src/core/Bootstrap.php` | Apache/Nginx; `setRequestedService`; **`api` hop**; ignores `METHOD_IN_URL_SECTION`; may `die` |
+| `Bootstrap` | `src/core/Bootstrap.php` | Apache/Nginx/FrankenPHP classic; `setRequestedService`; **`api` hop**; ignores `METHOD_IN_URL_SECTION`; may `die` |
 | `SwooleBootstrap` | `src/core/SwooleBootstrap.php` | `extractRouteInfo`; **no** `api` hop; uses `SERVICE_IN_URL_SECTION` + `METHOD_IN_URL_SECTION`; `processRequest()` returns; catches Auth / RateLimit / **ValidationException** → JSON |
 | `OpenSwooleServer` | `src/core/OpenSwooleServer.php` | Security → SwooleRequest → bootstrap → showSwoole → APM flush |
 | `WebserverDetector` | `src/core/WebserverDetector.php` | apache / nginx / swoole / frankenphp detection |

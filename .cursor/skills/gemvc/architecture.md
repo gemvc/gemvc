@@ -29,6 +29,12 @@ Routing in `Bootstrap::setRequestedService()` (`src/core/Bootstrap.php`):
 
 Example: `/api/User/create` → `App\Api\User::create()`.
 
+### FrankenPHP
+
+Classic (default): same as Apache/Nginx — `startup/frankenphp/index.php` → `StandardHttpRequest` → `Bootstrap` → `die`. Edge denies in **Caddyfile**.
+
+Worker (opt-in `Caddyfile.worker`): `worker.php` → `FrankenPhpWorker` → `FrankenPhpBootstrap` (classic `/api/` hop, **no** `die`). Guide: [frankenphp.md](../../../docs/guides/frankenphp.md).
+
 ### OpenSwoole
 
 ```
@@ -115,7 +121,7 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 - TraceKit package autoloads that NS from `vendor/gemvc/apm-tracekit/src/` (`TraceKitProvider`)
 - Env: unified `APM_*`; TraceKit also `TRACEKIT_ENDPOINT` (not `TRACEKIT_API_URL`), `TRACEKIT_API_KEY`, …
 - Root span: Bootstrap / SwooleBootstrap
-- Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (Apache **and** OpenSwoole)
+- Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (all servers)
 - DB spans: `APM_TRACE_DB_QUERY=1` via `createModel` → Request on Table / `UniversalQueryExecuter`
 - Never hardcode TraceKit in app or library app-facing APIs
 
@@ -123,7 +129,7 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 
 - `DatabaseManagerFactory::getManager()` picks PDO vs OpenSwoole pool via `WebserverDetector`
 - Table → `UniversalQueryExecuter` → getConnection(`default`) → always release
-- Apache/Nginx/FrankenPHP classic: `PdoConnection` (cached; persistent default on)
+- Apache/Nginx/FrankenPHP: `PdoConnection` (cached; persistent default on)
 - OpenSwoole: Hyperf pool (`MIN_DB_CONNECTION_POOL` / `MAX_DB_CONNECTION_POOL`); per-worker; must release
 - FrankenPHP edge security: **Caddyfile** only — never ship `.htaccess` for path denies
 

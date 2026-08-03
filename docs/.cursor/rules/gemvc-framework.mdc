@@ -1,12 +1,10 @@
 ---
 description: GEMVC framework rules — read vendor/gemvc before inventing patterns
-globs: app/**/*.php
 alwaysApply: false
 ---
-
 # GEMVC (not Laravel / Symfony)
 
-Installed: **`gemvc/library` 5.13.0** under `vendor/gemvc/`. Before inventing APIs, open:
+Installed: **`gemvc/library` 5.14.0** under `vendor/gemvc/`. Before inventing APIs, open:
 
 1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't
 2. `vendor/gemvc/library/README.md` — architecture + AI reading order
@@ -32,7 +30,7 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 ## Hard rules
 
 - **DO** `definePostSchema` / `defineGetSchema` before using input; fail with `$this->request->returnResponse()`
-- **DO** `$this->callController(new XController($this->request))->method()` on Apache/Nginx **and** OpenSwoole
+- **DO** `$this->callController(new XController($this->request))->method()` on all servers (Apache/Nginx/FrankenPHP/OpenSwoole)
 - **DO** prefer `gemvc/helper` (`CryptHelper`, `TypeChecker`) and `gemvc/http-client` for outbound HTTP
 - **DO** set JWT `$token->role` (comma-separated names) when minting tokens if you rely on `auth(['admin'])`
 - **DO** use `setPrimaryKey('col')` after `parent::__construct()` when the Table/ViewTable has no `id` property (views / alternate PKs)

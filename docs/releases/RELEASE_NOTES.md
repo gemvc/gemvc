@@ -41,7 +41,7 @@ See [frankenphp.md](../guides/frankenphp.md), [http-lifecycle.md](../guides/http
 
 One developer-facing API base for Apache, Nginx, and OpenSwoole. Auth, rate-limit, validation throw helpers, and `callController` / magic `$this->XController` share one implementation. Old Swoole class names remain as **deprecated** thin subclasses.
 
-- **Phases 0–3** of [api-runtime-unification.md](../improvements/api-runtime-unification.md) — shipped
+- **Phases 0–3** of ApiService runtime unification — shipped (see [api.md](../guides/api.md))
 - **`ApiServiceSharedTrait`:** `requireAuth`, `requireRateLimit*`, `callController`, magic controllers
 - **`validateOrFail()` / `validateStringOrFail()`** on both paths; `SwooleBootstrap` catches `ValidationException` → 400
 - **Recommended:** `extends ApiService` / `ProtectedApiService` on **all** servers

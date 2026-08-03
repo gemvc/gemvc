@@ -21,7 +21,7 @@ Before evaluating the framework or reading the API documentation, read:
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
 - [`docs/guides/architecture.md`](docs/guides/architecture.md) — *how* requests flow through the code
 
-Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md). For FrankenPHP (classic mode + Caddyfile security), read [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md).
+Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md). For FrankenPHP (classic + worker, Caddyfile security), read [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md).
 
 > **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
@@ -36,14 +36,14 @@ php vendor/bin/gemvc init
 composer require --dev gemvc/cli-dev
 ```
 
-Same application code runs on **OpenSwoole**, **Apache**, **Nginx**, and **FrankenPHP** (classic).
+Same application code runs on **OpenSwoole**, **Apache**, **Nginx**, and **FrankenPHP** (classic or worker).
 
 ## What GEMVC is
 
-- **Server-agnostic** — your code works the same on OpenSwoole, Nginx, and Apache
+- **Server-agnostic** — your code works the same on OpenSwoole, Apache, Nginx, and FrankenPHP
 - **4-layer** API → Controller → Model → Table / **ViewTable** — **strongly recommended**. You *can* bypass a layer and the runtime still works; do that only with a clear reason. Skipping layers is how services become hard to test, secure, and reason about.
 - **Modular ecosystem** — **`gemvc/helper`** (types, crypto, paths) + **`gemvc/http-client`** (outbound HTTP) + connections, APM, CLI — not one monolith package
-- **No routes file** — Apache/Nginx: `/api/{Service}/{method}` maps automatically; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (see [architecture.md](docs/guides/architecture.md))
+- **No routes file** — Apache/Nginx/FrankenPHP: `/api/{Service}/{method}` maps automatically; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (see [architecture.md](docs/guides/architecture.md))
 - **~90% security automatic** — sanitize inputs, prepared statements, path protection; you add schema + auth
 - **Schema is documentation** — `definePostSchema()` feeds `/api/index/document` + Postman export (types from **`gemvc/helper` → TypeChecker**)
 - **Powerful lists** — API allowlists + Controller `createList()` (see below)
@@ -71,7 +71,7 @@ Strong request sanitization lives here. As a developer you can:
 - Guard a whole service with **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (preferred), or `$this->requireAuth(['role'])` on `ApiService`, or `$this->request->auth(['role'])` per method
 - Optional rate limit: global `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`), or `$this->requireRateLimit()` / `requireRateLimitApcu|Redis|Both()` (IP and/or JWT → 429). No automatic store fallback.
 - Define exact POST / GET / PUT / PATCH schemas on each endpoint with powerful types (`string`, `email`, `url`, `ip`, …)
-- Then call the Controller — Apache: `callController(...)`; OpenSwoole: `new XController($this->request)` — and pass the sanitized `Request`
+- Then call the Controller with `callController(...)` (all runtimes; enables APM when configured) — and pass the sanitized `Request`
 
 No business rules here. Details: [api.md](docs/guides/api.md) · [security](docs/guides/security.md) · [http-lifecycle](docs/guides/http-lifecycle.md) · [api docs](docs/guides/api-documentation.md)
 
@@ -181,6 +181,8 @@ Open a guide only when you need that topic. Prefer the **layer order**: API → 
 | **Table / DB** | [database.md](docs/guides/database.md) |
 | HTTP Request lifecycle | [http-lifecycle.md](docs/guides/http-lifecycle.md) |
 | Security / JWT | [security.md](docs/guides/security.md) |
+| OpenSwoole | [openswoole.md](docs/guides/openswoole.md) |
+| FrankenPHP | [frankenphp.md](docs/guides/frankenphp.md) |
 | CLI + cli-dev | [cli.md](docs/guides/cli.md) · [cli-reference.md](docs/guides/cli-reference.md) |
 | APM | [apm.md](docs/guides/apm.md) |
 | Auto API docs | [api-documentation.md](docs/guides/api-documentation.md) |

@@ -4,12 +4,12 @@
   "framework": {
     "name": "GEMVC",
     "type": "PHP REST API Framework",
-    "version": "5.13.0",
+    "version": "5.14.0",
     "library_package": "gemvc/library",
     "ecosystem_doc": "docs/guides/ecosystem.md",
     "ai_docs": "docs/ai/INDEX.md",
     "core_reference": "docs/ai/CORE_REFERENCE.md",
-    "target_platforms": ["OpenSwoole", "Apache", "Nginx"],
+    "target_platforms": ["OpenSwoole", "Apache", "Nginx", "FrankenPHP"],
     "databases": ["mysql", "pgsql", "sqlite"],
     "architecture": {
       "layers": [
@@ -25,7 +25,7 @@
     "gemvc/library": "Framework hub (incl. ViewTable, ViewGenerator, db:migrate --all)",
     "gemvc/helper": "^1.1 TypeChecker, CryptHelper, …",
     "gemvc/connection-contracts": "DB interfaces",
-    "gemvc/connection-pdo": "^1.1 Apache/Nginx/CLI",
+    "gemvc/connection-pdo": "^1.1 Apache/Nginx/FrankenPHP/CLI",
     "gemvc/connection-openswoole": "OpenSwoole pools",
     "gemvc/apm-contracts": "ApmInterface / ApmFactory",
     "gemvc/apm-tracekit": "Default TraceKit provider",
@@ -280,10 +280,10 @@
     "ghost_apis": "Do not invent methods not in source (e.g. Table::offset, CryptHelper::encrypt)"
   },
   "must_extend": {
-    "api_classes": "ApiService or SwooleApiService",
+    "api_classes": "ApiService or ProtectedApiService (deprecated: SwooleApiService / ProtectedSwooleApiService)",
     "controller_classes": "Controller",
-    "model_classes": "Table subclass",
-    "table_classes": "Table"
+    "model_classes": "Table subclass or composition",
+    "table_classes": "Table or ViewTable"
   },
   "url_structure": {
     "pattern": "/api/{ServiceName}/{MethodName}",
