@@ -8,8 +8,10 @@ Installed: **`gemvc/library` 5.16.0** under `vendor/gemvc/`. Before inventing AP
 
 1. `vendor/gemvc/library/.cursorrules` — hard Do/Don't (root AI front door)
 2. `vendor/gemvc/library/README.md` — architecture + AI reading order
-3. `vendor/gemvc/library/docs/ai/` — INDEX → CANONICAL → CORE_REFERENCE (ships with Composer)
+3. `vendor/gemvc/library/docs/ai/` — INDEX → CANONICAL → CORE_REFERENCE when present (`--prefer-source` / git); otherwise https://github.com/gemvc/gemvc `docs/ai/`
 4. Source of truth for signatures: `vendor/gemvc/library/src/` (Request, Response, ApiService, Controller, Table, ViewTable)
+
+Composer **dist** (default production) omits `docs/` via `.gitattributes` `export-ignore`. Root `.cursorrules` + `README.md` still ship.
 
 ## 4 layers (mandatory for HTTP services)
 

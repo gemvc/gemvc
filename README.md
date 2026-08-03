@@ -165,14 +165,14 @@ Then read these three files in order (mandatory):
 
 Optional mirrors: [docs/ai/core-reference.jsonc](docs/ai/core-reference.jsonc), [docs/ai/phpdoc-reference.php](docs/ai/phpdoc-reference.php).
 
-**After `gemvc init` (application projects):** AI tools should open the library pack under Composer — do not invent Laravel-shaped code:
+**After `gemvc init` (application projects):** AI tools should use library docs when present, otherwise GitHub / gemvc.de — do not invent Laravel-shaped code:
 
-1. `vendor/gemvc/library/docs/ai/INDEX.md` → `CANONICAL.md` → `CORE_REFERENCE.md`
-2. `vendor/gemvc/library/docs/AGENTS.md` — full brief  
-3. `vendor/gemvc/library/.cursorrules` — short hard rules  
-4. Claude: `vendor/gemvc/library/docs/CLAUDE.md` · Antigravity: `vendor/gemvc/library/docs/GEMINI.md`
+1. Prefer `vendor/gemvc/library/docs/ai/INDEX.md` → `CANONICAL.md` → `CORE_REFERENCE.md` when installed via **`--prefer-source`** or a path/git checkout  
+2. Packagist **dist** (default production install) **omits `docs/`** — use https://github.com/gemvc/gemvc or https://gemvc.de  
+3. Always available in vendor: `vendor/gemvc/library/.cursorrules` (short hard rules) and `vendor/gemvc/library/README.md`  
+4. Full briefs (git/source): `docs/AGENTS.md` · Claude `docs/CLAUDE.md` · Antigravity `docs/GEMINI.md`
 
-Truth lives in `docs/` (and `.cursorrules`). App scaffolds no longer ship separate root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`.
+Truth lives in `docs/` on GitHub (and `.cursorrules` in every install). App scaffolds no longer ship separate root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`.
 
 ### Guides (humans + deep dives)
 

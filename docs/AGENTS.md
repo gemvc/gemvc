@@ -3,7 +3,7 @@
 **Version:** 5.16.0 (`gemvc/library`)  
 **This file is the universal full brief** for Claude Code, Antigravity, Cursor, Copilot, and any other agent. Do **not** invent Laravel, Symfony, Slim, or Eloquent patterns.
 
-Root AI front door (short rules): [`.cursorrules`](../.cursorrules). Tool-specific depth: [`CLAUDE.md`](CLAUDE.md) · [`GEMINI.md`](GEMINI.md). This brief ships in Composer with `docs/`.
+Root AI front door (short rules): [`.cursorrules`](../.cursorrules). Tool-specific depth: [`CLAUDE.md`](CLAUDE.md) · [`GEMINI.md`](GEMINI.md). This brief lives under `docs/` on GitHub; Composer **dist** omits `docs/` (use `--prefer-source` or https://github.com/gemvc/gemvc).
 
 ## Before writing any code — mandatory read order
 

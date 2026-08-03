@@ -1,14 +1,15 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.16.0**.  
-**`docs/` ships in the Composer package** (~616 KB) — available under `vendor/gemvc/library/docs/` after install.
+Single entry point for humans and AI assistants. Framework version: **5.16.0**.
+
+**Packaging:** `docs/` is **omitted from Composer dist** (Packagist / production `prefer-dist` installs) so vendor stays lean. Full docs remain on GitHub and at [gemvc.de](https://gemvc.de). For a local checkout with docs under `vendor/`, use `composer update gemvc/library --prefer-source`.
 
 ## Docs ownership
 
 | Path | Audience | In Composer dist |
 |------|----------|------------------|
-| `docs/ai`, `docs/guides`, `docs/releases`, `docs/ARCHITECTURE.md`, `docs/AGENTS.md`, `docs/CLAUDE.md`, `docs/GEMINI.md` | Framework users + AI | Yes |
-| Root `.cursorrules`, `llms.txt` | Root AI front door / crawler map | Yes |
+| `docs/ai`, `docs/guides`, `docs/releases`, `docs/ARCHITECTURE.md`, `docs/AGENTS.md`, … | Framework users + AI | **No** (git / prefer-source / website) |
+| Root `.cursorrules`, `llms.txt`, `README.md` | Root AI front door / crawler map | Yes |
 | `.cursor/improvements/` | Framework maintainers only | N/A — not product docs |
 
 ## For AI assistants (read first)

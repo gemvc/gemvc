@@ -18,6 +18,7 @@
     "license": "MIT",
     "archive": {
         "exclude": [
+            "/docs",
             "/tests",
             "/.phpunit.cache",
             "/phpunit.xml",
