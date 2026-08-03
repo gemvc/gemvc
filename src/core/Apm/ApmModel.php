@@ -437,7 +437,7 @@ class ApmModel
         }
         
         $sourceMetadata = [
-            'version' => $_ENV['APP_VERSION'] ?? '5.13.0',
+            'version' => $_ENV['APP_VERSION'] ?? '5.14.0',
             'environment' => \Gemvc\Helper\ProjectHelper::getAppEnv(),
         ];
 

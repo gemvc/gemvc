@@ -10,7 +10,7 @@ Verified against `docs/` + `src/` / `vendor/gemvc/` (2026-08).
 ```
 HTTP
  → src/startup/apache|nginx/index.php
- → ApacheRequest (sanitize headers/body → shared Request)
+ → StandardHttpRequest (sanitize headers/body → shared Request)
  → Bootstrap (APM root; setRequestedService)
  → load app/api/{Service}.php → App\Api\{Service} extends ApiService
  → method (schema / requireAuth / requireRateLimit)

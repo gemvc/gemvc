@@ -7,7 +7,7 @@ namespace Tests\Unit\Core;
 use PHPUnit\Framework\TestCase;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Database\Table;
 
 /**
@@ -75,7 +75,7 @@ class ControllerCreateModelTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/Test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
     

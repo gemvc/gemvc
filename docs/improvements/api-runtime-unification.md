@@ -18,8 +18,8 @@
 
 | Path | Adapter | Bootstrap | Recommended API base |
 |------|---------|-----------|----------------------|
-| Apache | `ApacheRequest` | `Bootstrap` | `ApiService` / `ProtectedApiService` |
-| Nginx | **same** `ApacheRequest` (PHP-FPM) | `Bootstrap` | same |
+| Apache | `StandardHttpRequest` | `Bootstrap` | `ApiService` / `ProtectedApiService` |
+| Nginx | **same** `StandardHttpRequest` (PHP-FPM) | `Bootstrap` | same |
 | OpenSwoole | `SwooleRequest` | `SwooleBootstrap` | **same** `ApiService` / `ProtectedApiService` |
 
 Deprecated aliases (still work): `SwooleApiService` extends `ApiService`; `ProtectedSwooleApiService` extends `ProtectedApiService`.

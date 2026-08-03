@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Gemvc\Core\ApiService;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\JsonResponse;
 
 class TestApiService extends ApiService
@@ -64,7 +64,7 @@ class ApiServiceTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/Test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
     

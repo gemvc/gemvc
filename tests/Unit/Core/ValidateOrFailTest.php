@@ -7,7 +7,7 @@ namespace Tests\Unit\Core;
 use Gemvc\Core\ApiService;
 use Gemvc\Core\SwooleApiService;
 use Gemvc\Core\ValidationException;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
 use PHPUnit\Framework\TestCase;
@@ -71,14 +71,14 @@ class ValidateOrFailTest extends TestCase
             'REQUEST_METHOD' => 'POST',
             'REQUEST_URI' => '/api/Test',
         ];
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
 
     public function testApiServiceValidateOrFailPasses(): void
     {
         $_POST['email'] = 'a@b.com';
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailApiService($ar->request);
         $service->publicValidateOrFail(['email' => 'email']);
         $this->assertTrue(true);
@@ -87,7 +87,7 @@ class ValidateOrFailTest extends TestCase
     public function testApiServiceValidateOrFailThrows(): void
     {
         $_POST = [];
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailApiService($ar->request);
         $this->expectException(ValidationException::class);
         $service->publicValidateOrFail(['email' => 'email']);
@@ -96,7 +96,7 @@ class ValidateOrFailTest extends TestCase
     public function testSwooleApiServiceValidateOrFailThrows(): void
     {
         $_POST = [];
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailSwooleApiService($ar->request);
         $this->expectException(ValidationException::class);
         $service->publicValidateOrFail(['email' => 'email']);
@@ -105,7 +105,7 @@ class ValidateOrFailTest extends TestCase
     public function testSwooleApiServiceValidateOrFailPasses(): void
     {
         $_POST['email'] = 'a@b.com';
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailSwooleApiService($ar->request);
         $service->publicValidateOrFail(['email' => 'email']);
         $this->assertTrue(true);
@@ -114,7 +114,7 @@ class ValidateOrFailTest extends TestCase
     public function testSwooleValidatePostsNowThrowsLikeApiService(): void
     {
         $_POST = [];
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailSwooleApiService($ar->request);
         $this->expectException(ValidationException::class);
         $service->publicValidatePosts(['email' => 'email']);
@@ -123,7 +123,7 @@ class ValidateOrFailTest extends TestCase
     public function testSwooleSafeValidatePostsStillReturnsJsonResponse(): void
     {
         $_POST = [];
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailSwooleApiService($ar->request);
         $result = $service->publicSafeValidatePosts(['email' => 'email']);
         $this->assertInstanceOf(JsonResponse::class, $result);
@@ -133,7 +133,7 @@ class ValidateOrFailTest extends TestCase
     public function testApiServiceValidateStringOrFailThrows(): void
     {
         $_POST['name'] = 'a';
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $service = new ValidateOrFailApiService($ar->request);
         $this->expectException(ValidationException::class);
         $service->publicValidateStringOrFail(['name' => '2|100']);

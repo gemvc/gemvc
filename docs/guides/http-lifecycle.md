@@ -50,7 +50,7 @@ GEMVC's HTTP layer is designed to be **completely server-agnostic**. The same ap
 ```
 Webserver-Specific Request
     ↓
-Server Adapter (ApacheRequest for Apache/Nginx PHP-FPM / FrankenPHP classic | SwooleRequest for OpenSwoole)
+Server Adapter (StandardHttpRequest for Apache/Nginx PHP-FPM / FrankenPHP classic | SwooleRequest for OpenSwoole)
     ↓
 Unified Request Object
     ↓
@@ -64,7 +64,8 @@ Webserver-Specific Output
 ### Components
 
 1. **Server Adapters** - Convert webserver requests to unified format
-   - `ApacheRequest` — **Apache, Nginx, and FrankenPHP classic** (shared adapter; no separate NginxRequest/FrankenPhpRequest)
+   - `StandardHttpRequest` — **Apache, Nginx, and FrankenPHP classic/worker** (shared adapter; no separate NginxRequest/FrankenPhpRequest)
+   - `ApacheRequest` — **deprecated** since 5.14.0; thin subclass of `StandardHttpRequest`
    - `SwooleRequest` — OpenSwoole adapter
    - FrankenPHP guide: [frankenphp.md](frankenphp.md)
 
@@ -88,7 +89,7 @@ Webserver-Specific Output
     ↓
 3. index.php loads Bootstrap
     ↓
-4. ApacheRequest adapter created
+4. StandardHttpRequest adapter created
     ├─ Sanitizes all headers
     ├─ Sanitizes GET, POST, PUT, PATCH
     ├─ Extracts files, cookies, auth headers
@@ -143,7 +144,7 @@ Webserver-Specific Output
 
 ## Server Adapters
 
-### ApacheRequest Adapter
+### StandardHttpRequest Adapter
 
 **Purpose**: Converts Apache/PHP-FPM requests to unified `Request` object.
 
@@ -155,12 +156,12 @@ Webserver-Specific Output
 - Extracts cookies and auth headers
 - Creates unified `Request` object
 
-**Implementation** (simplified; see `src/http/ApacheRequest.php`):
+**Implementation** (simplified; see `src/http/StandardHttpRequest.php`):
 ```php
 <?php
 namespace Gemvc\Http;
 
-class ApacheRequest
+class StandardHttpRequest
 {
     public Request $request;
     
@@ -191,7 +192,7 @@ class ApacheRequest
 
 **Usage** (in `Bootstrap.php`):
 ```php
-$ar = new ApacheRequest();
+$ar = new StandardHttpRequest();
 $request = $ar->request;  // Unified Request object
 ```
 
@@ -380,7 +381,7 @@ PHP-FPM Processes Request
     ↓
 index.php
     ↓
-new ApacheRequest()
+new StandardHttpRequest()
     ├─ Sanitize $_SERVER headers
     ├─ Sanitize $_POST, $_GET
     ├─ Sanitize PUT/PATCH (from php://input)
@@ -467,7 +468,7 @@ JsonResponse->showSwoole($response)
 
 1. **HTTP Headers**
    ```php
-   // ApacheRequest
+   // StandardHttpRequest
    $this->sanitizeAllServerHttpRequestHeaders();
    
    // SwooleRequest
@@ -505,11 +506,11 @@ JsonResponse->showSwoole($response)
 <?php
 require_once 'vendor/autoload.php';
 
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Core\Bootstrap;
 
 // Create adapter
-$ar = new ApacheRequest();
+$ar = new StandardHttpRequest();
 $request = $ar->request;  // Unified Request
 
 // Route to API service
@@ -517,7 +518,7 @@ $bootstrap = new Bootstrap($request);
 ```
 
 **What Happens**:
-1. `ApacheRequest` sanitizes all `$_SERVER`, `$_POST`, `$_GET`
+1. `StandardHttpRequest` sanitizes all `$_SERVER`, `$_POST`, `$_GET`
 2. Creates unified `Request` object
 3. `Bootstrap` routes to API service
 4. Application code receives clean, sanitized data
@@ -662,7 +663,7 @@ return Response::success($data);  // Works everywhere!
 
 ## Key Takeaways
 
-1. **Server adapters** (`ApacheRequest`, `SwooleRequest`) convert requests
+1. **Server adapters** (`StandardHttpRequest`, `SwooleRequest`) convert requests
 2. **Unified `Request` object** - same interface for all servers
 3. **Automatic sanitization** - adapters handle security
 4. **Application code is server-agnostic** - never changes

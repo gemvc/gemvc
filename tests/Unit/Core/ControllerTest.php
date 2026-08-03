@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Gemvc\Core\Controller;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Database\Table;
 
 /**
@@ -93,7 +93,7 @@ class ControllerTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/Test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
     
@@ -159,7 +159,7 @@ class ControllerTest extends TestCase
         $_GET['page_number'] = '2';
         $_SERVER['QUERY_STRING'] = 'page_number=2';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $controller = new TestController($request);
         $model = new MockControllerTable();
@@ -174,7 +174,7 @@ class ControllerTest extends TestCase
         $_GET['page_number'] = 'invalid';
         $_SERVER['QUERY_STRING'] = 'page_number=invalid';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $controller = new TestController($request);
         $model = new MockControllerTable();
@@ -190,7 +190,7 @@ class ControllerTest extends TestCase
         $_GET['page_number'] = '-1';
         $_SERVER['QUERY_STRING'] = 'page_number=-1';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $controller = new TestController($request);
         $model = new MockControllerTable();
@@ -204,7 +204,7 @@ class ControllerTest extends TestCase
         $_GET['sort_by'] = 'name';
         $_SERVER['QUERY_STRING'] = 'sort_by=name';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->sortable(['name', 'email']);
         $controller = new TestController($request);
@@ -220,7 +220,7 @@ class ControllerTest extends TestCase
         $_GET['sort_by_asc'] = 'email';
         $_SERVER['QUERY_STRING'] = 'sort_by_asc=email';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->sortable(['name', 'email']);
         $controller = new TestController($request);
@@ -236,7 +236,7 @@ class ControllerTest extends TestCase
         $_GET['filter_by'] = 'name=Test';
         $_SERVER['QUERY_STRING'] = 'filter_by=name=Test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->filterable(['name' => 'string']);
         $controller = new TestController($request);
@@ -252,7 +252,7 @@ class ControllerTest extends TestCase
         $_GET['find_like'] = 'name=Test';
         $_SERVER['QUERY_STRING'] = 'find_like=name=Test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->findable(['name' => 'string']);
         $controller = new TestController($request);

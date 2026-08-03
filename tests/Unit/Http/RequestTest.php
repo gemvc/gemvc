@@ -6,7 +6,7 @@ namespace Tests\Unit\Http;
 
 use PHPUnit\Framework\TestCase;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 
 class RequestTest extends TestCase
 {
@@ -35,7 +35,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'id=123';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->intValueGet('id');
@@ -49,7 +49,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->intValueGet('id');
@@ -63,7 +63,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'name=John+Doe';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Request->get can be string|array, so we need to check
@@ -83,7 +83,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->definePostSchema([
@@ -101,7 +101,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->definePostSchema([
@@ -120,7 +120,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->definePostSchema([
@@ -140,7 +140,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->definePostSchema([
@@ -162,7 +162,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->intValuePost('id');
@@ -175,7 +175,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->intValuePost('id');
@@ -188,7 +188,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $name = $request->stringValuePost('name');
@@ -201,7 +201,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $name = $request->stringValuePost('name');
@@ -215,7 +215,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $name = $request->stringValuePost('name');
@@ -229,7 +229,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'q=search-term';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $q = $request->stringValueGet('q');
@@ -242,7 +242,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $q = $request->stringValueGet('q');
@@ -255,7 +255,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->intValuePost('id');
@@ -268,7 +268,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $price = $request->floatValuePost('price');
@@ -281,7 +281,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $price = $request->floatValuePost('price');
@@ -295,7 +295,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'price=29.99';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $price = $request->floatValueGet('price');
@@ -309,7 +309,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $price = $request->floatValueGet('price');
@@ -322,7 +322,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $price = $request->decimalValuePost('price');
@@ -335,7 +335,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $result = $request->definePostSchema(['price' => 'decimal']);
@@ -353,7 +353,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'id=123';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->defineGetSchema(['id' => 'int']);
@@ -366,7 +366,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->defineGetSchema(['id' => 'int']);
@@ -381,7 +381,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Manually set PUT data for testing
@@ -400,7 +400,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Manually set PATCH data for testing
@@ -421,7 +421,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->validateStringPosts([
@@ -438,7 +438,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->validateStringPosts([
@@ -455,7 +455,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->validateStringPosts([
@@ -471,7 +471,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->validateStringPosts([
@@ -486,7 +486,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->validateStringPosts([
@@ -507,7 +507,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'filter_by=name=John,email=john@example.com';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->filterable([
@@ -525,7 +525,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'filter_by=email=notanemail';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->filterable([
@@ -542,7 +542,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'find_like=name=John';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->findable([
@@ -559,7 +559,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'sort_by=name';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->sortable(['name', 'email', 'id']);
@@ -574,7 +574,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'sort_by_asc=email';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->sortable(['name', 'email', 'id']);
@@ -589,7 +589,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'sort_by=invalid_field';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->sortable(['name', 'email']);
@@ -608,7 +608,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'page_number=5';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->setPageNumber();
@@ -623,7 +623,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'page_number=not_a_number';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->setPageNumber();
@@ -637,7 +637,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'page_number=0';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->setPageNumber();
@@ -651,7 +651,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'per_page=25';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->setPerPage();
@@ -666,7 +666,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'per_page=not_a_number';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->setPerPage();
@@ -679,7 +679,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals(1, $request->getPageNumber());
@@ -691,7 +691,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Default should be from QUERY_LIMIT env or 10
@@ -709,7 +709,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $id = $request->getId();
@@ -722,7 +722,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $time = $request->getTime();
@@ -735,7 +735,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $startTime = $request->getStartExecutionTime();
@@ -748,7 +748,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertNull($request->getError());
@@ -759,7 +759,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Trigger an error
@@ -779,7 +779,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $expectedResponse = \Gemvc\Http\Response::success(['test' => 'data']);
@@ -794,7 +794,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $response = $request->returnResponse();
@@ -817,7 +817,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $object = new class {
@@ -841,7 +841,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $object = new class {
@@ -870,7 +870,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->auth();
@@ -889,7 +889,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->createTestToken(1);
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->auth();
@@ -907,7 +907,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->auth(['admin', 'moderator']);
@@ -928,7 +928,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->createTestTokenWithRole(1, 'user');
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
 
         $result = $request->auth(['admin']);
@@ -947,7 +947,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->userRole();
@@ -965,7 +965,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->userId();
@@ -983,7 +983,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertNull($request->getJwtToken());
@@ -997,7 +997,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $jwtToken = new \Gemvc\Http\JWTToken();
@@ -1020,7 +1020,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'filter_by=email&filter_value=test@example.com';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $request->filterable(['email' => 'email']);
@@ -1037,7 +1037,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'find_by=name&find_value=John';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $request->findable(['name' => 'string']);
@@ -1053,7 +1053,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'sort_by=name';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $request->sortable(['name', 'email']);
@@ -1070,7 +1070,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'sort_by=name&sort_asc=true';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $request->sortable(['name', 'email']);
@@ -1092,7 +1092,7 @@ class RequestTest extends TestCase
         // Simulate PUT data
         file_put_contents('php://temp', 'name=John&email=john@example.com');
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $object = new class {
@@ -1119,7 +1119,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->patch = [
             'name' => 'Patched',
@@ -1146,7 +1146,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $_SERVER['REQUEST_URI'] = '/api/test';
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         $request->patch = [];
 
@@ -1168,7 +1168,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // This will fail without actual API, but we test the method exists
@@ -1183,7 +1183,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // This will fail without actual API, but we test the method exists
@@ -1198,7 +1198,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $result = $request->forwardPost('https://example.com/api', 'Bearer token-123');
@@ -1215,7 +1215,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Test accessing a property via __get

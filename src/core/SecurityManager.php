@@ -81,7 +81,7 @@ class SecurityManager
     }
 
     /**
-     * Send security response for blocked requests
+     * Send security response for blocked requests (OpenSwoole response object).
      */
     public function sendSecurityResponse(object $response): void
     {
@@ -94,6 +94,21 @@ class SecurityManager
             'error' => 'Access Denied',
             'message' => 'Direct file access is not permitted'
         ]));
+    }
+
+    /**
+     * Emit 403 JSON via classic PHP headers (FrankenPHP worker / FPM — never die).
+     */
+    public function emitForbidden(): void
+    {
+        if (!headers_sent()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+        }
+        echo json_encode([
+            'error' => 'Access Denied',
+            'message' => 'Direct file access is not permitted',
+        ]);
     }
 
     /**

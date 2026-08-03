@@ -1,6 +1,6 @@
 # GEMVC Documentation
 
-Single entry point for humans and AI assistants. Framework version: **5.13.0**.
+Single entry point for humans and AI assistants. Framework version: **5.14.0**.
 
 ## For AI assistants (read first)
 
@@ -121,7 +121,7 @@ Adapters and hardening; **[openswoole.md](guides/openswoole.md)** for OpenSwoole
 When to open release notes vs changelog. **AI: skip unless version/migration task.**
 
 ### [releases/RELEASE_NOTES.md](releases/RELEASE_NOTES.md)
-Narrative notes (what/why/migration), including **5.13.0** unified `ApiService`, **5.12.0** rate-limit drivers / Protected API / `forUpdate`, **5.11.0 ViewTable** / `db:migrate --all`, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
+Narrative notes (what/why/migration), including **5.14.0** FrankenPHP / `StandardHttpRequest`, **5.13.0** unified `ApiService`, **5.12.0** rate-limit drivers / Protected API / `forUpdate`, **5.11.0 ViewTable** / `db:migrate --all`, 5.9.x multi-DB, decimal, cli-dev, `requireAuth`.
 
 ### [releases/CHANGELOG.md](releases/CHANGELOG.md)
 Keep-a-Changelog bullets for “is feature X in version Y?”

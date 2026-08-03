@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Http;
 
 use PHPUnit\Framework\TestCase;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\ApacheRequest;
 use Gemvc\Http\Request;
 
@@ -37,7 +38,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -59,7 +60,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['QUERY_STRING'] = 'search=test&query=test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Request->get can be string|array, check if it's array
@@ -82,7 +83,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         
         // Headers should be sanitized
         $this->assertStringNotContainsString('<script>', $_SERVER['HTTP_USER_AGENT']);
@@ -99,7 +100,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertIsArray($request->post['tags']);
@@ -116,7 +117,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['HTTP_USER_AGENT'] = 'Test Agent';
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -132,7 +133,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['QUERY_STRING'] = '_gemvc_url_path=/api/User&id=1';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // _gemvc_url_path should be removed from GET params
@@ -159,7 +160,7 @@ class ApacheRequestTest extends TestCase
         // Note: In real tests, we can't directly write to php://input
         // So we test the behavior indirectly through the Request object
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -174,7 +175,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/update';
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // PUT sanitization is tested indirectly
@@ -191,7 +192,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/patch';
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -213,7 +214,7 @@ class ApacheRequestTest extends TestCase
         
         // Note: We can't directly set php://input in tests
         // This test verifies the structure handles JSON content type
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -236,7 +237,7 @@ class ApacheRequestTest extends TestCase
             'size' => 1024
         ];
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -251,7 +252,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/upload';
         $_FILES = [];
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -269,7 +270,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer test-token-123';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -282,7 +283,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] = 'Bearer redirect-token-456';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -296,7 +297,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer primary-token';
         $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] = 'Bearer redirect-token';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // HTTP_AUTHORIZATION should take priority
@@ -309,7 +310,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['HTTP_AUTHORIZATION'] = '<script>alert("XSS")</script>';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Header should be sanitized
@@ -327,7 +328,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['QUERY_STRING'] = 'id=1&name=<script>alert("XSS")</script>';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertInstanceOf(Request::class, $request);
@@ -341,7 +342,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['QUERY_STRING'] = '';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('', $request->queryString);
@@ -356,7 +357,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/User/read?id=1';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('/api/User/read?id=1', $request->requestedUrl);
@@ -368,7 +369,7 @@ class ApacheRequestTest extends TestCase
         // Invalid URL with null bytes
         $_SERVER['REQUEST_URI'] = "\0invalid\0url";
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // FILTER_SANITIZE_URL may not return false for null bytes, it may sanitize them
@@ -381,7 +382,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         unset($_SERVER['REQUEST_URI']);
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('', $request->requestedUrl);
@@ -397,7 +398,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['REMOTE_ADDR'] = '192.168.1.1';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('192.168.1.1', $request->remoteAddress);
@@ -409,7 +410,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['REMOTE_ADDR'] = 'invalid-ip-address';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('invalid_remote_address_ip_format', $request->remoteAddress);
@@ -421,7 +422,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         unset($_SERVER['REMOTE_ADDR']);
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('unsetted_remote_address', $request->remoteAddress);
@@ -439,7 +440,7 @@ class ApacheRequestTest extends TestCase
             $_SERVER['REQUEST_METHOD'] = $method;
             $_SERVER['REQUEST_URI'] = '/api/test';
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             $request = $ar->request;
             
             $this->assertEquals($method, $request->requestMethod, "Method $method should be valid");
@@ -451,7 +452,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'INVALID';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('', $request->requestMethod);
@@ -462,7 +463,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'post';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('POST', $request->requestMethod);
@@ -473,7 +474,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = '  POST  ';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('POST', $request->requestMethod);
@@ -489,7 +490,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', $request->userMachine);
@@ -501,7 +502,7 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         unset($_SERVER['HTTP_USER_AGENT']);
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         $this->assertEquals('undetected', $request->userMachine);
@@ -517,11 +518,20 @@ class ApacheRequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/User/read';
         $_SERVER['HTTP_CUSTOM_HEADER'] = ['value1' => '<script>alert("XSS")</script>', 'value2' => 'normal'];
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         
         // Headers should be sanitized
         $this->assertStringNotContainsString('<script>', $_SERVER['HTTP_CUSTOM_HEADER']['value1']);
         $this->assertStringContainsString('&lt;script&gt;', $_SERVER['HTTP_CUSTOM_HEADER']['value1']);
+    }
+
+    public function testDeprecatedApacheRequestAliasStillWorks(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/Index/index';
+        $ar = new ApacheRequest();
+        $this->assertInstanceOf(StandardHttpRequest::class, $ar);
+        $this->assertSame('/api/Index/index', $ar->request->requestedUrl);
     }
 }
 

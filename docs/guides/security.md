@@ -29,7 +29,7 @@ Request Arrives
     ↓
 1. Path Access Security — OpenSwoole: SecurityManager; Apache: .htaccess; Nginx: nginx.conf; FrankenPHP: Caddyfile
     ↓
-2. Header Sanitization (ApacheRequest / SwooleRequest) AUTOMATIC
+2. Header Sanitization (StandardHttpRequest / SwooleRequest) AUTOMATIC
     ↓
 3. Input Sanitization (FILTER_SANITIZE_FULL_SPECIAL_CHARS) AUTOMATIC
     ↓
@@ -54,7 +54,7 @@ Request Arrives
 |---------|-----------|--------|
 | Apache | `.htaccess` | Startup template denies `app/`, `vendor/`, secrets |
 | Nginx | `nginx.conf` | Same denies at the reverse-proxy/FPM edge |
-| FrankenPHP | **`Caddyfile`** | Same denies; **`.htaccess` is ignored** — see [frankenphp.md](frankenphp.md) |
+| FrankenPHP | **`Caddyfile`** (+ worker: `SecurityManager::emitForbidden`) | Same denies; **`.htaccess` is ignored** — see [frankenphp.md](frankenphp.md) |
 | OpenSwoole | `SecurityManager` | PHP-level early deny in `OpenSwooleServer` |
 
 Do not copy Apache `.htaccess` into a FrankenPHP project expecting path protection.
@@ -138,7 +138,7 @@ Result: 403 Forbidden - "Direct file access is not permitted"
 
 ## Layer 2: Header Sanitization
 
-### AUTOMATIC - ApacheRequest.php & SwooleRequest.php
+### AUTOMATIC - StandardHttpRequest.php & SwooleRequest.php
 
 **Status**: **Automatically enabled** - All headers sanitized in Request constructors!
 
@@ -146,7 +146,7 @@ Result: 403 Forbidden - "Direct file access is not permitted"
 
 **Implementation**:
 ```php
-// ApacheRequest.php - Line 41-56
+// StandardHttpRequest.php - Line 41-56
 private function sanitizeAllServerHttpRequestHeaders(): void
 {
     foreach ($_SERVER as $key => $value) {
@@ -195,13 +195,13 @@ Authorization: Bearer &lt;script&gt;alert('XSS')&lt;/script&gt;
 
 ## Layer 3: Input Sanitization (XSS Prevention)
 
-### AUTOMATIC - ApacheRequest.php & SwooleRequest.php
+### AUTOMATIC - StandardHttpRequest.php & SwooleRequest.php
 
 **Status**: **Automatically enabled** - All inputs sanitized when Request object is created!
 
 **Core Sanitization Method**:
 ```php
-// ApacheRequest.php - Line 189-195
+// StandardHttpRequest.php - Line 189-195
 private function sanitizeInput(mixed $input): mixed
 {
     if(!is_string($input)) {
@@ -215,7 +215,7 @@ private function sanitizeInput(mixed $input): mixed
 - All POST / GET / PUT / PATCH data
 - All HTTP headers
 - Query strings / request URIs (as implemented per adapter)
-- **Upload name/MIME:** OpenSwoole `SwooleRequest` yes; **Apache `$_FILES` not auto-sanitized**. Apache also only copies the upload field named **`file`** into `$request->files` (see `ApacheRequest`).
+- **Upload name/MIME:** OpenSwoole `SwooleRequest` yes; **Apache `$_FILES` not auto-sanitized**. Apache also only copies the upload field named **`file`** into `$request->files` (see `StandardHttpRequest`).
 - Dangerous cookies: filtered on **Swoole** only
 
 **XSS Attack Prevention**:
@@ -994,7 +994,7 @@ This security policy is regularly updated to reflect:
 - Framework updates
 
 **Last Updated**: 2026-08-01
-**Version**: 5.13.0 (unified `ApiService`; rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
+**Version**: 5.14.0 (unified `ApiService`; rate-limit drivers / `requireRateLimit*()`, `Protected*`, `forUpdate`; plus `ViewTable`, `requireAuth()`, contracts APM, multi-DB); automatic hardening baseline unchanged
 
 ---
 
@@ -1007,7 +1007,7 @@ GEMVC provides **automatic protection** against:
 - **XSS (Cross-Site Scripting)** - Input sanitization on request constructors (HTML special chars). Not automatic HTML encoding of JSON API payloads.
 - **SQL Injection** - Table / UniversalQueryExecuter path uses prepared statements. Still do not concatenate untrusted input into SQL strings.
 - **Path Traversal (URL)** - OpenSwoole: `SecurityManager` blocks sensitive paths. Apache: `.htaccess`. Nginx: `nginx.conf`. FrankenPHP: **`Caddyfile`** (never rely on `.htaccess`).
-- **Header Injection** - Header sanitization in ApacheRequest / SwooleRequest
+- **Header Injection** - Header sanitization in StandardHttpRequest / SwooleRequest
 - **File Upload (name/MIME)** - Swoole sanitizes upload name/type; Apache leaves `$_FILES` raw — call `ImageHelper` / validate yourself for signatures
 - **JWT Forgery** - Signature + expiration when you call `auth()` / `requireAuth()` — **not** automatic on every request
 

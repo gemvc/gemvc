@@ -149,7 +149,7 @@ Queries still run through **PDO** on the Table path. With coroutines enabled, a 
 |---------|--------------------------|------------|
 | Process model | One request ≈ one process (or FPM worker reset semantics) | Persistent worker, many requests |
 | Entry | `startup/apache` or `startup/nginx` → `Bootstrap` | `startup/swoole` → `OpenSwooleServer` → `SwooleBootstrap` |
-| Adapter | `ApacheRequest` (shared) | `SwooleRequest` |
+| Adapter | `StandardHttpRequest` (shared) | `SwooleRequest` |
 | API base | `ApiService` / `ProtectedApiService` | **Same** (5.13+) |
 | Response | `JsonResponse::show()` then terminate | `showSwoole()` then continue worker |
 | Early path deny | `.htaccess` / server config | `SecurityManager` in server |
@@ -158,7 +158,7 @@ Queries still run through **PDO** on the Table path. With coroutines enabled, a 
 | URL `/api` hop | Yes (convention) | **No** automatic hop — configure sections |
 | APM end | Bootstrap path + flush semantics | Explicit flush after `showSwoole` |
 
-Same `app/api`, `app/controller`, `app/model`, `app/table` for all four servers (Apache, Nginx, FrankenPHP classic, OpenSwoole).
+Same `app/` for all servers including FrankenPHP classic/worker — see [frankenphp.md](frankenphp.md).
 
 ---
 
@@ -190,7 +190,7 @@ Historically dual bases; **5.13** unifies on `ApiService` / `ProtectedApiService
 
 ### “Nginx needs NginxRequest.”
 
-No. Nginx PHP-FPM uses **`ApacheRequest`** + `Bootstrap` (same as Apache). Only OpenSwoole uses `SwooleRequest`.
+No. Nginx PHP-FPM uses **`StandardHttpRequest`** + `Bootstrap` (same as Apache). Only OpenSwoole uses `SwooleRequest`.
 
 ---
 

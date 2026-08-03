@@ -7,7 +7,7 @@ namespace Tests\Unit\Database;
 use PHPUnit\Framework\TestCase;
 use Gemvc\Database\Table;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 
 /**
  * Test table class for Request propagation tests
@@ -67,7 +67,7 @@ class TableRequestPropagationTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/Test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
     

@@ -1,6 +1,6 @@
 # GEMVC Canonical Guide for AI Assistants
 
-Framework hub: **gemvc/library 5.13.0**.
+Framework hub: **gemvc/library 5.14.0**.
 **GEMVC is an ecosystem** of Composer packages under `vendor/gemvc/` — not Laravel, not Symfony, not a single monolith.
 
 ---
@@ -60,23 +60,23 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 ## Runtimes (Apache / Nginx / FrankenPHP / OpenSwoole)
 
-| | Apache / Nginx / FrankenPHP (classic) | OpenSwoole |
-|--|---------------------------------------|------------|
-| Recommended API base | `ApiService` / `ProtectedApiService` | **same** |
-| Deprecated aliases | — | `SwooleApiService` → `ApiService`; `ProtectedSwooleApiService` → `ProtectedApiService` |
-| Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
-| Request adapter | `ApacheRequest` | `SwooleRequest` |
-| Edge path deny | Apache: `.htaccess` · Nginx: `nginx.conf` · FrankenPHP: **`Caddyfile`** | `SecurityManager` |
-| DB | `connection-pdo` | `connection-openswoole` |
-| Shared helpers | `ApiServiceSharedTrait`: `requireAuth`, `requireRateLimit*`, `callController()`, magic `$this->UserController` | inherited |
-| `validatePosts` | throws `ValidationException` | same (inherited); legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
+| | Apache / Nginx / FrankenPHP classic | FrankenPHP worker | OpenSwoole |
+|--|-------------------------------------|-------------------|------------|
+| Recommended API base | `ApiService` / `ProtectedApiService` | **same** | **same** |
+| Deprecated aliases | — | — | `SwooleApiService` → `ApiService`; `ProtectedSwooleApiService` → `ProtectedApiService` |
+| Bootstrap | `Bootstrap` (may `die`) | `FrankenPhpBootstrap` (no `die`) | `SwooleBootstrap` (no `die`) |
+| Request adapter | `StandardHttpRequest` (deprecated: `ApacheRequest`) | `StandardHttpRequest` | `SwooleRequest` |
+| Edge path deny | Apache: `.htaccess` · Nginx: `nginx.conf` · FrankenPHP: **`Caddyfile`** | Caddyfile + `SecurityManager` | `SecurityManager` |
+| DB | `connection-pdo` | `connection-pdo` | `connection-openswoole` |
+| Shared helpers | `ApiServiceSharedTrait` | inherited | inherited |
+| `validatePosts` | throws `ValidationException` | same | same; legacy return → `safeValidatePosts()` on deprecated `SwooleApiService` only |
 
 Usual schema API: `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()`. Throw helpers: `validateOrFail()` / `validateStringOrFail()`.
 
 Prefer **`ApiService` / `ProtectedApiService`** on every server.
 
 **OpenSwoole isolation, pooling, no-`die()`, production FAQ:** [openswoole.md](../guides/openswoole.md).  
-**FrankenPHP classic + Caddyfile security:** [frankenphp.md](../guides/frankenphp.md).
+**FrankenPHP classic + worker:** [frankenphp.md](../guides/frankenphp.md).
 
 ---
 

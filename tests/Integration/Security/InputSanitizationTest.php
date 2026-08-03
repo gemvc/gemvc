@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Security;
 
 use PHPUnit\Framework\TestCase;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\Request;
 
 class InputSanitizationTest extends TestCase
@@ -44,7 +44,7 @@ class InputSanitizationTest extends TestCase
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $_SERVER['REQUEST_URI'] = '/api/test';
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             $request = $ar->request;
             
             // All XSS payloads should be sanitized (HTML entities encoded)
@@ -89,7 +89,7 @@ class InputSanitizationTest extends TestCase
             $_SERVER['REQUEST_URI'] = '/api/test';
             $_SERVER['QUERY_STRING'] = 'search=' . urlencode($payload);
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             $request = $ar->request;
             
             // XSS should be sanitized
@@ -114,7 +114,7 @@ class InputSanitizationTest extends TestCase
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $_SERVER['REQUEST_URI'] = '/api/test';
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             
             // Headers should be sanitized (HTML entities encoded)
             $sanitized = $_SERVER[$headerName];
@@ -138,7 +138,7 @@ class InputSanitizationTest extends TestCase
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $_SERVER['REQUEST_URI'] = '/api/test';
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             $request = $ar->request;
             
             // Path traversal should be sanitized (HTML entities encoded)
@@ -168,7 +168,7 @@ class InputSanitizationTest extends TestCase
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $_SERVER['REQUEST_URI'] = '/api/test';
             
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             $request = $ar->request;
             
             // Input should be sanitized (though SQL injection is prevented by prepared statements)
@@ -186,7 +186,7 @@ class InputSanitizationTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/api/test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $request = $ar->request;
         
         // Schema validation should reject unwanted fields

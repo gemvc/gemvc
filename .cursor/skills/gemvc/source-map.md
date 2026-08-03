@@ -11,9 +11,14 @@ Verified against `docs/` + source (2026-08).
 | `SwooleBootstrap` | `src/core/SwooleBootstrap.php` | `extractRouteInfo`; **no** `api` hop; uses `SERVICE_IN_URL_SECTION` + `METHOD_IN_URL_SECTION`; `processRequest()` returns; catches Auth / RateLimit / **ValidationException** → JSON |
 | `OpenSwooleServer` | `src/core/OpenSwooleServer.php` | Security → SwooleRequest → bootstrap → showSwoole → APM flush |
 | `WebserverDetector` | `src/core/WebserverDetector.php` | apache / nginx / swoole / frankenphp detection |
-| Apache entry | `src/startup/apache/index.php` | Dotenv → ApacheRequest → Bootstrap |
+| Apache entry | `src/startup/apache/index.php` | Dotenv → StandardHttpRequest → Bootstrap |
 | Nginx entry | `src/startup/nginx/index.php` | Same pattern as Apache |
-| FrankenPHP entry | `src/startup/frankenphp/index.php` | Same as Nginx; edge denies in `Caddyfile` (no `.htaccess`) |
+| FrankenPHP entry | `src/startup/frankenphp/index.php` | Classic: Dotenv → StandardHttpRequest → Bootstrap |
+| FrankenPHP worker | `src/startup/frankenphp/worker.php` | `FrankenPhpWorker` → `FrankenPhpBootstrap` (no die); `Caddyfile.worker` |
+| `StandardHttpRequest` | `src/http/StandardHttpRequest.php` | Shared classic SAPI adapter (Apache/Nginx/FrankenPHP) |
+| `ApacheRequest` | `src/http/ApacheRequest.php` | **Deprecated** thin subclass of `StandardHttpRequest` |
+| `FrankenPhpBootstrap` | `src/core/FrankenPhpBootstrap.php` | Classic `/api/` hop; returns responses |
+| `FrankenPhpWorker` | `src/core/FrankenPhpWorker.php` | `frankenphp_handle_request` loop + SecurityManager |
 | Swoole entry | `src/startup/swoole/index.php` | `OpenSwooleServer::start()` |
 
 ## API / controller
@@ -33,7 +38,7 @@ Verified against `docs/` + source (2026-08).
 | Class | Path | Must know |
 |-------|------|-----------|
 | `Request` | `src/http/Request.php` | schemas, `auth`/`authenticate`/`authorize`, findable/filterable/sortable, map*ToObject |
-| `ApacheRequest` | `src/http/ApacheRequest.php` | Sanitizes GET/POST/PUT/PATCH/headers; **`$files` = `$_FILES['file']` only**; no upload MIME sanitize |
+| `StandardHttpRequest` | `src/http/StandardHttpRequest.php` | Sanitizes GET/POST/PUT/PATCH/headers; **`$files` = `$_FILES['file']` only**; no upload MIME sanitize |
 | `SwooleRequest` | `src/http/SwooleRequest.php` | Normalizes files; sanitizes upload name/MIME |
 | `JWTToken` | `src/http/JWTToken.php` | HS256 create/verify; roles, claims |
 | `Response` / `JsonResponse` | `src/http/` | Factories; `show` vs `showSwoole`; `tooManyRequests` (429) |

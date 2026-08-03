@@ -1,0 +1,22 @@
+{
+    "name": "gemvc/frankenphp-smoke",
+    "type": "project",
+    "require": {
+        "gemvc/library": "*",
+        "symfony/dotenv": "^7.2"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../..",
+            "options": { "symlink": false }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\Api\\": "app/api/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

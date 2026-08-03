@@ -175,7 +175,7 @@ final public function execute(): bool
 4. InitProject creates appropriate Init class:
    - InitApache for Apache
    - InitSwoole for OpenSwoole
-   - InitNginx for Nginx (Nginx startup uses `ApacheRequest` / PHP-FPM, same as Apache)
+   - InitNginx for Nginx (Nginx startup uses `StandardHttpRequest` / PHP-FPM, same as Apache)
 5. Delegates execution to selected class
 ```
 

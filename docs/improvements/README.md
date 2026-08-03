@@ -8,7 +8,7 @@
 | Item | Status | Where to read |
 |------|--------|----------------|
 | **Unified `ApiService` (runtime)** | **Shipped (5.13.0)** | [RELEASE_NOTES](../releases/RELEASE_NOTES.md); [api-runtime-unification.md](api-runtime-unification.md) |
-| **FrankenPHP classic runtime + init** | **Shipped (Unreleased)** | [frankenphp.md](frankenphp.md); [guides/frankenphp.md](../guides/frankenphp.md) |
+| **FrankenPHP classic + worker + `StandardHttpRequest`** | **Shipped (5.14.0)** | [frankenphp.md](frankenphp.md); [guides/frankenphp.md](../guides/frankenphp.md) |
 | Rate-limit drivers / Protected API / `forUpdate` | **Shipped (5.12.0)** | [RELEASE_NOTES](../releases/RELEASE_NOTES.md); [model.md — transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock) |
 | **ViewTable** + `db:migrate` / `--all` | **Shipped (5.11.0)** | [guides/database.md](../guides/database.md#sql-views-via-viewtable-recommended) |
 | cli-dev `db:list` / describe / drop views | **Shipped (cli-dev 1.3.0)** | [cli-reference.md — db:list](../guides/cli-reference.md#db-list) |

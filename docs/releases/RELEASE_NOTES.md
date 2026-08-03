@@ -1,6 +1,35 @@
 ![gemvc_let](https://github.com/user-attachments/assets/d79203d4-f90f-44e4-9f53-ecc0f233609e)
-**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.12.0...5.13.0
+**Full Changelog**: https://github.com/gemvc/gemvc/compare/5.13.0...5.14.0
 # GEMVC Framework - Release Notes
+
+## Version 5.14.0 - FrankenPHP runtime + `StandardHttpRequest`
+
+**Release Date**: Monday, 3 August 2026  
+**Type**: Minor Release (backward compatible; `ApacheRequest` deprecated alias retained)  
+**Tag**: `5.14.0`
+
+### Overview
+
+GEMVC’s fourth HTTP runtime is **FrankenPHP** (classic + worker), with edge security in the **Caddyfile** (never `.htaccess`). The shared PHP-FPM-style adapter is renamed **`StandardHttpRequest`** (formerly `ApacheRequest`) so the name matches Apache, Nginx, and FrankenPHP classic/worker usage.
+
+- **FrankenPHP classic:** `index.php` → `StandardHttpRequest` → `Bootstrap` → PDO (`APP_ENV_SERVER=frankenphp`)
+- **FrankenPHP worker:** `worker.php` → `FrankenPhpWorker` / `FrankenPhpBootstrap` (no `die()`), per-request object graph (same isolation rules as [openswoole.md](../guides/openswoole.md)), optional `SecurityManager::emitForbidden()`
+- **`gemvc init --frankenphp`** (menu option 4) scaffolds both `Caddyfile` and `Caddyfile.worker`
+- **`StandardHttpRequest`:** preferred name; **`ApacheRequest extends StandardHttpRequest`** is deprecated for one minor
+- **`JsonResponse::show()`:** no longer calls `die()` (required for worker mode; classic Bootstrap may still terminate after send)
+- Docker pin: `dunglas/frankenphp:1-php8.4-bookworm`; Caddyfile at `/etc/frankenphp/Caddyfile`
+- Smoke: `tests/smoke/frankenphp-smoke.sh` validates `/api/Index/ping` for classic + worker
+
+### Migration
+
+1. Prefer `use Gemvc\Http\StandardHttpRequest` and `new StandardHttpRequest()` in new code and startups.
+2. Existing `ApacheRequest` imports keep working via the deprecated subclass — plan to rename before the alias is removed in a later minor.
+3. Under FrankenPHP **worker** mode: never call `die()` / `exit()` after writing a response; do not store request identity in `static`s or `$_ENV`.
+4. Enable worker with `frankenphp run --config Caddyfile.worker` (or swap the image Caddyfile).
+
+See [frankenphp.md](../guides/frankenphp.md), [http-lifecycle.md](../guides/http-lifecycle.md), [security.md](../guides/security.md).
+
+---
 
 ## Version 5.13.0 - Unified `ApiService` for all servers
 

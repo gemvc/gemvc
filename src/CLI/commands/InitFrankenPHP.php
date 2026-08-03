@@ -8,7 +8,7 @@ use Gemvc\CLI\AbstractInit;
  * Initialize a new GEMVC FrankenPHP project (classic mode).
  *
  * Sets up Caddyfile path protection, FrankenPHP Docker image, and shared
- * ApacheRequest + Bootstrap entry — same app/ as other servers.
+ * StandardHttpRequest + Bootstrap entry — same app/ as other servers.
  *
  * @package Gemvc\CLI\Commands
  */
@@ -57,7 +57,9 @@ class InitFrankenPHP extends AbstractInit
 
         $filesToCopy = [
             'index.php',
+            'worker.php',
             'Caddyfile',
+            'Caddyfile.worker',
             'composer.json',
             'Dockerfile',
             '.gitignore',
@@ -115,9 +117,11 @@ class InitFrankenPHP extends AbstractInit
             " • Do not rely on Apache .htaccess with FrankenPHP",
             "",
             "FrankenPHP:",
-            " • Classic mode only in this scaffold (see docs/guides/frankenphp.md)",
-            " • Docker image: dunglas/frankenphp:1-php8.3-bookworm",
-            " • Local: frankenphp run --config Caddyfile"
+            " • Classic: index.php + Caddyfile (default)",
+            " • Worker: worker.php + Caddyfile.worker (no die(); see docs/guides/frankenphp.md)",
+            " • Docker image: dunglas/frankenphp:1-php8.4-bookworm",
+            " • Local classic: frankenphp run --config Caddyfile",
+            " • Local worker: frankenphp run --config Caddyfile.worker"
         ];
     }
 }

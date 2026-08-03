@@ -10,7 +10,7 @@ use Gemvc\Core\RateLimiter;
 use Gemvc\Core\RateLimitException;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 
 class RateLimitGuardedApiService extends ApiService
 {
@@ -93,7 +93,7 @@ class RateLimiterTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/Test/list';
         $_SERVER['REMOTE_ADDR'] = '203.0.113.' . random_int(1, 254);
 
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
         $this->request->remoteAddress = $_SERVER['REMOTE_ADDR'];
         $this->request->requestedUrl = '/api/Test/list';

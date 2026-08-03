@@ -145,24 +145,22 @@ class JsonResponse implements ResponseInterface , \JsonSerializable
     {
         // Automatically end Model span if it was started (from Response static methods)
         $this->endModelSpanIfStarted();
-        
-        header('Content-Type: application/json',true,$this->response_code);
-        if(!isset($this->json_response) || $this->json_response === false)
-        {
+
+        if (!isset($this->json_response) || $this->json_response === false) {
             $this->message = "error in creating json response in Gemvc/JsonResponse .please check data payload because it is false or not set";
             $this->response_code = 500;
             $this->json_response = json_encode("error in creating json response in Gemvc/JsonResponse .please check data payload because it is false or not set");
-            $this->show();
-            die();
         }
-        $result  =  html_entity_decode($this->json_response, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        if($result == false)
-        {
+
+        // Never die()/exit() — Apache/Nginx Bootstrap may terminate after show(); FrankenPHP worker must stay alive
+        header('Content-Type: application/json', true, $this->response_code);
+        $payload = is_string($this->json_response) ? $this->json_response : '';
+        $decoded = html_entity_decode($payload, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if ($decoded === '') {
             echo json_encode("error in creating json response in Gemvc/JsonResponse .please check data payload");
-            die();
+            return;
         }
-        $this->json_response =  html_entity_decode($this->json_response, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        
+        $this->json_response = $decoded;
         echo $this->json_response;
     }
 

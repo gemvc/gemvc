@@ -1,5 +1,5 @@
-# Pin major FrankenPHP + PHP line (classic mode). See docs/guides/frankenphp.md
-FROM dunglas/frankenphp:1-php8.3-bookworm
+# Pin major FrankenPHP + PHP line. Classic by default; worker: use Caddyfile.worker — docs/guides/frankenphp.md
+FROM dunglas/frankenphp:1-php8.4-bookworm
 
 LABEL maintainer="GEMVC Developer"
 
@@ -7,6 +7,9 @@ LABEL maintainer="GEMVC Developer"
 # FOR PRODUCTION: Comment out or delete the following line
 ENV APP_ENV=dev
 ENV SERVER_NAME=:80
+# Classic mode (default). For worker mode uncomment:
+# ENV FRANKENPHP_CONFIG="worker ./worker.php"
+# And COPY/use Caddyfile.worker as /etc/frankenphp/Caddyfile
 
 WORKDIR /app
 
@@ -19,7 +22,8 @@ RUN install-php-extensions \
 	@composer
 
 COPY . .
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY Caddyfile /etc/frankenphp/Caddyfile
+# Older image layouts used /etc/frankenphp/Caddyfile — current dunglas/frankenphp uses /etc/frankenphp/Caddyfile
 
 RUN composer install --no-dev --optimize-autoloader \
 	&& chown -R www-data:www-data /app

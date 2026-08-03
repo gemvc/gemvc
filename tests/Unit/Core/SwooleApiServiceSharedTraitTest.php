@@ -10,7 +10,7 @@ use Gemvc\Core\ControllerTracingProxy;
 use Gemvc\Core\ProtectedApiService;
 use Gemvc\Core\ProtectedSwooleApiService;
 use Gemvc\Core\SwooleApiService;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +35,7 @@ final class SwooleApiServiceSharedTraitTest extends TestCase
         parent::setUp();
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/Test';
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
     }
 

@@ -57,7 +57,7 @@ See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](h
 ### 3. **Environment-Aware Architecture**
 - Automatic webserver detection (`WebserverDetector`)
 - Automatic database manager selection (`DatabaseManagerFactory`)
-- Startup-specific request adapter: `ApacheRequest` for Apache/Nginx PHP-FPM and FrankenPHP classic; `SwooleRequest` for OpenSwoole (no separate NginxRequest/FrankenPhpRequest; `WebserverDetector` does not pick the adapter)
+- Startup-specific request adapter: `StandardHttpRequest` for Apache/Nginx PHP-FPM and FrankenPHP classic; `SwooleRequest` for OpenSwoole (no separate NginxRequest/FrankenPhpRequest; `WebserverDetector` does not pick the adapter)
 
 ### 4. **Code Generation CLI**
 - Generate Services, Controllers, Models, Tables, CRUD operations
@@ -71,7 +71,7 @@ See [ecosystem.md](ecosystem.md) · [helper.md](helper.md) · [http-client.md](h
 ### Apache/Nginx Flow:
 ```
 HTTP Request
- → startup/apache|nginx|frankenphp/index.php → ApacheRequest (sanitize headers/body)
+ → startup/apache|nginx|frankenphp/index.php → StandardHttpRequest (sanitize headers/body)
  → Bootstrap (APM root) → route /api/{Service}/{method}
  → ApiService (schema + auth) → callController → Controller
  → Model → Table (DB span if APM_TRACE_DB_QUERY=1)
@@ -140,7 +140,7 @@ HTTP Request
 
 ### **http/** - HTTP Layer
 - `Request.php` - Unified request object (all inputs sanitized)
-- `ApacheRequest.php` - Apache, Nginx PHP-FPM, and FrankenPHP classic request adapter (sanitizes headers + inputs)
+- `StandardHttpRequest.php` - Apache, Nginx PHP-FPM, and FrankenPHP classic request adapter (sanitizes headers + inputs)
 - `SwooleRequest.php` - OpenSwoole request adapter (sanitizes headers + inputs)
 - `Response.php` - Response factory
 - `JsonResponse.php` - JSON response handler (show() vs showSwoole())
@@ -284,7 +284,7 @@ Dev OpenSwoole: request path `/` may route to `Developer` / `app` when `APP_ENV=
 1. **Template Method** - `AbstractInit.php` → `InitApache.php` / `InitSwoole.php`
 2. **Strategy** - `DatabaseManagerFactory` → Different DB managers
 3. **Factory** - `DatabaseManagerFactory`, `Response` factory
-4. **Adapter** - `ApacheRequest` (Apache/Nginx), `SwooleRequest` (OpenSwoole) adapt to unified `Request`
+4. **Adapter** - `StandardHttpRequest` (Apache/Nginx), `SwooleRequest` (OpenSwoole) adapt to unified `Request`
 5. **Singleton** - `RedisManager`, cached `DatabaseManagerFactory`
 6. **Builder** - `Table` fluent interface, `QueryBuilder`
 7. **Dependency Injection** - `Request` injected into services/controllers
@@ -303,9 +303,10 @@ Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 ## Key Files Reference
 
 ### **Entry Points**:
-- `startup/apache/index.php` - Apache entry (`ApacheRequest` + `Bootstrap`)
-- `startup/nginx/index.php` - Nginx entry (same `ApacheRequest` + `Bootstrap` PHP-FPM path)
-- `startup/frankenphp/index.php` - FrankenPHP classic entry (same `ApacheRequest` + `Bootstrap`; edge security in `Caddyfile`)
+- `startup/apache/index.php` - Apache entry (`StandardHttpRequest` + `Bootstrap`)
+- `startup/nginx/index.php` - Nginx entry (same `StandardHttpRequest` + `Bootstrap` PHP-FPM path)
+- `startup/frankenphp/index.php` - FrankenPHP classic entry (same `StandardHttpRequest` + `Bootstrap`; edge security in `Caddyfile`)
+- `startup/frankenphp/worker.php` - FrankenPHP worker entry (`FrankenPhpWorker` + `FrankenPhpBootstrap`; no `die()`)
 - `startup/swoole/index.php` - OpenSwoole entry
 - `bin/gemvc` - CLI entry point
 
@@ -320,7 +321,7 @@ Details: [cli.md](cli.md) · [cli-reference.md](cli-reference.md).
 
 ### **Security**:
 - `src/core/SecurityManager.php` - Path protection
-- `src/http/ApacheRequest.php` - Input sanitization (Apache/Nginx PHP-FPM / FrankenPHP classic)
+- `src/http/StandardHttpRequest.php` - Input sanitization (Apache/Nginx PHP-FPM / FrankenPHP classic)
 - `src/http/SwooleRequest.php` - Input sanitization (OpenSwoole)
 - `src/database/UniversalQueryExecuter.php` - SQL injection prevention
 

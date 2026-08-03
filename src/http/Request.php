@@ -53,7 +53,7 @@ class Request
     public ?string $requestMethod;
     /**
      * HTTP headers normalized to lowercase keys (PSR-7 compatible)
-     * Populated by ApacheRequest or SwooleRequest adapters
+     * Populated by StandardHttpRequest (or deprecated ApacheRequest) or SwooleRequest adapters
      * 
      * @var array<string, string>|null
      */

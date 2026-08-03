@@ -7,17 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
-## [Unreleased]
+## [5.14.0] - 2026-08-03
 
 ### Added
 
-- **FrankenPHP classic runtime** — `src/startup/frankenphp/` (`ApacheRequest` + `Bootstrap` + PDO), `Caddyfile` path denies (not `.htaccess`), `gemvc init --frankenphp` / menu option 4, `WebserverDetector` + Docker Compose support
+- **FrankenPHP classic runtime** — `src/startup/frankenphp/` (`StandardHttpRequest` + `Bootstrap` + PDO), `Caddyfile` path denies (not `.htaccess`), `gemvc init --frankenphp` / menu option 4, `WebserverDetector` + Docker Compose support
+- **FrankenPHP worker mode** — `worker.php`, `FrankenPhpBootstrap` / `FrankenPhpWorker` (no `die()`), `Caddyfile.worker`, `SecurityManager::emitForbidden()` defense-in-depth; isolation docs aligned with OpenSwoole
 - Guide: [frankenphp.md](../guides/frankenphp.md)
+- Docker smoke: `tests/smoke/frankenphp-smoke.sh` (classic + worker `/api/Index/ping` on `dunglas/frankenphp:1-php8.4-bookworm`)
+
+### Changed
+
+- Renamed request adapter **`ApacheRequest` → `StandardHttpRequest`** (shared by Apache, Nginx PHP-FPM, FrankenPHP). `ApacheRequest` remains a **deprecated** thin subclass for one minor
+- `JsonResponse::show()` no longer calls `die()` (worker-safe; classic `Bootstrap` may still terminate after `show()`)
+- FrankenPHP Docker Caddyfile path: `/etc/frankenphp/Caddyfile`; pinned image `dunglas/frankenphp:1-php8.4-bookworm`
 
 ### Documentation
 
-- Canonical OpenSwoole runtime guide: [openswoole.md](../guides/openswoole.md) (request isolation, pooling, no-`die()`, developer rules, production FAQ); linked from architecture, http-lifecycle, AI INDEX, ecosystem, database, APM
-- Four-server front doors (ARCHITECTURE, README, CANONICAL, security path matrix, CLI/install)
+- Canonical OpenSwoole runtime guide: [openswoole.md](../guides/openswoole.md)
+- Four-server front doors; FrankenPHP classic + worker; `StandardHttpRequest` rename across guides/AI pack
 
 ## [5.13.0] - 2026-08-03
 
@@ -37,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases; Nginx = shared `ApacheRequest` (no `NginxRequest`)
+- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases; Nginx = shared `StandardHttpRequest` (no `NginxRequest`)
 
 ## [5.12.0] - 2026-08-01
 
@@ -187,13 +195,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decode URL-encoded segments once (e.g. `%2fapp`, `%2e%2e`) before comparison
   - Resolve `.` and `..` segments to prevent path traversal (e.g. `/api/../app` → `/app`)
   - Location: `src/core/SecurityManager.php`
-- **ApacheRequest** – Input and body handling hardening
+- **StandardHttpRequest** – Input and body handling hardening
   - Read `php://input` once per request and reuse for JSON POST, PUT, and PATCH (stream is single-read; previously PUT/PATCH could receive empty body)
   - `sanitizeInput()`: when `filter_var(..., FILTER_SANITIZE_FULL_SPECIAL_CHARS)` returns `false`, return empty string instead of passing unsanitized value
   - `sanitizeRequestURI()`: use the filtered URL result when valid instead of the original string
   - `sanitizeQueryString()`: do not assign `false` to `$_SERVER['QUERY_STRING']` when filter fails; use empty string
   - Recursive sanitization for POST, GET, PUT, PATCH so deeply nested array values are sanitized (XSS prevention)
-  - Location: `src/http/ApacheRequest.php`
+  - Location: `src/http/StandardHttpRequest.php`
 - **SwooleRequest** – Request URI sanitization
   - `sanitizeRequestURI()`: return the filtered URL when `filter_var(..., FILTER_SANITIZE_URL)` succeeds instead of the original URI
   - Location: `src/http/SwooleRequest.php`

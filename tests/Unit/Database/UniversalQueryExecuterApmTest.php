@@ -10,7 +10,7 @@ use Gemvc\Database\UniversalQueryExecuter;
 use Gemvc\Database\Connection\Contracts\ConnectionManagerInterface;
 use Gemvc\Database\Connection\Contracts\ConnectionInterface;
 use Gemvc\Http\Request;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Core\Apm\ApmInterface;
 use PDO;
 use PDOStatement;
@@ -59,7 +59,7 @@ class UniversalQueryExecuterApmTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/api/Test';
         
-        $ar = new ApacheRequest();
+        $ar = new StandardHttpRequest();
         $this->request = $ar->request;
         
         // Set up environment for APM tracing

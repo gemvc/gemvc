@@ -1,0 +1,32 @@
+# GEMVC FrankenPHP (classic mode) — path protection lives HERE (not .htaccess).
+# .htaccess is ignored by Caddy/FrankenPHP. Do not copy Apache rewrite rules here.
+#
+# Docroot = project root (same layout as Nginx startup: index.php beside app/).
+# Official FrankenPHP image default is /app/public; this Caddyfile uses root * .
+# Run frankenphp from the project root (Docker WORKDIR /app).
+
+{
+	frankenphp
+}
+
+{$SERVER_NAME:localhost} {
+	# Project root (index.php beside app/). In Docker WORKDIR is /app; locally run from project root.
+	root * .
+	encode zstd br gzip
+
+	# Security: deny sensitive directories (parity with nginx.conf / Apache .htaccess)
+	@denied_dirs path /app/* /vendor/* /bin/* /config/* /templates/*
+	respond @denied_dirs 403
+
+	# Security: deny sensitive files and hidden paths
+	@denied_files {
+		path *.env *.htaccess *.ini *.log *.sh *.bak *.json *.lock
+		path /.env /.git*
+	}
+	respond @denied_files 404
+
+	# Route non-files through index.php; REQUEST_URI keeps the original path for Bootstrap
+	php_server {
+		try_files {path} index.php
+	}
+}

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Helpers;
 
 use PHPUnit\Framework\TestCase;
-use Gemvc\Http\ApacheRequest;
+use Gemvc\Http\StandardHttpRequest;
 use Gemvc\Http\Request;
 use Gemvc\Http\JsonResponse;
 
@@ -28,7 +28,7 @@ abstract class ApiTestCase extends TestCase
         $_GET = $get;
         
         try {
-            $ar = new ApacheRequest();
+            $ar = new StandardHttpRequest();
             return $ar->request;
         } finally {
             // Restore original superglobals

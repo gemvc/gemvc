@@ -21,10 +21,26 @@ final class FrankenPhpStartupTest extends TestCase
         $dir = $this->startupDir();
         $this->assertDirectoryExists($dir);
         $this->assertFileExists($dir . '/index.php');
+        $this->assertFileExists($dir . '/worker.php');
         $this->assertFileExists($dir . '/Caddyfile');
+        $this->assertFileExists($dir . '/Caddyfile.worker');
         $this->assertFileExists($dir . '/example.env');
         $this->assertFileExists($dir . '/Dockerfile');
         $this->assertFileExists($dir . '/composer.json');
+    }
+
+    public function testWorkerEntryUsesFrankenPhpWorker(): void
+    {
+        $worker = (string) file_get_contents($this->startupDir() . '/worker.php');
+        $this->assertStringContainsString('FrankenPhpWorker', $worker);
+        $this->assertStringNotContainsString('new Bootstrap', $worker);
+    }
+
+    public function testWorkerCaddyfileDefinesWorkerBlock(): void
+    {
+        $caddy = (string) file_get_contents($this->startupDir() . '/Caddyfile.worker');
+        $this->assertStringContainsString('worker ./worker.php', $caddy);
+        $this->assertStringContainsString('match *', $caddy);
     }
 
     public function testFrankenPhpStartupHasNoHtaccess(): void
@@ -47,10 +63,10 @@ final class FrankenPhpStartupTest extends TestCase
         $this->assertStringContainsString('APP_ENV_SERVER=frankenphp', $env);
     }
 
-    public function testIndexUsesApacheRequestAndBootstrap(): void
+    public function testIndexUsesStandardHttpRequestAndBootstrap(): void
     {
         $index = (string) file_get_contents($this->startupDir() . '/index.php');
-        $this->assertStringContainsString('ApacheRequest', $index);
+        $this->assertStringContainsString('StandardHttpRequest', $index);
         $this->assertStringContainsString('Bootstrap', $index);
         $this->assertStringNotContainsString('SwooleRequest', $index);
     }

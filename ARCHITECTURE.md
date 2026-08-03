@@ -1,6 +1,6 @@
 # The Architecture of GEMVC
 
-> **Version:** 5.13.0 (philosophy document)
+> **Version:** 5.14.0 (philosophy document)
 >
 > This document defines the architectural philosophy behind GEMVC.
 >
@@ -230,7 +230,7 @@ Runtime packages implement those contracts.
 
 Changing the runtime should not require application changes.
 
-FrankenPHP v1 uses classic request mode (`ApacheRequest` + `Bootstrap` + PDO) with edge path security in the **Caddyfile** (not `.htaccess`). See [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
+FrankenPHP v1 uses classic request mode (`StandardHttpRequest` + `Bootstrap` + PDO) with edge path security in the **Caddyfile** (not `.htaccess`). See [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
 
 ---
 

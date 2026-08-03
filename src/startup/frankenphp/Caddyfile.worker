@@ -1,0 +1,32 @@
+# GEMVC FrankenPHP — WORKER MODE
+# Path protection: Caddyfile (primary) + SecurityManager in FrankenPhpWorker (defense-in-depth).
+# Never use .htaccess. Classic mode: use Caddyfile instead of this file.
+#
+# Switch: copy this over Caddyfile, or set FRANKENPHP_CONFIG / php_server worker block.
+# Docs: docs/guides/frankenphp.md
+
+{
+	frankenphp
+}
+
+{$SERVER_NAME:localhost} {
+	root * .
+	encode zstd br gzip
+
+	@denied_dirs path /app/* /vendor/* /bin/* /config/* /templates/*
+	respond @denied_dirs 403
+
+	@denied_files {
+		path *.env *.htaccess *.ini *.log *.sh *.bak *.json *.lock
+		path /.env /.git*
+	}
+	respond @denied_files 404
+
+	php_server {
+		# All HTTP hits go to the long-lived worker (superglobals reset each request)
+		worker ./worker.php {
+			num {$FRANKENPHP_WORKER_NUM:2}
+			match *
+		}
+	}
+}

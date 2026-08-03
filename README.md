@@ -10,7 +10,7 @@
 [![FrankenPHP](https://img.shields.io/badge/FrankenPHP-Supported-000000.svg?style=flat-square)](https://frankenphp.dev/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
-**Latest:** 5.13.0 — unified `ApiService` / `ProtectedApiService` for all servers (`validateOrFail`, `ApiServiceSharedTrait`, deprecated `Swoole*` aliases). Also **5.12** rate-limit drivers + `Protected*` + `forUpdate()`, **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
+**Latest:** 5.14.0 — FrankenPHP classic + worker; `StandardHttpRequest` (deprecated `ApacheRequest` alias). Also **5.13** unified `ApiService` / `ProtectedApiService`, **5.12** rate-limit drivers + `Protected*` + `forUpdate()`, **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
 
 ## Before You Continue
 
