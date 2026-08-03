@@ -8,7 +8,7 @@ Before answering any architectural question, writing any code, or suggesting any
 
 **The Critical `vendor/gemvc` Directory:** (Very Important!) Thoroughly examine all packages, libraries, and GEMVC-related source code installed and located in this path to fully learn the actual structure and implementation of the packages.
 
-**Core Engine & Architecture:** `src/` (Examine all layers: API, Controller, Model, Table, and bootstrap loaders for Apache, Nginx, and OpenSwoole).
+**Core Engine & Architecture:** `src/` (Examine all layers: API, Controller, Model, Table, and bootstrap loaders for Apache, Nginx, FrankenPHP, and OpenSwoole).
 
 **In-House Ecosystem Packages:** Check any package directories or similar structures (http-client, apm-contracts, apm-tracekit, connection adapters, CLI).
 
@@ -28,7 +28,7 @@ Never weaken type hints, never use generic `mixed` types where specific types ca
 
 ## 4. Execution Command
 
-Acknowledge this protocol. Confirm that you have examined the source codes located in `vendor/gemvc` and `src/`, understand the server-agnostic nature (Apache / Nginx / OpenSwoole), and are ready to analyze or improve GEMVC strictly based on the actual source code.
+Acknowledge this protocol. Confirm that you have examined the source codes located in `vendor/gemvc` and `src/`, understand the server-agnostic nature (Apache / Nginx / FrankenPHP / OpenSwoole), and are ready to analyze or improve GEMVC strictly based on the actual source code.
 
 ---
 

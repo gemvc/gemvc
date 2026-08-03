@@ -28,6 +28,7 @@ Optional machine/IDE mirrors (same content, not required):
 | **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types; money transfers) | [../guides/model.md](../guides/model.md) |
 | HTTP Request lifecycle / adapters | [../guides/http-lifecycle.md](../guides/http-lifecycle.md) |
 | **OpenSwoole isolation / pool / memory / FAQ** | **[../guides/openswoole.md](../guides/openswoole.md)** |
+| **FrankenPHP classic / Caddyfile security** | **[../guides/frankenphp.md](../guides/frankenphp.md)** |
 | Install → first API call | [../guides/installation.md](../guides/installation.md) |
 | Framework internals | [../guides/architecture.md](../guides/architecture.md) |
 | Codegen templates | [../guides/templates.md](../guides/templates.md) |

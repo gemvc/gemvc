@@ -453,11 +453,11 @@ class DockerComposeInit extends Command
     }
     
     /**
-     * Generate webserver service configuration (OpenSwoole, Apache, or Nginx)
+     * Generate webserver service configuration (OpenSwoole, Apache, Nginx, or FrankenPHP)
      */
     private function generateWebserverService(): string
     {
-        $serviceName = in_array($this->webserverType, ['apache', 'nginx']) ? 'web' : 'openswoole';
+        $serviceName = in_array($this->webserverType, ['apache', 'nginx', 'frankenphp'], true) ? 'web' : 'openswoole';
         $port = $this->webserverPort;
         $dependsOn = [];
         if (in_array('db', $this->selectedServices)) {
@@ -485,6 +485,9 @@ class DockerComposeInit extends Command
                 'REDIS_READ_TIMEOUT' => '"0.0"'
             ]);
         }
+        if ($this->webserverType === 'frankenphp') {
+            $environment['SERVER_NAME'] = '":80"';
+        }
         
         $envStr = empty($environment) ? '' : "\n    environment:\n" . 
             implode("\n", array_map(function($key, $value) {
@@ -498,6 +501,10 @@ class DockerComposeInit extends Command
         $resourcesStr = "\n    cpus: {$this->cpuLimit}\n" .
             "    mem_limit: {$this->memoryLimit}\n" .
             "    mem_reservation: {$this->memoryLimit}";
+
+        $volumeMount = $this->webserverType === 'frankenphp'
+            ? '- ./:/app:delegated'
+            : '- ./:/var/www/html:delegated';
         
         return <<<EOT
   {$serviceName}:
@@ -507,7 +514,7 @@ class DockerComposeInit extends Command
     ports:
       - "{$portMapping}"
     volumes:
-      - ./:/var/www/html:delegated
+      {$volumeMount}
     restart: unless-stopped{$resourcesStr}
     networks:
       - backend-network{$dependsOnStr}{$envStr}

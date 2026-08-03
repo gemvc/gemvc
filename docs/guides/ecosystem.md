@@ -112,7 +112,7 @@ See the full stack in [database.md — Under the hood](database.md#under-the-hoo
 
 | | |
 |--|--|
-| **Role** | **PDO** connection manager for Apache/Nginx (and CLI). Builds DSN from `DB_DRIVER` / `DB_*` — **MySQL, PostgreSQL, SQLite** |
+| **Role** | **PDO** connection manager for Apache/Nginx/FrankenPHP classic (and CLI). Builds DSN from `DB_DRIVER` / `DB_*` — **MySQL, PostgreSQL, SQLite** |
 | **Pooling** | Simple cache / optional persistent connections — **not** a Hyperf-style pool |
 | **Key pieces** | `PdoConnection` (manager) + `PdoConnectionAdapter` |
 | **Docs** | `vendor/gemvc/connection-pdo/README.md`, `CHANGELOG.md` |

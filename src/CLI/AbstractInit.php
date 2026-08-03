@@ -13,7 +13,7 @@ use Gemvc\CLI\Commands\CliBoxShow;
  * Abstract Base Class for Webserver Initialization
  * 
  * This abstract class contains all shared functionality for initializing
- * GEMVC projects with different webservers (OpenSwoole, Apache, Nginx).
+ * GEMVC projects with different webservers (OpenSwoole, Apache, Nginx, FrankenPHP).
  * 
  * Uses Template Method Pattern to define the skeleton of initialization
  * while allowing subclasses to override specific steps.
@@ -397,7 +397,8 @@ abstract class AbstractInit extends Command
         $webserverTypeMap = [
             'openswoole' => 'swoole',
             'nginx' => 'nginx',
-            'apache' => 'apache'
+            'apache' => 'apache',
+            'frankenphp' => 'frankenphp',
         ];
         $directoryName = $webserverTypeMap[$webserverType] ?? $webserverType;
         
@@ -630,7 +631,8 @@ abstract class AbstractInit extends Command
             $webserverTypeMap = [
                 'openswoole' => 'swoole',
                 'nginx' => 'nginx',
-                'apache' => 'apache'
+                'apache' => 'apache',
+                'frankenphp' => 'frankenphp',
             ];
             $directoryName = $webserverTypeMap[$webserverType] ?? $webserverType;
             $exampleEnvPath = $this->packagePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'startup' . DIRECTORY_SEPARATOR . $directoryName . DIRECTORY_SEPARATOR . 'example.env';

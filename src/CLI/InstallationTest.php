@@ -21,6 +21,7 @@ class InstallationTest {
             'Gemvc\CLI\Commands\InitSwoole',
             'Gemvc\CLI\Commands\InitApache',
             'Gemvc\CLI\Commands\InitNginx',
+            'Gemvc\CLI\Commands\InitFrankenPHP',
             'Gemvc\CLI\Commands\DbMigrate',
             'Gemvc\CLI\Commands\DbConnect',
         ];
@@ -79,6 +80,7 @@ class InstallationTest {
             'Gemvc\CLI\Commands\InitSwoole',
             'Gemvc\CLI\Commands\InitApache',
             'Gemvc\CLI\Commands\InitNginx',
+            'Gemvc\CLI\Commands\InitFrankenPHP',
         ];
         
         foreach ($webserverClasses as $webserverClass) {

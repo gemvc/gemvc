@@ -9,6 +9,7 @@ use Gemvc\CLI\AbstractInit;
 use Gemvc\CLI\Commands\InitSwoole;
 use Gemvc\CLI\Commands\InitApache;
 use Gemvc\CLI\Commands\InitNginx;
+use Gemvc\CLI\Commands\InitFrankenPHP;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -117,6 +118,36 @@ class AbstractInitTest extends TestCase
         
         // Should be declared in AbstractInit, not InitNginx
         $this->assertEquals('Gemvc\CLI\AbstractInit', $declaringClass, 'InitNginx should use inherited getStartupTemplatePath from AbstractInit');
+    }
+
+    /**
+     * Test that InitFrankenPHP uses inherited getStartupTemplatePath()
+     */
+    public function testInitFrankenPHPUsesInheritedGetStartupTemplatePath(): void
+    {
+        $reflection = new ReflectionClass(InitFrankenPHP::class);
+        $this->assertTrue($reflection->hasMethod('getStartupTemplatePath'));
+        $method = $reflection->getMethod('getStartupTemplatePath');
+        $this->assertEquals('Gemvc\CLI\AbstractInit', $method->getDeclaringClass()->getName());
+    }
+
+    /**
+     * InitFrankenPHP findStartupPath resolves to startup/frankenphp
+     */
+    public function testInitFrankenPHPFindStartupPath(): void
+    {
+        $init = new InitFrankenPHP(['--non-interactive']);
+        $reflection = new ReflectionClass($init);
+        $packagePathProperty = $reflection->getProperty('packagePath');
+        $packagePathProperty->setAccessible(true);
+        if (!$packagePathProperty->isInitialized($init)) {
+            $packagePathProperty->setValue($init, dirname(__DIR__, 3));
+        }
+        $findStartupPathMethod = $reflection->getMethod('findStartupPath');
+        $findStartupPathMethod->setAccessible(true);
+        $path = $findStartupPathMethod->invoke($init);
+        $this->assertStringEndsWith('startup' . DIRECTORY_SEPARATOR . 'frankenphp', $path);
+        $this->assertDirectoryExists($path);
     }
     
     /**

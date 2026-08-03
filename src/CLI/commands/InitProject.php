@@ -7,6 +7,7 @@ use Gemvc\CLI\Command;
 use Gemvc\CLI\Commands\InitSwoole;
 use Gemvc\CLI\Commands\InitApache;
 use Gemvc\CLI\Commands\InitNginx;
+use Gemvc\CLI\Commands\InitFrankenPHP;
 use Gemvc\CLI\Commands\CliBoxShow;
 
 /**
@@ -17,9 +18,10 @@ use Gemvc\CLI\Commands\CliBoxShow;
  * - OpenSwoole (High-performance async server)
  * - Apache (Traditional PHP hosting)
  * - Nginx (Modern web server with PHP-FPM)
+ * - FrankenPHP (Caddy + classic PHP; Caddyfile path security)
  * 
  * The orchestrator delegates the actual initialization to the appropriate
- * webserver-specific Init class (InitSwoole, InitApache, or InitNginx).
+ * webserver-specific Init class (InitSwoole, InitApache, InitNginx, or InitFrankenPHP).
  * 
  * @package Gemvc\CLI\Commands
  */
@@ -56,6 +58,15 @@ class InitProject extends Command
             'status' => 'available',
             'icon' => '🟢',
             'color' => 'green'
+        ],
+        '4' => [
+            'name' => 'FrankenPHP',
+            'class' => InitFrankenPHP::class,
+            'package' => null,
+            'description' => 'Caddy + FrankenPHP classic mode (Caddyfile path security)',
+            'status' => 'available',
+            'icon' => '🟠',
+            'color' => 'yellow'
         ]
     ];
     
@@ -135,6 +146,12 @@ class InitProject extends Command
             $this->info("Using Nginx (from --nginx flag)");
             return '3';
         }
+
+        // Check for --frankenphp flag
+        if (in_array('--frankenphp', $this->args)) {
+            $this->info("Using FrankenPHP (from --frankenphp flag)");
+            return '4';
+        }
         
         // Check for --server=<name> flag
         foreach ($this->args as $arg) {
@@ -154,6 +171,9 @@ class InitProject extends Command
                     case 'nginx':
                         $this->info("Using Nginx (from --server flag)");
                         return '3';
+                    case 'frankenphp':
+                        $this->info("Using FrankenPHP (from --server flag)");
+                        return '4';
                 }
             }
         }
@@ -164,7 +184,7 @@ class InitProject extends Command
     /**
      * Display webserver selection menu and get user choice
      * 
-     * @return string User's choice (1, 2, or 3)
+     * @return string User's choice (1, 2, 3, or 4)
      */
     private function displayWebserverMenu(): string
     {
@@ -181,7 +201,7 @@ class InitProject extends Command
         }
 
         while (true) {
-            $this->write('Enter your choice (1-3) [1]: ', CliColor::Blue);
+            $this->write('Enter your choice (1-4) [1]: ', CliColor::Blue);
             
             $handle = fopen("php://stdin", "r");
             if ($handle === false) {
@@ -206,7 +226,7 @@ class InitProject extends Command
                 return $choice;
             }
             
-            $this->warning("Invalid choice. Please enter 1, 2, or 3.");
+            $this->warning("Invalid choice. Please enter 1, 2, 3, or 4.");
         }
     }
     

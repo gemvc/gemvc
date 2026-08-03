@@ -3,7 +3,7 @@
 **Audience:** production evaluators, architects, and developers running GEMVC under OpenSwoole / Swoole workers.  
 **Purpose:** answer recurring questions about request isolation, memory, pooling, and app constraints — once, in one place.
 
-**Related:** [http-lifecycle.md](http-lifecycle.md) · [architecture.md](architecture.md) · [database.md](database.md) · [ecosystem.md](ecosystem.md) · [apm.md](apm.md) · [api.md](api.md) · [api-runtime-unification.md](../improvements/api-runtime-unification.md)
+**Related:** [http-lifecycle.md](http-lifecycle.md) · [architecture.md](architecture.md) · [database.md](database.md) · [ecosystem.md](ecosystem.md) · [apm.md](apm.md) · [api.md](api.md) · [frankenphp.md](frankenphp.md) · [api-runtime-unification.md](../improvements/api-runtime-unification.md)
 
 **Framework version:** 5.13+ (unified `ApiService` / `ProtectedApiService` on all servers).
 
@@ -158,7 +158,7 @@ Queries still run through **PDO** on the Table path. With coroutines enabled, a 
 | URL `/api` hop | Yes (convention) | **No** automatic hop — configure sections |
 | APM end | Bootstrap path + flush semantics | Explicit flush after `showSwoole` |
 
-Same `app/api`, `app/controller`, `app/model`, `app/table` for all three servers.
+Same `app/api`, `app/controller`, `app/model`, `app/table` for all four servers (Apache, Nginx, FrankenPHP classic, OpenSwoole).
 
 ---
 

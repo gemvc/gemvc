@@ -15,7 +15,7 @@ use Gemvc\CLI\Commands\CliBoxShow;
  * - Existing container conflicts
  * - Automatic port suggestions
  * 
- * Works for all webservers (OpenSwoole, Apache, Nginx)
+ * Works for all webservers (OpenSwoole, Apache, Nginx, FrankenPHP)
  */
 class DockerContainerBuilder extends Command
 {
@@ -104,7 +104,7 @@ class DockerContainerBuilder extends Command
         
         // Build port list for display
         $portList = [3306, 8080, $this->appPort];
-        if ($this->webserverType === 'apache' || $this->webserverType === 'nginx') {
+        if ($this->webserverType === 'apache' || $this->webserverType === 'nginx' || $this->webserverType === 'frankenphp') {
             $portList[] = 80;
         }
         $portListStr = implode(', ', $portList);
@@ -181,7 +181,7 @@ class DockerContainerBuilder extends Command
                 ];
                 
                 // Add port 80 only for Apache/Nginx
-                if (in_array($this->webserverType, ['apache', 'nginx'])) {
+                if (in_array($this->webserverType, ['apache', 'nginx', 'frankenphp'], true)) {
                     if (!in_array(80, $portsToCheck)) {
                         $portsToCheck[] = 80;
                     }
@@ -210,7 +210,7 @@ class DockerContainerBuilder extends Command
                 ];
                 
                 // Add port 80 only for Apache/Nginx
-                if (in_array($this->webserverType, ['apache', 'nginx'])) {
+                if (in_array($this->webserverType, ['apache', 'nginx', 'frankenphp'], true)) {
                     if (!in_array(80, $portsToCheck)) {
                         $portsToCheck[] = 80;
                     }
@@ -560,7 +560,7 @@ class DockerContainerBuilder extends Command
                     // If this port mapping uses the old port as host port, update it
                     if ($hostPort === $oldPort) {
                         // For Apache/Nginx, ensure container port is 80 when updating web service
-                        if (in_array($this->webserverType, ['apache', 'nginx']) && 
+                        if (in_array($this->webserverType, ['apache', 'nginx', 'frankenphp'], true) && 
                             $targetServiceName === 'web' && 
                             $containerPort === 80) {
                             return $matches[1] . $newPort . ':80' . $matches[4];
@@ -655,6 +655,8 @@ class DockerContainerBuilder extends Command
                 return 'Apache';
             } elseif ($this->webserverType === 'nginx') {
                 return 'Nginx';
+            } elseif ($this->webserverType === 'frankenphp') {
+                return 'FrankenPHP';
             }
             return 'Application Server';
         }
@@ -764,9 +766,9 @@ class DockerContainerBuilder extends Command
         // Common app service names - prioritize based on webserver type
         $possibleNames = [];
         
-        if ($this->webserverType === 'apache' || $this->webserverType === 'nginx') {
-            // For Apache/Nginx, 'web' is the standard service name
-            $possibleNames = ['web', 'nginx', 'apache', 'app'];
+        if ($this->webserverType === 'apache' || $this->webserverType === 'nginx' || $this->webserverType === 'frankenphp') {
+            // For Apache/Nginx/FrankenPHP, 'web' is the standard service name
+            $possibleNames = ['web', 'nginx', 'apache', 'frankenphp', 'app'];
         } else {
             // For OpenSwoole, 'openswoole' is the standard service name
             $possibleNames = ['openswoole', 'web', 'app'];
@@ -811,7 +813,7 @@ class DockerContainerBuilder extends Command
         
         // If not found by service block, try to identify by webserver type
         // For Apache/Nginx, the 'web' service typically uses the app port
-        if (in_array($this->webserverType, ['apache', 'nginx']) && $port === $this->appPort) {
+        if (in_array($this->webserverType, ['apache', 'nginx', 'frankenphp'], true) && $port === $this->appPort) {
             if (preg_match('/^\s*web:\s*$/m', $content)) {
                 return 'web';
             }
@@ -1088,7 +1090,7 @@ class DockerContainerBuilder extends Command
         }
         
         // Update APP_ENV_API_DEFAULT_SUB_URL
-        // If server is NOT swoole (nginx/apache), set to '/api'
+        // If server is NOT swoole (nginx/apache/frankenphp), set to '/api'
         // If server IS swoole, set to empty string
         $apiSubUrl = ($this->webserverType === 'swoole' || $this->webserverType === 'openswoole') ? '' : 'api';
         $apiSubUrlLine = "APP_ENV_API_DEFAULT_SUB_URL='{$apiSubUrl}'";

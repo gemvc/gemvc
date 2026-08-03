@@ -13,7 +13,7 @@ use Gemvc\Database\Connection\Pdo\PdoConnection;
  * implementation based on the current web server environment.
  * 
  * **Uses New Connection Packages Directly:**
- * - `gemvc/connection-pdo` - PDO implementation for Apache/Nginx
+ * - `gemvc/connection-pdo` - PDO implementation for Apache/Nginx/FrankenPHP (classic)
  * - `gemvc/connection-openswoole` - OpenSwoole implementation with Hyperf pooling
  * 
  * **Minimal Implementation:**
@@ -66,7 +66,7 @@ class DatabaseManagerFactory
     /**
      * Get cached environment detection result
      * 
-     * @return string The detected environment ('swoole', 'apache', 'nginx')
+     * @return string The detected environment ('swoole', 'apache', 'nginx', 'frankenphp')
      */
     private static function getCachedEnvironment(): string
     {
@@ -120,8 +120,8 @@ class DatabaseManagerFactory
             'performance_mode' => 'optimized'
         ];
         
-        // Add PDO-specific configuration info
-        if ($environment === 'apache' || $environment === 'nginx') {
+        // Add PDO-specific configuration info (classic HTTP: Apache / Nginx / FrankenPHP)
+        if ($environment === 'apache' || $environment === 'nginx' || $environment === 'frankenphp') {
             $persistentEnabled = $_ENV['DB_PERSISTENT_CONNECTIONS'] ?? '1';
             $info['pdo_config'] = [
                 'persistent_connections' => $persistentEnabled,

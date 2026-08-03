@@ -10,7 +10,7 @@ class CommandCategories
 {
     public const CATEGORIES = [
         'Project Management' => [
-            'init' => 'Initialize a new GEMVC project with server configuration (Apache/Swoole/Nginx)',
+            'init' => 'Initialize a new GEMVC project with server configuration (Apache/Swoole/Nginx/FrankenPHP)',
         ],
         'Database (production)' => [
             'db:migrate' => 'Create/update a table or ViewTable (db:migrate ClassName | db:migrate --all)',

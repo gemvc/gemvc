@@ -10,9 +10,10 @@ Verified against `docs/` + source (2026-08).
 | `Bootstrap` | `src/core/Bootstrap.php` | Apache/Nginx; `setRequestedService`; **`api` hop**; ignores `METHOD_IN_URL_SECTION`; may `die` |
 | `SwooleBootstrap` | `src/core/SwooleBootstrap.php` | `extractRouteInfo`; **no** `api` hop; uses `SERVICE_IN_URL_SECTION` + `METHOD_IN_URL_SECTION`; `processRequest()` returns; catches Auth / RateLimit / **ValidationException** → JSON |
 | `OpenSwooleServer` | `src/core/OpenSwooleServer.php` | Security → SwooleRequest → bootstrap → showSwoole → APM flush |
-| `WebserverDetector` | `src/core/WebserverDetector.php` | apache / nginx / swoole detection |
+| `WebserverDetector` | `src/core/WebserverDetector.php` | apache / nginx / swoole / frankenphp detection |
 | Apache entry | `src/startup/apache/index.php` | Dotenv → ApacheRequest → Bootstrap |
 | Nginx entry | `src/startup/nginx/index.php` | Same pattern as Apache |
+| FrankenPHP entry | `src/startup/frankenphp/index.php` | Same as Nginx; edge denies in `Caddyfile` (no `.htaccess`) |
 | Swoole entry | `src/startup/swoole/index.php` | `OpenSwooleServer::start()` |
 
 ## API / controller
@@ -101,7 +102,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 | Piece | Path | Must know |
 |-------|------|-----------|
 | `DatabaseManagerFactory` | `src/database/DatabaseManagerFactory.php` | `WebserverDetector` → `SwooleConnection` or `PdoConnection` |
-| `WebserverDetector` | `src/core/WebserverDetector.php` | `APP_ENV_SERVER` / extension / `SERVER_SOFTWARE` → swoole\|apache\|nginx |
+| `WebserverDetector` | `src/core/WebserverDetector.php` | `APP_ENV_SERVER` / extension / `SERVER_SOFTWARE` → swoole\|apache\|nginx\|frankenphp |
 | `PdoConnection` | `vendor/gemvc/connection-pdo/...` | Cached PDO (not a pool); `DB_PERSISTENT_CONNECTIONS` default **1** |
 | `SwooleConnection` | `vendor/gemvc/connection-openswoole/...` | Hyperf pool; `MIN/MAX_DB_CONNECTION_POOL`; always **release** |
 | Contracts | `vendor/gemvc/connection-contracts/...` | `ConnectionInterface` + `ConnectionManagerInterface` |

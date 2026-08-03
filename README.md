@@ -7,6 +7,7 @@
 [![Swoole](https://img.shields.io/badge/Swoole-Supported-green.svg?style=flat-square&logo=swoole&logoColor=white)](https://openswoole.com/)
 [![Apache](https://img.shields.io/badge/Apache-Supported-D22128.svg?style=flat-square&logo=apache&logoColor=white)](https://httpd.apache.org/)
 [![Nginx](https://img.shields.io/badge/Nginx-Supported-009639.svg?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
+[![FrankenPHP](https://img.shields.io/badge/FrankenPHP-Supported-000000.svg?style=flat-square)](https://frankenphp.dev/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen.svg?style=flat-square)](https://phpstan.org/)
 
 **Latest:** 5.13.0 — unified `ApiService` / `ProtectedApiService` for all servers (`validateOrFail`, `ApiServiceSharedTrait`, deprecated `Swoole*` aliases). Also **5.12** rate-limit drivers + `Protected*` + `forUpdate()`, **ViewTable**, multi-DB, `requireAuth()`, decimal types, modular CLI.
@@ -20,7 +21,7 @@ Before evaluating the framework or reading the API documentation, read:
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
 - [`docs/guides/architecture.md`](docs/guides/architecture.md) — *how* requests flow through the code
 
-Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md).
+Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md). For FrankenPHP (classic mode + Caddyfile security), read [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md).
 
 > **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 
@@ -35,7 +36,7 @@ php vendor/bin/gemvc init
 composer require --dev gemvc/cli-dev
 ```
 
-Same application code runs on **OpenSwoole**, **Apache**, and **Nginx**.
+Same application code runs on **OpenSwoole**, **Apache**, **Nginx**, and **FrankenPHP** (classic).
 
 ## What GEMVC is
 

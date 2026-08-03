@@ -1,0 +1,8 @@
+composer.phar
+/vendor/
+app/config.php
+docker-compose.yml
+LICENSE
+README.md
+.gitignore
+# Keep Caddyfile and composer.json in the build context (Dockerfile COPY)

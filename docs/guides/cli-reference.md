@@ -673,7 +673,7 @@ gemvc init
 ```
 
 **Interactive Mode**:
-- Prompts you to select webserver (OpenSwoole, Apache, Nginx)
+- Prompts you to select webserver (OpenSwoole, Apache, Nginx, FrankenPHP)
 - Prompts you to select a database (MySQL, PostgreSQL, SQLite)
 - Offers optional PHPStan installation
 - Offers optional testing framework (PHPUnit/Pest)
@@ -691,14 +691,19 @@ gemvc init --apache
 # Nginx
 gemvc init --nginx
 
+# FrankenPHP (classic; Caddyfile edge security — not .htaccess)
+gemvc init --frankenphp
+
 # Or use --server flag
 gemvc init --server=swoole
 gemvc init --server=apache
+gemvc init --server=frankenphp
 
 # Database driver (defaults to mysql if omitted)
 gemvc init --apache --db=postgres --non-interactive
 gemvc init --swoole --sqlite --non-interactive
 gemvc init --nginx --mysql --non-interactive
+gemvc init --frankenphp --sqlite --non-interactive
 ```
 
 **What It Does**:
@@ -719,6 +724,7 @@ gemvc init --nginx --mysql --non-interactive
 - `--swoole` - Initialize for OpenSwoole
 - `--apache` - Initialize for Apache
 - `--nginx` - Initialize for Nginx
+- `--frankenphp` - Initialize for FrankenPHP (classic; Caddyfile security)
 - `--server=<name>` - Specify webserver (`swoole`, `apache`, `nginx`)
 - `--db=<driver>` - Specify database (`mysql`, `postgres`, `sqlite`) - defaults to `mysql` if omitted
 - `--mysql` / `--postgres` / `--sqlite` - Shorthand equivalents of `--db=<driver>`
@@ -1160,6 +1166,7 @@ gemvc admin:setadmin
 | `--swoole` | Initialize for OpenSwoole | `init` |
 | `--apache` | Initialize for Apache | `init` |
 | `--nginx` | Initialize for Nginx | `init` |
+| `--frankenphp` | Initialize for FrankenPHP | `init` |
 | `--server=<name>` | Specify webserver | `init` |
 | `--db=<driver>` | Specify database (`mysql`\|`postgres`\|`sqlite`), defaults to `mysql` | `init` |
 | `--mysql` / `--postgres` / `--sqlite` | Shorthand for `--db=<driver>` | `init` |

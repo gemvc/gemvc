@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **FrankenPHP classic runtime** — `src/startup/frankenphp/` (`ApacheRequest` + `Bootstrap` + PDO), `Caddyfile` path denies (not `.htaccess`), `gemvc init --frankenphp` / menu option 4, `WebserverDetector` + Docker Compose support
+- Guide: [frankenphp.md](../guides/frankenphp.md)
+
 ### Documentation
 
 - Canonical OpenSwoole runtime guide: [openswoole.md](../guides/openswoole.md) (request isolation, pooling, no-`die()`, developer rules, production FAQ); linked from architecture, http-lifecycle, AI INDEX, ecosystem, database, APM
+- Four-server front doors (ARCHITECTURE, README, CANONICAL, security path matrix, CLI/install)
 
 ## [5.13.0] - 2026-08-03
 

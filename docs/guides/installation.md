@@ -78,6 +78,7 @@ Select server type:
 1) OpenSwoole (High-performance, async, WebSocket support)
 2) Apache (Traditional PHP-FPM)
 3) Nginx (High-performance, reverse proxy)
+4) FrankenPHP (Caddy + classic PHP; Caddyfile path security)
 
 Your choice: 
 ```
@@ -86,6 +87,7 @@ Your choice:
 - `1` for OpenSwoole (recommended for high-performance APIs)
 - `2` for Apache (traditional hosting, shared hosting compatible)
 - `3` for Nginx (high-performance, production-ready)
+- `4` for FrankenPHP (`gemvc init --frankenphp` — see [frankenphp.md](frankenphp.md))
 
 #### 3.1b: Select Database
 

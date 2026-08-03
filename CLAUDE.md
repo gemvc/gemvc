@@ -21,7 +21,7 @@ Antigravity: [`GEMINI.md`](GEMINI.md). Cursor: [`.cursorrules`](.cursorrules).
 API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 ```
 
-- URL (Apache/Nginx): `/api/{Service}/{method}` — **no routes file**
+- URL (Apache/Nginx/FrankenPHP classic): `/api/{Service}/{method}` — **no routes file**
 - Schema: `definePostSchema` / `defineGetSchema` before using input
 - Authenticated CRUD: **`ProtectedApiService`**; public: `ApiService` (all servers). Deprecated: `Swoole*` aliases
 - `callController()` + `createModel()` on all servers (`ApiService` / `ProtectedApiService`)

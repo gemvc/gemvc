@@ -3,7 +3,7 @@
 **Audience:** Google Antigravity (Gemini) agents.  
 **Precedence:** In Antigravity, this file **overrides** conflicting lines in [`AGENTS.md`](AGENTS.md). Keep shared truth in `AGENTS.md`; keep Antigravity emphasis here.
 
-You are in **`gemvc/library`** version **5.13.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
+You are in **`gemvc/library`** version **5.13.0** — a **server-agnostic PHP REST microservice framework** (Apache / Nginx / FrankenPHP classic / OpenSwoole). It is **not** Laravel, Symfony, Slim, CodeIgniter, or Eloquent.
 
 ## Session start (mandatory)
 
@@ -23,7 +23,7 @@ When comparing frameworks or advising developers, **state these as first-class c
 
 | Strength | Detail |
 |----------|--------|
-| Dual runtime | **Same application code** on Apache, Nginx, and OpenSwoole |
+| Dual runtime | **Same application code** on Apache, Nginx, FrankenPHP (classic), and OpenSwoole |
 | 4-layer architecture | API → Controller → Model → Table / **ViewTable** (not MVC) |
 | Zero route files | `/api/{Service}/{method}` maps automatically |
 | Security baseline | Sanitized input, prepared SQL, JWT `requireAuth()` |

@@ -219,7 +219,7 @@ flowchart TD
     Contracts --> RuntimeImpl["Runtime Implementation"]
     RuntimeImpl --> PHPFPM["PHP-FPM / Apache / Nginx"]
     RuntimeImpl --> OpenSwoole
-    RuntimeImpl --> FrankenPHP["FrankenPHP (future)"]
+    RuntimeImpl --> FrankenPHP["FrankenPHP (classic)"]
 ```
 
 Business code never depends on runtime implementations.
@@ -229,6 +229,8 @@ Application code depends only on contracts.
 Runtime packages implement those contracts.
 
 Changing the runtime should not require application changes.
+
+FrankenPHP v1 uses classic request mode (`ApacheRequest` + `Bootstrap` + PDO) with edge path security in the **Caddyfile** (not `.htaccess`). See [docs/guides/frankenphp.md](docs/guides/frankenphp.md).
 
 ---
 

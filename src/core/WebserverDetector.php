@@ -5,7 +5,7 @@ namespace Gemvc\Core;
 /**
  * EnvironmentDetector: performant, cached webserver environment detection
  *
- * Detects whether runtime is 'swoole', 'apache', or 'nginx' using a layered
+ * Detects whether runtime is 'swoole', 'apache', 'nginx', or 'frankenphp' using a layered
  * strategy optimized for fast-path checks and with simple static caching.
  */
 class WebserverDetector
@@ -19,7 +19,7 @@ class WebserverDetector
     /**
      * Get cached environment, performing detection on first call.
      *
-     * @return string 'swoole' | 'apache' | 'nginx'
+     * @return string 'swoole' | 'apache' | 'nginx' | 'frankenphp'
      */
     public static function get(): string
     {
@@ -53,6 +53,7 @@ class WebserverDetector
         if ($envServer === 'swoole') { return 'swoole'; }
         if ($envServer === 'apache') { return 'apache'; }
         if ($envServer === 'nginx') { return 'nginx'; }
+        if ($envServer === 'frankenphp') { return 'frankenphp'; }
 
         // Fast-path: Swoole/OpenSwoole constants/extensions
         if (defined('SWOOLE_BASE') || defined('SWOOLE_PROCESS')) { return 'swoole'; }
@@ -61,6 +62,8 @@ class WebserverDetector
         // Medium-path: SERVER_SOFTWARE header
         if (isset($_SERVER['SERVER_SOFTWARE']) && is_string($_SERVER['SERVER_SOFTWARE'])) {
             $serverSoftware = strtolower($_SERVER['SERVER_SOFTWARE']);
+            // Prefer frankenphp over bare "caddy" to avoid false positives
+            if (strpos($serverSoftware, 'frankenphp') !== false) { return 'frankenphp'; }
             if (strpos($serverSoftware, 'nginx') !== false) { return 'nginx'; }
             if (strpos($serverSoftware, 'apache') !== false) { return 'apache'; }
         }
@@ -91,6 +94,10 @@ class WebserverDetector
     {
         return self::get() === 'apache';
     }
+    public static function isFrankenPhp(): bool
+    {
+        return self::get() === 'frankenphp';
+    }
 
     /**
      * Get simple performance metrics for detection.
@@ -111,5 +118,3 @@ class WebserverDetector
         ];
     }
 }
-
-

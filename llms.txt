@@ -1,6 +1,6 @@
 # GEMVC
 
-> Server-agnostic PHP REST API framework (Apache / Nginx / OpenSwoole). Four layers: API → Controller → Model → Table/ViewTable. Not Laravel or Symfony.
+> Server-agnostic PHP REST API framework (Apache / Nginx / FrankenPHP / OpenSwoole). Four layers: API → Controller → Model → Table/ViewTable. Not Laravel or Symfony.
 
 Version: 5.13.0 (gemvc/library)
 
@@ -28,6 +28,7 @@ Version: 5.13.0 (gemvc/library)
 - docs/guides/security.md: JWT, schema, rate-limit drivers + FAIL_MODE, hardening
 - docs/guides/http-lifecycle.md: Adapters, unified Request, Apache vs Swoole delivery
 - docs/guides/openswoole.md: OpenSwoole isolation, pooling, no-die, production FAQ (canonical)
+- docs/guides/frankenphp.md: FrankenPHP classic mode, Caddyfile path security (not .htaccess)
 - docs/guides/apm.md: APM tracing
 - docs/guides/api-documentation.md: Auto @http docs
 

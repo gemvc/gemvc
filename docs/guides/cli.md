@@ -52,11 +52,14 @@ composer require --dev gemvc/cli-dev   # needed for create:crud and most db:*
 ```bash
 composer require gemvc/library
 php vendor/bin/gemvc init
+# non-interactive: --swoole | --apache | --nginx | --frankenphp
 composer require --dev gemvc/cli-dev
 php vendor/bin/gemvc db:migrate UserTable   # if sample present
 # php vendor/bin/gemvc db:migrate --all     # all Table + ViewTable classes
 # Views: class extends ViewTable — see database.md
 ```
+
+FrankenPHP classic uses a **Caddyfile** for path denies (not `.htaccess`) — [frankenphp.md](frankenphp.md).
 
 ### New CRUD resource
 

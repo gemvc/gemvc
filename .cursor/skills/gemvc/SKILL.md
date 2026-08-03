@@ -4,7 +4,7 @@ description: >-
   Orients agents on GEMVC under a mandatory source-ingestion protocol: examine
   vendor/gemvc and src/ before any architecture advice or code; no Laravel/
   Symfony assumptions; PHPStan level 9. Covers server-agnostic PHP microservices
-  (Apache/Nginx/OpenSwoole), 4 layers, automatic routing, JWT, Table/ViewTable ORM, CLI,
+  (Apache/Nginx/FrankenPHP/OpenSwoole), 4 layers, automatic routing, JWT, Table/ViewTable ORM, CLI,
   @http API docs, Bootstrap/SwooleBootstrap, apm-contracts, apm-tracekit,
   http-client. Use when working in the gemvc repo, improving gemvc/library or
   vendor/gemvc packages, or when the user asks about GEMVC architecture or
@@ -13,14 +13,14 @@ description: >-
 
 # GEMVC
 
-GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Apache / Nginx / OpenSwoole):
+GEMVC is a **server-agnostic** PHP framework and ecosystem for microservices (Apache / Nginx / FrankenPHP classic / OpenSwoole):
 
 - **4 layers** — API → Controller → Model → Table / **ViewTable** (not Laravel/Symfony MVC)
 - **Automatic routing** — no route file; URL → `app/api/{Service}.php`::{method}
 - **Integrated JWT**, in-house ORM (`Table` + **`ViewTable`**), CLI (`bin/gemvc`)
 - **Automatic API docs** via `@http` PHPDoc → `/api/index/document` (no Swagger)
-- **Bootstrap** (Apache/Nginx, may `die`) and **SwooleBootstrap** (return responses; never kill worker)
-- **Early security** — Apache `.htaccess`; Swoole `SecurityManager` before bootstrap
+- **Bootstrap** (Apache/Nginx/FrankenPHP classic, may `die`) and **SwooleBootstrap** (return responses; never kill worker)
+- **Early security** — Apache `.htaccess`; Nginx `nginx.conf`; FrankenPHP **`Caddyfile`** (never `.htaccess`); Swoole `SecurityManager` before bootstrap
 - **apm-contracts** + **apm-tracekit**; **http-client** (sync + `fireAndForget`)
 - More packages under github.com/gemvc; internal docs; **PHPStan level 9**
 
@@ -45,7 +45,7 @@ Before answering architecture questions, writing code, or suggesting refactors:
 
 Canonical deep guide: [docs/guides/openswoole.md](../../../docs/guides/openswoole.md) (isolation, pool, no-die, FAQ).
 
-| | Apache/Nginx (`Bootstrap`) | OpenSwoole (`SwooleBootstrap`) |
+| | Apache/Nginx/FrankenPHP (`Bootstrap`) | OpenSwoole (`SwooleBootstrap`) |
 |--|--|--|
 | URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
 | API base | Prefer `ApiService` / `ProtectedApiService` | **same** (deprecated: `SwooleApiService` extends `ApiService`) |

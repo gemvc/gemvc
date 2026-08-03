@@ -110,8 +110,8 @@ Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
 ### [apm.md](guides/apm.md)
 **`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) + providers (e.g. TraceKit): root span, unified `APM_*` flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`.
 
-### [http-lifecycle.md](guides/http-lifecycle.md) · [openswoole.md](guides/openswoole.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
-Adapters and hardening; **[openswoole.md](guides/openswoole.md)** is the canonical answer for OpenSwoole isolation, pooling, no-`die()`, and production FAQ. Prefer [api.md](guides/api.md) first for writing `app/api`.
+### [http-lifecycle.md](guides/http-lifecycle.md) · [openswoole.md](guides/openswoole.md) · [frankenphp.md](guides/frankenphp.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
+Adapters and hardening; **[openswoole.md](guides/openswoole.md)** for OpenSwoole isolation/pooling; **[frankenphp.md](guides/frankenphp.md)** for FrankenPHP classic + Caddyfile. Prefer [api.md](guides/api.md) first for writing `app/api`.
 
 ---
 

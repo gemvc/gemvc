@@ -2,17 +2,18 @@
 
 **Audience:** auth, schema hardening, uploads, production checklist.
 
-**Related:** [api.md](api.md) · [helper.md](helper.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [helper.md](helper.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [frankenphp.md](frankenphp.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 GEMVC is architected with **security-by-design**: multi-layered defense from request arrival to database operations.
 
-> **Key point:** Much security is automatic on inbound requests (header/input sanitization; SQL via prepared statements in the Table path). **You must still call** `define*Schema()` and `auth()` / `requireAuth()`. Path blocking via `SecurityManager` runs on **OpenSwoole** (`OpenSwooleServer`) — not on Apache/Nginx Bootstrap. File signature checks and encryption are **developer calls** (`ImageHelper` / `FileHelper`).
+> **Key point:** Much security is automatic on inbound requests (header/input sanitization; SQL via prepared statements in the Table path). **You must still call** `define*Schema()` and `auth()` / `requireAuth()`. Path blocking via `SecurityManager` runs on **OpenSwoole** (`OpenSwooleServer`) — not on Apache/Nginx/FrankenPHP Bootstrap. Apache uses `.htaccess`; Nginx uses `nginx.conf`; FrankenPHP uses the **`Caddyfile`** (never `.htaccess`). File signature checks and encryption are **developer calls** (`ImageHelper` / `FileHelper`).
 
 ## Reading map (AI)
 
 | Need | Jump to |
 |------|---------|
 | What is automatic vs you call | [Multi-Layer Security Architecture](#multi-layer-security-architecture) |
+| Edge path deny matrix | [Path protection by runtime](#path-protection-by-runtime) |
 | Schema / `define*Schema` | [Layer 4: Schema Validation](#layer-4-schema-validation-request-filtering) |
 | JWT / `requireAuth` / 401 vs 403 | [Layer 5: Authentication](#layer-5-authentication-authorization) |
 | **Global / service rate limit** | [Rate limiting](#rate-limiting-optional) — drivers `apcu`/`redis`/`both`/`none`; global = `.env`; overrides in API |
@@ -26,7 +27,7 @@ GEMVC is architected with **security-by-design**: multi-layered defense from req
 ```
 Request Arrives
     ↓
-1. Path Access Security (SecurityManager) — OpenSwoole only (OpenSwooleServer)
+1. Path Access Security — OpenSwoole: SecurityManager; Apache: .htaccess; Nginx: nginx.conf; FrankenPHP: Caddyfile
     ↓
 2. Header Sanitization (ApacheRequest / SwooleRequest) AUTOMATIC
     ↓
@@ -47,11 +48,23 @@ Request Arrives
 - **AUTOMATIC**: Enabled by default, no developer action needed
 - **Developer Calls**: Available methods developers use in their code
 
+### Path protection by runtime
+
+| Runtime | Mechanism | Notes |
+|---------|-----------|--------|
+| Apache | `.htaccess` | Startup template denies `app/`, `vendor/`, secrets |
+| Nginx | `nginx.conf` | Same denies at the reverse-proxy/FPM edge |
+| FrankenPHP | **`Caddyfile`** | Same denies; **`.htaccess` is ignored** — see [frankenphp.md](frankenphp.md) |
+| OpenSwoole | `SecurityManager` | PHP-level early deny in `OpenSwooleServer` |
+
+Do not copy Apache `.htaccess` into a FrankenPHP project expecting path protection.
+
 ### How It Works
 
-**Apache Environment** (`Bootstrap.php`):
+**Apache / Nginx / FrankenPHP classic** (`Bootstrap.php`):
 ```php
-// Security happens BEFORE any API code runs
+// Edge path deny: .htaccess / nginx.conf / Caddyfile (not SecurityManager)
+// Security sanitization happens BEFORE any API code runs
 new Bootstrap($request); // All sanitization happens in Request constructor
 ```
 
@@ -993,7 +1006,7 @@ GEMVC provides **automatic protection** against:
 
 - **XSS (Cross-Site Scripting)** - Input sanitization on request constructors (HTML special chars). Not automatic HTML encoding of JSON API payloads.
 - **SQL Injection** - Table / UniversalQueryExecuter path uses prepared statements. Still do not concatenate untrusted input into SQL strings.
-- **Path Traversal (URL)** - OpenSwoole: `SecurityManager` blocks sensitive paths. Apache/Nginx: rely on webserver + not serving `app/`/`vendor`/`.env`.
+- **Path Traversal (URL)** - OpenSwoole: `SecurityManager` blocks sensitive paths. Apache: `.htaccess`. Nginx: `nginx.conf`. FrankenPHP: **`Caddyfile`** (never rely on `.htaccess`).
 - **Header Injection** - Header sanitization in ApacheRequest / SwooleRequest
 - **File Upload (name/MIME)** - Swoole sanitizes upload name/type; Apache leaves `$_FILES` raw — call `ImageHelper` / validate yourself for signatures
 - **JWT Forgery** - Signature + expiration when you call `auth()` / `requireAuth()` — **not** automatic on every request

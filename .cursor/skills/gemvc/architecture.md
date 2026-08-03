@@ -123,8 +123,9 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 
 - `DatabaseManagerFactory::getManager()` picks PDO vs OpenSwoole pool via `WebserverDetector`
 - Table → `UniversalQueryExecuter` → getConnection(`default`) → always release
-- Apache/Nginx: `PdoConnection` (cached; persistent default on)
+- Apache/Nginx/FrankenPHP classic: `PdoConnection` (cached; persistent default on)
 - OpenSwoole: Hyperf pool (`MIN_DB_CONNECTION_POOL` / `MAX_DB_CONNECTION_POOL`); per-worker; must release
+- FrankenPHP edge security: **Caddyfile** only — never ship `.htaccess` for path denies
 
 ## Helper / outbound HTTP
 

@@ -13,7 +13,7 @@ Framework hub: **gemvc/library 5.13.0**.
 | **`gemvc/helper`** | **Core:** TypeChecker, CryptHelper, ProjectHelper, File/Image — [guides/helper.md](../guides/helper.md) |
 | **`gemvc/http-client`** | **Core:** outbound sync/async HTTP — [guides/http-client.md](../guides/http-client.md) |
 | `gemvc/connection-contracts` | DB interfaces |
-| `gemvc/connection-pdo` | PDO connections (Apache/Nginx/CLI); MySQL/Postgres/SQLite |
+| `gemvc/connection-pdo` | PDO connections (Apache/Nginx/FrankenPHP classic/CLI); MySQL/Postgres/SQLite |
 | `gemvc/connection-openswoole` | OpenSwoole **pooled** connections |
 | `gemvc/apm-contracts` | ApmInterface / ApmFactory |
 | `gemvc/apm-tracekit` | TraceKit provider (default APM) |
@@ -47,7 +47,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 | Table | `UserTable.php` | `UserTable extends Table` |
 | View | `UserAccessTable.php` | `UserAccessTable extends ViewTable` |
 
-**URL (Apache/Nginx):** `/api/{Service}/{method}` → `App\Api\User::create()`  
+**URL (Apache/Nginx/FrankenPHP classic):** `/api/{Service}/{method}` → `App\Api\User::create()`  
 **OpenSwoole:** path segments come from `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults `1` / `2`) — there is no automatic `api` hop; configure sections so `{Service}` / `{method}` land correctly (see [architecture.md](../guides/architecture.md)).
 
 **Properties**
@@ -58,13 +58,16 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 ---
 
-## Apache/Nginx vs OpenSwoole
+## Runtimes (Apache / Nginx / FrankenPHP / OpenSwoole)
 
-| | Apache / Nginx | OpenSwoole |
-|--|----------------|------------|
+| | Apache / Nginx / FrankenPHP (classic) | OpenSwoole |
+|--|---------------------------------------|------------|
 | Recommended API base | `ApiService` / `ProtectedApiService` | **same** |
 | Deprecated aliases | — | `SwooleApiService` → `ApiService`; `ProtectedSwooleApiService` → `ProtectedApiService` |
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
+| Request adapter | `ApacheRequest` | `SwooleRequest` |
+| Edge path deny | Apache: `.htaccess` · Nginx: `nginx.conf` · FrankenPHP: **`Caddyfile`** | `SecurityManager` |
+| DB | `connection-pdo` | `connection-openswoole` |
 | Shared helpers | `ApiServiceSharedTrait`: `requireAuth`, `requireRateLimit*`, `callController()`, magic `$this->UserController` | inherited |
 | `validatePosts` | throws `ValidationException` | same (inherited); legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
 
@@ -72,7 +75,8 @@ Usual schema API: `definePostSchema()` / `defineGetSchema()` → `bool` + `retur
 
 Prefer **`ApiService` / `ProtectedApiService`** on every server.
 
-**OpenSwoole isolation, pooling, no-`die()`, production FAQ:** [openswoole.md](../guides/openswoole.md).
+**OpenSwoole isolation, pooling, no-`die()`, production FAQ:** [openswoole.md](../guides/openswoole.md).  
+**FrankenPHP classic + Caddyfile security:** [frankenphp.md](../guides/frankenphp.md).
 
 ---
 
