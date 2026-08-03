@@ -80,6 +80,7 @@ interface ResponseFactory
     public static function unprocessableEntity(?string $service_message = null): \Gemvc\Http\JsonResponse;
     public static function internalError(?string $service_message = null): \Gemvc\Http\JsonResponse;
     public static function conflict(?string $service_message = null): \Gemvc\Http\JsonResponse;
+    public static function tooManyRequests(?string $service_message = null): \Gemvc\Http\JsonResponse; // 429
     public static function notAcceptable(?string $service_message = null): \Gemvc\Http\JsonResponse;
     public static function unsupportedMediaType(?string $service_message = null): \Gemvc\Http\JsonResponse;
     public static function unknownError(mixed $data, ?string $service_message = null): \Gemvc\Http\JsonResponse;
@@ -149,6 +150,10 @@ interface TableReference
     /** true = ASC; false or null = DESC; null column = primary key */
     public function orderBy(?string $columnName = null, ?bool $ascending = null): self;
     public function limit(int $limit): self;
+    /** Disable pagination LIMIT/OFFSET */
+    public function noLimit(): self;
+    /** Alias of noLimit() */
+    public function all(): self;
     /** SELECT … FOR UPDATE — use inside beginTransaction() (MySQL InnoDB / PostgreSQL) */
     public function forUpdate(bool $enable = true): self;
     public function beginTransaction(): bool;

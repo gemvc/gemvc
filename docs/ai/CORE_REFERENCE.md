@@ -186,7 +186,8 @@ whereIn(string $col, array $vals): self
 whereNotIn(string $col, array $vals): self
 orderBy(?string $col = null, ?bool $ascending = null): self  // true = ASC; false/null = DESC; null col = PK
 limit(int $n): self
-noLimit(): self
+noLimit(): self                 // disable pagination LIMIT/OFFSET
+all(): self                     // alias of noLimit()
 forUpdate(bool $enable = true): self  // SELECT … FOR UPDATE (use inside beginTransaction)
 run(): ?array
 

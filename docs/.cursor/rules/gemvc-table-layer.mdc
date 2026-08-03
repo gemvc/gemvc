@@ -86,6 +86,7 @@ For views / non-`id` keys (e.g. `user_id`), call `setPrimaryKey` in the construc
 
 ```php
 $this->select()->whereEqual('email', $email)->limit(1)->run();
+$this->select()->noLimit()->run(); // or ->all() — disable default pagination
 $this->insertSingleQuery();   // Table only — fails on ViewTable
 $this->updateSingleQuery();
 $this->deleteByIdQuery($id);

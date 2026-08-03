@@ -277,6 +277,10 @@ $rows = $this->select('id,name')
     ->orderBy('name', true)   // true = ASC; false|null = DESC
     ->limit(10)
     ->run();                  // ?array of static
+
+// Disable default pagination LIMIT/OFFSET:
+$this->select()->whereEqual('active', true)->noLimit()->run();
+$this->select()->all()->run(); // all() === noLimit()
 ```
 
 ### Transactions & FOR UPDATE

@@ -10,11 +10,12 @@
 | Rate-limit drivers / Protected API / `forUpdate` | **Shipped (5.12.0)** | [RELEASE_NOTES](../releases/RELEASE_NOTES.md); [model.md — transfers](../guides/model.md#atomic-money-transfers-pessimistic-lock) |
 | **ViewTable** + `db:migrate` / `--all` | **Shipped (5.11.0)** | [guides/database.md](../guides/database.md#sql-views-via-viewtable-recommended) |
 | cli-dev `db:list` / describe / drop views | **Shipped (cli-dev 1.3.0)** | [cli-reference.md — db:list](../guides/cli-reference.md#db-list) |
+| **Unified `ApiService` (runtime)** | Planned | Keep both bases until `validateOrFail()` + SwooleBootstrap catches `ValidationException`; then deprecate `SwooleApiService`. Canonical cross-runtime today: `definePostSchema` → `returnResponse()`. See [api-runtime-unification.md](api-runtime-unification.md) |
 | **Phase 2** — Trust + mesh | Planned | [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md) |
 | Schema `primary` → runtime/DDL | Stretch (not done) | [database.md — Primary keys](../guides/database.md#primary-keys-ddl-runtime) |
 | Developer UI table list views | Future (library) | Still **BASE TABLE** only in `DeveloperTable::getAllTables` |
 
-Do **Phase 2a (trust)** before **Phase 2b (mesh DX)**.
+Do **Phase 2a (trust)** before **Phase 2b (mesh DX)**. For API base unification, standardize validation **before** inheritance merge.
 
 ## Related
 

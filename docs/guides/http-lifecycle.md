@@ -49,7 +49,7 @@ GEMVC's HTTP layer is designed to be **completely server-agnostic**. The same ap
 ```
 Webserver-Specific Request
     ↓
-Server Adapter (ApacheRequest | SwooleRequest)
+Server Adapter (ApacheRequest for Apache/Nginx PHP-FPM | SwooleRequest for OpenSwoole)
     ↓
 Unified Request Object
     ↓
@@ -63,17 +63,16 @@ Webserver-Specific Output
 ### Components
 
 1. **Server Adapters** - Convert webserver requests to unified format
-   - `ApacheRequest` - Apache/PHP-FPM adapter
-   - `SwooleRequest` - OpenSwoole adapter
-   - `NginxRequest` - Nginx adapter (coming soon)
+   - `ApacheRequest` — **Apache and Nginx** (shared PHP-FPM adapter; Nginx startup uses the same class)
+   - `SwooleRequest` — OpenSwoole adapter
+   - There is **no** separate `NginxRequest` — it is unnecessary
 
 2. **Unified Request** - Single interface for all requests
    - `Request` - Core request object with sanitization
 
 3. **Response Abstraction** - Consistent responses
    - `JsonResponse` - JSON responses with `show()` and `showSwoole()`
-   - `Response` - Response factory
-
+   - `Response` - Response factory (includes `Response::tooManyRequests()` → HTTP **429**)
 ---
 
 ## Request Life Cycle

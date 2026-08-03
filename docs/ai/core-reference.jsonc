@@ -106,6 +106,7 @@
       "conflict": { "code": 409, "signature": "conflict(?string $service_message = null): JsonResponse" },
       "unsupportedMediaType": { "code": 415, "signature": "unsupportedMediaType(?string $service_message = null): JsonResponse" },
       "unprocessableEntity": { "code": 422, "signature": "unprocessableEntity(?string $service_message = null): JsonResponse" },
+      "tooManyRequests": { "code": 429, "signature": "tooManyRequests(?string $service_message = null): JsonResponse" },
       "internalError": { "code": 500, "signature": "internalError(?string $service_message = null): JsonResponse" },
       "unknownError": { "signature": "unknownError(mixed $data, ?string $service_message = null): JsonResponse" }
     },
@@ -156,6 +157,8 @@
       "join": { "signature": "join(string $table, string $condition, string $type = 'INNER'): self" },
       "orderBy": { "signature": "orderBy(?string $columnName = null, ?bool $ascending = null): self", "note": "true=ASC; false/null=DESC; null column=PK" },
       "limit": { "signature": "limit(int $limit): self" },
+      "noLimit": { "signature": "noLimit(): self", "note": "Disable pagination LIMIT/OFFSET" },
+      "all": { "signature": "all(): self", "note": "Alias of noLimit()" },
       "forUpdate": { "signature": "forUpdate(bool $enable = true): self", "note": "SELECT … FOR UPDATE; use inside beginTransaction (MySQL InnoDB / PostgreSQL)" },
       "run": { "signature": "run(): ?array" }
     },
