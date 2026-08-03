@@ -11,18 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `ApiServiceSharedTrait` — shared `requireAuth`, `requireRateLimit*`, `callController`, magic `$this->XController` on `ApiService` **and** `SwooleApiService`
+- `ApiServiceSharedTrait` — shared `requireAuth`, `requireRateLimit*`, `callController`, magic `$this->XController`
 - `ApiService` / `SwooleApiService`: `validateOrFail()` / `validateStringOrFail()` — throw `ValidationException` on both runtimes
 - `SwooleBootstrap` catches `ValidationException` → `Response::badRequest()` (constructor + method)
 - Unit tests: `ValidateOrFailTest.php`, `SwooleApiServiceSharedTraitTest.php`
 
 ### Changed
 
-- OpenSwoole apps can use `callController()` / `$this->UserController` the same way as Apache/Nginx (Phase 2 of runtime unification)
+- **Phase 3 runtime unification:** prefer `ApiService` / `ProtectedApiService` on **all** servers (including OpenSwoole)
+- `SwooleApiService` is now a **deprecated** thin subclass of `ApiService` (keeps `safeValidatePosts` / `safeValidateStringPosts` for legacy return style)
+- `ProtectedSwooleApiService` is now a **deprecated** thin subclass of `ProtectedApiService`
+- On the Swoole subclass path, `validatePosts()` / `validateStringPosts()` now **throw** `ValidationException` (same as `ApiService`); migrate `if ($err = $this->validatePosts(...)) return $err` → `safeValidatePosts()` or `validateOrFail()` / `definePostSchema()`
 
 ### Documentation
 
-- Phase 1–2 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / api.md / apm.md updated for shared trait
+- Phases 0–3 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / guides recommend unified bases
 
 ## [5.12.0] - 2026-08-01
 

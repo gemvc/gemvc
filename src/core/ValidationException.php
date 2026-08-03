@@ -3,8 +3,8 @@
 namespace Gemvc\Core;
 
 /**
- * Exception thrown when validation fails in ApiService / SwooleApiService
- * (validateOrFail, validatePosts on Apache path, etc.).
+ * Exception thrown when validation fails in ApiService
+ * (validateOrFail, validatePosts, etc.).
  * Caught by Bootstrap and SwooleBootstrap and converted to HTTP 400 JSON.
  */
 class ValidationException extends \Exception

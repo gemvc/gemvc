@@ -14,7 +14,7 @@ API is the **thin HTTP boundary**:
 HTTP → API (schema + auth) → Controller → Model → Table → DB
 ```
 
-You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiService` (OpenSwoole). URL mapping: Apache `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop — see [architecture.md](architecture.md)).
+You extend `Gemvc\Core\ApiService` (or `ProtectedApiService` for auth) on **all** servers. Deprecated aliases: `SwooleApiService` / `ProtectedSwooleApiService`. URL mapping: Apache `/api/{Service}/{method}` → `App\Api\{Service}::{method}()`; OpenSwoole uses `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no automatic `api` hop — see [architecture.md](architecture.md)).
 
 | Belongs in API | Belongs elsewhere |
 |----------------|-------------------|
@@ -47,32 +47,30 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 ## Hard rules (AI)
 
 1. API classes live in `app/api/` as `User.php` → `App\Api\User`.
-2. Extend **`ProtectedApiService`** / **`ProtectedSwooleApiService`** for authenticated CRUD; **`ApiService`** / **`SwooleApiService`** for public endpoints (login, register, health). Match Apache vs OpenSwoole.
+2. Extend **`ProtectedApiService`** for authenticated CRUD; **`ApiService`** for public endpoints (login, register, health). Use these on **all** servers (Apache, Nginx, OpenSwoole). `SwooleApiService` / `ProtectedSwooleApiService` are **deprecated** thin subclasses.
 3. Always **`definePostSchema` / `defineGetSchema` / …** before using body/query data.
 4. If using a public base, prefer **`requireAuth([...])`** in the constructor to guard the whole service.
-5. Prefer **`callController(new XController($this->request))->method()`** on Apache/Nginx **and** OpenSwoole (shared via `ApiServiceSharedTrait`).
+5. Prefer **`callController(new XController($this->request))->method()`** (works on all servers).
 6. Bare `(new XController($this->request))->method()` still works (no APM controller span).
 7. For lists: call `findable` / `filterable` / `sortable` **in API before** Controller `createList`.
 8. Never invent a routes file. Never put Model/Table SQL in API.
 
 ---
 
-## ApiService vs SwooleApiService
+## One public base (`ApiService`)
 
-| | `ApiService` / `ProtectedApiService` | `SwooleApiService` / `ProtectedSwooleApiService` |
-|--|--------------|-------------------|
-| Server | Apache / Nginx | OpenSwoole |
-| Auth by default | `Protected*` yes; plain `Api*` no | `Protected*` yes; plain `Swoole*` no |
-| `callController()` | yes (APM proxy) — shared trait | yes (same) |
-| Magic `$this->UserController` | yes — shared trait | yes (same) |
-| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` (legacy) |
-| Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` | same (SwooleBootstrap → 400) |
-| `requireAuth()` | yes — shared trait | yes (same) |
-| `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | yes — shared trait | yes (same) |
+Prefer `ApiService` / `ProtectedApiService` everywhere. Bootstrap still differs (`Bootstrap` may `die`; `SwooleBootstrap` returns) — that is outside the API class.
 
-Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw). Prefer that, or `validateOrFail()` for throw-style on **both** servers. Do not rely on Swoole’s legacy `validatePosts()` return style for new code.
+| | Recommended | Deprecated aliases |
+|--|-------------|-------------------|
+| Public | `ApiService` | `SwooleApiService` extends `ApiService` |
+| Auth CRUD | `ProtectedApiService` | `ProtectedSwooleApiService` extends `ProtectedApiService` |
+| `callController()` / magic controllers | yes | inherited |
+| `requireAuth` / `requireRateLimit*` | yes | inherited |
+| `validatePosts` / `validateStringPosts` | throws `ValidationException` | same (inherited throws) |
+| Legacy return-style validation | — | `safeValidatePosts()` / `safeValidateStringPosts()` on `SwooleApiService` only |
 
-Same `app/` layering either way; pick the matching API base for the server. Auth / rate-limit / `callController` are shared (`ApiServiceSharedTrait`). Details: [http-lifecycle.md](http-lifecycle.md).
+Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw). Prefer that, or `validateOrFail()` for throw-style. Details: [http-lifecycle.md](http-lifecycle.md).
 
 ---
 
@@ -81,7 +79,7 @@ Same `app/` layering either way; pick the matching API base for the server. Auth
 ### Protected base (preferred for authenticated CRUD)
 
 ```php
-use Gemvc\Core\ProtectedApiService; // OpenSwoole: ProtectedSwooleApiService
+use Gemvc\Core\ProtectedApiService; // all servers including OpenSwoole
 
 class User extends ProtectedApiService
 {
@@ -94,8 +92,8 @@ class User extends ProtectedApiService
 
 - `parent::__construct($request, null)` or `[]` → any authenticated user  
 - `parent::__construct($request, ['admin','editor'])` → one of these roles  
-- Public endpoints: keep `extends ApiService` / `SwooleApiService`
-
+- Public endpoints: `extends ApiService`  
+- Deprecated: `SwooleApiService` / `ProtectedSwooleApiService` (thin subclasses; still work)
 ### Or `requireAuth()` on a public base
 
 ```php
@@ -290,7 +288,7 @@ class User extends ApiService
 }
 ```
 
-OpenSwoole: extend `SwooleApiService` (or `ProtectedSwooleApiService`); prefer the same `callController(...)` as Apache.
+OpenSwoole: extend the same `ApiService` / `ProtectedApiService` (deprecated `Swoole*` aliases still work).
 
 ---
 
@@ -305,7 +303,7 @@ gemvc create:service User -cmt
 gemvc create:crud User
 ```
 
-Hand-add: `requireAuth`, schemas, `@http` / `mockResponse`, Apache vs Swoole invoke style.
+Hand-add: `requireAuth`, schemas, `@http` / `mockResponse`.
 
 Templates: [templates.md](templates.md).
 
@@ -316,17 +314,18 @@ Templates: [templates.md](templates.md).
 **Do**
 
 - Keep API thin: schema + auth + call Controller  
-- Match base class to server (`ApiService` vs `SwooleApiService`)  
-- Prefer `callController` / `$this->XController` on **both** bases (shared trait)  
+- Prefer `ApiService` / `ProtectedApiService` on **all** servers  
+- Prefer `callController` / `$this->XController`  
 - Add `@http` + mocks for auto docs  
 
 **Don’t**
 
 - Put business rules or SQL in API  
 - Invent routes files  
-- Skip `callController` on OpenSwoole when you want controller APM spans  
+- Use deprecated `SwooleApiService` for new code (alias only)  
 - Skip `define*Schema`  
 - Re-sanitize inputs  
+- Call legacy return-style `validatePosts` expecting `?JsonResponse` on Swoole — use `safeValidatePosts` or throw helpers  
 
 ---
 

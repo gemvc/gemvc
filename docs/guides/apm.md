@@ -16,7 +16,7 @@
 | New provider | [Custom APM Provider](#custom-apm-provider) |
 | Missing traces | [Troubleshooting](#troubleshooting) |
 
-**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Framework talks to **`ApmFactory` / `ApmInterface`** (`gemvc/apm-contracts`) — never hardcode TraceKit in app code. Root tracing needs no app code. Controller spans need `callController` on **`ApiService` and `SwooleApiService`** (shared trait). Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
+**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Framework talks to **`ApmFactory` / `ApmInterface`** (`gemvc/apm-contracts`) — never hardcode TraceKit in app code. Root tracing needs no app code. Controller spans need `callController` on **`ApiService`** (all servers; deprecated `SwooleApiService` inherits it). Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
 
 ## Table of Contents
 
@@ -200,7 +200,7 @@ The root trace is automatically created in `Bootstrap` or `SwooleBootstrap` and 
 
 **Optional** - Enable via `APM_TRACE_CONTROLLER=1`.
 
-When enabled, automatic spans are created for controller method calls **when you use `callController()`** on `ApiService` or `SwooleApiService` (shared `ApiServiceSharedTrait`).
+When enabled, automatic spans are created for controller method calls **when you use `callController()`** on `ApiService` (all servers; deprecated `SwooleApiService` inherits it).
 
 ```php
 // Apache / Nginx / OpenSwoole
@@ -578,7 +578,7 @@ class ProductController extends Controller
 
 ### 0. Prefer `callController()` on every server
 
-Use `callController()` on `ApiService` **and** `SwooleApiService` so `APM_TRACE_CONTROLLER=1` creates controller spans. Bare `new XController(...)` still works (no automatic controller span).
+Use `callController()` on `ApiService` (all servers) so `APM_TRACE_CONTROLLER=1` creates controller spans. Bare `new XController(...)` still works (no automatic controller span). Deprecated `SwooleApiService` inherits `callController`.
 
 ### 1. Always Set Request on Models
 

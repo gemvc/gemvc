@@ -41,13 +41,13 @@ Optional machine/IDE mirrors (same content, not required):
 
 - GEMVC is an **ecosystem** (`vendor/gemvc/*`) — not a single package; see [ecosystem.md](../guides/ecosystem.md)
 - Prefer **4 layers** for HTTP services: API → Controller → Model → Table/`ViewTable`. Bypassing a layer is possible but **strongly discouraged**
-- Authenticated CRUD: prefer **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (auth in base constructor). Public endpoints: `ApiService` / `SwooleApiService`
+- Authenticated CRUD: prefer **`ProtectedApiService`** (all servers). Public: `ApiService`. Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - Prefer **`ViewTable`** for SQL views (`defineView` + migrate); never `db:migrate` a plain `Table` that points at a view name
 - Never invent Eloquent-style relations or nested 1:n on views — views are flat; reshape in Model
 - Never skip schema validation (`definePostSchema` / `defineGetSchema`)
 - Never manually sanitize inputs (framework already does)
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)
-- Prefer `callController()` + `createModel()` for APM-ready code on **both** Apache/`ApiService` and OpenSwoole/`SwooleApiService` — see [api.md](../guides/api.md)
+- Prefer `callController()` + `createModel()` for APM-ready code (`ApiService` on all servers) — see [api.md](../guides/api.md)
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - **Global rate limit:** `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`) → Bootstrap `enforceFromEnv`

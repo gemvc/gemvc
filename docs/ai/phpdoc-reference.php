@@ -108,20 +108,11 @@ interface ApiServiceReference
     public static function mockResponse(string $method): array;
 }
 
-interface SwooleApiServiceReference
+/** @deprecated Prefer ApiServiceReference — SwooleApiService extends ApiService */
+interface SwooleApiServiceReference extends ApiServiceReference
 {
-    public function __construct(\Gemvc\Http\Request $request);
-    /** @throws \Gemvc\Core\AuthException */
-    public function requireAuth(?array $roles = []): void;
-    /** @return \Gemvc\Core\ControllerTracingProxy — shared via ApiServiceSharedTrait */
-    public function callController(\Gemvc\Core\Controller $controller);
-    /** @throws \Gemvc\Core\ValidationException */
-    public function validateOrFail(array $post_schema): void;
-    /** @throws \Gemvc\Core\ValidationException */
-    public function validateStringOrFail(array $post_string_schema): void;
-    public function validatePosts(array $post_schema): ?\Gemvc\Http\JsonResponse;
-    public function validateStringPosts(array $post_string_schema): ?\Gemvc\Http\JsonResponse;
-    public static function mockResponse(string $method): array;
+    public function safeValidatePosts(array $post_schema): ?\Gemvc\Http\JsonResponse;
+    public function safeValidateStringPosts(array $post_string_schema): ?\Gemvc\Http\JsonResponse;
 }
 
 interface ControllerReference
@@ -258,7 +249,7 @@ interface ValidationTypes
 interface FrameworkRules
 {
     const TABLE_BASE_CLASS = 'Gemvc\\Database\\Table';
-    const API_BASE_CLASS = 'Gemvc\\Core\\ApiService'; // or SwooleApiService on OpenSwoole
+    const API_BASE_CLASS = 'Gemvc\\Core\\ApiService'; // all servers; SwooleApiService is a deprecated subclass
     const CONTROLLER_BASE_CLASS = 'Gemvc\\Core\\Controller';
     const AGGREGATION_PREFIX = '_';
     const AUTOMATIC_ROUTING = true;

@@ -36,7 +36,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 ```
 
 - Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`
-- Authenticated CRUD: **`ProtectedApiService`** / **`ProtectedSwooleApiService`**. Public: `ApiService` / `SwooleApiService`
+- Authenticated CRUD: **`ProtectedApiService`** (all servers). Public: `ApiService`. Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - SQL views: `extends ViewTable` + `defineView()` — never migrate a plain `Table` as a view
 - Money: `public string` + `$_type_map` `decimal` — never `float`; concurrent transfers: `beginTransaction` + `forUpdate` + BCMath on one Table instance (not raw PDO) — [`model.md`](docs/guides/model.md#atomic-money-transfers-pessimistic-lock)
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today (PK from property `id`)
@@ -45,9 +45,9 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 
 **DO**
 
-- Extend `ApiService` / `SwooleApiService` (public) or **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (authenticated CRUD)
+- Extend `ApiService` / **`ProtectedApiService`** (all servers). Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - Call `definePostSchema` / `defineGetSchema` before using request data
-- Apache: `callController()` in API + `createModel()` in Controller (also on OpenSwoole via shared trait)
+- `callController()` in API + `createModel()` in Controller (all servers)
 - Prefer `gemvc/helper` and `gemvc/http-client` over inventing validators/curl wrappers
 - Prefer `createList` + API list allowlists for filtered lists
 - Migrate views with `gemvc db:migrate YourViewTable` or `--all`
@@ -61,7 +61,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Manually sanitize inputs or concatenate SQL; grab `DatabaseManagerFactory…->getPdo()` for multi-step money ops
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
 - Assume the **Developer UI** list shows views (still BASE TABLE only; use `db:list` from cli-dev ≥ 1.3)
-- Assume `callController` is Apache-only — it is on `SwooleApiService` via `ApiServiceSharedTrait`
+- Use deprecated `SwooleApiService` for new code — prefer `ApiService` on OpenSwoole too
 
 ## Anti-hallucination checklist (verify before answering)
 

@@ -8,7 +8,7 @@ alwaysApply: false
 
 Extend `Gemvc\Core\ApiService` (or `ProtectedApiService` for auth-by-default). Validate and authorize here; **no** business logic or SQL.
 
-URL (Apache/Nginx): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403), `RateLimitException` (429), and `ValidationException` (400). OpenSwoole: same exceptions via `SwooleBootstrap` (use `SwooleApiService` / `ProtectedSwooleApiService`).
+URL (Apache/Nginx): `/api/{Service}/{method}` — convention routing only (no routes file). Bootstrap loads `App\Api\{Service}` and calls the method; catches `AuthException` (401/403), `RateLimitException` (429), and `ValidationException` (400). OpenSwoole: same exceptions via `SwooleBootstrap`. Prefer `ApiService` / `ProtectedApiService` on all servers (deprecated: `SwooleApiService` / `ProtectedSwooleApiService`).
 
 ## Patterns
 

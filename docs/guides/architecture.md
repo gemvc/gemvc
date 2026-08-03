@@ -85,7 +85,7 @@ HTTP Request
  → OpenSwooleServer (SecurityManager path check — Swoole only)
  → SwooleRequest (sanitize; upload name/MIME)
  → SwooleBootstrap (APM root; SERVICE_IN_URL_SECTION / METHOD_IN_URL_SECTION)
- → SwooleApiService (schema + auth) → `callController` → Controller (same shared trait as Apache)
+ → ApiService (schema + auth; deprecated SwooleApiService still works) → `callController` → Controller
  → Model → Table (pool + DB span if APM_TRACE_DB_QUERY=1)
  → JsonResponse|HtmlResponse showSwoole → APM flush
 ```
@@ -110,8 +110,8 @@ HTTP Request
 
 ### **core/** - Framework Core
 - `Bootstrap.php` / `SwooleBootstrap.php` - Request routing, **APM initialization (early tracing)**
-- `ApiService.php` / `SwooleApiService.php` - Base API service classes
- - `ApiService::callController()` for controller tracing (**Apache/Nginx only** — not on `SwooleApiService`)
+- `ApiService.php` — unified API base (all servers); deprecated `SwooleApiService.php` thin subclass
+ - `ApiService::callController()` for controller tracing (all servers)
  - Uses `$request->apm` for trace context propagation
 - `Controller.php` - Base controller with pagination, filtering, sanitization
  - `createModel()` helper for automatic Request propagation
@@ -240,7 +240,7 @@ Full guide: [apm.md](apm.md) · `vendor/gemvc/apm-contracts/README.md`.
 
 ```
 Bootstrap → $request->apm
-  → ApiService / SwooleApiService (`callController` span if enabled)
+  → ApiService (`callController` span if enabled; deprecated Swoole* aliases OK)
   → Controller → createModel() → Model/Table → UniversalQueryExecuter (query span if enabled)
   → Response → provider flush (non-blocking where supported)
 ```

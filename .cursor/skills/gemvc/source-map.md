@@ -19,11 +19,11 @@ Verified against `docs/` + source (2026-08).
 
 | Class | Path | Must know |
 |-------|------|-----------|
-| `ApiService` | `src/core/ApiService.php` | Public endpoints; uses `ApiServiceSharedTrait` |
+| `ApiService` | `src/core/ApiService.php` | **Recommended** public base for all servers; uses `ApiServiceSharedTrait` |
 | `ApiServiceSharedTrait` | `src/core/ApiServiceSharedTrait.php` | Shared: `requireAuth`, `requireRateLimit*`, `callController`, magic `__get` |
-| `ProtectedApiService` | `src/core/ProtectedApiService.php` | Authenticated CRUD — ctor calls `requireAuth($roles)` |
-| `SwooleApiService` | `src/core/SwooleApiService.php` | Public on Swoole; same shared trait; legacy validate* returns `?JsonResponse` |
-| `ProtectedSwooleApiService` | `src/core/ProtectedSwooleApiService.php` | Authenticated CRUD on Swoole — ctor calls `requireAuth($roles)` |
+| `ProtectedApiService` | `src/core/ProtectedApiService.php` | **Recommended** authenticated CRUD — ctor calls `requireAuth($roles)` |
+| `SwooleApiService` | `src/core/SwooleApiService.php` | **Deprecated** thin subclass of `ApiService`; `safeValidate*` for legacy return style |
+| `ProtectedSwooleApiService` | `src/core/ProtectedSwooleApiService.php` | **Deprecated** thin subclass of `ProtectedApiService` |
 | `Controller` | `src/core/Controller.php` | `createModel`, `createList`, `listJsonResponse` |
 | `ControllerTracingProxy` | (in ApiService file) | Optional controller spans |
 
@@ -118,7 +118,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 1. Apache expects `/api/...` + `api` hop; Swoole does **not** auto-skip `api` — configure sections or drop prefix
 2. `METHOD_IN_URL_SECTION` = **SwooleBootstrap only**
 3. Never `die`/`exit` on Swoole request path
-4. `callController` / magic controllers = shared via `ApiServiceSharedTrait` (both bases)
+4. Prefer `ApiService` / `ProtectedApiService` on all servers; `Swoole*` are deprecated aliases
 5. `requireAuth` must **throw**; JsonResponse from constructor does not abort method
 6. Auth: missing token **401**; bad verify / wrong role **403**
 7. Rate limit: DRIVER apcu/redis/both/none; no auto-fallback; FAIL_MODE when backend down; APCu full → purge `gemvc:rl:*` → retry → else 429
@@ -128,6 +128,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 11. Prefer `ViewTable` + `db:migrate` for SQL views (never migrate a plain Table as a view)
 12. Money = string + decimal type_map
 13. Doc generator defaults `@http` to POST; URL examples may lack `/api`
+14. On deprecated `SwooleApiService`, `validatePosts` now throws — use `safeValidatePosts` for old return style
 14. Prefer contracts (`APM_NAME`, connection packages) over hardcoding TraceKit / PDO pools
 15. `create:*` needs **cli-dev**; templates: project `templates/cli/` then cli-dev vendor; init does **not** ship create stubs from library
 16. CLI: `--default <value>` (space, not `=`); `db:drop --force`; `db:unique table/column`; `create:service X -cmt`

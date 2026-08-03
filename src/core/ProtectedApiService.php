@@ -5,10 +5,11 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 
 /**
- * Apache/Nginx API service base that requires authentication for every method.
+ * API service base that requires authentication for every method.
  *
- * Prefer this over {@see ApiService} for authenticated CRUD. Keep {@see ApiService}
- * for public endpoints (login, register, health, docs).
+ * Prefer this over {@see ApiService} for authenticated CRUD on **all** servers
+ * (Apache, Nginx, OpenSwoole). Keep {@see ApiService} for public endpoints
+ * (login, register, health, docs).
  *
  *   class User extends ProtectedApiService {
  *       public function __construct(Request $request) {
@@ -16,9 +17,9 @@ use Gemvc\Http\Request;
  *       }
  *   }
  *
- * OpenSwoole: use {@see ProtectedSwooleApiService}.
+ * {@see ProtectedSwooleApiService} is a deprecated alias of this class.
  *
- * @throws AuthException from the constructor when auth fails (caught by Bootstrap → 401/403)
+ * @throws AuthException from the constructor when auth fails (caught by Bootstrap / SwooleBootstrap → 401/403)
  */
 abstract class ProtectedApiService extends ApiService
 {

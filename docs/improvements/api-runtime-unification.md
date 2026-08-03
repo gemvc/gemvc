@@ -1,13 +1,13 @@
 # Unified `ApiService` (runtime) — plan of record
 
-**Status:** Phase 0–2 **done** · Phase 3 planned.  
-**AI:** implement Phase 3 only when explicitly tasked. Do **not** merge inheritance until explicitly asked.
+**Status:** Phase 0–3 **done**.  
+**AI:** no further runtime-unification work unless a new plan is written.
 
-## Goals
+## Goals (achieved)
 
 - Developers write `class User extends ApiService {}` (and `ProtectedApiService`) for **all** servers.
-- Keep backward compatibility for apps that still extend `SwooleApiService` / `ProtectedSwooleApiService`.
-- Never `die()` / `exit()` in shared API service code; OpenSwoole must always return a response from bootstrap.
+- Backward compatibility: `SwooleApiService` / `ProtectedSwooleApiService` remain as thin deprecated subclasses.
+- Never `die()` / `exit()` in shared API service code; OpenSwoole still returns responses from `SwooleBootstrap`.
 
 ## Non-goals (rejected)
 
@@ -16,86 +16,69 @@
 
 ## Facts today
 
-| Path | Adapter | Bootstrap | API base |
-|------|---------|-----------|----------|
+| Path | Adapter | Bootstrap | Recommended API base |
+|------|---------|-----------|----------------------|
 | Apache | `ApacheRequest` | `Bootstrap` | `ApiService` / `ProtectedApiService` |
 | Nginx | **same** `ApacheRequest` (PHP-FPM) | `Bootstrap` | same |
-| OpenSwoole | `SwooleRequest` | `SwooleBootstrap` | `SwooleApiService` / `ProtectedSwooleApiService` |
+| OpenSwoole | `SwooleRequest` | `SwooleBootstrap` | **same** `ApiService` / `ProtectedApiService` |
+
+Deprecated aliases (still work): `SwooleApiService` extends `ApiService`; `ProtectedSwooleApiService` extends `ProtectedApiService`.
 
 There is **no** `NginxRequest` and none is needed.
 
-Canonical validation (unchanged, works on both servers):
+Canonical validation (all servers):
 
 ```php
 if (!$this->request->definePostSchema([...])) {
     return $this->request->returnResponse();
 }
+// or
+$this->validateOrFail(['email' => 'email']);
+$this->validateStringOrFail(['name' => '2|100']);
 ```
 
-Cross-runtime throw helpers (**Phase 1 — shipped**):
-
-```php
-$this->validateOrFail(['email' => 'email']);           // throws ValidationException
-$this->validateStringOrFail(['name' => '2|100']);      // throws ValidationException
-// Bootstrap + SwooleBootstrap catch → HTTP 400
-```
-
-Shared behavior (**Phase 2 — shipped**): `ApiServiceSharedTrait` on both bases:
+Shared helpers (all servers):
 
 ```php
 $this->requireAuth(['admin']);
 $this->requireRateLimit();
 return $this->callController(new UserController($this->request))->create();
-// Magic: $this->UserController->create()
 ```
 
-Legacy helper mismatch (still present; do **not** unify parents until Phase 3):
+Legacy OpenSwoole return-style (only on deprecated `SwooleApiService`):
 
 ```php
-// ApiService
-protected function validatePosts(array $schema): void;           // throws ValidationException
-
-// SwooleApiService
-protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 JsonResponse
+if ($err = $this->safeValidatePosts([...])) {
+    return $err;
+}
 ```
+
+`validatePosts()` on `SwooleApiService` now **throws** (inherited from `ApiService`). Migrate old return-style callers to `safeValidatePosts()` or `validateOrFail()` / `definePostSchema()`.
 
 ## Phases
 
 ### Phase 0 — Documentation (**done**)
 
-- State Nginx = shared `ApacheRequest` / PHP-FPM path; remove “NginxRequest coming soon”.
-- Document `Table::noLimit()`, `Table::all()`, `Response::tooManyRequests()`.
-
 ### Phase 1 — Validation consistency (**done**)
 
-1. Added `validateOrFail()` / `validateStringOrFail()` on `ApiService` and `SwooleApiService` (always throw `ValidationException`).
-2. `SwooleBootstrap` catches `ValidationException` → `Response::badRequest(...)` (constructor + method).
-3. Docs/AI pack prefer `definePostSchema` / `validateOrFail`; legacy `validatePosts` signatures left unchanged.
-4. Kept `safeValidatePosts()` / `safeValidateStringPosts()` as return-style shims on Swoole.
-5. Tests: `tests/Unit/Core/ValidateOrFailTest.php`.
+`validateOrFail` / `validateStringOrFail`; SwooleBootstrap catches `ValidationException`.
 
 ### Phase 2 — Shared behavior (**done**)
 
-1. Extracted `Gemvc\Core\ApiServiceSharedTrait` with:
-   - `requireAuth`
-   - `requireRateLimit` / `requireRateLimitApcu` / `Redis` / `Both`
-   - `callController` / `callWithTracing`
-   - magic `__get` controller resolution
-2. `ApiService` and `SwooleApiService` both `use` the trait (still two public classes).
-3. Response delivery unchanged (Bootstrap / OpenSwooleServer).
-4. Tests: `tests/Unit/Core/SwooleApiServiceSharedTraitTest.php`; ProtectedSwoole `auth(null)` expectation aligned with shared `requireAuth`.
+`ApiServiceSharedTrait`: auth, rate limit, `callController`, magic controllers.
 
-### Phase 3 — One public base (**planned**)
+### Phase 3 — One public base (**done**)
 
-- Make `ApiService` the unified developer-facing class.
-- `SwooleApiService` / `ProtectedSwooleApiService` become thin deprecated subclasses or aliases.
-- Only then treat `extends ApiService` as the single recommended path.
+1. `SwooleApiService extends ApiService` (deprecated thin subclass; keeps `safeValidatePosts` / `safeValidateStringPosts`).
+2. `ProtectedSwooleApiService extends ProtectedApiService` (deprecated empty alias).
+3. Docs/AI pack recommend `ApiService` / `ProtectedApiService` on all servers.
+4. Tests updated for inheritance + throw-style `validatePosts` on Swoole path.
 
-## Safety rules
+## Safety rules (still apply)
 
 - Only Apache/Nginx bootstrap may terminate after sending output.
 - OpenSwoole bootstrap always returns `JsonResponse` / `ResponseInterface`; convert exceptions there.
-- Do not change `validatePosts()` behavior silently — `validateOrFail()` is the shared throw API.
+- Prefer `validateOrFail()` / `definePostSchema()` for new code; `safeValidate*` only for legacy return-style on `SwooleApiService`.
 
 ## Related
 

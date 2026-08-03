@@ -11,10 +11,11 @@ use Gemvc\Core\Apm\AbstractApm;
 
 
 /**
- * Base class for all API services (Apache / Nginx PHP-FPM).
+ * Base class for all API services (Apache, Nginx PHP-FPM, and OpenSwoole).
  *
- * Shared auth, rate-limit, and callController live in {@see ApiServiceSharedTrait}
- * (also used by {@see SwooleApiService}).
+ * Shared auth, rate-limit, and callController live in {@see ApiServiceSharedTrait}.
+ * OpenSwoole apps should extend this class (or {@see ProtectedApiService}); the old
+ * {@see SwooleApiService} / {@see ProtectedSwooleApiService} names are deprecated aliases.
  *
  * @property Request $request
  * @property-read mixed $errors

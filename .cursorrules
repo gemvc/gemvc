@@ -26,9 +26,9 @@ URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTI
 
 **DO**
 
-- Extend `ApiService` or `SwooleApiService` (public), or **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (authenticated — auth in base ctor)
+- Extend `ApiService` (public) or **`ProtectedApiService`** (authenticated — all servers). Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
 - `definePostSchema` / `defineGetSchema` before using post/get data
-- `callController()` in API + `createModel()` in Controller (Apache **and** OpenSwoole; shared trait)
+- `callController()` in API + `createModel()` in Controller (all servers)
 - Prefer `Protected*` over manually forgetting `$this->requireAuth()` on CRUD services
 - `requireAuth(['role'])` still valid on public bases when you need a custom constructor flow
 - `requireRateLimit()` uses global `REQUEST_RATE_LIMIT_DRIVER`; overrides: `requireRateLimitApcu|Redis|Both()` (no auto-fallback)
@@ -47,7 +47,7 @@ URL (Apache/Nginx): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_IN_URL_SECTI
 - Point a plain `Table` at a view name and `db:migrate` it — use `ViewTable` (never invent Eloquent 1:n on views)
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
 - Assume the **Developer UI** list shows views (still BASE TABLE only; CLI `db:list` ≥ 1.3 shows them)
-- Skip `callController` on OpenSwoole when you want controller APM — it is on `SwooleApiService` via `ApiServiceSharedTrait`
+- Use deprecated `SwooleApiService` for new services — prefer `ApiService` on OpenSwoole too
 
 ## Auth
 

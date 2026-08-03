@@ -53,7 +53,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 1. Controllers **extend** `Gemvc\Core\Controller`; live in `app/controller/` as `UserController`, etc.
 2. **No schema / auth in Controller** — that belongs in API (`define*Schema`, `requireAuth` / `auth`).
 3. Prefer **`createModel(new XModel())`** before DB work so Request (and APM) reach Table queries. Works for any object; calls `setRequest` if present (composition Models should forward it to children).
-4. Prefer **`callController(new XController($this->request))->method()`** on Apache/Nginx **and** OpenSwoole (shared `ApiServiceSharedTrait`).
+4. Prefer **`callController(new XController($this->request))->method()`** on all servers (`ApiService`).
 5. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.
 6. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` (initialized public props only; skips `protected` and often uninitialized typed publics).
 7. Never invent routes or put SQL in the controller.
@@ -118,21 +118,7 @@ return $this->callController(new UserController($this->request))->create();
 // return $this->UserController->create();
 ```
 
-`callController()` enables controller spans when `APM_TRACE_CONTROLLER=1`. See [apm.md](apm.md).
-
-### OpenSwoole — `SwooleApiService`
-
-```php
-return (new UserController($this->request))->create();
-```
-
-No `callController` and no `$this->UserController` magic on `SwooleApiService`.
-
-| | `ApiService` | `SwooleApiService` |
-|--|--------------|-------------------|
-| `callController()` | yes | **no** |
-| Magic `$this->XController` | yes | **no** |
-| Controller class itself | same | same |
+`callController()` enables controller spans when `APM_TRACE_CONTROLLER=1`. See [apm.md](apm.md). Prefer `ApiService` / `ProtectedApiService` on all servers (including OpenSwoole). Deprecated `SwooleApiService` inherits the same helpers.
 
 ---
 
@@ -296,7 +282,7 @@ Templates: [templates.md](templates.md).
 **Don’t**
 
 - Put `definePostSchema` / `requireAuth` in Controller  
-- Copy `callController` into `SwooleApiService` subclasses  
+- Prefer `ApiService` / `ProtectedApiService` (deprecated `Swoole*` aliases still work)  
 - Write JOINs/SQL in Controller (use Model / `ViewTable` — [SQL views](database.md#sql-views-via-viewtable-recommended))
 - Invent Laravel-style resource controllers / form requests  
 
@@ -307,6 +293,6 @@ Templates: [templates.md](templates.md).
 1. Extends `Controller`; constructor calls `parent::__construct($request)`
 2. API validates + auth; Controller only orchestrates
 3. `createModel` before DB-bound work
-4. Prefer `callController(...)` on both Apache and OpenSwoole API bases
+4. Prefer `callController(...)` on `ApiService` (all servers)
 5. List: API `findable`/`filterable`/`sortable` + Controller `createList(..., $columns?)`
 6. Mapping failures → `returnResponse()`

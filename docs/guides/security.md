@@ -335,11 +335,11 @@ Result: REJECTED - "String length for post 'name' is 10000, outside range (2-100
 
 ### Developer Calls - JWT Token System
 
-**Status**: **Available methods** — prefer **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (auth in base constructor), or `$this->requireAuth()` on `ApiService`, or `$request->auth()` per method.
+**Status**: **Available methods** — prefer **`ProtectedApiService`** (all servers; deprecated `ProtectedSwooleApiService` alias), or `$this->requireAuth()` on `ApiService`, or `$request->auth()` per method.
 
 **Protected base (recommended for authenticated CRUD)**:
 ```php
-class User extends ProtectedApiService  // OpenSwoole: ProtectedSwooleApiService
+class User extends ProtectedApiService  // all servers including OpenSwoole
 {
     public function __construct(Request $request)
     {

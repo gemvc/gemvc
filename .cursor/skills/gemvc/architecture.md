@@ -36,8 +36,8 @@ HTTP
  → OpenSwooleServer
  → SecurityManager::isRequestAllowed (path normalize; block /app, /vendor, .env, .php, …)
  → SwooleRequest → SwooleBootstrap (APM; extractRouteInfo)
- → processRequest() → App\Api\{Service} extends SwooleApiService
- → callController → ControllerTracingProxy → Controller  (same shared trait as Apache)
+ → processRequest() → App\Api\{Service} extends ApiService (or deprecated SwooleApiService)
+ → callController → ControllerTracingProxy → Controller
  → Model → Table (pooled connection)
  → showSwoole() → APM flush
 ```
@@ -52,15 +52,15 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 
 ## Dual bases (public API)
 
-| Concern | `ApiService` | `SwooleApiService` |
+| Concern | `ApiService` (recommended) | `SwooleApiService` (deprecated) |
 |---------|--------------|-------------------|
-| File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` |
-| Shared | `ApiServiceSharedTrait` — `requireAuth`, `requireRateLimit*`, `callController()`, `__get` | same trait |
-| APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | same |
-| Auth default | Prefer `ProtectedApiService` for CRUD | Prefer `ProtectedSwooleApiService` for CRUD |
-| `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` (legacy) |
-| `validateOrFail` / `validateStringOrFail` | throws `ValidationException` | throws (SwooleBootstrap → 400) |
-| `requireAuth` / `requireRateLimit*` | both throw; Bootstrap catch | same throws; SwooleBootstrap catch |
+| File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` extends `ApiService` |
+| Shared | `ApiServiceSharedTrait` | inherited |
+| APM controller wrap | `callController()`, `__get` | inherited |
+| Auth default | Prefer `ProtectedApiService` | Prefer `ProtectedApiService` (or deprecated `ProtectedSwooleApiService`) |
+| `validatePosts` / `validateStringPosts` | throws `ValidationException` | same (inherited throws) |
+| Legacy return-style | — | `safeValidatePosts` / `safeValidateStringPosts` |
+| `requireAuth` / `requireRateLimit*` | throw; Bootstrap / SwooleBootstrap catch | inherited |
 
 Schema API shared: `Request::definePostSchema` / `defineGetSchema` → `bool` (no throw). Prefer that, or `validateOrFail()`, for portable code.
 

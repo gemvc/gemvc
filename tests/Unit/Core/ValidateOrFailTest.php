@@ -42,9 +42,15 @@ class ValidateOrFailSwooleApiService extends SwooleApiService
     }
 
     /** @param array<string> $schema */
-    public function publicValidatePosts(array $schema): ?JsonResponse
+    public function publicValidatePosts(array $schema): void
     {
-        return $this->validatePosts($schema);
+        $this->validatePosts($schema);
+    }
+
+    /** @param array<string> $schema */
+    public function publicSafeValidatePosts(array $schema): ?JsonResponse
+    {
+        return $this->safeValidatePosts($schema);
     }
 }
 
@@ -105,12 +111,21 @@ class ValidateOrFailTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testSwooleLegacyValidatePostsStillReturnsJsonResponse(): void
+    public function testSwooleValidatePostsNowThrowsLikeApiService(): void
     {
         $_POST = [];
         $ar = new ApacheRequest();
         $service = new ValidateOrFailSwooleApiService($ar->request);
-        $result = $service->publicValidatePosts(['email' => 'email']);
+        $this->expectException(ValidationException::class);
+        $service->publicValidatePosts(['email' => 'email']);
+    }
+
+    public function testSwooleSafeValidatePostsStillReturnsJsonResponse(): void
+    {
+        $_POST = [];
+        $ar = new ApacheRequest();
+        $service = new ValidateOrFailSwooleApiService($ar->request);
+        $result = $service->publicSafeValidatePosts(['email' => 'email']);
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertSame(400, $result->response_code);
     }

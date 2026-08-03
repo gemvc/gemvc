@@ -126,14 +126,15 @@
       "magic_controllers": true
     },
     "SwooleApiService": {
-      "requireAuth": "requireAuth(?array $roles = []): void",
-      "callController": "callController(Controller $c): ControllerTracingProxy  // shared trait",
-      "validateOrFail": "validateOrFail(array $schema): void  // throws; SwooleBootstrap → 400",
-      "validateStringOrFail": "validateStringOrFail(array $schema): void",
-      "validatePosts": "validatePosts(array $schema): ?JsonResponse  // legacy return style",
-      "validateStringPosts": "validateStringPosts(array $schema): ?JsonResponse",
-      "magic_controllers": true,
-      "shared_trait": "ApiServiceSharedTrait"
+      "deprecated": true,
+      "extends": "ApiService",
+      "note": "Prefer ApiService; keeps safeValidatePosts / safeValidateStringPosts for legacy return style",
+      "safeValidatePosts": "safeValidatePosts(array $schema): ?JsonResponse",
+      "validatePosts": "inherited — throws ValidationException"
+    },
+    "ProtectedSwooleApiService": {
+      "deprecated": true,
+      "extends": "ProtectedApiService"
     },
     "ApiServiceSharedTrait": {
       "requireAuth": true,

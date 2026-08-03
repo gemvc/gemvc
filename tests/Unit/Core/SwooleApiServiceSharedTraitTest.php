@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Core;
 
+use Gemvc\Core\ApiService;
 use Gemvc\Core\Controller;
 use Gemvc\Core\ControllerTracingProxy;
+use Gemvc\Core\ProtectedApiService;
+use Gemvc\Core\ProtectedSwooleApiService;
 use Gemvc\Core\SwooleApiService;
 use Gemvc\Http\ApacheRequest;
 use Gemvc\Http\JsonResponse;
@@ -21,7 +24,7 @@ class TestSwooleApiService extends SwooleApiService
 }
 
 /**
- * Phase 2: SwooleApiService shares callController / requireAuth via ApiServiceSharedTrait.
+ * Phase 2–3: SwooleApiService extends ApiService; shared helpers inherited.
  */
 final class SwooleApiServiceSharedTraitTest extends TestCase
 {
@@ -60,14 +63,14 @@ final class SwooleApiServiceSharedTraitTest extends TestCase
         $this->assertInstanceOf(ControllerTracingProxy::class, $proxy);
     }
 
-    public function testUsesSharedTrait(): void
+    public function testSwooleApiServiceExtendsApiService(): void
     {
-        $traits = class_uses(SwooleApiService::class);
-        $this->assertIsArray($traits);
-        $this->assertArrayHasKey(\Gemvc\Core\ApiServiceSharedTrait::class, $traits);
+        $this->assertTrue(is_subclass_of(SwooleApiService::class, ApiService::class));
+        $this->assertTrue(is_subclass_of(ProtectedSwooleApiService::class, ProtectedApiService::class));
+        $this->assertTrue(is_subclass_of(ProtectedSwooleApiService::class, ApiService::class));
 
-        $apiTraits = class_uses(\Gemvc\Core\ApiService::class);
-        $this->assertIsArray($apiTraits);
-        $this->assertArrayHasKey(\Gemvc\Core\ApiServiceSharedTrait::class, $apiTraits);
+        $service = new TestSwooleApiService($this->request);
+        $this->assertInstanceOf(ApiService::class, $service);
+        $this->assertInstanceOf(SwooleApiService::class, $service);
     }
 }

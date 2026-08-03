@@ -5,7 +5,7 @@ namespace Gemvc\Core;
 /**
  * Shared auth, rate-limit, and controller APM helpers for API service bases.
  *
- * Used by {@see ApiService} and {@see SwooleApiService} (Phase 2 of runtime unification).
+ * Used by {@see ApiService} (and inherited by deprecated {@see SwooleApiService}).
  * Consuming classes must declare `protected Request $request`.
  *
  * Response delivery stays in Bootstrap / SwooleBootstrap — this trait never die()/exit().
@@ -159,7 +159,7 @@ trait ApiServiceSharedTrait
      *
      *   return $this->callController(new ProductController($this->request))->create();
      *
-     * Available on both ApiService and SwooleApiService.
+     * Available on ApiService (and deprecated SwooleApiService subclass).
      *
      * @param Controller $controller The controller instance
      * @return ControllerTracingProxy A proxy that intercepts method calls

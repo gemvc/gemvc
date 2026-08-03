@@ -41,7 +41,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 | Layer | File | Class |
 |-------|------|-------|
-| API | `User.php` | `User extends ProtectedApiService` (auth) or `ApiService` (public); Swoole: `ProtectedSwooleApiService` / `SwooleApiService` |
+| API | `User.php` | `User extends ProtectedApiService` (auth) or `ApiService` (public) — **all** servers; `Swoole*` names deprecated |
 | Controller | `UserController.php` | `UserController extends Controller` |
 | Model | `UserModel.php` | `UserModel extends UserTable` **or** composition class (no Table) |
 | Table | `UserTable.php` | `UserTable extends Table` |
@@ -60,18 +60,17 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 
 ## Apache/Nginx vs OpenSwoole
 
-| | `ApiService` / `ProtectedApiService` | `SwooleApiService` / `ProtectedSwooleApiService` |
-|--|--------------|-------------------|
+| | Apache / Nginx | OpenSwoole |
+|--|----------------|------------|
+| Recommended API base | `ApiService` / `ProtectedApiService` | **same** |
+| Deprecated aliases | — | `SwooleApiService` → `ApiService`; `ProtectedSwooleApiService` → `ProtectedApiService` |
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
-| Shared helpers | `ApiServiceSharedTrait`: `requireAuth`, `requireRateLimit*`, `callController()`, magic `$this->UserController` | same trait |
-| Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` (legacy) |
-| Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` → `ValidationException` (Bootstrap **and** SwooleBootstrap → 400) | same |
-| Auth whole service | Prefer **`ProtectedApiService`** (auth in base ctor); or `requireAuth()` on `ApiService` | Prefer **`ProtectedSwooleApiService`**; or `requireAuth()` on `SwooleApiService` |
-| Rate limit | `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | same |
+| Shared helpers | `ApiServiceSharedTrait`: `requireAuth`, `requireRateLimit*`, `callController()`, magic `$this->UserController` | inherited |
+| `validatePosts` | throws `ValidationException` | same (inherited); legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
 
-Usual schema API is still `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()` — that path does **not** throw. Cross-runtime throw helpers: `validateOrFail()` / `validateStringOrFail()` (caught by Bootstrap and SwooleBootstrap → 400).
+Usual schema API: `definePostSchema()` / `defineGetSchema()` → `bool` + `return $this->request->returnResponse()`. Throw helpers: `validateOrFail()` / `validateStringOrFail()`.
 
-Use the matching base class for the target server.
+Prefer **`ApiService` / `ProtectedApiService`** on every server.
 
 ---
 
@@ -80,7 +79,7 @@ Use the matching base class for the target server.
 ### Prefer protected base (authenticated CRUD)
 
 ```php
-class User extends ProtectedApiService  // OpenSwoole: ProtectedSwooleApiService
+class User extends ProtectedApiService  // all servers including OpenSwoole
 {
     public function __construct(Request $request)
     {
@@ -93,8 +92,8 @@ class User extends ProtectedApiService  // OpenSwoole: ProtectedSwooleApiService
 
 - `parent::__construct($request, null)` or `[]` → any authenticated user
 - `parent::__construct($request, ['admin','editor'])` → must have one of these roles
-- Public endpoints (login, register, health): keep `extends ApiService` / `SwooleApiService`
-
+- Public endpoints (login, register, health): `extends ApiService`
+- Deprecated: `ProtectedSwooleApiService` / `SwooleApiService`
 ### Or call `requireAuth()` on a public base
 
 ```php
@@ -384,7 +383,7 @@ APM_TRACE_DB_QUERY=1
 ```
 
 - Root span: Bootstrap (automatic)
-- Controllers: use `callController()` on both `ApiService` and `SwooleApiService`
+- Controllers: use `callController()` on `ApiService` (all servers)
 - DB: use `createModel()`
 - Details: [guides/apm.md](../guides/apm.md) · `vendor/gemvc/apm-contracts/README.md`
 
@@ -416,8 +415,8 @@ Visit `/api/index/document`.
 
 ## DO
 
-- Extend `ApiService` / `SwooleApiService` (public) or **`ProtectedApiService` / `ProtectedSwooleApiService`** (authenticated CRUD), plus `Controller`, `Table` / `ViewTable`
-- Use `callController` + `createModel` on **both** Apache/Nginx and OpenSwoole (shared trait)
+- Extend `ApiService` / **`ProtectedApiService`** (all servers), plus `Controller`, `Table` / `ViewTable`. Deprecated: `SwooleApiService` / `ProtectedSwooleApiService`
+- Use `callController` + `createModel`
 - Use `_` for relations; `protected` for secrets
 - PHPStan Level 9 types; nullable returns with null checks
 - Match `$_type_map` to columns / view aliases
@@ -431,4 +430,4 @@ Visit `/api/index/document`.
 - Point a plain `Table` at a view name and run `db:migrate` (creates a physical table)
 - Invent PDO `CREATE VIEW` helpers when `ViewTable` exists
 - `float` for money
-- Assume `callController` is Apache-only — it is on `SwooleApiService` via `ApiServiceSharedTrait` (Phase 2)
+- Use deprecated `SwooleApiService` for new services — prefer `ApiService` on OpenSwoole too
