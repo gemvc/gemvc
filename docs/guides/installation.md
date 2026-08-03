@@ -195,7 +195,7 @@ SERVER_PORT=9501
 
 **Important Notes:**
 - Change `TOKEN_SECRET` to a random string in production
-- For family/internal APIs: set the same `GEMVC_INTERNAL_SECRET` on every service and use `requireInternalService()` — see [security.md](security.md#family-trust-phase-2a)
+- For family/internal APIs: set the same `GEMVC_INTERNAL_SECRET` on every service, use `requireInternalService()` on receivers, and prefer `ServiceCall` + `GEMVC_SERVICES_JSON` for callers — see [security.md](security.md#family-trust-phase-2a) · [http-client.md](http-client.md#servicecall-phase-2b)
 - If using Docker, set `DB_HOST=mysql` (or `postgres` for PostgreSQL — container name)
 - For Apache/Nginx, use `DB_HOST=localhost`
 - **PostgreSQL**: `DB_DRIVER="pgsql"`, `DB_PORT="5432"`, `DB_USER="postgres"` — no `DB_CHARSET` param in the connection string (set via `UTF8`/`SET NAMES` post-connect instead)

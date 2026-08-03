@@ -163,9 +163,9 @@ Receiver still uses `$this->requireInternalService()`. Details: [security.md](se
 
 ---
 
-## Family trust (outbound HMAC)
+## Family trust (outbound HMAC) — low-level
 
-Until Phase 2b `ServiceCall`, attach family HMAC headers with `InternalTrust::callerHeaders()` and **`postRaw` / `get` using the same path and raw body you sign**.
+Prefer [`ServiceCall`](#servicecall-phase-2b) for sibling calls. For one-off or non-mapped URLs, attach family HMAC with `InternalTrust::callerHeaders()` and send the **same** path + raw body you sign:
 
 ```php
 use Gemvc\Core\InternalTrust;

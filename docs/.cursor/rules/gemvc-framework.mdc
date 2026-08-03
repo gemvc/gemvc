@@ -22,7 +22,7 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 
 | Layer | Extends | Job |
 |-------|---------|-----|
-| `app/api/` | `ApiService` / `ProtectedApiService` | schema, `requireAuth` / `auth()`, `requireRateLimit*()`, `callController()` |
+| `app/api/` | `ApiService` / `ProtectedApiService` | schema, `requireAuth` / `auth()`, `requireInternalService()`, `requireRateLimit*()`, `callController()` |
 | `app/controller/` | `Controller` | `createModel()`, `mapPostToObject()`, `createList()` |
 | `app/model/` | `*Table` / `*ViewTable` or composition | business rules; reshape flat view rows → JSON; `Response::*` |
 | `app/table/` | `Table` or `ViewTable` | columns/`$_type_map`; tables: `defineSchema()`; views: `defineView()` + `viewDependsOn()` |
@@ -31,10 +31,11 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 
 - **DO** `definePostSchema` / `defineGetSchema` before using input; fail with `$this->request->returnResponse()`
 - **DO** `$this->callController(new XController($this->request))->method()` on all servers (Apache/Nginx/FrankenPHP/OpenSwoole)
-- **DO** prefer `gemvc/helper` (`CryptHelper`, `TypeChecker`) and `gemvc/http-client` for outbound HTTP
+- **DO** prefer `gemvc/helper` (`CryptHelper`, `TypeChecker`) and `gemvc/http-client` / library `ServiceCall` for outbound HTTP (family mesh)
 - **DO** set JWT `$token->role` (comma-separated names) when minting tokens if you rely on `auth(['admin'])`
 - **DO** use `setPrimaryKey('col')` after `parent::__construct()` when the Table/ViewTable has no `id` property (views / alternate PKs)
 - **DO** use **`ViewTable`** for SQL views: `defineView()`, flat column props matching aliases, `gemvc db:migrate YourViewTable` or `--all`
+- **DO** family-only routes: `requireInternalService()`; sibling callers: `ServiceCall::to(...)->withInternalTrust()`
 - **DON'T** invent routes files, Eloquent, manual sanitization, or string-concat SQL
 - **DON'T** point a plain `Table` at a view and migrate it — that creates a physical table; use `ViewTable`
 - **DON'T** invent Eloquent-style 1:n on views — views are flat; nest in the Model after select

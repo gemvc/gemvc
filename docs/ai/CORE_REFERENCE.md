@@ -133,6 +133,27 @@ Internal trait used by `ApiService` (inherited by deprecated `SwooleApiService`)
 
 Family HMAC gate. Env `GEMVC_INTERNAL_SECRET`. Headers `X-Gemvc-Internal-Timestamp` / `X-Gemvc-Internal-Signature`. See [security.md](../guides/security.md#family-trust-phase-2a).
 
+## `Gemvc\Http\ServiceCall` / `Gemvc\Core\ServiceMap`
+
+Mesh DX (Phase 2b). Env `GEMVC_SERVICES_JSON`. Wraps `ApiCall` (default) / `AsyncApiCall`.
+
+```php
+public static function to(string $serviceName): self
+public function sync(): self
+public function async(): self
+public function withInternalTrust(): self
+public function withoutInternalTrust(): self
+public function withTimeout(float|int $timeout, float|int $connectTimeout = 0): self
+public function get(string $path, array $queryParams = []): self
+public function post(string $path, array|string|null $payload = null): self
+public function put(string $path, array|string|null $payload = null): self
+public function patch(string $path, array|string|null $payload = null): self
+public function run(): string|false
+public function fireAndForget(): bool  // requires ->async()
+```
+
+Production mapped calls require `withInternalTrust()` or `withoutInternalTrust()`. Guide: [http-client.md](../guides/http-client.md#servicecall-phase-2b).
+
 ## `Gemvc\Core\ProtectedSwooleApiService` (deprecated)
 
 **@deprecated** Prefer `ProtectedApiService`. Empty thin subclass of `ProtectedApiService`.

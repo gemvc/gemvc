@@ -50,7 +50,7 @@ Machine-to-machine **family trust** for internal microservice endpoints — orth
 - Fail-closed when `GEMVC_INTERNAL_SECRET` is missing (**500** `ERR_INTERNAL_TRUST_MISCONFIGURED`); bad trust → **401** `ERR_INTERNAL_TRUST_FAILED`
 - Works on Apache, Nginx, FrankenPHP, and OpenSwoole via shared trait + all bootstraps
 
-Caller helper: `InternalTrust::callerHeaders(...)`. Mesh DX (`ServiceCall`) remains Phase **2b**.
+Caller helper: `InternalTrust::callerHeaders(...)`. Prefer **`ServiceCall`** (shipped in **5.16.0**) for mapped siblings — see [http-client.md — ServiceCall](../guides/http-client.md#servicecall-phase-2b).
 
 See [security.md — Family trust](../guides/security.md#family-trust-phase-2a) and [phase-2-trust-and-mesh.md](../improvements/phase-2-trust-and-mesh.md).
 
@@ -58,7 +58,7 @@ See [security.md — Family trust](../guides/security.md#family-trust-phase-2a) 
 
 1. Set the same `GEMVC_INTERNAL_SECRET` on every family member
 2. Guard internal methods with `requireInternalService()`
-3. Attach HMAC headers on outbound calls (`InternalTrust::callerHeaders` until 2b `ServiceCall`)
+3. Prefer `ServiceCall::to(...)->withInternalTrust()->run()` for outbound family calls (or `InternalTrust::callerHeaders` for one-off URLs)
 
 No change required for public JWT-only endpoints.
 

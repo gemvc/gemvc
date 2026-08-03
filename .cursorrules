@@ -30,6 +30,7 @@ URL (Apache/Nginx/FrankenPHP): `/api/{Service}/{method}`. OpenSwoole: `SERVICE_I
 - `definePostSchema` / `defineGetSchema` before using post/get data
 - `callController()` in API + `createModel()` in Controller (all servers)
 - `requireInternalService()` for family-only routes (`GEMVC_INTERNAL_SECRET` HMAC)
+- Sibling mesh: `ServiceCall::to(...)->withInternalTrust()` (`GEMVC_SERVICES_JSON`) — [http-client.md](docs/guides/http-client.md#servicecall-phase-2b)
 - Prefer `Protected*` over manually forgetting `$this->requireAuth()` on CRUD services
 - `requireAuth(['role'])` still valid on public bases when you need a custom constructor flow
 - `requireRateLimit()` uses global `REQUEST_RATE_LIMIT_DRIVER`; overrides: `requireRateLimitApcu|Redis|Both()` (no auto-fallback)

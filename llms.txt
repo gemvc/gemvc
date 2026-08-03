@@ -25,10 +25,11 @@ Version: 5.16.0 (gemvc/library)
 - docs/guides/model.md#atomic-money-transfers-pessimistic-lock: beginTransaction + forUpdate + BCMath (not raw PDO)
 - docs/guides/installation.md: Install → first API; APCu/Redis for rate-limit drivers
 - docs/guides/cli.md: CLI workflows
-- docs/guides/security.md: JWT, schema, rate-limit drivers + FAIL_MODE, hardening
+- docs/guides/security.md: JWT, schema, rate-limit, family trust (requireInternalService / HMAC)
+- docs/guides/http-client.md: outbound HttpClient + ServiceCall mesh DX (GEMVC_SERVICES_JSON)
 - docs/guides/http-lifecycle.md: Adapters, unified Request, Apache vs Swoole delivery
 - docs/guides/openswoole.md: OpenSwoole isolation, pooling, no-die, production FAQ (canonical)
-- docs/guides/frankenphp.md: FrankenPHP classic mode, Caddyfile path security (not .htaccess)
+- docs/guides/frankenphp.md: FrankenPHP classic + worker, Caddyfile path security (not .htaccess)
 - docs/guides/apm.md: APM tracing
 - docs/guides/api-documentation.md: Auto @http docs
 

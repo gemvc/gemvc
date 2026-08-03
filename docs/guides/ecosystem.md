@@ -164,8 +164,8 @@ See the full stack in [database.md — Under the hood](database.md#under-the-hoo
 |--|--|
 | **Role** | Sync + async HTTP **client** (calling *other* APIs), environment-aware (native / Swoole coroutines) |
 | **Key classes** | `HttpClient`, `AsyncHttpClient`, `SwooleHttpClient`, typed exceptions |
-| **Also** | Usable outside GEMVC; library `ApiCall` / `AsyncApiCall` use it internally |
-| **Library docs** | **[http-client.md](http-client.md)** |
+| **Also** | Usable outside GEMVC; library `ApiCall` / `AsyncApiCall` / **`ServiceCall`** use it internally |
+| **Library docs** | **[http-client.md](http-client.md)** (includes ServiceCall mesh DX) |
 | **Docs** | `vendor/gemvc/http-client/README.md`, `CHANGELOG.md` |
 
 Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
@@ -207,7 +207,7 @@ Do not confuse with inbound `Gemvc\Http\Request` (library). Client = outbound.
 | Apache/Nginx DB connection | `gemvc/connection-pdo` |
 | OpenSwoole pooled DB | `gemvc/connection-openswoole` |
 | DB interfaces only | `gemvc/connection-contracts` |
-| Call external HTTP APIs | `gemvc/http-client` |
+| Call external / sibling HTTP APIs | `gemvc/http-client` (+ library `ServiceCall` for family mesh) |
 | Distributed tracing | `gemvc/apm-contracts` + `gemvc/apm-tracekit` |
 | Project init / migrate | `gemvc/library` CLI |
 | Codegen / db:list / admin | `gemvc/cli-dev` |

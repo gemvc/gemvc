@@ -20,7 +20,7 @@ Optional machine/IDE mirrors (same content, not required):
 |------|------|
 | **All gemvc/* packages (ecosystem)** | [../guides/ecosystem.md](../guides/ecosystem.md) |
 | **`gemvc/helper`** (TypeChecker, CryptHelper, …) | [../guides/helper.md](../guides/helper.md) |
-| **`gemvc/http-client`** (outbound HTTP) | [../guides/http-client.md](../guides/http-client.md) |
+| **`gemvc/http-client`** (outbound HTTP / ServiceCall) | [../guides/http-client.md](../guides/http-client.md) |
 | Migrations / Table / **ViewTable** / connections | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)) |
 | **Lists** `createList` + findable/filterable/sortable | [../guides/controller.md](../guides/controller.md#lists-createlist) (+ [api.md](../guides/api.md#list-allowlists)) |
 | **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
@@ -51,6 +51,7 @@ Optional machine/IDE mirrors (same content, not required):
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)
 - Prefer `callController()` + `createModel()` for APM-ready code (`ApiService` on all servers) — see [api.md](../guides/api.md)
 - Family-only routes: `requireInternalService()` + `GEMVC_INTERNAL_SECRET` (not end-user JWT) — [security.md](../guides/security.md#family-trust-phase-2a)
+- Sibling mesh calls: `ServiceCall::to(...)->withInternalTrust()->run()` — [http-client.md](../guides/http-client.md#servicecall-phase-2b)
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - **Global rate limit:** `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`) → Bootstrap `enforceFromEnv`

@@ -882,6 +882,7 @@ REDIS_PREFIX=gemvc:
 - [x] Role-based access control active
 - [x] Password hashing uses Argon2i
 - [ ] Internal routes use `requireInternalService()` + shared `GEMVC_INTERNAL_SECRET` (family HMAC)
+- [ ] Sibling callers use `ServiceCall` + `GEMVC_SERVICES_JSON` (or explicit `callerHeaders`); production uses `withInternalTrust()` / `withoutInternalTrust()`
 
 ### Rate limiting & storage
 - [ ] `REQUEST_RATE_LIMIT_DRIVER` matches infra (`apcu` / `redis` / `both` / `none`) — no reliance on auto-fallback

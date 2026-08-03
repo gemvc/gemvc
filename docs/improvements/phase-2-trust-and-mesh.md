@@ -14,7 +14,7 @@
 - `ApiService::requireInternalService()` — same DX as `requireAuth()` / `requireRateLimit()` (throw; Bootstrap catches).
 - Separate from end-user JWT.
 
-### 2b — Mesh DX (after 2a) — **design locked; not implemented**
+### 2b — Mesh DX (after 2a) — **shipped in 5.16.0**
 
 - Resolve sibling base URLs (`GEMVC_SERVICES_JSON` static map).
 - `ServiceCall` facade over existing **`ApiCall` / `AsyncApiCall`** (not a new HTTP stack); injects `InternalTrust` headers.

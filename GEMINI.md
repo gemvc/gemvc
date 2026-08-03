@@ -67,6 +67,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Authenticated CRUD: **`ProtectedApiService`** (auth in base ctor). Public: `ApiService` (all servers). Deprecated: `Swoole*` aliases
 - `callController()` + `createModel()` on all servers (`ApiService` / `ProtectedApiService`)
 - Family-only: `requireInternalService()` + `GEMVC_INTERNAL_SECRET` (HMAC; not end-user JWT)
+- Sibling calls: `ServiceCall::to(...)->withInternalTrust()->run()` (`GEMVC_SERVICES_JSON`)
 - SQL views: **`extends ViewTable`** + `defineView()` — never `db:migrate` a plain `Table` aimed at a view name
 - Money: `public string` + `$_type_map` `decimal` — never `float`; concurrent transfers: `beginTransaction` + `forUpdate` + BCMath on `$this` — not raw PDO
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today
@@ -91,6 +92,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 | Packages | `docs/guides/ecosystem.md` |
 | OpenSwoole isolation / pool / FAQ | `docs/guides/openswoole.md` |
 | FrankenPHP classic / worker | `docs/guides/frankenphp.md` |
+| Family trust / ServiceCall | `docs/guides/security.md` · `docs/guides/http-client.md` |
 | CLI | `docs/guides/cli.md` |
 | Auth / JWT | `docs/guides/security.md` |
 

@@ -1,7 +1,7 @@
 # GEMVC improvements
 
 **Audience:** maintainers tracking **remaining** framework work.  
-**AI:** skip unless implementing an **active** row below (e.g. Phase 2 trust/mesh or Schema PK stretch).
+**AI:** skip unless implementing an **active** row below (e.g. Schema PK stretch or Phase 2 Redis/nonce stretch).
 
 Done work is recorded in [guides/](../guides/) and [RELEASE_NOTES](../releases/RELEASE_NOTES.md) — do not re-implement items listed as shipped below.
 

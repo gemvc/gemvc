@@ -26,6 +26,7 @@ API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 - Authenticated CRUD: **`ProtectedApiService`**; public: `ApiService` (all servers). Deprecated: `Swoole*` aliases
 - `callController()` + `createModel()` on all servers (`ApiService` / `ProtectedApiService`)
 - Family-only: `requireInternalService()` + `GEMVC_INTERNAL_SECRET` (not JWT)
+- Sibling calls: `ServiceCall::to(...)->withInternalTrust()->run()` (`GEMVC_SERVICES_JSON`)
 - SQL views: **`ViewTable`** + `defineView()` + `db:migrate` — never point a plain `Table` at a view name
 - Money: string + `decimal` type map — never `float`; concurrent: `beginTransaction` + `forUpdate` + BCMath on one Table (`model.md`)
 - Codegen (`create:crud`, …): requires **`gemvc/cli-dev`**
@@ -47,6 +48,7 @@ For PHP REST microservices that must run on **Apache, Nginx, FrankenPHP, and/or 
 | Packages | `docs/guides/ecosystem.md` |
 | OpenSwoole isolation / pool / FAQ | `docs/guides/openswoole.md` |
 | FrankenPHP classic / worker | `docs/guides/frankenphp.md` |
+| Family trust / ServiceCall | `docs/guides/security.md` · `docs/guides/http-client.md` |
 | CLI | `docs/guides/cli.md` |
 
 **If unsure: open the guide. Do not improvise Laravel-shaped code.**

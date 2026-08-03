@@ -49,6 +49,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Call `definePostSchema` / `defineGetSchema` before using request data
 - `callController()` in API + `createModel()` in Controller (all servers)
 - `requireInternalService()` on family-only endpoints (`GEMVC_INTERNAL_SECRET` HMAC — not JWT)
+- Prefer `ServiceCall::to(...)->withInternalTrust()->run()` for sibling calls (`GEMVC_SERVICES_JSON`)
 - Prefer `gemvc/helper` and `gemvc/http-client` over inventing validators/curl wrappers
 - Prefer `createList` + API list allowlists for filtered lists
 - Migrate views with `gemvc db:migrate YourViewTable` or `--all`
@@ -107,6 +108,7 @@ Drivers: `apcu` | `redis` | `both` (dual check, not failover) | `none`. No auto 
 | Atomic money / `forUpdate` | [`docs/guides/model.md#atomic-money-transfers-pessimistic-lock`](docs/guides/model.md#atomic-money-transfers-pessimistic-lock) |
 | OpenSwoole isolation / pool / FAQ | [`docs/guides/openswoole.md`](docs/guides/openswoole.md) |
 | FrankenPHP classic / worker | [`docs/guides/frankenphp.md`](docs/guides/frankenphp.md) |
+| Family trust / ServiceCall | [`docs/guides/security.md`](docs/guides/security.md#family-trust-phase-2a) · [`http-client.md`](docs/guides/http-client.md#servicecall-phase-2b) |
 | API / Controller / Model | [`docs/guides/api.md`](docs/guides/api.md), [`controller.md`](docs/guides/controller.md), [`model.md`](docs/guides/model.md) |
 | Install | [`docs/guides/installation.md`](docs/guides/installation.md) |
 | Human + AI docs index | [`docs/README.md`](docs/README.md) |

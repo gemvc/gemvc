@@ -73,7 +73,7 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 ## Improve GEMVC
 
 1. Change the right package (`library` `src/` vs helper / http-client / connection-* / apm-* / cli-*)
-2. Check [docs/improvements/](../../../docs/improvements/) for remaining work (Phase 2 trust/mesh; Schema PK stretch). **ViewTable is shipped** — use [database.md](../../../docs/guides/database.md)
+2. Check [docs/improvements/](../../../docs/improvements/) for remaining work (Schema PK stretch; Phase 2 Redis/nonce stretch). **ViewTable / family trust / ServiceCall are shipped** — use guides.
 3. Keep PHPStan level 9 ([phpstan.neon](../../../phpstan.neon)); no casual `@phpstan-ignore`
 4. Preserve: 4 layers, no routes file, schema-before-input, multi-runtime (`ApiService` / `ProtectedApiService`)
 
