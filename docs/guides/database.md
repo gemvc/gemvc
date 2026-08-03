@@ -471,6 +471,8 @@ Table / Model
 | `gemvc/connection-pdo` | Apache/Nginx/CLI — PDO cache / optional persistent (**not** Hyperf pool) |
 | `gemvc/connection-openswoole` | OpenSwoole — true pool (get + release) |
 
+OpenSwoole worker isolation, get/release discipline, and production FAQ: [openswoole.md](openswoole.md).
+
 | Axis | Who decides |
 |------|-------------|
 | PDO vs pool | Webserver (`WebserverDetector` → swoole / apache / nginx) |

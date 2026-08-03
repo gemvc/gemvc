@@ -44,6 +44,7 @@ For PHP REST microservices that must run on **Apache and/or OpenSwoole** with JW
 | Money / concurrent transfer | `docs/guides/model.md#atomic-money-transfers-pessimistic-lock` (`forUpdate`) |
 | Views / migrate | `docs/guides/database.md` |
 | Packages | `docs/guides/ecosystem.md` |
+| OpenSwoole isolation / pool / FAQ | `docs/guides/openswoole.md` |
 | CLI | `docs/guides/cli.md` |
 
 **If unsure: open the guide. Do not improvise Laravel-shaped code.**

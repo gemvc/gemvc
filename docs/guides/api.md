@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/api` · AI assistants generating API services.
 
-**Related:** [helper.md](helper.md) · [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [api-documentation.md](api-documentation.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [helper.md](helper.md) · [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [api-documentation.md](api-documentation.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 

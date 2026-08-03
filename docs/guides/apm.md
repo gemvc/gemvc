@@ -2,7 +2,7 @@
 
 **Audience:** enabling / debugging APM via **`gemvc/apm-contracts`** (any provider). TraceKit is one implementation.
 
-**Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md) · `vendor/gemvc/apm-contracts/README.md`
+**Related:** [api.md](api.md) · [controller.md](controller.md) · [ecosystem.md](ecosystem.md) · [openswoole.md](openswoole.md) · [CANONICAL.md](../ai/CANONICAL.md) · `vendor/gemvc/apm-contracts/README.md`
 
 ## Reading map (AI)
 

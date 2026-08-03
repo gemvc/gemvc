@@ -2,7 +2,7 @@
 
 **Audience:** understanding framework internals and request flow (`src/`).
 
-**Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [api.md](api.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [ecosystem.md](ecosystem.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 > App layer how-tos: [api](api.md) · [controller](controller.md) · [model](model.md) · [database](database.md).
 > 4-layer stack is **strongly recommended** (bypass works; don’t for normal HTTP services).
@@ -89,6 +89,8 @@ HTTP Request
  → Model → Table (pool + DB span if APM_TRACE_DB_QUERY=1)
  → JsonResponse|HtmlResponse showSwoole → APM flush
 ```
+
+**Canonical OpenSwoole behavior** (isolation, pooling, no `die()`, developer rules, FAQ): [openswoole.md](openswoole.md).
 
 ---
 

@@ -37,11 +37,13 @@ Before answering architecture questions, writing code, or suggesting refactors:
 2. Examine **`src/`** — Bootstrap / SwooleBootstrap, ApiService / SwooleApiService, Request/JWT, Table ORM, CLI, `startup/{apache,nginx,swoole}`
 3. [docs/ai/INDEX.md](../../../docs/ai/INDEX.md) → [CANONICAL.md](../../../docs/ai/CANONICAL.md) → [CORE_REFERENCE.md](../../../docs/ai/CORE_REFERENCE.md)
 4. This skill’s depth: [architecture.md](architecture.md) → [source-map.md](source-map.md)
-5. Task guides from INDEX (ecosystem, api, controller, model, database, security, apm, api-documentation, cli, helper, http-client)
+5. Task guides from INDEX (ecosystem, api, controller, model, database, **openswoole**, security, apm, api-documentation, cli, helper, http-client)
 6. Shared backlog (shipped docs only): [docs/improvements/](../../../docs/improvements/)
 7. Re-verify the specific files you will change in `src/` and/or `vendor/gemvc/<pkg>/` before proposing diffs
 
 ## Apache vs Swoole (never confuse)
+
+Canonical deep guide: [docs/guides/openswoole.md](../../../docs/guides/openswoole.md) (isolation, pool, no-die, FAQ).
 
 | | Apache/Nginx (`Bootstrap`) | OpenSwoole (`SwooleBootstrap`) |
 |--|--|--|
@@ -49,7 +51,7 @@ Before answering architecture questions, writing code, or suggesting refactors:
 | API base | Prefer `ApiService` / `ProtectedApiService` | **same** (deprecated: `SwooleApiService` extends `ApiService`) |
 | Controllers | `callController()` / magic `$this->XController` | same |
 | Validation | `validatePosts` **throws**; prefer `validateOrFail()` / `definePostSchema` | same; legacy return style → `safeValidatePosts()` on deprecated `SwooleApiService` only |
-| Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` |
+| Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` — see [openswoole.md](../../../docs/guides/openswoole.md) |
 | Root `/` | `Index`/`index` | Dev: `Developer`/`app` |
 | Early path deny | `.htaccess` | `SecurityManager::isRequestAllowed` |
 | Uploads | `$files` = `$_FILES['file']` only; no MIME sanitize | Normalized + name/MIME sanitize |

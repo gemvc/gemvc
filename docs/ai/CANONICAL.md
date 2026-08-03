@@ -72,6 +72,8 @@ Usual schema API: `definePostSchema()` / `defineGetSchema()` → `bool` + `retur
 
 Prefer **`ApiService` / `ProtectedApiService`** on every server.
 
+**OpenSwoole isolation, pooling, no-`die()`, production FAQ:** [openswoole.md](../guides/openswoole.md).
+
 ---
 
 ## Authentication (5.9.1)

@@ -88,6 +88,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 | Money / concurrent transfer | `docs/guides/model.md#atomic-money-transfers-pessimistic-lock` (`forUpdate`) |
 | Views / migrate | `docs/guides/database.md` |
 | Packages | `docs/guides/ecosystem.md` |
+| OpenSwoole isolation / pool / FAQ | `docs/guides/openswoole.md` |
 | CLI | `docs/guides/cli.md` |
 | Auth / JWT | `docs/guides/security.md` |
 

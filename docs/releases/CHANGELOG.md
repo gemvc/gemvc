@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Canonical OpenSwoole runtime guide: [openswoole.md](../guides/openswoole.md) (request isolation, pooling, no-`die()`, developer rules, production FAQ); linked from architecture, http-lifecycle, AI INDEX, ecosystem, database, APM
+
 ## [5.13.0] - 2026-08-03
 
 ### Added

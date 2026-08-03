@@ -84,3 +84,4 @@ if ($err = $this->safeValidatePosts([...])) {
 
 - [api.md](../guides/api.md) · [http-lifecycle.md](../guides/http-lifecycle.md) · [architecture.md](../guides/architecture.md) · [apm.md](../guides/apm.md)
 - Trust/mesh is separate: [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md)
+- OpenSwoole runtime behavior (isolation / pool / FAQ): [openswoole.md](../guides/openswoole.md)

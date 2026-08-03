@@ -124,7 +124,7 @@ See the full stack in [database.md — Under the hood](database.md#under-the-hoo
 | **Role** | **True connection pooling** for OpenSwoole (Hyperf pool), get + release per operation |
 | **Drivers** | MySQL (primary), **PostgreSQL** supported; same contracts |
 | **When used** | `WebserverDetector` → `swoole` and class exists; else factory falls back to PDO |
-| **Docs** | `vendor/gemvc/connection-openswoole/README.md`, `RELEASE_NOTES.md` |
+| **Docs** | `vendor/gemvc/connection-openswoole/README.md`, `RELEASE_NOTES.md`; library runtime behavior: [openswoole.md](openswoole.md) |
 
 **AI rules:**
 

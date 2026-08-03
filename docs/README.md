@@ -60,7 +60,7 @@ Deeper: [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/se
 
 ### 2. Controller layer — [controller.md](guides/controller.md)
 
-**What it does:** Orchestration only. Map POST/PUT/PATCH onto Model, `createModel()` for APM, Model methods, or **flagship `createList()`** (filter / LIKE / sort / paginate from API allowlists). Apache uses `callController`; Swoole does not.
+**What it does:** Orchestration only. Map POST/PUT/PATCH onto Model, `createModel()` for APM, Model methods, or **flagship `createList()`** (filter / LIKE / sort / paginate from API allowlists). Prefer `callController` on all servers.
 
 Covers: 4-layer role; mapping; `createModel` / `createList` + list GET params; protected columns; errors; CLI templates; Do/Don’t.
 
@@ -110,8 +110,8 @@ Customizing `create:*` output via `{project}/templates/cli/`. Needs **cli-dev**.
 ### [apm.md](guides/apm.md)
 **`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) + providers (e.g. TraceKit): root span, unified `APM_*` flags, **`callController` / `createModel`**, exceptions, `ApmTracingTrait`.
 
-### [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
-Also linked from [api.md](guides/api.md) — adapters, hardening, auto docs. Prefer [api.md](guides/api.md) first for writing `app/api`.
+### [http-lifecycle.md](guides/http-lifecycle.md) · [openswoole.md](guides/openswoole.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
+Adapters and hardening; **[openswoole.md](guides/openswoole.md)** is the canonical answer for OpenSwoole isolation, pooling, no-`die()`, and production FAQ. Prefer [api.md](guides/api.md) first for writing `app/api`.
 
 ---
 

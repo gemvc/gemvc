@@ -20,7 +20,7 @@ Before evaluating the framework or reading the API documentation, read:
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — *why* GEMVC is shaped this way (philosophy)
 - [`docs/guides/architecture.md`](docs/guides/architecture.md) — *how* requests flow through the code
 
-Understanding the architectural assumptions behind GEMVC is essential.
+Understanding the architectural assumptions behind GEMVC is essential. For OpenSwoole production questions (isolation, pooling, memory), read [`docs/guides/openswoole.md`](docs/guides/openswoole.md).
 
 > **AI coding agents (Claude Code, Antigravity, Cursor, Copilot, …):** start at [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md); Antigravity: [`GEMINI.md`](GEMINI.md)), then **mandatory** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) → [`CANONICAL.md`](docs/ai/CANONICAL.md) → [`CORE_REFERENCE.md`](docs/ai/CORE_REFERENCE.md). GEMVC is **not** Laravel/Symfony — do not invent routes or Eloquent. Machine map: [`llms.txt`](llms.txt).
 

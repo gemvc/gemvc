@@ -26,6 +26,8 @@ Version: 5.13.0 (gemvc/library)
 - docs/guides/installation.md: Install → first API; APCu/Redis for rate-limit drivers
 - docs/guides/cli.md: CLI workflows
 - docs/guides/security.md: JWT, schema, rate-limit drivers + FAIL_MODE, hardening
+- docs/guides/http-lifecycle.md: Adapters, unified Request, Apache vs Swoole delivery
+- docs/guides/openswoole.md: OpenSwoole isolation, pooling, no-die, production FAQ (canonical)
 - docs/guides/apm.md: APM tracing
 - docs/guides/api-documentation.md: Auto @http docs
 

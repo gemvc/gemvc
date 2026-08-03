@@ -117,7 +117,7 @@ Installed here (this repo has **no** top-level `packages/`). Library engine is `
 
 1. Apache expects `/api/...` + `api` hop; Swoole does **not** auto-skip `api` — configure sections or drop prefix
 2. `METHOD_IN_URL_SECTION` = **SwooleBootstrap only**
-3. Never `die`/`exit` on Swoole request path
+3. Never `die`/`exit` on Swoole request path — details: [openswoole.md](../../../docs/guides/openswoole.md)
 4. Prefer `ApiService` / `ProtectedApiService` on all servers; `Swoole*` are deprecated aliases
 5. `requireAuth` must **throw**; JsonResponse from constructor does not abort method
 6. Auth: missing token **401**; bad verify / wrong role **403**

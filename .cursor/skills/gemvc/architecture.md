@@ -38,6 +38,8 @@ HTTP
  → SwooleRequest → SwooleBootstrap (APM; extractRouteInfo)
  → processRequest() → App\Api\{Service} extends ApiService (or deprecated SwooleApiService)
  → callController → ControllerTracingProxy → Controller
+
+Full OpenSwoole contract (isolation, pool, no-die, FAQ): [docs/guides/openswoole.md](../../../docs/guides/openswoole.md).
  → Model → Table (pooled connection)
  → showSwoole() → APM flush
 ```

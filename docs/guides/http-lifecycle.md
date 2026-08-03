@@ -2,7 +2,7 @@
 
 **Audience:** adapters, unified `Request` / `JsonResponse`, Apache vs OpenSwoole paths.
 
-**Related:** [api.md](api.md) · [architecture.md](architecture.md) · [security.md](security.md)
+**Related:** [api.md](api.md) · [architecture.md](architecture.md) · [security.md](security.md) · [openswoole.md](openswoole.md)
 
 Complete guide to GEMVC's server-agnostic HTTP request handling.
 
@@ -11,6 +11,7 @@ Complete guide to GEMVC's server-agnostic HTTP request handling.
 | Need | Jump to |
 |------|---------|
 | Apache vs Swoole path | [Request Life Cycle](#request-life-cycle) |
+| **OpenSwoole isolation / pool / no-die** | **[openswoole.md](openswoole.md)** (canonical) |
 | Adapters | [Server Adapters](#server-adapters) |
 | Unified Request fields | [Unified Request Object](#unified-request-object) |
 | Writing `app/api` | [api.md](api.md) |
