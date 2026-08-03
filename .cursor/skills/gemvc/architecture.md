@@ -37,7 +37,7 @@ HTTP
  → SecurityManager::isRequestAllowed (path normalize; block /app, /vendor, .env, .php, …)
  → SwooleRequest → SwooleBootstrap (APM; extractRouteInfo)
  → processRequest() → App\Api\{Service} extends SwooleApiService
- → bare new Controller (no callController)
+ → callController → ControllerTracingProxy → Controller  (same shared trait as Apache)
  → Model → Table (pooled connection)
  → showSwoole() → APM flush
 ```
@@ -55,7 +55,8 @@ Routing in `SwooleBootstrap::extractRouteInfo()`:
 | Concern | `ApiService` | `SwooleApiService` |
 |---------|--------------|-------------------|
 | File | `src/core/ApiService.php` | `src/core/SwooleApiService.php` |
-| APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | **Absent** |
+| Shared | `ApiServiceSharedTrait` — `requireAuth`, `requireRateLimit*`, `callController()`, `__get` | same trait |
+| APM controller wrap | `callController()`, `__get` → `ControllerTracingProxy` | same |
 | Auth default | Prefer `ProtectedApiService` for CRUD | Prefer `ProtectedSwooleApiService` for CRUD |
 | `validatePosts` / `validateStringPosts` | throws `ValidationException` | returns `?JsonResponse` (legacy) |
 | `validateOrFail` / `validateStringOrFail` | throws `ValidationException` | throws (SwooleBootstrap → 400) |
@@ -112,7 +113,7 @@ Constructor `requireAuth` works because Bootstrap wraps construct + invoke in tr
 - TraceKit package autoloads that NS from `vendor/gemvc/apm-tracekit/src/` (`TraceKitProvider`)
 - Env: unified `APM_*`; TraceKit also `TRACEKIT_ENDPOINT` (not `TRACEKIT_API_URL`), `TRACEKIT_API_KEY`, …
 - Root span: Bootstrap / SwooleBootstrap
-- Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (Apache)
+- Controller spans: `APM_TRACE_CONTROLLER=1` **and** `callController` (Apache **and** OpenSwoole)
 - DB spans: `APM_TRACE_DB_QUERY=1` via `createModel` → Request on Table / `UniversalQueryExecuter`
 - Never hardcode TraceKit in app or library app-facing APIs
 

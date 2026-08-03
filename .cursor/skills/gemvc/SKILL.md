@@ -46,7 +46,7 @@ Before answering architecture questions, writing code, or suggesting refactors:
 | | Apache/Nginx (`ApiService` + `Bootstrap`) | OpenSwoole (`SwooleApiService` + `SwooleBootstrap`) |
 |--|--|--|
 | URL | `/api/{Service}/{method}` — segment `"api"` hops to next | **No** automatic `api` hop; `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (defaults 1/2) — **Swoole only** for METHOD |
-| Controllers | `callController()` / magic `$this->XController` | Bare `new XController($this->request)` |
+| Controllers | `callController()` / magic `$this->XController` | same (`ApiServiceSharedTrait`) |
 | Validation helpers | `validatePosts` **throws**; prefer `validateOrFail()` | Legacy `validatePosts` returns `?JsonResponse`; prefer `validateOrFail()` (SwooleBootstrap → 400) |
 | Lifecycle | `JsonResponse::show()` then `die` | `processRequest()` → `showSwoole()` — **never** `die`/`exit` |
 | Root `/` | `Index`/`index` | Dev: `Developer`/`app` |
@@ -76,9 +76,9 @@ API: `findable` / `filterable` / `sortable` → Controller: `createList($model, 
 
 ## Hard Do / Don't
 
-**DO:** Extend `ApiService`/`SwooleApiService` (public) or `ProtectedApiService`/`ProtectedSwooleApiService` (auth CRUD), `Controller`, `Table`/`ViewTable`; schema before input; `callController`+`createModel` on Apache; prefer `gemvc/helper`, `http-client`, `apm-contracts` (`APM_NAME`, never hardcode TraceKit in app).
+**DO:** Extend `ApiService`/`SwooleApiService` (public) or `ProtectedApiService`/`ProtectedSwooleApiService` (auth CRUD), `Controller`, `Table`/`ViewTable`; schema before input; `callController`+`createModel` on **both** bases; prefer `gemvc/helper`, `http-client`, `apm-contracts` (`APM_NAME`, never hardcode TraceKit in app).
 
-**DON'T:** Invent routes/Eloquent; skip layers on normal HTTP services; string-concat SQL; float money; assume `create:*` without `cli-dev`; copy `callController` into `SwooleApiService`; migrate a plain `Table` as a SQL view.
+**DON'T:** Invent routes/Eloquent; skip layers on normal HTTP services; string-concat SQL; float money; assume `create:*` without `cli-dev`; migrate a plain `Table` as a SQL view.
 
 ## Resources
 

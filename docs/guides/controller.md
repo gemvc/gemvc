@@ -53,11 +53,10 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 1. Controllers **extend** `Gemvc\Core\Controller`; live in `app/controller/` as `UserController`, etc.
 2. **No schema / auth in Controller** — that belongs in API (`define*Schema`, `requireAuth` / `auth`).
 3. Prefer **`createModel(new XModel())`** before DB work so Request (and APM) reach Table queries. Works for any object; calls `setRequest` if present (composition Models should forward it to children).
-4. Apache/Nginx API: prefer **`callController(new XController($this->request))->method()`**.
-5. OpenSwoole API (`SwooleApiService`): **`(new XController($this->request))->method()`** — no `callController` / magic `$this->XController`.
-6. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.
-7. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` (initialized public props only; skips `protected` and often uninitialized typed publics).
-8. Never invent routes or put SQL in the controller.
+4. Prefer **`callController(new XController($this->request))->method()`** on Apache/Nginx **and** OpenSwoole (shared `ApiServiceSharedTrait`).
+5. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.
+6. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` (initialized public props only; skips `protected` and often uninitialized typed publics).
+7. Never invent routes or put SQL in the controller.
 
 ---
 
@@ -308,6 +307,6 @@ Templates: [templates.md](templates.md).
 1. Extends `Controller`; constructor calls `parent::__construct($request)`
 2. API validates + auth; Controller only orchestrates
 3. `createModel` before DB-bound work
-4. Apache: `callController(...)`; Swoole: bare `new`
+4. Prefer `callController(...)` on both Apache and OpenSwoole API bases
 5. List: API `findable`/`filterable`/`sortable` + Controller `createList(..., $columns?)`
 6. Mapping failures → `returnResponse()`

@@ -5,25 +5,29 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Core\AuthException;
-use Gemvc\Core\ValidationException;
 
 /**
- * SwooleApiService - OpenSwoole-compatible API service base class
- * 
- * This class replaces the Gemvc\Core\ApiService class to work with Swoole's
- * persistent process model by returning responses instead of using die()
+ * OpenSwoole-compatible API service base class.
  *
- * For authenticated CRUD services prefer {@see ProtectedSwooleApiService}.
+ * Shared auth, rate-limit, and callController live in {@see ApiServiceSharedTrait}
+ * (same as {@see ApiService}). Legacy validatePosts() still returns ?JsonResponse;
+ * prefer validateOrFail() or definePostSchema() + returnResponse().
+ *
+ * For authenticated CRUD prefer {@see ProtectedSwooleApiService}.
+ *
+ * @property Request $request
+ * @property-read ControllerTracingProxy $UserController
+ * @property-read ControllerTracingProxy $ProfileController
+ * @property-read ControllerTracingProxy $AnyController
  */
 class SwooleApiService
 {
+    use ApiServiceSharedTrait;
+
     protected Request $request;
     public ?string $error;
 
     /**
-     * Constructor
-     * 
      * @param Request $request The HTTP request object
      */
     public function __construct(Request $request)
@@ -33,129 +37,8 @@ class SwooleApiService
     }
 
     /**
-     * Require authentication (and optionally specific roles) before continuing.
-     *
-     * Call this ONCE — typically as the first line of your child class's
-     * constructor — to protect every method of that service, with no per-method
-     * boilerplate at all:
-     *
-     *   class User extends SwooleApiService {
-     *       public function __construct(Request $request) {
-     *           parent::__construct($request);
-     *           $this->requireAuth(['admin']); // whole service now requires role 'admin'
-     *       }
-     *   }
-     *
-     * On failure this THROWS AuthException instead of returning a value. Unlike
-     * a plain die()/exit(), this is safe under OpenSwoole: SwooleBootstrap catches
-     * AuthException (both around service construction and around the method call)
-     * and converts it directly into the correct response (401 if no token /
-     * cannot extract Authorization; 403 if token is invalid or role is missing)
-     * without ever crashing or terminating the persistent worker process.
-     *
-     * Because Bootstrap builds the service object and calls the requested method
-     * from the same place, throwing during construction guarantees the target
-     * method body never runs.
-     *
-     * You can still call it inside a single method instead, if you only want to
-     * protect that one method rather than the whole service.
-     *
-     * @param array<string>|null $roles null or [] = authenticated only (any role), otherwise require one of these roles
-     * @throws AuthException when authentication or authorization fails
-     */
-    public function requireAuth(?array $roles = []): void
-    {
-        $authorized = $roles === null ? $this->request->auth() : $this->request->auth($roles);
-        if (!$authorized) {
-            $response = $this->request->returnResponse();
-            throw new AuthException($response->service_message ?? 'Unauthorized', $response->response_code ?: 401);
-        }
-    }
-
-    /**
-     * Require rate limit — uses REQUEST_RATE_LIMIT_DRIVER (no-op if none).
-     * Overrides: requireRateLimitApcu(), requireRateLimitRedis(), requireRateLimitBoth().
-     *
-     *   $this->requireRateLimit();
-     *   $this->requireRateLimit(10, 'ip');
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimit(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api', null);
-    }
-
-    /**
-     * Force APCu for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitApcu(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_APCU
-        );
-    }
-
-    /**
-     * Force Redis for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitRedis(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_REDIS
-        );
-    }
-
-    /**
-     * Force simultaneous APCu + Redis for this call (deny if either over). Not failover.
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitBoth(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_BOTH
-        );
-    }
-
-    /**
      * Default index method
-     * 
+     *
      * @return JsonResponse Welcome response
      */
     public function index(): JsonResponse
@@ -236,7 +119,7 @@ class SwooleApiService
     /**
      * Safe validation method for use with Swoole
      * Returns the error response if validation fails
-     * 
+     *
      * @param array<string> $post_schema Validation schema
      * @return JsonResponse|null Error response or null if validation passes
      */
@@ -248,7 +131,7 @@ class SwooleApiService
     /**
      * Safe string validation method for use with Swoole
      * Returns the error response if validation fails
-     * 
+     *
      * @param array<string> $post_string_schema Validation schema
      * @return JsonResponse|null Error response or null if validation passes
      */
@@ -259,7 +142,7 @@ class SwooleApiService
 
     /**
      * Generates mock response data for API documentation
-     * 
+     *
      * @param string $method Method name
      * @return array<string, mixed> Mock response data
      */
@@ -267,4 +150,4 @@ class SwooleApiService
     {
         return [];
     }
-} 
+}

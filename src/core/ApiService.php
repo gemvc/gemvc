@@ -5,71 +5,34 @@ namespace Gemvc\Core;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
 use Gemvc\Http\JsonResponse;
-use Gemvc\Core\Apm\ApmFactory;
 use Gemvc\Core\Apm\ApmInterface;
 use Gemvc\Core\Apm\ApmTracingTrait;
-use Gemvc\Helper\ProjectHelper;
 use Gemvc\Core\Apm\AbstractApm;
 
 
 /**
- * Base class for all API services
- * 
+ * Base class for all API services (Apache / Nginx PHP-FPM).
+ *
+ * Shared auth, rate-limit, and callController live in {@see ApiServiceSharedTrait}
+ * (also used by {@see SwooleApiService}).
+ *
  * @property Request $request
  * @property-read mixed $errors
- * 
+ *
  * Magic Properties for Controllers:
  * @property-read \Gemvc\Core\ControllerTracingProxy $UserController  Access App\Controller\UserController
  * @property-read \Gemvc\Core\ControllerTracingProxy $ProfileController Access App\Controller\ProfileController
  * @property-read \Gemvc\Core\ControllerTracingProxy $AnyController   Access App\Controller\AnyController
- * 
- * public service is suitable for all service without need of Authentication, like Login , Register etc...
- * For authenticated CRUD services prefer {@see ProtectedApiService} (auth in the base constructor).
+ *
+ * Public service is suitable for endpoints without Authentication (Login, Register, etc.).
+ * For authenticated CRUD prefer {@see ProtectedApiService}.
  */
 class ApiService
 {
     use ApmTracingTrait;
+    use ApiServiceSharedTrait;
+
     protected Request $request;
-
-    /**
-     * Magic getter for easy Controller access with APM tracing
-     * 
-     * Allows accessing controllers as properties:
-     * $this->UserController->method()
-     * $this->User->method() (resolves to UserController)
-     * 
-     * @param string $name
-     * @return mixed|ControllerTracingProxy
-     */
-    public function __get(string $name)
-    {
-        // 1. Try resolving as full Controller name (e.g., $this->UserController)
-        if (str_ends_with($name, 'Controller')) {
-            $class = 'App\\Controller\\' . $name;
-            if (class_exists($class)) {
-                $instance = new $class($this->request);
-                if ($instance instanceof Controller) {
-                    return $this->callController($instance);
-                }
-            }
-        }
-
-        // 2. Try resolving as short name (e.g., $this->User -> UserController)
-        $shortClass = 'App\\Controller\\' . ucfirst($name) . 'Controller';
-        if (class_exists($shortClass)) {
-            $instance = new $shortClass($this->request);
-            if ($instance instanceof Controller) {
-                return $this->callController($instance);
-            }
-        }
-
-        // 3. Trigger standard PHP undefined property error
-        $trace = debug_backtrace();
-        /*@phpstan-ignore-next-line */
-        trigger_error('Undefined property: ' . static::class . '::$' . $name .' in ' . $trace[0]['file'] .' on line ' . $trace[0]['line'],            E_USER_NOTICE);
-        return null;
-    }
-
 
     /**
      * @deprecated Use $errors array and GemvcError instead
@@ -84,177 +47,15 @@ class ApiService
 
     public function __construct(Request $request)
     {
-        //$this->error = null;
         $this->errors = [];
         $this->request = $request;
 
-        // APM is now initialized in Bootstrap/SwooleBootstrap, available via $request->apm
-        // No need to initialize here - this ensures APM captures the full request lifecycle
-    }
-
-    /**
-     * Require authentication (and optionally specific roles) before continuing.
-     *
-     * Call this ONCE — typically as the first line of your child class's
-     * constructor — to protect every method of that service, with no per-method
-     * boilerplate at all:
-     *
-     *   class User extends ApiService {
-     *       public function __construct(Request $request) {
-     *           parent::__construct($request);
-     *           $this->requireAuth(['admin']); // whole service now requires role 'admin'
-     *       }
-     *   }
-     *
-     * On failure this THROWS AuthException instead of returning a value — there
-     * is nothing to check or return. Bootstrap/SwooleBootstrap catch AuthException
-     * and immediately produce the correct error response:
-     * 401 if no token / cannot extract Authorization,
-     * 403 if token is present but invalid, or authenticated but missing the required role.
-     *
-     * This actually stops execution (not just the final response) even when
-     * called from the constructor: Bootstrap builds the service object and calls
-     * the requested method inside the SAME try/catch block, so throwing during
-     * construction prevents the target method from ever running.
-     *
-     * You can still call it inside a single method instead, if you only want to
-     * protect that one method rather than the whole service.
-     *
-     * @param array<string>|null $roles null or [] = authenticated only (any role), otherwise require one of these roles
-     * @throws AuthException when authentication or authorization fails
-     */
-    public function requireAuth(?array $roles = []): void
-    {
-        if (!$this->request->auth($roles)) {
-            $response = $this->request->returnResponse();
-            throw new AuthException($response->service_message ?? 'Unauthorized', $response->response_code ?: 401);
-        }
-    }
-
-    /**
-     * Require rate limit before continuing — same DX as requireAuth().
-     *
-     * Call in the service constructor to guard every method, or inside one method:
-     *
-     *   $this->requireRateLimit();              // 20/sec, IP + token
-     *   $this->requireRateLimit(10);            // 10/sec
-     *   $this->requireRateLimit(10, 'ip');      // IP only
-     *   $this->requireRateLimit(5, 'token', 120);
-     *
-     * Uses REQUEST_RATE_LIMIT_DRIVER (no-op if driver=none).
-     * Throws RateLimitException → Bootstrap returns HTTP 429.
-     * Unavailable backend → REQUEST_RATE_LIMIT_FAIL_MODE (default closed). No auto-fallback.
-     *
-     * Explicit overrides: requireRateLimitApcu(), requireRateLimitRedis(), requireRateLimitBoth().
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimit(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce($this->request, $perSec, $scope, $blockSeconds, 'api', null);
-    }
-
-    /**
-     * Force APCu for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitApcu(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_APCU
-        );
-    }
-
-    /**
-     * Force Redis for this call (ignores REQUEST_RATE_LIMIT_DRIVER).
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitRedis(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_REDIS
-        );
-    }
-
-    /**
-     * Force simultaneous APCu + Redis for this call (deny if either over). Not failover.
-     *
-     * @param 'both'|'ip'|'token'|string $scope
-     * @throws RateLimitException
-     */
-    public function requireRateLimitBoth(
-        int $perSec = RateLimiter::DEFAULT_PER_SEC,
-        string $scope = RateLimiter::SCOPE_BOTH,
-        int $blockSeconds = RateLimiter::DEFAULT_BLOCK_SECONDS
-    ): void {
-        RateLimiter::enforce(
-            $this->request,
-            $perSec,
-            $scope,
-            $blockSeconds,
-            'api',
-            RateLimiter::DRIVER_BOTH
-        );
-    }
-
-    /**
-     * Call a controller method with automatic APM span creation
-     * 
-     * This is the recommended method name. Tracing is controlled by APM_TRACE_CONTROLLER
-     * environment variable. When enabled, automatically creates spans for controller operations.
-     * 
-     * Usage in API layer:
-     *   return $this->callController(new ProductController($this->request))->create();
-     *   return $this->callController(new ProductController($this->request))->delete();
-     * 
-     * @param Controller $controller The controller instance
-     * @return ControllerTracingProxy A proxy object that intercepts method calls
-     */
-    protected function callController(Controller $controller): ControllerTracingProxy
-    {
-        return new ControllerTracingProxy($controller, $this->request->apm);
-    }
-
-    /**
-     * Call a controller method with automatic APM span creation
-     * 
-     * @deprecated Use callController() instead. This method will be removed in a future version.
-     * 
-     * @param Controller $controller The controller instance
-     * @return ControllerTracingProxy A proxy object that intercepts method calls
-     */
-    protected function callWithTracing(Controller $controller): ControllerTracingProxy
-    {
-        return $this->callController($controller);
+        // APM is initialized in Bootstrap/SwooleBootstrap, available via $request->apm
     }
 
     /**
      * Add an error to the errors array
-     * 
+     *
      * @param string $message Error message
      * @param int $httpCode HTTP status code (default: 400)
      * @return void
@@ -262,13 +63,11 @@ class ApiService
     protected function addError(string $message, int $httpCode = 400): void
     {
         $this->errors[] = new GemvcError($message, $httpCode, __FILE__, __LINE__);
-        // Keep backward compatibility - set string error to first error message
-        //$this->error = $this->error ?? $message;
     }
 
     /**
      * Get all errors as GemvcError array
-     * 
+     *
      * @return array<GemvcError>
      */
     public function getErrors(): array
@@ -278,7 +77,7 @@ class ApiService
 
     /**
      * Check if there are any errors
-     * 
+     *
      * @return bool True if errors exist, false otherwise
      */
     public function hasErrors(): bool
@@ -288,25 +87,22 @@ class ApiService
 
     /**
      * Clear all errors
-     * 
+     *
      * @return void
      */
     public function clearErrors(): void
     {
         $this->errors = [];
-        //$this->error = null;
     }
 
     /**
      * Default index method - returns welcome message for the service
-     * 
+     *
      * @return JsonResponse Welcome response with service name
      */
     public function index(): JsonResponse
     {
         $name = get_class($this);
-        //because get_class return class name with namespace like App\\Service\\className ,
-        //we need only to show className and it is in index 2
         $name = explode('\\', $name)[2];
         return Response::success("welcome to $name service");
     }
@@ -343,11 +139,11 @@ class ApiService
 
     /**
      * Validates POST data against a schema
-     * 
+     *
      * @param array<string> $post_schema Define Post Schema to validation
      * @return void
      * @throws ValidationException If validation fails (HTTP 400)
-     * 
+     *
      * @example validatePosts(['email'=>'email' , 'id'=>'int' , '?name' => 'string'])
      * @help : ?name means it is optional
      */
@@ -361,11 +157,11 @@ class ApiService
 
     /**
      * Validates string lengths in POST data against min and max constraints
-     * 
+     *
      * @param array<string> $post_string_schema Array where keys are post name and values are strings in the format "min-value|max-value" (optional)
      * @return void
      * @throws ValidationException If validation fails (HTTP 400)
-     * 
+     *
      * @example validateStringPosts([
      *     'username' => '3|15',  // Min length 3, max length 15
      *     'password' => '8|',    // Min length 8, no max limit
@@ -383,23 +179,12 @@ class ApiService
 
     /**
      * Parse JSON POST data if Content-Type is application/json
-     * 
+     *
      * Helper method to handle JSON POST parsing when framework doesn't auto-parse.
-     * This is useful for cases where JSON POST data needs to be manually parsed.
-     * 
      * Checks if request->post is empty, then attempts to parse JSON from php://input
      * if Content-Type is application/json.
-     * 
+     *
      * @return void
-     * 
-     * @example
-     * // In your API service method:
-     * public function create(): JsonResponse
-     * {
-     *     $this->parseJsonPostData(); // Parse JSON if needed
-     *     // Now $this->request->post contains the parsed JSON data
-     *     // ... rest of your logic
-     * }
      */
     public function parseJsonPostData(): void
     {
@@ -434,13 +219,13 @@ class ApiService
 
 /**
  * Proxy class for Controller that intercepts method calls and creates APM spans
- * 
- * This class allows fluent syntax: $apiService->callWithTracing($controller)->method()
- * 
+ *
+ * This class allows fluent syntax: $apiService->callController($controller)->method()
+ *
  * This is a magic method proxy - all controller methods are intercepted via __call().
  * Static analysis tools may warn about undefined methods, but this is expected behavior.
- * 
- * @internal This class is used internally by ApiService::callWithTracing()
+ *
+ * @internal Used by ApiServiceSharedTrait::callController()
  * @method JsonResponse create() Intercepts create() method calls
  * @method JsonResponse read() Intercepts read() method calls
  * @method JsonResponse update() Intercepts update() method calls
@@ -461,19 +246,15 @@ class ControllerTracingProxy
 
     /**
      * Intercept method calls and create APM spans
-     * 
-     * This magic method intercepts all method calls to the controller and automatically
-     * creates APM spans for the operation. Tracing is controlled by APM_TRACE_CONTROLLER
-     * environment variable.
-     * 
+     *
+     * Tracing is controlled by APM_TRACE_CONTROLLER environment variable.
+     *
      * @param string $methodName The method name being called
      * @param array<mixed> $args The arguments passed to the method
      * @return JsonResponse The JsonResponse from the controller method
      */
     public function __call(string $methodName, array $args): JsonResponse
     {
-        // Check if APM_TRACE_CONTROLLER is enabled (environment-controlled)
-        // If disabled, call method directly without tracing overhead
         if (!self::shouldTraceController()) {
             /** @var callable $callable */
             $callable = [$this->controller, $methodName];
@@ -482,7 +263,6 @@ class ControllerTracingProxy
             return $result;
         }
 
-        // If APM is not available, just call the method directly
         if ($this->apm === null) {
             /** @var callable $callable */
             $callable = [$this->controller, $methodName];
@@ -491,46 +271,35 @@ class ControllerTracingProxy
             return $result;
         }
 
-
-
-        // Extract controller name
         $controllerName = get_class($this->controller);
         $parts = explode('\\', $controllerName);
         $controllerName = $parts[count($parts) - 1] ?? 'Unknown';
 
-        // Start controller operation span
         $controllerSpan = $this->apm->startSpan('controller-operation', [
             'controller.name' => $controllerName,
             'controller.method' => $methodName,
         ], ApmInterface::SPAN_KIND_INTERNAL);
 
         try {
-            // Call the actual controller method
             /** @var callable $callable */
             $callable = [$this->controller, $methodName];
             /** @var JsonResponse $result */
             $result = call_user_func_array($callable, $args);
 
-            // Determine status based on result
             $statusCode = $result->response_code ?? 200;
             $status = ($statusCode >= 400) ? ApmInterface::STATUS_ERROR : ApmInterface::STATUS_OK;
 
-            // Build span attributes
             $spanAttributes = [
                 'controller.result' => 'success',
                 'http.status_code' => $statusCode,
             ];
 
-            // Optionally include response data if enabled
             if ($this->apm->shouldTraceResponse()) {
-                // Get the full JSON response
                 $responseData = $result->json_response ?? '';
                 if ($responseData === false || empty($responseData)) {
-                    // Fallback: encode the response object
                     $responseData = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
 
-                // Limit response size to avoid huge traces (using centralized helper)
                 if (is_string($responseData)) {
                     $responseData = AbstractApm::limitStringForTracing($responseData);
                 }
@@ -541,12 +310,10 @@ class ControllerTracingProxy
                 $spanAttributes['response.count'] = $result->count !== null ? (string) $result->count : 'null';
             }
 
-            // Update span with response details
             $this->apm->endSpan($controllerSpan, $spanAttributes, $status);
 
             return $result;
         } catch (\Throwable $e) {
-            // Record exception and end span with error
             if (!empty($controllerSpan)) {
                 $this->apm->recordException($controllerSpan, $e);
                 $this->apm->endSpan($controllerSpan, [
@@ -560,11 +327,6 @@ class ControllerTracingProxy
     }
 
     /**
-     * Check if controller tracing is enabled via environment variable
-     * 
-     * Tracing is controlled by APM_TRACE_CONTROLLER environment variable.
-     * Supports both '1' and 'true' values for compatibility.
-     * 
      * @return bool True if APM_TRACE_CONTROLLER is set to '1' or 'true'
      */
     private static function shouldTraceController(): bool

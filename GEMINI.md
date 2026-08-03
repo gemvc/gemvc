@@ -65,7 +65,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Naming: `User.php`, `UserController.php`, `UserModel.php`, `UserTable.php`
 - Schema **before** using request data: `definePostSchema` / `defineGetSchema`
 - Authenticated CRUD: **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (auth in base ctor). Public: `ApiService` / `SwooleApiService`
-- Apache: `callController()` + `createModel()`; OpenSwoole: bare `new` Controller — **never** copy `callController` onto `SwooleApiService`
+- Apache: `callController()` + `createModel()`; OpenSwoole: same `callController()` on `SwooleApiService` (shared `ApiServiceSharedTrait`) + `createModel()`
 - SQL views: **`extends ViewTable`** + `defineView()` — never `db:migrate` a plain `Table` aimed at a view name
 - Money: `public string` + `$_type_map` `decimal` — never `float`; concurrent transfers: `beginTransaction` + `forUpdate` + BCMath on `$this` — not raw PDO
 - `Schema::primary` / `autoIncrement` are **not** migrate DDL today

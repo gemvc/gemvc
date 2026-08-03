@@ -11,13 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ApiServiceSharedTrait` — shared `requireAuth`, `requireRateLimit*`, `callController`, magic `$this->XController` on `ApiService` **and** `SwooleApiService`
 - `ApiService` / `SwooleApiService`: `validateOrFail()` / `validateStringOrFail()` — throw `ValidationException` on both runtimes
 - `SwooleBootstrap` catches `ValidationException` → `Response::badRequest()` (constructor + method)
-- Unit tests: `tests/Unit/Core/ValidateOrFailTest.php`
+- Unit tests: `ValidateOrFailTest.php`, `SwooleApiServiceSharedTraitTest.php`
+
+### Changed
+
+- OpenSwoole apps can use `callController()` / `$this->UserController` the same way as Apache/Nginx (Phase 2 of runtime unification)
 
 ### Documentation
 
-- Phase 1 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / api.md prefer `definePostSchema` or `validateOrFail` over legacy Swoole return-style `validatePosts`
+- Phase 1–2 of [api-runtime-unification.md](../improvements/api-runtime-unification.md); AI pack / api.md / apm.md updated for shared trait
 
 ## [5.12.0] - 2026-08-01
 

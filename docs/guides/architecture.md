@@ -85,7 +85,7 @@ HTTP Request
  → OpenSwooleServer (SecurityManager path check — Swoole only)
  → SwooleRequest (sanitize; upload name/MIME)
  → SwooleBootstrap (APM root; SERVICE_IN_URL_SECTION / METHOD_IN_URL_SECTION)
- → SwooleApiService (schema + auth) → bare `new Controller` (no callController)
+ → SwooleApiService (schema + auth) → `callController` → Controller (same shared trait as Apache)
  → Model → Table (pool + DB span if APM_TRACE_DB_QUERY=1)
  → JsonResponse|HtmlResponse showSwoole → APM flush
 ```
@@ -240,7 +240,7 @@ Full guide: [apm.md](apm.md) · `vendor/gemvc/apm-contracts/README.md`.
 
 ```
 Bootstrap → $request->apm
-  → ApiService (callController span if enabled; Swoole: bare new Controller)
+  → ApiService / SwooleApiService (`callController` span if enabled)
   → Controller → createModel() → Model/Table → UniversalQueryExecuter (query span if enabled)
   → Response → provider flush (non-blocking where supported)
 ```

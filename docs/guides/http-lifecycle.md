@@ -563,7 +563,7 @@ $this->server->on("request", function ($request, $response) {
 **app/api/User.php** — same layering on every server; **base class differs**:
 
 ```php
-// Apache/Nginx: extend ApiService and prefer callController(...) for APM
+// Apache/Nginx and OpenSwoole: prefer callController(...) for APM
 // OpenSwoole: extend SwooleApiService and use bare (new UserController(...))->create()
 ```
 
@@ -594,7 +594,7 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Apache ApiService: prefer callController for APM controller spans
+        // Prefer callController for APM controller spans (both ApiService and SwooleApiService)
         return $this->callController(new UserController($this->request))->create();
         // OpenSwoole SwooleApiService: return (new UserController($this->request))->create();
     }

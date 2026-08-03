@@ -17,7 +17,7 @@ app/api/ → app/controller/ → app/model/ → app/table/
 
 - URL: `/api/{Service}/{method}` — **no routes file**
 - Validate with `definePostSchema` / `defineGetSchema` before using input
-- Apache: `callController()` + `createModel()`; OpenSwoole: bare `new` Controller
+- Apache: `callController()` + `createModel()`; OpenSwoole: same `callController()` via shared trait + `createModel()`
 - SQL views: `extends ViewTable` + `defineView()` + `gemvc db:migrate`
 - Codegen: `composer require --dev gemvc/cli-dev` then `create:crud` / `create:*`
 

@@ -14,7 +14,9 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 |------|----------|
 | `library/.cursorrules` | AI hard rules for GEMVC 5.x |
 | `library/README.md` | Ecosystem overview, layer guides index |
-| `library/src/core/ApiService.php` | `requireAuth`, `requireRateLimit*`, `callController` |
+| `library/src/core/ApiService.php` | Apache/Nginx public base; uses `ApiServiceSharedTrait` |
+| `library/src/core/ApiServiceSharedTrait.php` | Shared: `requireAuth`, `requireRateLimit*`, `callController` |
+| `library/src/core/SwooleApiService.php` | OpenSwoole public base; same shared trait |
 | `library/src/core/RateLimiter.php` | Drivers apcu/redis/both/none; scopes ip/token/both; no auto-fallback; FAIL_MODE |
 | `library/src/core/AuthException.php` / `RateLimitException.php` | Thrown by require*; Bootstrap → 401/403/429 |
 | `library/src/core/Bootstrap.php` | Convention routing `/api/{Service}/{method}`, global rate env |
@@ -37,6 +39,6 @@ Treat as **read-only**. Change app code or Composer constraints; do not patch ve
 ## Notes
 
 - Composer **dist** may omit `docs/ai/` and `docs/guides/` — rely on `.cursorrules`, README, and `src/`
-- This app runs **Apache** (`APP_ENV_SERVER=apache`); Swoole APIs (`SwooleApiService`) differ — do not copy `callController` magic onto Swoole services
+- This app runs **Apache** (`APP_ENV_SERVER=apache`); OpenSwoole still uses `SwooleApiService` as the base class name, but `callController` / `requireAuth` / rate limits are shared via `ApiServiceSharedTrait`
 - Connection packages implement DB under `Table`; prefer Table/`ViewTable`/QueryBuilder over raw PDO in app code
 - SQL views: extend **`ViewTable`**, migrate with `db:migrate` — do **not** invent PDO `CREATE VIEW` helpers unless bypassing the framework on purpose

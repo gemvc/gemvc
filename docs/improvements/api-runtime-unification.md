@@ -1,7 +1,7 @@
 # Unified `ApiService` (runtime) — plan of record
 
-**Status:** Phase 0 done · **Phase 1 done** (validation consistency) · Phase 2–3 planned.  
-**AI:** implement Phase 2+ only when explicitly tasked. Do **not** merge inheritance until Phase 2 shared behavior is extracted.
+**Status:** Phase 0–2 **done** · Phase 3 planned.  
+**AI:** implement Phase 3 only when explicitly tasked. Do **not** merge inheritance until explicitly asked.
 
 ## Goals
 
@@ -40,7 +40,16 @@ $this->validateStringOrFail(['name' => '2|100']);      // throws ValidationExcep
 // Bootstrap + SwooleBootstrap catch → HTTP 400
 ```
 
-Legacy helper mismatch (still present; do **not** unify parents until Phase 2+):
+Shared behavior (**Phase 2 — shipped**): `ApiServiceSharedTrait` on both bases:
+
+```php
+$this->requireAuth(['admin']);
+$this->requireRateLimit();
+return $this->callController(new UserController($this->request))->create();
+// Magic: $this->UserController->create()
+```
+
+Legacy helper mismatch (still present; do **not** unify parents until Phase 3):
 
 ```php
 // ApiService
@@ -65,12 +74,18 @@ protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 
 4. Kept `safeValidatePosts()` / `safeValidateStringPosts()` as return-style shims on Swoole.
 5. Tests: `tests/Unit/Core/ValidateOrFailTest.php`.
 
-### Phase 2 — Shared behavior
+### Phase 2 — Shared behavior (**done**)
 
-- Extract shared auth / rate limit / `callController` / APM wiring into a trait or internal abstract.
-- Response **delivery** stays in Bootstrap / OpenSwooleServer (not in API classes).
+1. Extracted `Gemvc\Core\ApiServiceSharedTrait` with:
+   - `requireAuth`
+   - `requireRateLimit` / `requireRateLimitApcu` / `Redis` / `Both`
+   - `callController` / `callWithTracing`
+   - magic `__get` controller resolution
+2. `ApiService` and `SwooleApiService` both `use` the trait (still two public classes).
+3. Response delivery unchanged (Bootstrap / OpenSwooleServer).
+4. Tests: `tests/Unit/Core/SwooleApiServiceSharedTraitTest.php`; ProtectedSwoole `auth(null)` expectation aligned with shared `requireAuth`.
 
-### Phase 3 — One public base
+### Phase 3 — One public base (**planned**)
 
 - Make `ApiService` the unified developer-facing class.
 - `SwooleApiService` / `ProtectedSwooleApiService` become thin deprecated subclasses or aliases.
@@ -84,5 +99,5 @@ protected function validatePosts(array $schema): ?JsonResponse;  // returns 400 
 
 ## Related
 
-- [api.md](../guides/api.md) · [http-lifecycle.md](../guides/http-lifecycle.md) · [architecture.md](../guides/architecture.md)
-- Phase 2 trust/mesh is separate: [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md)
+- [api.md](../guides/api.md) · [http-lifecycle.md](../guides/http-lifecycle.md) · [architecture.md](../guides/architecture.md) · [apm.md](../guides/apm.md)
+- Trust/mesh is separate: [phase-2-trust-and-mesh.md](phase-2-trust-and-mesh.md)

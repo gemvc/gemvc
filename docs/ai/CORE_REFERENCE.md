@@ -79,6 +79,7 @@ $response->showSwoole($swooleResponse);
 ## `Gemvc\Core\ApiService`
 
 Public / optional-auth endpoints (login, register, health). For authenticated CRUD prefer {@see ProtectedApiService}.
+Shares `ApiServiceSharedTrait` with `SwooleApiService`.
 
 ```php
 public function __construct(Request $request)
@@ -116,6 +117,7 @@ class User extends ProtectedApiService {
 ## `Gemvc\Core\SwooleApiService`
 
 Public / optional-auth on OpenSwoole. For authenticated CRUD prefer {@see ProtectedSwooleApiService}.
+Shares `ApiServiceSharedTrait` with `ApiService` (`requireAuth`, rate limits, `callController`).
 
 ```php
 public function requireAuth(?array $roles = []): void
@@ -123,14 +125,17 @@ public function requireRateLimit(int $perSec = 20, string $scope = 'both', int $
 public function requireRateLimitApcu(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 public function requireRateLimitRedis(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
 public function requireRateLimitBoth(int $perSec = 20, string $scope = 'both', int $blockSeconds = 60): void
+protected function callController(Controller $c): ControllerTracingProxy  // same as ApiService
 protected function validateOrFail(array $schema): void              // throws; preferred (SwooleBootstrap → 400)
 protected function validateStringOrFail(array $schema): void        // throws
 protected function validatePosts(array $schema): ?JsonResponse      // legacy return style
 protected function validateStringPosts(array $schema): ?JsonResponse
 protected function safeValidatePosts(array $schema): ?JsonResponse  // alias of validatePosts
-// No callController / magic controllers — instantiate Controller yourself
 ```
 
+## `Gemvc\Core\ApiServiceSharedTrait`
+
+Internal trait used by `ApiService` and `SwooleApiService`: `requireAuth`, `requireRateLimit*`, `callController`, magic `__get` controllers.
 ## `Gemvc\Core\ProtectedSwooleApiService`
 
 Extends `SwooleApiService`. Same auth-in-constructor contract as `ProtectedApiService`.

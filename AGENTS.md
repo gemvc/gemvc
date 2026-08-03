@@ -47,7 +47,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 
 - Extend `ApiService` / `SwooleApiService` (public) or **`ProtectedApiService`** / **`ProtectedSwooleApiService`** (authenticated CRUD)
 - Call `definePostSchema` / `defineGetSchema` before using request data
-- Apache: `callController()` in API + `createModel()` in Controller
+- Apache: `callController()` in API + `createModel()` in Controller (also on OpenSwoole via shared trait)
 - Prefer `gemvc/helper` and `gemvc/http-client` over inventing validators/curl wrappers
 - Prefer `createList` + API list allowlists for filtered lists
 - Migrate views with `gemvc db:migrate YourViewTable` or `--all`
@@ -61,7 +61,7 @@ app/api/  →  app/controller/  →  app/model/  →  app/table/
 - Manually sanitize inputs or concatenate SQL; grab `DatabaseManagerFactory…->getPdo()` for multi-step money ops
 - Assume `create:crud` exists without `composer require --dev gemvc/cli-dev`
 - Assume the **Developer UI** list shows views (still BASE TABLE only; use `db:list` from cli-dev ≥ 1.3)
-- Copy `callController` into `SwooleApiService` (Apache `ApiService` only)
+- Assume `callController` is Apache-only — it is on `SwooleApiService` via `ApiServiceSharedTrait`
 
 ## Anti-hallucination checklist (verify before answering)
 

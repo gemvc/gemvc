@@ -47,7 +47,7 @@ Optional machine/IDE mirrors (same content, not required):
 - Never skip schema validation (`definePostSchema` / `defineGetSchema`)
 - Never manually sanitize inputs (framework already does)
 - Never create a routes file (URL maps to `app/api/{Service}/{method}`)
-- Prefer `callController()` (Apache/`ApiService`) + `createModel()` for APM-ready code; Swoole uses bare `new` Controller — see [api.md](../guides/api.md)
+- Prefer `callController()` + `createModel()` for APM-ready code on **both** Apache/`ApiService` and OpenSwoole/`SwooleApiService` — see [api.md](../guides/api.md)
 - **Lists:** API `findable`/`filterable`/`sortable` then Controller `createList(..., $columns)` — see [controller.md](../guides/controller.md#lists-createlist)
 - Use `requireAuth()` in the service constructor to guard a whole service
 - **Global rate limit:** `REQUEST_RATE_LIMIT_PER_SEC` + `REQUEST_RATE_LIMIT_DRIVER` (`apcu`|`redis`|`both`|`none`) → Bootstrap `enforceFromEnv`

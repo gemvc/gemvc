@@ -24,7 +24,7 @@ API (app/api/) → Controller → Model → Table / ViewTable (app/table/)
 - URL (Apache/Nginx): `/api/{Service}/{method}` — **no routes file**
 - Schema: `definePostSchema` / `defineGetSchema` before using input
 - Authenticated CRUD: **`ProtectedApiService`** / **`ProtectedSwooleApiService`**; public: `ApiService` / `SwooleApiService`
-- Apache path: `callController()` + `createModel()`; Swoole: bare `new` Controller (no `callController` on `SwooleApiService`)
+- Apache path: `callController()` + `createModel()`; Swoole: same `callController()` on `SwooleApiService` (shared trait) + `createModel()`
 - SQL views: **`ViewTable`** + `defineView()` + `db:migrate` — never point a plain `Table` at a view name
 - Money: string + `decimal` type map — never `float`; concurrent: `beginTransaction` + `forUpdate` + BCMath on one Table (`model.md`)
 - Codegen (`create:crud`, …): requires **`gemvc/cli-dev`**

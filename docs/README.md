@@ -50,7 +50,7 @@ OpenSwoole: configure `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no aut
 
 ### 1. API layer — [api.md](guides/api.md)
 
-**What it does:** Thin HTTP boundary. Schema, auth, **list allowlists** (`findable` / `filterable` / `sortable` — flagship with `createList`), then `callController(...)` (Apache) or bare `new` (Swoole). No business rules here.
+**What it does:** Thin HTTP boundary. Schema, auth, **list allowlists** (`findable` / `filterable` / `sortable` — flagship with `createList`), then `callController(...)` (Apache and OpenSwoole). No business rules here.
 
 Covers: `ApiService` vs `SwooleApiService`; auth; schemas; list allowlists; Controller invoke; `@http` docs; CLI; Do/Don’t.
 

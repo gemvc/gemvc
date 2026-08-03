@@ -50,8 +50,8 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 2. Extend **`ProtectedApiService`** / **`ProtectedSwooleApiService`** for authenticated CRUD; **`ApiService`** / **`SwooleApiService`** for public endpoints (login, register, health). Match Apache vs OpenSwoole.
 3. Always **`definePostSchema` / `defineGetSchema` / …** before using body/query data.
 4. If using a public base, prefer **`requireAuth([...])`** in the constructor to guard the whole service.
-5. Apache/Nginx: prefer **`callController(new XController($this->request))->method()`**.
-6. OpenSwoole: **`(new XController($this->request))->method()`** — **no** `callController` / magic `$this->XController`.
+5. Prefer **`callController(new XController($this->request))->method()`** on Apache/Nginx **and** OpenSwoole (shared via `ApiServiceSharedTrait`).
+6. Bare `(new XController($this->request))->method()` still works (no APM controller span).
 7. For lists: call `findable` / `filterable` / `sortable` **in API before** Controller `createList`.
 8. Never invent a routes file. Never put Model/Table SQL in API.
 
@@ -63,16 +63,16 @@ You extend `Gemvc\Core\ApiService` (Apache/Nginx) or `Gemvc\Core\SwooleApiServic
 |--|--------------|-------------------|
 | Server | Apache / Nginx | OpenSwoole |
 | Auth by default | `Protected*` yes; plain `Api*` no | `Protected*` yes; plain `Swoole*` no |
-| `callController()` | yes (APM proxy) on both Apache bases | **no** |
-| Magic `$this->UserController` | yes on both Apache bases | **no** |
+| `callController()` | yes (APM proxy) — shared trait | yes (same) |
+| Magic `$this->UserController` | yes — shared trait | yes (same) |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap → JSON) | return `?JsonResponse` (legacy) |
 | Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` | same (SwooleBootstrap → 400) |
-| `requireAuth()` | yes | yes |
-| `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | yes | yes |
+| `requireAuth()` | yes — shared trait | yes (same) |
+| `requireRateLimit()` / `requireRateLimitApcu\|Redis\|Both()` | yes — shared trait | yes (same) |
 
 Usual schema path: `definePostSchema()` / `defineGetSchema()` → `bool` + `returnResponse()` (does **not** throw). Prefer that, or `validateOrFail()` for throw-style on **both** servers. Do not rely on Swoole’s legacy `validatePosts()` return style for new code.
 
-Same `app/` layering either way; only the API base class and how you invoke Controllers differ. Details: [http-lifecycle.md](http-lifecycle.md).
+Same `app/` layering either way; pick the matching API base for the server. Auth / rate-limit / `callController` are shared (`ApiServiceSharedTrait`). Details: [http-lifecycle.md](http-lifecycle.md).
 
 ---
 
@@ -290,7 +290,7 @@ class User extends ApiService
 }
 ```
 
-OpenSwoole: extend `SwooleApiService` and use bare `new UserController(...)`.
+OpenSwoole: extend `SwooleApiService` (or `ProtectedSwooleApiService`); prefer the same `callController(...)` as Apache.
 
 ---
 
@@ -317,14 +317,14 @@ Templates: [templates.md](templates.md).
 
 - Keep API thin: schema + auth + call Controller  
 - Match base class to server (`ApiService` vs `SwooleApiService`)  
-- Use `callController` only on Apache/Nginx  
+- Prefer `callController` / `$this->XController` on **both** bases (shared trait)  
 - Add `@http` + mocks for auto docs  
 
 **Don’t**
 
 - Put business rules or SQL in API  
 - Invent routes files  
-- Use `callController` / `$this->XController` on `SwooleApiService`  
+- Skip `callController` on OpenSwoole when you want controller APM spans  
 - Skip `define*Schema`  
 - Re-sanitize inputs  
 

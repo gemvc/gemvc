@@ -127,12 +127,19 @@
     },
     "SwooleApiService": {
       "requireAuth": "requireAuth(?array $roles = []): void",
+      "callController": "callController(Controller $c): ControllerTracingProxy  // shared trait",
       "validateOrFail": "validateOrFail(array $schema): void  // throws; SwooleBootstrap → 400",
       "validateStringOrFail": "validateStringOrFail(array $schema): void",
       "validatePosts": "validatePosts(array $schema): ?JsonResponse  // legacy return style",
       "validateStringPosts": "validateStringPosts(array $schema): ?JsonResponse",
-      "callController": false,
-      "magic_controllers": false
+      "magic_controllers": true,
+      "shared_trait": "ApiServiceSharedTrait"
+    },
+    "ApiServiceSharedTrait": {
+      "requireAuth": true,
+      "requireRateLimit": true,
+      "callController": true,
+      "magic_controllers": true
     }
   },
   "controller": {

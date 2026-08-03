@@ -63,7 +63,7 @@ The stack is **not** hard-enforced by the framework: you can call a Model from A
 | | `ApiService` / `ProtectedApiService` | `SwooleApiService` / `ProtectedSwooleApiService` |
 |--|--------------|-------------------|
 | Bootstrap | `Bootstrap` (may `die`) | `SwooleBootstrap` (return responses) |
-| APM helpers | `callController()`, magic `$this->UserController` | **No** — call controllers manually |
+| Shared helpers | `ApiServiceSharedTrait`: `requireAuth`, `requireRateLimit*`, `callController()`, magic `$this->UserController` | same trait |
 | Validation helpers (`validatePosts` / `validateStringPosts`) | throws `ValidationException` (Bootstrap catches → JSON) | return `?JsonResponse` (legacy) |
 | Cross-runtime throw helpers | `validateOrFail()` / `validateStringOrFail()` → `ValidationException` (Bootstrap **and** SwooleBootstrap → 400) | same |
 | Auth whole service | Prefer **`ProtectedApiService`** (auth in base ctor); or `requireAuth()` on `ApiService` | Prefer **`ProtectedSwooleApiService`**; or `requireAuth()` on `SwooleApiService` |
@@ -284,7 +284,7 @@ return $this->createList($this->createModel(new UserModel()), 'id,name,email,cre
 
 Full params / `createList` vs `listJsonResponse` / column rules: [guides/controller.md](../guides/controller.md#lists-createlist) · [guides/api.md](../guides/api.md#list-allowlists).
 
-Magic controller access (ApiService only): `$this->UserController->create()` (same as `callController`).
+Magic controller access (both bases): `$this->UserController->create()` (same as `callController`).
 
 ---
 
@@ -384,7 +384,7 @@ APM_TRACE_DB_QUERY=1
 ```
 
 - Root span: Bootstrap (automatic)
-- Controllers: use `callController()` (Apache/`ApiService`)
+- Controllers: use `callController()` on both `ApiService` and `SwooleApiService`
 - DB: use `createModel()`
 - Details: [guides/apm.md](../guides/apm.md) · `vendor/gemvc/apm-contracts/README.md`
 
@@ -417,7 +417,7 @@ Visit `/api/index/document`.
 ## DO
 
 - Extend `ApiService` / `SwooleApiService` (public) or **`ProtectedApiService` / `ProtectedSwooleApiService`** (authenticated CRUD), plus `Controller`, `Table` / `ViewTable`
-- Use `callController` + `createModel` on Apache/Nginx path
+- Use `callController` + `createModel` on **both** Apache/Nginx and OpenSwoole (shared trait)
 - Use `_` for relations; `protected` for secrets
 - PHPStan Level 9 types; nullable returns with null checks
 - Match `$_type_map` to columns / view aliases
@@ -431,4 +431,4 @@ Visit `/api/index/document`.
 - Point a plain `Table` at a view name and run `db:migrate` (creates a physical table)
 - Invent PDO `CREATE VIEW` helpers when `ViewTable` exists
 - `float` for money
-- Copy `callController` / magic `$this->XController` into `SwooleApiService` subclasses without checking — those helpers are on `ApiService` only
+- Assume `callController` is Apache-only — it is on `SwooleApiService` via `ApiServiceSharedTrait` (Phase 2)

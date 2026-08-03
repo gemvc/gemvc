@@ -65,10 +65,10 @@ final class ProtectedApiServiceTest extends TestCase
     {
         /** @var Request&MockObject $mockRequest */
         $mockRequest = $this->createMock(Request::class);
-        // Swoole requireAuth(null) calls auth() with no args
+        // Shared trait: requireAuth(null) → auth(null) (same as Apache path)
         $mockRequest->expects($this->once())
             ->method('auth')
-            ->with()
+            ->with(null)
             ->willReturn(true);
 
         $service = new TestProtectedSwooleApiService($mockRequest, null);

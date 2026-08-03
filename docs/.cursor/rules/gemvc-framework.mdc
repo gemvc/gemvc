@@ -32,7 +32,7 @@ Naming: `User.php` / `UserController.php` / `UserModel.php` / `UserTable.php` (v
 ## Hard rules
 
 - **DO** `definePostSchema` / `defineGetSchema` before using input; fail with `$this->request->returnResponse()`
-- **DO** Apache path: `$this->callController(new XController($this->request))->method()`
+- **DO** `$this->callController(new XController($this->request))->method()` on Apache/Nginx **and** OpenSwoole
 - **DO** prefer `gemvc/helper` (`CryptHelper`, `TypeChecker`) and `gemvc/http-client` for outbound HTTP
 - **DO** set JWT `$token->role` (comma-separated names) when minting tokens if you rely on `auth(['admin'])`
 - **DO** use `setPrimaryKey('col')` after `parent::__construct()` when the Table/ViewTable has no `id` property (views / alternate PKs)

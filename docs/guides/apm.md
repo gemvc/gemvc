@@ -16,7 +16,7 @@
 | New provider | [Custom APM Provider](#custom-apm-provider) |
 | Missing traces | [Troubleshooting](#troubleshooting) |
 
-**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Framework talks to **`ApmFactory` / `ApmInterface`** (`gemvc/apm-contracts`) — never hardcode TraceKit in app code. Root tracing needs no app code. Controller spans need `callController` on **Apache/`ApiService` only**. Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
+**AI rule:** Do not ingest this whole file for routine CRUD (~900+ lines). Framework talks to **`ApmFactory` / `ApmInterface`** (`gemvc/apm-contracts`) — never hardcode TraceKit in app code. Root tracing needs no app code. Controller spans need `callController` on **`ApiService` and `SwooleApiService`** (shared trait). Prefer [api.md](api.md) / [controller.md](controller.md) for invoke style; jump via the map above.
 
 ## Table of Contents
 
@@ -149,7 +149,7 @@ APM_TRACE_DB_QUERY=1
 | `APM_SAMPLE_RATE` | `0.0`–`1.0` | `1.0` | Fraction of requests to sample (errors still recorded) |
 | `APM_TRACE_RESPONSE` | `true`/`1`/`false`/`0` | `false` | Include response payload attrs when supported |
 | `APM_TRACE_REQUEST_BODY` | `true`/`1`/`false`/`0` | `false` | Include request body attrs when supported |
-| `APM_TRACE_CONTROLLER` | `1`, `true`, or unset | disabled | Controller spans via `callController` (Apache) |
+| `APM_TRACE_CONTROLLER` | `1`, `true`, or unset | disabled | Controller spans via `callController` (both API bases) |
 | `APM_TRACE_DB_QUERY` | `1`, `true`, or unset | disabled | SQL spans via Request/`createModel` wire |
 | `APM_API_KEY` | string | — | Optional unified API key (providers may prefer their own key) |
 | `APM_SEND_INTERVAL` | int | provider default | Batch send interval (contracts) |
@@ -200,10 +200,10 @@ The root trace is automatically created in `Bootstrap` or `SwooleBootstrap` and 
 
 **Optional** - Enable via `APM_TRACE_CONTROLLER=1`.
 
-When enabled, automatic spans are created for controller method calls **when you use `ApiService::callController()`** (Apache/Nginx).
+When enabled, automatic spans are created for controller method calls **when you use `callController()`** on `ApiService` or `SwooleApiService` (shared `ApiServiceSharedTrait`).
 
 ```php
-// Apache / Nginx — ApiService
+// Apache / Nginx / OpenSwoole
 public function create(): JsonResponse
 {
     return $this->callController(new UserController($this->request))->create();
@@ -211,13 +211,7 @@ public function create(): JsonResponse
 }
 ```
 
-**OpenSwoole (`SwooleApiService`):** there is **no** `callController()`. Invoke Controllers with bare `new`:
-
-```php
-return (new UserController($this->request))->create();
-```
-
-Root request tracing still works on Swoole. For controller-level spans on Swoole, use manual tracing (`ApmTracingTrait`) or wrap calls yourself — see [Manual Tracing](#manual-tracing).
+Bare `new XController($this->request)` still works but skips the automatic controller span.
 
 **Span Attributes** (when `callController` is used):
 - `controller.name`: Controller class name
@@ -225,7 +219,7 @@ Root request tracing still works on Swoole. For controller-level spans on Swoole
 - `http.status_code`: HTTP response code
 - Optional `response.*` fields when response tracing is enabled
 
-Set `APM_TRACE_CONTROLLER=1` in `.env`, and use `callController` on Apache/Nginx.
+Set `APM_TRACE_CONTROLLER=1` in `.env`, and use `callController` on both API bases.
 
 ### 3. Database Query Tracing
 
@@ -401,8 +395,7 @@ class User extends ApiService
             return $this->request->returnResponse();
         }
         
-        // Apache/Nginx: callController → controller span if APM_TRACE_CONTROLLER=1
-        // OpenSwoole: return (new UserController($this->request))->create();
+        // callController → controller span if APM_TRACE_CONTROLLER=1 (both bases)
         return $this->callController(new UserController($this->request))->create();
     }
 }
@@ -583,11 +576,9 @@ class ProductController extends Controller
 
 ## Best Practices
 
-### 0. Match Controller invoke style to server
+### 0. Prefer `callController()` on every server
 
-**Apache/Nginx (`ApiService`):** use `callController()` so `APM_TRACE_CONTROLLER=1` creates controller spans.
-
-**OpenSwoole (`SwooleApiService`):** use `(new XController($this->request))->method()` — no `callController`. Root span still works; add manual spans if you need controller-level detail.
+Use `callController()` on `ApiService` **and** `SwooleApiService` so `APM_TRACE_CONTROLLER=1` creates controller spans. Bare `new XController(...)` still works (no automatic controller span).
 
 ### 1. Always Set Request on Models
 
@@ -924,7 +915,7 @@ Library → **`gemvc/apm-contracts`** (`ApmFactory` / `ApmInterface`) → provid
 
 - Root request trace  
 - Exception tracking  
-- Controller spans (if `APM_TRACE_CONTROLLER=1` + Apache `callController`)  
+- Controller spans (if `APM_TRACE_CONTROLLER=1` + `callController` on either API base)  
 - Database query spans (if `APM_TRACE_DB_QUERY=1` + Request wired)
 
 ### What Requires Code
