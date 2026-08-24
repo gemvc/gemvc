@@ -65,7 +65,7 @@ OpenSwoole: configure `SERVICE_IN_URL_SECTION` / `METHOD_IN_URL_SECTION` (no aut
 
 Covers: unified `ApiService` / `ProtectedApiService` (deprecated `Swoole*` aliases); auth; schemas; list allowlists; Controller invoke; `@http` docs; CLI; Do/Don’t.
 
-Deeper: [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md)
+Deeper: [http-lifecycle.md](guides/http-lifecycle.md) · [security.md](guides/security.md) · [api-documentation.md](guides/api-documentation.md) · [graphql.md](guides/graphql.md) (opt-in `POST /api/Graphql/query`)
 
 ---
 

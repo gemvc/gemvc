@@ -211,7 +211,7 @@ class Request
         
         // Verify token validity
         if (!$this->token->isTokenValid) {
-            return $this->setErrorResponse(['Invalid JWT token. Authentication failed.'], 401);
+            return $this->setErrorResponse(['Invalid JWT token. Authentication failed.'], 403);
         }
         
         // Check if role is actually set
@@ -229,7 +229,8 @@ class Request
         {
             if (!$JWT->verify()) {
                 // Present but invalid token → 403 (distinct from 401 = missing/unextractable)
-                $this->error = $JWT->error;	
+                // Generic body: JWT library messages stay on JWTToken::$error for logs
+                $this->error = 'Invalid JWT token. Authentication failed.';
                 $this->response = Response::forbidden($this->error);
                 return false;
             }
@@ -254,10 +255,10 @@ class Request
      */
     private function authorize(JWTToken $token,array $roles): bool
     {
-        if ($token->role && strlen($token->role) > 1) {
-            $user_roles = explode(',', $token->role);
+        if ($token->role !== null && strlen($token->role) > 0) {
+            $user_roles = array_map('trim', explode(',', $token->role));
             foreach ($roles as $role) {
-                if (in_array($role, $user_roles)) {
+                if (in_array($role, $user_roles, true)) {
                     $this->isAuthorized = true;
                     return true;
                 }
@@ -492,7 +493,7 @@ class Request
         return $this->$name;
     }
 
-    public function getJwtToken(): JwtToken|null
+    public function getJwtToken(): JWTToken|null
     {
         return $this->token;
     }
@@ -503,6 +504,7 @@ class Request
             return false;
         }
         $this->token = $jwtToken;
+        $this->isAuthenticated = true;
         return true;
     }
 
@@ -519,7 +521,7 @@ class Request
         
         // Verify token validity
         if (!$this->token->isTokenValid) {
-            return $this->setErrorResponse(['Invalid JWT token. Authentication failed.'], 401);
+            return $this->setErrorResponse(['Invalid JWT token. Authentication failed.'], 403);
         }
         
         // Check if user_id is actually set and valid

@@ -2,7 +2,7 @@
 
 **Audience:** developers writing `app/api` · AI assistants generating API services.
 
-**Related:** [helper.md](helper.md) · [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [api-documentation.md](api-documentation.md) · [CANONICAL.md](../ai/CANONICAL.md)
+**Related:** [helper.md](helper.md) · [controller.md](controller.md) · [security.md](security.md) · [http-lifecycle.md](http-lifecycle.md) · [openswoole.md](openswoole.md) · [api-documentation.md](api-documentation.md) · [graphql.md](graphql.md) · [CANONICAL.md](../ai/CANONICAL.md)
 
 ---
 
@@ -346,7 +346,8 @@ Templates: [templates.md](templates.md).
 
 - Keep API thin: schema + auth + call Controller  
 - Prefer `ApiService` / `ProtectedApiService` on **all** servers  
-- Prefer `callController` / `$this->XController`  
+- Prefer `callController()` / `$this->XController`  
+- GraphQL: [graphql.md](graphql.md) — `POST /api/Graphql/query`, resolvers call Controller  
 - Add `@http` + mocks for auto docs  
 
 **Don’t**
@@ -375,5 +376,6 @@ Templates: [templates.md](templates.md).
 
 - Startup sample: `src/startup/common/init_example/api/User.php`  
 - Auth deep dive: [security.md](security.md)  
+- GraphQL: [graphql.md](graphql.md)  
 - Controllers: [controller.md](controller.md)  
 - Signatures: [CORE_REFERENCE.md](../ai/CORE_REFERENCE.md)  

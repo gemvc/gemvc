@@ -67,7 +67,7 @@
 |--|--|
 | **Role** | REST microservice framework: Bootstrap / SwooleBootstrap, ApiService, Controller, Table ORM, Request/Response, JWT, dialects, `bin/gemvc` entry |
 | **Pulls in** | helper, connection-*, apm-*, http-client, cli-base (see `composer.json` `require`) |
-| **Optional** | `gemvc/cli-dev` via `suggest` / `require-dev` |
+| **Optional** | `gemvc/cli-dev` via `suggest` / `require-dev`; `webonyx/graphql-php` via `suggest` for `POST /api/Graphql/query` ([graphql.md](graphql.md)) |
 | **Docs** | [docs/README.md](../README.md), [ai/CANONICAL.md](../ai/CANONICAL.md) |
 
 ---

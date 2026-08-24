@@ -24,6 +24,7 @@ Optional machine/IDE mirrors (same content, not required):
 | Migrations / Table / **ViewTable** / connections | [../guides/database.md](../guides/database.md) (+ [ecosystem](../guides/ecosystem.md)); 4-layer samples: [../examples/README.md](../examples/README.md) |
 | **Lists** `createList` + findable/filterable/sortable | [../guides/controller.md](../guides/controller.md#lists-createlist) (+ [api.md](../guides/api.md#list-allowlists)) |
 | **API** layer (schema / auth / call Controller) | [../guides/api.md](../guides/api.md) |
+| **GraphQL** single endpoint (`/api/Graphql/query`) | [../guides/graphql.md](../guides/graphql.md) |
 | **Controller** orchestration / lists | [../guides/controller.md](../guides/controller.md) |
 | **Model** logic (Table-backed **or** composition; JsonResponse **or** PHP types; money transfers) | [../guides/model.md](../guides/model.md) |
 | HTTP Request lifecycle / adapters | [../guides/http-lifecycle.md](../guides/http-lifecycle.md) |

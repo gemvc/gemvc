@@ -455,15 +455,6 @@ class JWTTokenTest extends TestCase
         $this->assertEquals('data', $verifyToken->payload->custom);
     }
     
-    public function testVerifyWithZeroUserId(): void
-    {
-        // Create a token manually with user_id = 0 (should fail verification)
-        // We can't easily create a token with user_id = 0 through the public API,
-        // but we can test that verify() rejects tokens with user_id <= 0
-        // This is tested indirectly through the create/verify flow
-        $this->assertTrue(true); // Placeholder - user_id validation is in verify()
-    }
-    
     public function testConstructorWithMissingEnvVars(): void
     {
         $originalIssuer = $_ENV['TOKEN_ISSUER'] ?? null;
@@ -495,6 +486,267 @@ class JWTTokenTest extends TestCase
         // Token should expire approximately timeToLive seconds from creation
         $this->assertGreaterThan(time() + $timeToLive - 10, $verifyToken->exp);
         $this->assertLessThan(time() + $timeToLive + 10, $verifyToken->exp);
+    }
+
+    public function testFailedVerifyAfterSuccessSetsIsTokenValidFalse(): void
+    {
+        $token = $this->jwtToken->createAccessToken(123);
+        $verifyToken = new JWTToken();
+        $this->assertInstanceOf(JWTToken::class, $verifyToken->verify($token));
+        $this->assertTrue($verifyToken->isTokenValid);
+
+        $result = $verifyToken->verify('invalid.token.here');
+        $this->assertFalse($result);
+        $this->assertFalse($verifyToken->isTokenValid);
+        $this->assertNotNull($verifyToken->error);
+    }
+
+    public function testCreateThrowsWhenTokenSecretMissing(): void
+    {
+        $original = $_ENV['TOKEN_SECRET'] ?? null;
+        unset($_ENV['TOKEN_SECRET']);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('TOKEN_SECRET');
+        try {
+            (new JWTToken())->create(1, 60);
+        } finally {
+            $_ENV['TOKEN_SECRET'] = $original ?? 'test-secret-key-for-testing-only';
+        }
+    }
+
+    public function testCreateThrowsWhenTokenSecretEmpty(): void
+    {
+        $original = $_ENV['TOKEN_SECRET'] ?? null;
+        $_ENV['TOKEN_SECRET'] = '';
+
+        $this->expectException(\RuntimeException::class);
+        try {
+            (new JWTToken())->create(1, 60);
+        } finally {
+            $_ENV['TOKEN_SECRET'] = $original ?? 'test-secret-key-for-testing-only';
+        }
+    }
+
+    public function testTokenIdIsHexAndIatIsPresent(): void
+    {
+        $token = $this->jwtToken->createAccessToken(123);
+        $verifyToken = new JWTToken();
+        $this->assertInstanceOf(JWTToken::class, $verifyToken->verify($token));
+        $this->assertNotNull($verifyToken->token_id);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $verifyToken->token_id);
+
+        $parts = explode('.', $token);
+        $b64 = strtr($parts[1], '-_', '+/');
+        $pad = strlen($b64) % 4;
+        if ($pad > 0) {
+            $b64 .= str_repeat('=', 4 - $pad);
+        }
+        $json = base64_decode($b64, true);
+        $this->assertIsString($json);
+        $payload = json_decode($json, true);
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('iat', $payload);
+        $this->assertIsInt($payload['iat']);
+    }
+
+    public function testVerifyAcceptsLegacyNumericTokenId(): void
+    {
+        $legacy = \Firebase\JWT\JWT::encode([
+            'token_id' => 1730000000.1234,
+            'user_id' => 9,
+            'iss' => 'TestIssuer',
+            'exp' => time() + 300,
+            'type' => 'access',
+            'payload' => new \stdClass(),
+            'role' => null,
+        ], $_ENV['TOKEN_SECRET'], 'HS256');
+
+        $verifyToken = new JWTToken();
+        $result = $verifyToken->verify($legacy);
+        $this->assertInstanceOf(JWTToken::class, $result);
+        $this->assertSame('1730000000.1234', $verifyToken->token_id);
+        $this->assertSame(9, $verifyToken->user_id);
+    }
+
+    public function testVerifyRejectsIssuerMismatchWhenTokenIssuerIsSet(): void
+    {
+        $token = $this->jwtToken->createAccessToken(123);
+        $original = $_ENV['TOKEN_ISSUER'];
+        $_ENV['TOKEN_ISSUER'] = 'OtherIssuer';
+
+        $verifyToken = new JWTToken();
+        $result = $verifyToken->verify($token);
+
+        $_ENV['TOKEN_ISSUER'] = $original;
+
+        $this->assertFalse($result);
+        $this->assertFalse($verifyToken->isTokenValid);
+        $this->assertNotNull($verifyToken->error);
+        $this->assertStringContainsString('issuer', strtolower((string) $verifyToken->error));
+    }
+
+    public function testGetTypeDecodesBase64UrlPayload(): void
+    {
+        $payloadJson = '{"type":"access","x":"??"}';
+        $segment = rtrim(strtr(base64_encode($payloadJson), '+/', '-_'), '=');
+        $this->assertTrue(str_contains($segment, '-') || str_contains($segment, '_'));
+        $jwt = 'eyJhbGciOiJub25lIn0.' . $segment . '.sig';
+
+        $newToken = new JWTToken();
+        $this->assertSame('access', $newToken->GetType($jwt));
+    }
+
+    public function testExtractTokenWithLowercaseBearer(): void
+    {
+        $token = $this->jwtToken->createAccessToken(123);
+        $request = $this->createMock(\Gemvc\Http\Request::class);
+        $request->authorizationHeader = 'bearer ' . $token;
+
+        $newToken = new JWTToken();
+        $this->assertTrue($newToken->extractToken($request));
+        $this->assertNull($newToken->error);
+        $this->assertInstanceOf(JWTToken::class, $newToken->verify());
+    }
+
+    public function testExtractTokenWithInvalidBearerFormatSetsError(): void
+    {
+        $request = $this->createMock(\Gemvc\Http\Request::class);
+        $request->authorizationHeader = 'InvalidFormat token';
+
+        $newToken = new JWTToken();
+        $this->assertFalse($newToken->extractToken($request));
+        $this->assertNotNull($newToken->error);
+    }
+
+    public function testCreateAsymmetricAccessTokenRs256(): void
+    {
+        if (!function_exists('openssl_pkey_new')) {
+            $this->markTestSkipped('openssl extension required for RS256 minting');
+        }
+
+        $resource = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        $this->assertNotFalse($resource);
+        $privatePem = '';
+        $this->assertTrue(openssl_pkey_export($resource, $privatePem));
+        $details = openssl_pkey_get_details($resource);
+        $this->assertIsArray($details);
+        $this->assertArrayHasKey('key', $details);
+        $this->assertIsString($details['key']);
+
+        $originalKey = $_ENV['TOKEN_PRIVATE_KEY'] ?? null;
+        $originalPath = $_ENV['TOKEN_PRIVATE_KEY_PATH'] ?? null;
+        unset($_ENV['TOKEN_PRIVATE_KEY_PATH']);
+        $_ENV['TOKEN_PRIVATE_KEY'] = $privatePem;
+
+        $jwt = new JWTToken();
+        $token = $jwt->createAsymmetricAccessToken(77);
+
+        if ($originalKey === null) {
+            unset($_ENV['TOKEN_PRIVATE_KEY']);
+        } else {
+            $_ENV['TOKEN_PRIVATE_KEY'] = $originalKey;
+        }
+        if ($originalPath !== null) {
+            $_ENV['TOKEN_PRIVATE_KEY_PATH'] = $originalPath;
+        }
+
+        $parts = explode('.', $token);
+        $this->assertCount(3, $parts);
+        $headerB64 = strtr($parts[0], '-_', '+/');
+        $headerPad = strlen($headerB64) % 4;
+        if ($headerPad > 0) {
+            $headerB64 .= str_repeat('=', 4 - $headerPad);
+        }
+        $headerJson = base64_decode($headerB64, true);
+        $this->assertIsString($headerJson);
+        $header = json_decode($headerJson, true);
+        $this->assertIsArray($header);
+        $this->assertSame('RS256', $header['alg']);
+
+        $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($details['key'], 'RS256'));
+        $this->assertSame(77, $decoded->user_id);
+        $this->assertSame('access', $decoded->type);
+        $this->assertTrue(isset($decoded->iat));
+    }
+
+    public function testCreateAsymmetricThrowsWithoutPrivateKey(): void
+    {
+        $originalKey = $_ENV['TOKEN_PRIVATE_KEY'] ?? null;
+        $originalPath = $_ENV['TOKEN_PRIVATE_KEY_PATH'] ?? null;
+        unset($_ENV['TOKEN_PRIVATE_KEY'], $_ENV['TOKEN_PRIVATE_KEY_PATH']);
+
+        $this->expectException(\RuntimeException::class);
+        try {
+            (new JWTToken())->createAsymmetric(1, 60);
+        } finally {
+            if ($originalKey !== null) {
+                $_ENV['TOKEN_PRIVATE_KEY'] = $originalKey;
+            }
+            if ($originalPath !== null) {
+                $_ENV['TOKEN_PRIVATE_KEY_PATH'] = $originalPath;
+            }
+        }
+    }
+
+    public function testCreateAsymmetricFromKeyPath(): void
+    {
+        if (!function_exists('openssl_pkey_new')) {
+            $this->markTestSkipped('openssl extension required for RS256 minting');
+        }
+
+        $resource = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        $this->assertNotFalse($resource);
+        $privatePem = '';
+        $this->assertTrue(openssl_pkey_export($resource, $privatePem));
+
+        $path = tempnam(sys_get_temp_dir(), 'gemvc-jwt-');
+        $this->assertIsString($path);
+        file_put_contents($path, $privatePem);
+
+        $originalKey = $_ENV['TOKEN_PRIVATE_KEY'] ?? null;
+        $originalPath = $_ENV['TOKEN_PRIVATE_KEY_PATH'] ?? null;
+        unset($_ENV['TOKEN_PRIVATE_KEY']);
+        $_ENV['TOKEN_PRIVATE_KEY_PATH'] = $path;
+
+        try {
+            $token = (new JWTToken())->createAsymmetricRefreshToken(3);
+            $this->assertNotEmpty($token);
+            $this->assertTrue(JWTToken::isJWT($token));
+        } finally {
+            unlink($path);
+            if ($originalKey !== null) {
+                $_ENV['TOKEN_PRIVATE_KEY'] = $originalKey;
+            } else {
+                unset($_ENV['TOKEN_PRIVATE_KEY']);
+            }
+            if ($originalPath !== null) {
+                $_ENV['TOKEN_PRIVATE_KEY_PATH'] = $originalPath;
+            } else {
+                unset($_ENV['TOKEN_PRIVATE_KEY_PATH']);
+            }
+        }
+    }
+
+    public function testVerifyWithZeroUserIdRejectsSignedToken(): void
+    {
+        $zero = \Firebase\JWT\JWT::encode([
+            'token_id' => 'abc',
+            'user_id' => 0,
+            'iss' => 'TestIssuer',
+            'exp' => time() + 300,
+            'type' => 'access',
+        ], $_ENV['TOKEN_SECRET'], 'HS256');
+
+        $verifyToken = new JWTToken();
+        $this->assertFalse($verifyToken->verify($zero));
+        $this->assertFalse($verifyToken->isTokenValid);
     }
 }
 

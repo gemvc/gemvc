@@ -20,7 +20,8 @@ Version: 5.16.0 (gemvc/library)
 - docs/README.md: Human + AI documentation index
 - docs/guides/architecture.md: Internals / request flow (*how*)
 - docs/guides/ecosystem.md: gemvc/* package map
-- docs/guides/api.md: API layer + rate limit (DRIVER apcu/redis/both/none, requireRateLimit*)
+- [docs/guides/api.md](docs/guides/api.md): API layer + rate limit (DRIVER apcu/redis/both/none, requireRateLimit*)
+- docs/guides/graphql.md: GraphQL POST /api/Graphql/query (opt-in webonyx/graphql-php)
 - docs/guides/controller.md: Controller + createList
 - docs/guides/model.md: Model layer + atomic money transfers (forUpdate)
 - docs/guides/database.md: Table, ViewTable, migrate, transactions / forUpdate

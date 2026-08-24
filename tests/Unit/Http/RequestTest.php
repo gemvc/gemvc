@@ -937,6 +937,115 @@ class RequestTest extends TestCase
         $response = $request->returnResponse();
         $this->assertEquals(403, $response->response_code);
     }
+
+    public function testAuthWithInvalidTokenReturnsForbidden(): void
+    {
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer not-a-valid-jwt';
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $result = $request->auth();
+
+        $this->assertFalse($result);
+        $response = $request->returnResponse();
+        $this->assertEquals(403, $response->response_code);
+        $this->assertEquals('Invalid JWT token. Authentication failed.', $request->error);
+    }
+
+    public function testAuthWithTrimmedRoleSucceeds(): void
+    {
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->createTestTokenWithRole(1, ' admin');
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $this->assertTrue($request->auth(['admin']));
+    }
+
+    public function testAuthWithSingleCharacterRoleSucceeds(): void
+    {
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->createTestTokenWithRole(1, 'a');
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $this->assertTrue($request->auth(['a']));
+    }
+
+    public function testSetJwtTokenSetsIsAuthenticated(): void
+    {
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $jwtToken = new \Gemvc\Http\JWTToken();
+        $jwtToken->setToken($this->createTestToken(4));
+
+        $this->assertFalse($request->isAuthenticated);
+        $this->assertTrue($request->setJwtToken($jwtToken));
+        $this->assertTrue($request->isAuthenticated);
+        $this->assertSame(4, $request->userId());
+    }
+
+    public function testUserIdWithInvalidAttachedTokenReturnsForbidden(): void
+    {
+        $_ENV['TOKEN_SECRET'] = 'test-secret-key-for-testing-only';
+        $_ENV['TOKEN_ISSUER'] = 'TestIssuer';
+        $_ENV['ACCESS_TOKEN_VALIDATION_IN_SECONDS'] = '300';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $jwtToken = new \Gemvc\Http\JWTToken();
+        $jwtToken->setToken($this->createTestToken(4));
+        $this->assertTrue($request->setJwtToken($jwtToken));
+
+        $jwtToken->setToken('invalid.token.here');
+        $this->assertFalse($jwtToken->verify());
+
+        $result = $request->userId();
+        $this->assertFalse($result);
+        $this->assertEquals(403, $request->returnResponse()->response_code);
+    }
+
+    public function testUserRoleWithoutTokenReturnsUnauthorized(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+
+        $ar = new StandardHttpRequest();
+        $request = $ar->request;
+
+        $this->assertFalse($request->userRole());
+        $this->assertEquals(401, $request->returnResponse()->response_code);
+    }
     
     // ============================================
     // User Role Tests

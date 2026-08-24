@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Full narratives: [RELEASE_NOTES.md](RELEASE_NOTES.md). Docs live under [`docs/`](../README.md).
 
+## [5.17.0] - 2026-08-24
+
+### Fixed
+
+- **JWTToken / Request::auth hardening** — failed `verify()` now always sets `isTokenValid = false`; HS256 `create()` requires a non-empty `TOKEN_SECRET`; `token_id` is a 32-char hex id (`bin2hex(random_bytes(16))`); `verify()` uses `isset`/int casts; `GetType()` decodes base64url; Bearer extraction is case-insensitive and sets `$error` on bad format; `authorize()` trims roles, allows 1-character roles, and uses strict `in_array`; `userId()` / `userRole()` return **403** for a present-but-invalid token (401 remains missing token); `setJwtToken()` sets `isAuthenticated`; HTTP 403 bodies no longer leak firebase/php-jwt exception text
+
+### Added
+
+- **RS256 minting** — `JWTToken::createAsymmetricAccessToken()` / `createAsymmetricRefreshToken()` / `createAsymmetricLoginToken()` / `createAsymmetric()` signed with `TOKEN_PRIVATE_KEY` or `TOKEN_PRIVATE_KEY_PATH`. Default `create*()` and `Request::auth()` stay HS256. Public-key verify is not in this release.
+- New tokens include `iat`. When `TOKEN_ISSUER` is set (and not `undefined`), `verify()` requires matching `iss`.
+- **GraphQL Phase 1** — `Gemvc\GraphQL\GraphQlRunner` (`POST /api/Graphql/query`); spec `{data,errors}` envelope; `webonyx/graphql-php` via Composer `suggest` (fail-closed if missing)
+
+### Documentation
+
+- [security.md](../guides/security.md) JWT section; [CORE_REFERENCE.md](../ai/CORE_REFERENCE.md) `JWTToken` / `GraphQlRunner` signatures
+- [graphql.md](../guides/graphql.md)
+
 ## [5.16.0] - 2026-08-03
 
 ### Added

@@ -94,7 +94,7 @@ class AuthController extends Controller
             return Response::unauthorized('Invalid or expired token');
         }
 
-        $tokenType = $verified->GetType() ?? 'access';
+        $tokenType = $verified->type !== 'not defined' ? $verified->type : 'access';
 
         $seconds = match ($tokenType) {
             'refresh' => $this->envSeconds('REFRESH_TOKEN_VALIDATION_IN_SECONDS'),

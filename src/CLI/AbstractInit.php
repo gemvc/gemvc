@@ -44,6 +44,7 @@ abstract class AbstractInit extends Command
         'app/controller',
         'app/model',
         'app/table',
+        'app/graphql',
         'bin'
     ];
     
@@ -52,7 +53,8 @@ abstract class AbstractInit extends Command
         'api',
         'controller',
         'model',
-        'table'
+        'table',
+        'graphql',
     ];
     
     /**
@@ -449,7 +451,7 @@ abstract class AbstractInit extends Command
      * Copy init example files to appropriate directories
      * 
      * This method mirrors the folder structure from init_example to app directory.
-     * Any folder in init_example that matches app structure (api, controller, model, table)
+     * Any folder in init_example that matches app structure (api, controller, model, table, graphql)
      * will be copied to the corresponding app directory.
      * 
      * @param string $startupPath

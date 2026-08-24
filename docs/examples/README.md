@@ -9,7 +9,8 @@ docs/examples/
 ├── api/           → app/api/            (LAYER 1 — public contract)
 ├── controller/    → app/controller/     (LAYER 2 — orchestration)
 ├── model/         → app/model/          (LAYER 3 — business rules)
-└── table/         → app/table/          (LAYER 4 — DB / VIEW)
+├── table/         → app/table/          (LAYER 4 — DB / VIEW)
+└── graphql/       → app/graphql/        (schema.php for POST /api/Graphql/query)
 ```
 
 | Layer | Auth (public) | User | Order | UserOrderSummary (VIEW) |
@@ -48,4 +49,4 @@ gemvc db:migrate --all
 - Prefer `callController()` + `createModel()` for APM.
 - Nest 1:n (`$_recent_orders`) in the **Model**, not in the SQL VIEW.
 
-Guide: [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-recommended)
+Guide: [database.md — ViewTable](../guides/database.md#sql-views-via-viewtable-recommended) · GraphQL: [graphql.md](../guides/graphql.md) (`api/Graphql.php`, `controller/GraphQlController.php`, `graphql/schema.php`)

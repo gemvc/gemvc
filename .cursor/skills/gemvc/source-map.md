@@ -31,6 +31,7 @@ Verified against `docs/` + source (2026-08).
 | `InternalTrust` | `src/core/InternalTrust.php` | Family HMAC gate; `GEMVC_INTERNAL_SECRET` |
 | `InternalServiceException` | `src/core/InternalServiceException.php` | 401 failed / 500 misconfigured |
 | `ProtectedApiService` | `src/core/ProtectedApiService.php` | **Recommended** authenticated CRUD — ctor calls `requireAuth($roles)` |
+| `GraphQlRunner` | `src/GraphQL/GraphQlRunner.php` | Opt-in GraphQL execute; `POST /api/Graphql/query`; needs `webonyx/graphql-php` |
 | `SwooleApiService` | `src/core/SwooleApiService.php` | **Deprecated** thin subclass of `ApiService`; `safeValidate*` for legacy return style |
 | `ProtectedSwooleApiService` | `src/core/ProtectedSwooleApiService.php` | **Deprecated** thin subclass of `ProtectedApiService` |
 | `Controller` | `src/core/Controller.php` | `createModel`, `createList`, `listJsonResponse` |
@@ -43,7 +44,7 @@ Verified against `docs/` + source (2026-08).
 | `Request` | `src/http/Request.php` | schemas, `auth`/`authenticate`/`authorize`, findable/filterable/sortable, map*ToObject |
 | `StandardHttpRequest` | `src/http/StandardHttpRequest.php` | Sanitizes GET/POST/PUT/PATCH/headers; **`$files` = `$_FILES['file']` only**; no upload MIME sanitize |
 | `SwooleRequest` | `src/http/SwooleRequest.php` | Normalizes files; sanitizes upload name/MIME |
-| `JWTToken` | `src/http/JWTToken.php` | HS256 create/verify; roles, claims |
+| `JWTToken` | `src/http/JWTToken.php` | HS256 create/verify (`TOKEN_SECRET`); additive RS256 `createAsymmetric*` (`TOKEN_PRIVATE_KEY`); roles, claims |
 | `Response` / `JsonResponse` | `src/http/` | Factories; `show` vs `showSwoole`; `tooManyRequests` (429) |
 | `AuthException` | `src/core/AuthException.php` | From `requireAuth` |
 | `RateLimiter` / `RateLimitException` | `src/core/` | Drivers apcu/redis/both/none; 429; no auto-fallback; FAIL_MODE; dual check for both |

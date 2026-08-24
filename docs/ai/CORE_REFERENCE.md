@@ -31,6 +31,11 @@ decimalValuePost(string $key, string $type = 'decimal'): string|false
 
 auth(?array $roles = null): bool          // 401 missing token; 403 invalid token or wrong role
 returnResponse(): JsonResponse
+userId(): int|null|false                  // 401 missing token; 403 invalid token / missing user_id
+userRole(): string|null|false             // 401 missing token; 403 invalid token / missing role
+getJwtToken(): JWTToken|null
+setJwtToken(JWTToken $jwt): bool          // verify() then set isAuthenticated
+
 
 findable(array $fields): bool             // LIKE
 filterable(array $fields): bool           // exact
@@ -51,6 +56,44 @@ mapPatchToObject(object $o, ?array $map = null): object|null
 **Schema type strings:**  
 `string`, `int`, `integer`, `float`, `number`, `bool`, `boolean`, `email`, `array`, `json`, `jsonb`, `date`, `datetime`, `url`, `ip`, `ipv4`, `ipv6`, `decimal`, `decimal:10,2`, `hex`, `uuid`, `slug`, `positive_int`, `timestamp`  
 Prefix `?` for optional: `'?phone' => 'string'`.
+
+---
+
+## `Gemvc\Http\JWTToken`
+
+HS256 is the default for GEMVC auth. RS256 minting is additive; `verify()` / `Request::auth()` do **not** accept RS256 yet.
+
+```php
+createAccessToken(int $userId): string           // HS256, TOKEN_SECRET
+createRefreshToken(int $userId): string
+createLoginToken(int $userId): string
+create(int $userId, int $ttlSeconds): string     // HS256
+createAsymmetricAccessToken(int $userId): string // RS256, TOKEN_PRIVATE_KEY or TOKEN_PRIVATE_KEY_PATH
+createAsymmetricRefreshToken(int $userId): string
+createAsymmetricLoginToken(int $userId): string
+createAsymmetric(int $userId, int $ttlSeconds): string
+verify(?string $token = null): false|JWTToken    // HS256 only
+renew(int $extensionSeconds, ?string $token = null): false|string  // re-signs HS256
+setToken(string $token): void
+extractToken(Request $request): bool
+GetType(?string $token = null): string|null      // unsigned peek; prefer $token->type after verify()
+```
+
+Env: `TOKEN_SECRET`, `TOKEN_ISSUER`, `ACCESS_TOKEN_VALIDATION_IN_SECONDS`, `REFRESH_TOKEN_VALIDATION_IN_SECONDS`, `LOGIN_TOKEN_VALIDATION_IN_SECONDS`. Optional: `TOKEN_PRIVATE_KEY`, `TOKEN_PRIVATE_KEY_PATH`.
+
+---
+
+## `Gemvc\GraphQL\GraphQlRunner`
+
+Opt-in GraphQL (`composer require webonyx/graphql-php`). URL: `POST /api/Graphql/query`. Guide: [graphql.md](../guides/graphql.md).
+
+```php
+GraphQlRunner::fromRequest(Request $request): self
+withSchema(\GraphQL\Type\Schema $schema): self
+withSchemaPath(string $path): self   // default app/graphql/schema.php
+execute(): JsonResponse              // 200 spec {data, errors}; 400 missing query; 500 missing package/schema
+JsonResponseBridge::dataOrThrow(JsonResponse $r): mixed  // resolver helper
+```
 
 ---
 
@@ -330,6 +373,7 @@ gemvc admin:setpassword
 DB_DRIVER=mysql|pgsql|sqlite
 DB_HOST= DB_PORT= DB_NAME= DB_USER= DB_PASSWORD=
 TOKEN_SECRET= TOKEN_ISSUER=
+# Optional RS256 mint: TOKEN_PRIVATE_KEY= or TOKEN_PRIVATE_KEY_PATH=
 QUERY_LIMIT=10
 APM_NAME=TraceKit
 APM_SAMPLE_RATE=1.0

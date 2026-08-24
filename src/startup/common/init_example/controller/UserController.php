@@ -128,7 +128,7 @@ class UserController extends Controller
         if(!$token){
             return Response::unauthorized("Invalid or expired token");
         }
-        $tokenType = $token->GetType();
+        $tokenType = $token->type;
         $new_token = null;
         if($tokenType === 'refresh'){
             $seconds = isset($_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS']) && is_numeric($_ENV['REFRESH_TOKEN_VALIDATION_IN_SECONDS'])

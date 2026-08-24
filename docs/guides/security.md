@@ -442,19 +442,50 @@ $this->requireRateLimitBoth(10);            // force dual check
 - Chosen backend(s) unavailable at start of enforce → **fail-closed** (429) unless `FAIL_MODE=open`. Mid-request write failures still deny (429); they do not switch to another driver.
 - Explicit overrides still run when global `DRIVER=none`.
 
+**How to use (developers)**
+
+GEMVC login / `requireAuth()` / `Request::auth()` use **HS256** (`TOKEN_SECRET`). Keep issuing those tokens for your own APIs.
+
+RS256 is **only for minting** tokens that *other* applications will verify with your public key. GEMVC **cannot** `verify()` / `auth()` RS256 tokens yet — do not put them in `Authorization` for `ProtectedApiService`.
+
+1. **Own APIs (HS256)** — set `TOKEN_SECRET` (long random string) and `TOKEN_ISSUER`. Mint as usual:
+
+```php
+use Gemvc\Http\JWTToken;
+
+$jwt = new JWTToken();
+$jwt->role = 'admin'; // comma-separated if several; required for requireAuth(['admin'])
+$access  = $jwt->createAccessToken($userId);   // default 300s
+$refresh = $jwt->createRefreshToken($userId);  // default 3600s
+$login   = $jwt->createLoginToken($userId);    // default 7 days
+```
+
+Clients send `Authorization: Bearer {access}`. Guard services with `ProtectedApiService` or `$this->requireAuth(['admin'])`. GraphQL uses the same JWT when `app/api/Graphql.php` extends `ProtectedApiService` — [graphql.md](graphql.md).
+
+2. **Tokens for other apps (RS256)** — generate a keypair once (keep the private key on the GEMVC host only):
+
+```bash
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-rs256.pem
+openssl rsa -in jwt-rs256.pem -pubout -out jwt-rs256.pub.pem
+```
+
+```env
+TOKEN_PRIVATE_KEY_PATH=/path/to/jwt-rs256.pem
+# or inline PEM (literal \n is OK):
+# TOKEN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+```
+
+```php
+$forOthers = (new JWTToken())->createAsymmetricAccessToken($userId);
+// also: createAsymmetricRefreshToken(), createAsymmetricLoginToken()
+```
+
+Give **only** `jwt-rs256.pub.pem` to the other app. They verify `alg=RS256` with that public key (`firebase/php-jwt` `new Key($publicPem, 'RS256')`). Missing private key → `RuntimeException` (no HS256 fallback). `renew()` still re-signs **HS256**.
+
 **Token Creation** (JWTToken.php):
 ```php
-// Access Token (short-lived)
-$token = (new JWTToken())->createAccessToken($userId);
-// Default: 300 seconds (5 minutes)
-
-// Refresh Token (medium-lived)
-$token = (new JWTToken())->createRefreshToken($userId);
-// Default: 3600 seconds (1 hour)
-
-// Login Token (long-lived)
-$token = (new JWTToken())->createLoginToken($userId);
-// Default: 604800 seconds (7 days)
+$token = (new JWTToken())->createAccessToken($userId);           // HS256 — Request::auth
+$rs256 = (new JWTToken())->createAsymmetricAccessToken($userId); // RS256 — other apps
 ```
 
 **Token Payload**:
@@ -467,6 +498,7 @@ $token = (new JWTToken())->createLoginToken($userId);
     "company_id": 5,
     "employee_id": 10,
     "branch_id": 2,
+    "iat": 1234567590,
     "exp": 1234567890,
     "iss": "MyCompany",
     "type": "access"
@@ -499,11 +531,13 @@ public function create(): JsonResponse {
 | Valid JWT, role not allowed | **403** Forbidden |
 
 **Security Features**:
-- **HS256 Signature**: Uses `TOKEN_SECRET` from `.env`
+- **HS256 Signature** (default): `create*()` / `verify()` / `Request::auth()` use `TOKEN_SECRET`
+- **RS256 minting** (additive): `createAsymmetric*()` uses `TOKEN_PRIVATE_KEY` or `TOKEN_PRIVATE_KEY_PATH` — other apps can later verify with the matching public key; GEMVC `verify()` stays HS256
 - **Expiration Validation**: Checks `exp > time()`
+- **Issuer check**: when `TOKEN_ISSUER` is set (and not `undefined`), `iss` must match
 - **User ID Validation**: Ensures `user_id > 0`
-- **Role-Based Access Control**: Multi-role support
-- **Token Renewal**: `renew()` method for extending tokens
+- **Role-Based Access Control**: Multi-role support (comma-separated, trimmed)
+- **Token Renewal**: `renew()` re-signs HS256 with `TOKEN_SECRET`
 
 **Attack Prevention**:
 ```
@@ -772,7 +806,7 @@ $user->deleteSingleQuery();
 | Input Sanitization | XSS prevention | FILTER_SANITIZE_FULL_SPECIAL_CHARS |  Protected |
 | Schema Validation | Request filtering | TypeChecker + defineSchema |  Validated |
 | Type Validation | Type safety | TypeChecker::check() |  Enforced |
-| Authentication | Token security | JWT (HS256) + expiration |  Verified |
+| Authentication | Token security | JWT HS256 verify + exp; optional RS256 mint |  Verified |
 | Authorization | Role-based access | Role checking |  Enforced |
 | File Name Sanitization | Path traversal | sanitizeInput() |  Protected |
 | File MIME Sanitization | MIME injection | sanitizeInput() |  Protected |
@@ -845,6 +879,10 @@ TOKEN_ISSUER='MyCompany'
 ACCESS_TOKEN_VALIDATION_IN_SECONDS=300
 REFRESH_TOKEN_VALIDATION_IN_SECONDS=3600
 LOGIN_TOKEN_VALIDATION_IN_SECONDS=604800
+# Optional RS256 minting (Request::auth still verifies HS256 only)
+# TOKEN_PRIVATE_KEY_PATH=/path/to/jwt-rs256.pem
+# TOKEN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
 
 # Database Security
 DB_HOST_CLI_DEV=localhost    # For CLI commands
