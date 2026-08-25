@@ -138,7 +138,7 @@ public function index(): JsonResponse
 protected function validateOrFail(array $schema): void          // throws ValidationException (preferred throw helper)
 protected function validateStringOrFail(array $schema): void    // throws ValidationException
 protected function validatePosts(array $schema): void           // throws; same as validateOrFail on this class
-public static function mockResponse(string $method): array
+public static function mockResponse(string $method): array  // PHP override > JSON fixture > create/read/list/update inference > []
 ```
 
 ## `Gemvc\Core\ProtectedApiService`
@@ -231,7 +231,7 @@ public function clearErrors(): void
 
 List GET params (API allowlists first): `find_like`, `filter_by`, `sort_by`, `sort_by_asc`, `page_number`.  
 **Flagship:** `createList` applies those allowlists (filter / LIKE / sort / page + total count + APM).  
-`createList($model, null)` builds columns from `get_object_vars($model)` (initialized public props only) — **prefer an explicit column list**. Guide: [controller.md](../guides/controller.md#lists-createlist).
+`createList($model, null)` builds **SQL** columns from `get_object_vars($model)` (initialized public props only) — **prefer an explicit column list**. List **JSON** keeps `Table::payloadFieldNames()` ∩ initialized public vars (not used as SELECT). Guide: [controller.md](../guides/controller.md#lists-createlist) · [database.md](../guides/database.md#payload-contract-vs-query-metadata).
 
 App Models are **not** a framework base class. Usual shape: extend your Table (`UserModel extends UserTable`). Also valid: **composition** Models (plain class + other Models) — [model.md](../guides/model.md).
 
@@ -245,7 +245,12 @@ abstract public function getTable(): string   // required on every Table subclas
 // — used by db:migrate / generators via method_exists; must be public
 protected array $_type_map;
 
-select(?string $columns = null): self
+/** @return list<array{name: string, type: string, php_type: string, nullable: bool}> */
+public static function payloadFields(): array   // API-visible public non-_ fields; not SQL
+/** @return list<string> */
+public static function payloadFieldNames(): array
+
+select(?string $columns = null): self   // raw SQL fragment or *; not validated against payloadFields()
 where(string $col, mixed $val): self
 whereEqual(string $col, mixed $val): self
 whereLike(string $col, string $pattern): self

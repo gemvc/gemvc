@@ -47,7 +47,6 @@ class AbstractInitTest extends TestCase
         
         // Initialize packagePath property if needed (via reflection)
         $packagePathProperty = $reflection->getProperty('packagePath');
-        $packagePathProperty->setAccessible(true);
         if (!$packagePathProperty->isInitialized($initSwoole)) {
             // Set a default package path for testing
             $packagePathProperty->setValue($initSwoole, dirname(__DIR__, 3));
@@ -55,11 +54,9 @@ class AbstractInitTest extends TestCase
         
         // Get the getStartupTemplatePath method
         $getStartupTemplatePathMethod = $reflection->getMethod('getStartupTemplatePath');
-        $getStartupTemplatePathMethod->setAccessible(true);
         
         // Get the findStartupPath method
         $findStartupPathMethod = $reflection->getMethod('findStartupPath');
-        $findStartupPathMethod->setAccessible(true);
         
         // Call both methods
         $templatePath = $getStartupTemplatePathMethod->invoke($initSwoole);
@@ -139,12 +136,10 @@ class AbstractInitTest extends TestCase
         $init = new InitFrankenPHP(['--non-interactive']);
         $reflection = new ReflectionClass($init);
         $packagePathProperty = $reflection->getProperty('packagePath');
-        $packagePathProperty->setAccessible(true);
         if (!$packagePathProperty->isInitialized($init)) {
             $packagePathProperty->setValue($init, dirname(__DIR__, 3));
         }
         $findStartupPathMethod = $reflection->getMethod('findStartupPath');
-        $findStartupPathMethod->setAccessible(true);
         $path = $findStartupPathMethod->invoke($init);
         $this->assertStringEndsWith('startup' . DIRECTORY_SEPARATOR . 'frankenphp', $path);
         $this->assertDirectoryExists($path);
@@ -240,7 +235,6 @@ class AbstractInitTest extends TestCase
         
         $reflection = new ReflectionClass($initSwoole);
         $method = $reflection->getMethod('isPackageInstalled');
-        $method->setAccessible(true);
         
         // Check if composer.lock exists
         $composerLockFile = getcwd() . '/composer.lock';
@@ -277,7 +271,6 @@ class AbstractInitTest extends TestCase
         
         $reflection = new ReflectionClass($initSwoole);
         $method = $reflection->getMethod('isPackageInstalled');
-        $method->setAccessible(true);
         
         // Check for a package that definitely doesn't exist
         $result = $method->invoke($initSwoole, 'non-existent/package-name-that-will-never-exist-12345');
@@ -294,7 +287,6 @@ class AbstractInitTest extends TestCase
         
         $reflection = new ReflectionClass($initSwoole);
         $method = $reflection->getMethod('isPackageInstalled');
-        $method->setAccessible(true);
         
         // Temporarily change directory to a location without composer.lock
         $originalCwd = getcwd();
@@ -348,12 +340,10 @@ class AbstractInitTest extends TestCase
         
         // Verify isPackageInstalled is accessible (inherited from AbstractInit)
         $isPackageInstalledMethod = $reflection->getMethod('isPackageInstalled');
-        $isPackageInstalledMethod->setAccessible(true);
         $this->assertEquals(AbstractInit::class, $isPackageInstalledMethod->getDeclaringClass()->getName(), 'isPackageInstalled should be inherited from AbstractInit');
         
         // Verify installPackage is accessible (inherited from AbstractInit)
         $installPackageMethod = $reflection->getMethod('installPackage');
-        $installPackageMethod->setAccessible(true);
         $this->assertEquals(AbstractInit::class, $installPackageMethod->getDeclaringClass()->getName(), 'installPackage should be inherited from AbstractInit');
     }
 }

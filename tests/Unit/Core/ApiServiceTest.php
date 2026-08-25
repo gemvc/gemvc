@@ -99,7 +99,6 @@ class ApiServiceTest extends TestCase
         // Use reflection to access protected method
         $reflection = new \ReflectionClass($service);
         $method = $reflection->getMethod('callController');
-        $method->setAccessible(true);
         
         // Create a simple mock controller
         $controller = $this->createMock(\Gemvc\Core\Controller::class);
@@ -116,10 +115,8 @@ class ApiServiceTest extends TestCase
         // Use reflection to access protected methods
         $reflection = new \ReflectionClass($service);
         $callControllerMethod = $reflection->getMethod('callController');
-        $callControllerMethod->setAccessible(true);
         
         $callWithTracingMethod = $reflection->getMethod('callWithTracing');
-        $callWithTracingMethod->setAccessible(true);
         
         // Create a simple mock controller
         $controller = $this->createMock(\Gemvc\Core\Controller::class);

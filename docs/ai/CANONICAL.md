@@ -415,7 +415,7 @@ Developer must: `define*Schema()`, `auth()` / `requireAuth()`, hash passwords (`
  */
 public function create(): JsonResponse { ... }
 
-public static function mockResponse(string $method): array { ... }
+public static function mockResponse(string $method): array { ... }  // or app/response_example/{Short}.{method}.json
 ```
 
 Visit `/api/index/document`.

@@ -8,6 +8,7 @@ use Gemvc\Http\JsonResponse;
 use Gemvc\Core\Apm\ApmInterface;
 use Gemvc\Core\Apm\ApmTracingTrait;
 use Gemvc\Core\Apm\AbstractApm;
+use Gemvc\Core\Documentation\ResponseExampleResolver;
 
 
 /**
@@ -209,11 +210,16 @@ class ApiService
     }
 
     /**
+     * Documentation example for one API method.
+     *
+     * Override in a subclass to supply a PHP example (always wins).
+     * Otherwise: app/response_example/{ShortName}.{method}.json, then safe create/read/list/update inference, then [].
+     *
      * @return array<string, mixed>
      */
     public static function mockResponse(string $method): array
     {
-        return [];
+        return ResponseExampleResolver::resolve(static::class, $method);
     }
 
 }

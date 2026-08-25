@@ -6,6 +6,7 @@ namespace Tests\Unit\Http;
 
 use PHPUnit\Framework\TestCase;
 use Gemvc\Http\NoCors;
+use Tests\Helpers\FakeSwooleHttpResponse;
 
 /**
  * @outputBuffering enabled
@@ -134,185 +135,93 @@ class NoCorsTest extends TestCase
     
     public function testSwooleSetsBasicCorsHeaders(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = [];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with($this->anything(), $this->anything());
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse();
+        NoCors::swoole($swooleResponse);
+
+        $this->assertNotSame([], $swooleResponse->sentHeaders);
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Origin', '*'));
     }
     
     public function testSwooleWithOriginHeader(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = ['origin' => 'https://example.com'];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with($this->anything(), $this->anything());
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse(['origin' => 'https://example.com']);
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Origin', 'https://example.com'));
     }
     
     public function testSwooleWithOptionsRequest(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = [
+        $swooleResponse = new FakeSwooleHttpResponse([
             'access-control-request-method' => 'POST',
-            'access-control-request-headers' => 'Content-Type'
-        ];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'OPTIONS']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with($this->anything(), $this->anything());
-        
-        NoCors::swoole($swooleResponseMock);
+            'access-control-request-headers' => 'Content-Type',
+        ], 'OPTIONS');
+        NoCors::swoole($swooleResponse);
+
+        $this->assertNotSame([], $swooleResponse->sentHeaders);
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'));
     }
     
     public function testSwooleSetsAccessControlAllowOrigin(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = [];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Allow-Origin', '*');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse();
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Origin', '*'));
     }
     
     public function testSwooleSetsAccessControlAllowMethods(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = [];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse();
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Methods', 'POST, GET, OPTIONS'));
     }
     
     public function testSwooleSetsContentType(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = [];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Content-Type', 'application/json');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse();
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Content-Type', 'application/json'));
     }
     
     public function testSwooleWithOriginSetsCredentials(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = ['origin' => 'https://example.com'];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Allow-Credentials', 'true');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse(['origin' => 'https://example.com']);
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Credentials', 'true'));
     }
     
     public function testSwooleWithOriginSetsMaxAge(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = ['origin' => 'https://example.com'];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'GET']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Max-Age', '86400');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse(['origin' => 'https://example.com']);
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Max-Age', '86400'));
     }
     
     public function testSwooleWithOptionsSetsAllowMethods(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = ['access-control-request-method' => 'POST'];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'OPTIONS']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse(
+            ['access-control-request-method' => 'POST'],
+            'OPTIONS'
+        );
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'));
     }
     
     public function testSwooleWithOptionsSetsAllowHeaders(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->header = ['access-control-request-headers' => 'Authorization, Content-Type'];
-        $swooleResponseMock->request = (object)['server' => ['request_method' => 'OPTIONS']];
-        
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-        
-        NoCors::swoole($swooleResponseMock);
+        $swooleResponse = new FakeSwooleHttpResponse(
+            ['access-control-request-headers' => 'Authorization, Content-Type'],
+            'OPTIONS'
+        );
+        NoCors::swoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Access-Control-Allow-Headers', 'Authorization, Content-Type'));
     }
 }
 

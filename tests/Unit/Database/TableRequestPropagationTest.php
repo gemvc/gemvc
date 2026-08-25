@@ -37,7 +37,6 @@ class TestTableForRequest extends Table
     {
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $property = $reflection->getProperty('_request');
-        $property->setAccessible(true);
         return $property->getValue($this);
     }
     
@@ -46,7 +45,6 @@ class TestTableForRequest extends Table
     {
         $reflection = new \ReflectionClass($this);
         $method = $reflection->getMethod('getConnectionManager');
-        $method->setAccessible(true);
         return $method->invoke($this);
     }
 }

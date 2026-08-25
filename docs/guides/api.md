@@ -274,7 +274,7 @@ PHPDoc on methods feeds `/api/index/document` + Postman:
  */
 public function create(): JsonResponse { ... }
 
-public static function mockResponse(string $method): array { ... }
+public static function mockResponse(string $method): array { ... }  // optional; or app/response_example/{Short}.{method}.json
 ```
 
 Details: [api-documentation.md](api-documentation.md).

@@ -136,6 +136,10 @@ interface ControllerReference
 interface TableReference
 {
     public function getTable(): string;
+    /** @return list<array{name: string, type: string, php_type: string, nullable: bool}> */
+    public static function payloadFields(): array;
+    /** @return list<string> */
+    public static function payloadFieldNames(): array;
     // Convention on subclasses (not on base Table):
     // public function defineSchema(): array;
 

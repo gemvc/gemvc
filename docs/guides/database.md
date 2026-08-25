@@ -123,6 +123,25 @@ Set `DB_*` in `.env` once. Pooling and driver selection stay invisible to this c
 
 ---
 
+## Payload contract vs query metadata
+
+API-visible fields and SQL-selectable columns are **not** the same abstraction.
+
+| Concern | Source | Used for |
+|---------|--------|----------|
+| **Payload contract** | `Table::payloadFields()` / `payloadFieldNames()` | List/API **output** keys, docs, later mock inference |
+| **Query / persistence** | `select($columns)` string, INSERT skip `_`, migrate `shouldSkipProperty`, ViewTable `defineView()` aliases | SQL SELECT / INSERT / DDL |
+
+`select()` concatenates the caller string (or `SELECT *`) with **no** property whitelist. Public properties are a **convention** for columns, not an enforced selectable set. A public PHP property that is not a column can make `createList(null)` SQL fail — that is existing behavior.
+
+`createList($model, null)` still builds the SELECT list from `get_object_vars($model)` (initialized public props). It does **not** `SELECT` every declared payload field (that would include uninitialized names and any public non-column).
+
+List **JSON** then keeps only payload field names that are currently initialized (public, no `_`, no `protected`). Uninitialized typed publics stay omitted — not emitted as `null`.
+
+`payloadFields()` is **static**: it reads the class-default `$_type_map`. It does not construct Table, open PDO, or run SQL. Constructor mutations of `$_type_map` are not visible.
+
+Protected secrets (e.g. `password`) remain DB columns and stay out of the payload contract.
+
 ## Properties
 
 | Kind | In DB? | In `SELECT *` / Table hydration? | In list JSON / `createList` default cols? | In INSERT/UPDATE? |
@@ -346,7 +365,7 @@ Also: `activateQuery($id)`, `deactivateQuery($id)`.
 GEMVC is built for **microservice-style** data access. For JOIN-heavy read models:
 
 1. Extend **`Gemvc\Database\ViewTable`** (not a plain `Table`).
-2. Declare **public properties + `$_type_map`** matching view column **aliases** (flat, 1:1).
+2. Declare **public properties + `$_type_map`** matching view column **aliases** (flat, 1:1). Those aliases are selectable because they appear in `defineView()` SQL, not because they are listed in `payloadFields()`.
 3. Implement **`defineView(): string`** — compose other Table classes via `getTable()`; use `AS` aliases freely.
 4. Optionally implement **`viewDependsOn(): list<class-string<Table>>`** for `db:migrate --all` ordering.
 5. Migrate with `gemvc db:migrate YourViewTable` or `gemvc db:migrate --all` — creates/replaces a **VIEW**, never a physical table from props.

@@ -7,6 +7,7 @@ use Gemvc\Database\TableComponents\PropertyCaster;
 use Gemvc\Database\TableComponents\TableValidator;
 use Gemvc\Database\TableComponents\PaginationManager;
 use Gemvc\Database\TableComponents\ConnectionManager;
+use Gemvc\Database\TableComponents\PayloadMetadata;
 use Gemvc\Database\TableComponents\CrudOperationsTrait;
 use Gemvc\Database\TableComponents\SoftDeleteOperationsTrait;
 use Gemvc\Http\Request;
@@ -88,6 +89,29 @@ abstract class Table
      * @return string The database table name
      */
     abstract public function getTable(): string;
+
+    /**
+     * API-visible payload fields (public, non-static, not "_" prefixed).
+     *
+     * This is not SQL/select metadata. Protected columns (e.g. password) are omitted.
+     * Uses class-default {@see $_type_map}; does not construct this table or open PDO.
+     *
+     * @return list<array{name: string, type: string, php_type: string, nullable: bool}>
+     */
+    public static function payloadFields(): array
+    {
+        return PayloadMetadata::fields(static::class);
+    }
+
+    /**
+     * Names from {@see payloadFields()}.
+     *
+     * @return list<string>
+     */
+    public static function payloadFieldNames(): array
+    {
+        return PayloadMetadata::fieldNames(static::class);
+    }
 
     /**
      * Initialize a new Table instance

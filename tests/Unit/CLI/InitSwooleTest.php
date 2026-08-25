@@ -90,7 +90,6 @@ class InitSwooleTest extends TestCase
     {
         $reflection = new ReflectionClass(InitSwoole::class);
         $method = $reflection->getMethod('installSwooleDependencies');
-        $method->setAccessible(true);
         
         // Get the source code of the method
         $filename = $method->getFileName();
@@ -125,7 +124,6 @@ class InitSwooleTest extends TestCase
         $reflection = new ReflectionClass($initSwoole);
         
         $method = $reflection->getMethod('getWebserverType');
-        $method->setAccessible(true);
         
         $webserverType = $method->invoke($initSwoole);
         $this->assertEquals('OpenSwoole', $webserverType, 'InitSwoole should return OpenSwoole as webserver type');
@@ -141,7 +139,6 @@ class InitSwooleTest extends TestCase
         
         // Access protected property packageName
         $property = $reflection->getProperty('packageName');
-        $property->setAccessible(true);
         $packageName = $property->getValue($initSwoole);
         
         $this->assertEquals('swoole', $packageName, 'InitSwoole constructor should set packageName to swoole');

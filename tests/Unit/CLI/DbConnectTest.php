@@ -26,7 +26,6 @@ class DbConnectTest extends TestCase
     {
         $reflection = new ReflectionClass(DbConnect::class);
         $reflectionMethod = $reflection->getMethod($method);
-        $reflectionMethod->setAccessible(true);
         return $reflectionMethod->invokeArgs(null, $args);
     }
 

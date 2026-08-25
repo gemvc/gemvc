@@ -1020,7 +1020,6 @@ class TableTest extends TestCase
         // Inject mock via reflection - ConnectionManager is in parent Table class
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         
         // Inject mock PdoQuery into ConnectionManager
@@ -1041,7 +1040,6 @@ class TableTest extends TestCase
     {
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         
         $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
@@ -1202,7 +1200,6 @@ class TableTest extends TestCase
         // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
         $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
@@ -1238,7 +1235,6 @@ class TableTest extends TestCase
         // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
         $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
@@ -1357,7 +1353,6 @@ class TableTest extends TestCase
         // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
         $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');
@@ -1391,7 +1386,6 @@ class TableTest extends TestCase
         // Inject mock into ConnectionManager
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $getConnectionManagerMethod = $reflection->getMethod('getConnectionManager');
-        $getConnectionManagerMethod->setAccessible(true);
         $connectionManager = $getConnectionManagerMethod->invoke($table);
         $connectionManagerReflection = new \ReflectionClass(\Gemvc\Database\TableComponents\ConnectionManager::class);
         $pdoQueryProperty = $connectionManagerReflection->getProperty('pdoQuery');

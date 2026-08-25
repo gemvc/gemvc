@@ -6,6 +6,7 @@ namespace Tests\Unit\Http;
 
 use PHPUnit\Framework\TestCase;
 use Gemvc\Http\HtmlResponse;
+use Tests\Helpers\FakeSwooleHttpResponse;
 
 /**
  * @outputBuffering enabled
@@ -28,11 +29,8 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $contentProperty = $reflection->getProperty('content');
-        $contentProperty->setAccessible(true);
         $statusProperty = $reflection->getProperty('status');
-        $statusProperty->setAccessible(true);
         $headersProperty = $reflection->getProperty('headers');
-        $headersProperty->setAccessible(true);
         
         $this->assertEquals('Hello World', $contentProperty->getValue($response));
         $this->assertEquals(200, $statusProperty->getValue($response));
@@ -47,7 +45,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $statusProperty = $reflection->getProperty('status');
-        $statusProperty->setAccessible(true);
         
         $this->assertEquals(404, $statusProperty->getValue($response));
     }
@@ -58,7 +55,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $headersProperty = $reflection->getProperty('headers');
-        $headersProperty->setAccessible(true);
         $headers = $headersProperty->getValue($response);
         
         $this->assertArrayHasKey('Content-Type', $headers);
@@ -76,7 +72,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $headersProperty = $reflection->getProperty('headers');
-        $headersProperty->setAccessible(true);
         $headers = $headersProperty->getValue($response);
         
         // Content-Type should be merged (default + custom)
@@ -132,62 +127,34 @@ class HtmlResponseTest extends TestCase
     
     public function testShowSwooleSetsHeaders(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) { // @phpstan-ignore-line
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header')
-            ->with($this->logicalOr(
-                $this->equalTo('Content-Type'),
-                $this->equalTo('X-Custom')
-            ), $this->anything());
-        
+        $swooleResponse = new FakeSwooleHttpResponse();
         $response = new HtmlResponse('Content', 200, ['X-Custom' => 'value']);
-        $response->showSwoole($swooleResponseMock);
+        $response->showSwoole($swooleResponse);
+
+        $this->assertTrue($swooleResponse->wasHeaderSet('Content-Type', 'text/html'));
+        $this->assertTrue($swooleResponse->wasHeaderSet('X-Custom', 'value'));
     }
     
     public function testShowSwooleSetsStatus(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) {
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->expects($this->once())
-            ->method('status')
-            ->with(404);
-        $swooleResponseMock->expects($this->once())
-            ->method('header');
-        $swooleResponseMock->expects($this->once())
-            ->method('end')
-            ->with('Content');
-        
+        $swooleResponse = new FakeSwooleHttpResponse();
         $response = new HtmlResponse('Content', 404);
-        $response->showSwoole($swooleResponseMock);
+        $response->showSwoole($swooleResponse);
+
+        $this->assertSame(404, $swooleResponse->statusCode);
+        $this->assertNotSame([], $swooleResponse->sentHeaders);
+        $this->assertSame('Content', $swooleResponse->body);
     }
     
     public function testShowSwooleEndsWithContent(): void
     {
-        // @phpstan-ignore-next-line
-        if (!class_exists('\Swoole\Http\Response') && !class_exists('\OpenSwoole\Http\Response')) {
-            $this->markTestSkipped('Swoole extension not available');
-        }
-        
-        $swooleResponseMock = $this->createMock(\stdClass::class);
-        $swooleResponseMock->expects($this->once())
-            ->method('end')
-            ->with('Test HTML Content');
-        $swooleResponseMock->expects($this->atLeastOnce())
-            ->method('header');
-        $swooleResponseMock->expects($this->once())
-            ->method('status');
-        
+        $swooleResponse = new FakeSwooleHttpResponse();
         $response = new HtmlResponse('Test HTML Content');
-        $response->showSwoole($swooleResponseMock);
+        $response->showSwoole($swooleResponse);
+
+        $this->assertSame('Test HTML Content', $swooleResponse->body);
+        $this->assertNotSame([], $swooleResponse->sentHeaders);
+        $this->assertSame(200, $swooleResponse->statusCode);
     }
     
     // ============================================
@@ -207,9 +174,7 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $contentProperty = $reflection->getProperty('content');
-        $contentProperty->setAccessible(true);
         $statusProperty = $reflection->getProperty('status');
-        $statusProperty->setAccessible(true);
         
         $this->assertEquals('Hello', $contentProperty->getValue($response));
         $this->assertEquals(200, $statusProperty->getValue($response));
@@ -221,7 +186,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $statusProperty = $reflection->getProperty('status');
-        $statusProperty->setAccessible(true);
         
         $this->assertEquals(500, $statusProperty->getValue($response));
     }
@@ -232,7 +196,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $headersProperty = $reflection->getProperty('headers');
-        $headersProperty->setAccessible(true);
         $headers = $headersProperty->getValue($response);
         
         $this->assertArrayHasKey('X-Header', $headers);
@@ -276,7 +239,6 @@ class HtmlResponseTest extends TestCase
         
         $reflection = new \ReflectionClass($response);
         $headersProperty = $reflection->getProperty('headers');
-        $headersProperty->setAccessible(true);
         $headers = $headersProperty->getValue($response);
         
         $this->assertCount(4, $headers); // Content-Type + 3 custom headers

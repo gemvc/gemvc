@@ -72,6 +72,137 @@ class MockControllerTable extends Table
     }
 }
 
+/**
+ * Captures the SQL projection string createList passes to select().
+ */
+class SqlCaptureTable extends Table
+{
+    public static ?string $lastSelectColumns = null;
+
+    public int $id = 1;
+    public string $email = 'a@example.com';
+    public string $display_name;
+
+    /** @var array<string, string> */
+    protected array $_type_map = [
+        'id' => 'int',
+        'email' => 'string',
+        'display_name' => 'string',
+    ];
+
+    public function getTable(): string
+    {
+        return 'sql_capture';
+    }
+
+    public function defineSchema(): array
+    {
+        return [];
+    }
+
+    public function select(?string $columns = null): self
+    {
+        self::$lastSelectColumns = $columns;
+        return $this;
+    }
+
+    public function run(): ?array
+    {
+        $row = new self();
+        $row->id = 1;
+        $row->email = 'a@example.com';
+
+        return [$row];
+    }
+
+    public function getTotalCounts(): int
+    {
+        return 1;
+    }
+
+    public function setPage(int $page): void
+    {
+    }
+
+    public function orderBy(?string $columnName = null, ?bool $ascending = null): self
+    {
+        return $this;
+    }
+
+    public function where(string $column, mixed $value): self
+    {
+        return $this;
+    }
+
+    public function whereLike(string $column, string $value): self
+    {
+        return $this;
+    }
+}
+
+class HiddenFieldListTable extends Table
+{
+    public int $id = 1;
+    public string $email = 'a@example.com';
+    protected string $password = 'secret';
+    public string $_bag = 'internal';
+
+    /** @var array<string, string> */
+    protected array $_type_map = [
+        'id' => 'int',
+        'email' => 'string',
+        'password' => 'string',
+    ];
+
+    public function getTable(): string
+    {
+        return 'hidden_field_list';
+    }
+
+    public function defineSchema(): array
+    {
+        return [];
+    }
+
+    public function select(?string $columns = null): self
+    {
+        return $this;
+    }
+
+    public function run(): ?array
+    {
+        $row = new self();
+        $row->id = 7;
+        $row->email = 'hidden@example.com';
+
+        return [$row];
+    }
+
+    public function getTotalCounts(): int
+    {
+        return 1;
+    }
+
+    public function setPage(int $page): void
+    {
+    }
+
+    public function orderBy(?string $columnName = null, ?bool $ascending = null): self
+    {
+        return $this;
+    }
+
+    public function where(string $column, mixed $value): self
+    {
+        return $this;
+    }
+
+    public function whereLike(string $column, string $value): self
+    {
+        return $this;
+    }
+}
+
 class TestController extends Controller
 {
     public ?string $error = null; // Made public for testing
@@ -102,6 +233,7 @@ class ControllerTest extends TestCase
         $_POST = [];
         $_GET = [];
         $_SERVER = [];
+        SqlCaptureTable::$lastSelectColumns = null;
         parent::tearDown();
     }
     
@@ -128,7 +260,6 @@ class ControllerTest extends TestCase
         // Verify that getApm() returns request->apm
         $reflection = new \ReflectionClass($controller);
         $getApmMethod = $reflection->getMethod('getApm');
-        $getApmMethod->setAccessible(true);
         $apm = $getApmMethod->invoke($controller);
         
         $this->assertSame($mockApm, $apm);
@@ -144,7 +275,6 @@ class ControllerTest extends TestCase
         // Verify that getApm() returns null
         $reflection = new \ReflectionClass($controller);
         $getApmMethod = $reflection->getMethod('getApm');
-        $getApmMethod->setAccessible(true);
         $apm = $getApmMethod->invoke($controller);
         
         $this->assertNull($apm);
@@ -334,6 +464,65 @@ class ControllerTest extends TestCase
         
         $this->assertEquals($result1->response_code, $result2->response_code);
         $this->assertEquals($result1->count, $result2->count);
+    }
+
+    public function testCreateListSqlDoesNotUseDeclaredPayloadFieldNames(): void
+    {
+        SqlCaptureTable::$lastSelectColumns = null;
+        $controller = new TestController($this->request);
+        $model = new SqlCaptureTable();
+
+        $this->assertContains('display_name', SqlCaptureTable::payloadFieldNames());
+        $this->assertArrayNotHasKey('display_name', get_object_vars($model));
+
+        $controller->createList($model);
+
+        $this->assertNotNull(SqlCaptureTable::$lastSelectColumns);
+        $this->assertStringNotContainsString('display_name', (string) SqlCaptureTable::$lastSelectColumns);
+        $this->assertStringContainsString('id', (string) SqlCaptureTable::$lastSelectColumns);
+        $this->assertStringContainsString('email', (string) SqlCaptureTable::$lastSelectColumns);
+    }
+
+    public function testCreateListExplicitColumnsUnchanged(): void
+    {
+        SqlCaptureTable::$lastSelectColumns = null;
+        $controller = new TestController($this->request);
+        $model = new SqlCaptureTable();
+
+        $controller->createList($model, 'id,email');
+
+        $this->assertSame('id,email', SqlCaptureTable::$lastSelectColumns);
+    }
+
+    public function testListOutputOmitsProtectedAndUnderscoreFields(): void
+    {
+        $controller = new TestController($this->request);
+        $model = new HiddenFieldListTable();
+
+        $result = $controller->createList($model);
+        $this->assertIsArray($result->data);
+        $this->assertArrayHasKey(0, $result->data);
+        $row = $result->data[0];
+        $this->assertIsArray($row);
+        $this->assertArrayHasKey('id', $row);
+        $this->assertArrayHasKey('email', $row);
+        $this->assertArrayNotHasKey('password', $row);
+        $this->assertArrayNotHasKey('_bag', $row);
+        $this->assertArrayNotHasKey('display_name', $row);
+    }
+
+    public function testListOutputOmitsUninitializedPublicPayloadFields(): void
+    {
+        $controller = new TestController($this->request);
+        $model = new SqlCaptureTable();
+
+        $result = $controller->createList($model);
+        $this->assertIsArray($result->data);
+        $row = $result->data[0];
+        $this->assertIsArray($row);
+        $this->assertArrayHasKey('id', $row);
+        $this->assertArrayHasKey('email', $row);
+        $this->assertArrayNotHasKey('display_name', $row);
     }
 }
 

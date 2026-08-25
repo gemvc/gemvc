@@ -23,7 +23,6 @@ class DatabaseDriverSelectionTest extends TestCase
     {
         $reflection = new ReflectionClass($object);
         $reflectionMethod = $reflection->getMethod($method);
-        $reflectionMethod->setAccessible(true);
 
         // resolveDatabaseDriver()/etc. write CLI status messages via $this->info(); swallow
         // them here so PHPUnit doesn't flag the test as risky for unexpected output.
@@ -39,7 +38,6 @@ class DatabaseDriverSelectionTest extends TestCase
     {
         $reflection = new ReflectionClass($object);
         $property = $reflection->getProperty('databaseDriver');
-        $property->setAccessible(true);
         $property->setValue($object, $driver);
     }
 
@@ -52,7 +50,6 @@ class DatabaseDriverSelectionTest extends TestCase
     {
         $reflection = new ReflectionClass($object);
         $property = $reflection->getProperty('nonInteractive');
-        $property->setAccessible(true);
         $property->setValue($object, true);
     }
 

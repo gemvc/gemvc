@@ -18,11 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **RS256 minting** — `JWTToken::createAsymmetricAccessToken()` / `createAsymmetricRefreshToken()` / `createAsymmetricLoginToken()` / `createAsymmetric()` signed with `TOKEN_PRIVATE_KEY` or `TOKEN_PRIVATE_KEY_PATH`. Default `create*()` and `Request::auth()` stay HS256. Public-key verify is not in this release.
 - New tokens include `iat`. When `TOKEN_ISSUER` is set (and not `undefined`), `verify()` requires matching `iss`.
 - **GraphQL Phase 1** — `Gemvc\GraphQL\GraphQlRunner` (`POST /api/Graphql/query`); spec `{data,errors}` envelope; `webonyx/graphql-php` via Composer `suggest` (fail-closed if missing)
+- **Payload contract** — `Table::payloadFields()` / `payloadFieldNames()` (API-visible public fields; not SQL). `createList` SELECT is still `get_object_vars`; list JSON is filtered by the payload contract
+- **Response examples** — optional `app/response_example/{ShortName}.{method}.json`; `ApiService::mockResponse()` resolves PHP override > JSON fixture > inference for `create|read|list|update` from payload fields > `[]`. `delete` is not inferred (returns deleted id).
 
 ### Documentation
 
 - [security.md](../guides/security.md) JWT section; [CORE_REFERENCE.md](../ai/CORE_REFERENCE.md) `JWTToken` / `GraphQlRunner` signatures
 - [graphql.md](../guides/graphql.md)
+- [database.md](../guides/database.md) payload contract vs query metadata; [api-documentation.md](../guides/api-documentation.md) response examples
 
 ## [5.16.0] - 2026-08-03
 

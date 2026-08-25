@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Gemvc\Http\AsyncApiCall;
 use ReflectionClass;
 use ReflectionMethod;
+use Tests\Helpers\LocalHttpStatusServer;
 
 class AsyncApiCallTest extends TestCase
 {
@@ -1438,17 +1439,19 @@ class AsyncApiCallTest extends TestCase
     
     public function testExecuteAllWithHttp500Error(): void
     {
-        $async = new AsyncApiCall();
-        $async->setTimeouts(5, 10);
-        $async->addGet('test', 'https://httpbin.org/status/500');
-        
-        $results = $async->executeAll();
-        
-        $this->assertIsArray($results);
-        if (isset($results['test'])) {
-            $this->assertArrayHasKey('http_code', $results['test']);
-            $this->skipIfExternalHttpUnavailable($results['test']);
-            $this->assertEquals(500, $results['test']['http_code']);
+        $server = LocalHttpStatusServer::start();
+        try {
+            $async = new AsyncApiCall();
+            $async->setTimeouts(5, 10);
+            $async->addGet('test', $server->urlForStatus(500));
+
+            $results = $async->executeAll();
+
+            $this->assertArrayHasKey('test', $results);
+            $this->assertSame(500, $results['test']['http_code']);
+            $this->assertFalse($results['test']['success']);
+        } finally {
+            $server->stop();
         }
     }
     
@@ -1750,17 +1753,19 @@ class AsyncApiCallTest extends TestCase
     
     public function testProcessResponseWithHttpCode400(): void
     {
-        $async = new AsyncApiCall();
-        $async->setTimeouts(5, 10);
-        $async->addGet('test', 'https://httpbin.org/status/400');
-        
-        $results = $async->executeAll();
-        
-        $this->assertIsArray($results);
-        if (isset($results['test'])) {
-            $this->skipIfExternalHttpUnavailable($results['test']);
-            $this->assertEquals(400, $results['test']['http_code']);
-            $this->assertFalse($results['test']['success']); // 400 is not in 200-399 range
+        $server = LocalHttpStatusServer::start();
+        try {
+            $async = new AsyncApiCall();
+            $async->setTimeouts(5, 10);
+            $async->addGet('test', $server->urlForStatus(400));
+
+            $results = $async->executeAll();
+
+            $this->assertArrayHasKey('test', $results);
+            $this->assertSame(400, $results['test']['http_code']);
+            $this->assertFalse($results['test']['success']);
+        } finally {
+            $server->stop();
         }
     }
     
@@ -1917,16 +1922,5 @@ class AsyncApiCallTest extends TestCase
         $this->assertIsArray($results);
     }
 
-    /**
-     * Skip when live httpbin (or external HTTP) is unreachable — e.g. sandbox/CI without network.
-     *
-     * @param array<string, mixed> $result
-     */
-    private function skipIfExternalHttpUnavailable(array $result): void
-    {
-        if (($result['http_code'] ?? 0) === 0) {
-            $this->markTestSkipped('External HTTP request failed (httpbin.org unreachable in this environment).');
-        }
-    }
 }
 

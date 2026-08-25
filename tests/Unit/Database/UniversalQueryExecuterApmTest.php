@@ -83,7 +83,6 @@ class UniversalQueryExecuterApmTest extends TestCase
         // Use reflection to inject mock manager (since DatabaseManagerFactory is static)
         $reflection = new \ReflectionClass(UniversalQueryExecuter::class);
         $property = $reflection->getProperty('dbManager');
-        $property->setAccessible(true);
         $property->setValue($executer, $this->mockDbManager);
         
         return $executer;

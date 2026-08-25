@@ -55,7 +55,7 @@ You extend `Gemvc\Core\Controller`, receive `Request` in the constructor, map in
 3. Prefer **`createModel(new XModel())`** before DB work so Request (and APM) reach Table queries. Works for any object; calls `setRequest` if present (composition Models should forward it to children).
 4. Prefer **`callController(new XController($this->request))->method()`** on all servers (`ApiService`).
 5. Lists: API must call `findable` / `filterable` / `sortable` **before** Controller `createList`.
-6. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` (initialized public props only; skips `protected` and often uninitialized typed publics).
+6. Prefer an **explicit column list** for `createList` — `null` uses `get_object_vars()` for **SQL** (initialized public props only). List **JSON** is filtered by `Table::payloadFieldNames()` (public, no `_`, no `protected`). Payload names are never used as the SELECT list.
 7. Never invent routes or put SQL in the controller.
 
 ---
@@ -219,7 +219,7 @@ Page **size** comes from Table / `QUERY_LIMIT` (and related Table helpers), not 
 | | `createList` | `listJsonResponse` |
 |--|--------------|-------------------|
 | Calls `createModel` first | yes | via `_listObjects` also |
-| Default `$columns` | `get_object_vars` keys (initialized **public** only) | `*` inside `_listObjects` if null |
+| Default `$columns` (SQL) | `get_object_vars` keys (initialized **public** only) — not `payloadFieldNames()` | `*` inside `_listObjects` if null |
 | Typical use | Prefer for app lists | Alternate helper |
 
 **Always prefer an explicit column string** for `createList`. Reasons: (1) uninitialized typed public props may be missing from the default list; (2) you choose the public subset; (3) `protected` fields are already omitted from the default list but you should not rely on that alone for clear APIs.

@@ -140,32 +140,53 @@ public function list(): JsonResponse
 
 ## Mock Responses
 
-Provide example responses using the `mockResponse()` static method:
+Documentation shows **one** example per method: the return value of `$class::mockResponse($method)`. The generator does not scan folders.
 
-```php
-/**
- * @hidden
- */
-public static function mockResponse(string $method): array
+**Precedence** (no merge):
+
+1. A subclass `mockResponse()` that returns a non-empty array (or `[]` without calling `parent::`) — PHP wins.
+2. Else `parent::mockResponse()` / inherited base: `app/response_example/{ApiShortName}.{method}.json` if valid.
+3. Else safe inference from `Table::payloadFields()` when the method is `create|read|list|update` and `App\Table\{ShortName}Table` exists. Create/update inference follows GEMVC's standard CRUD Model convention (`Response::created($this)` / `Response::updated($instance)`), not a compiler-enforced guarantee — custom shapes need a fixture or `mockResponse()` override. **`delete` is not inferred:** standard delete operations return the deleted identifier (`deleteByIdQuery(): int|string|null` → `Response::deleted($id)`), not a Table payload row.
+4. Else `[]`.
+
+### Optional JSON fixtures
+
+Manually authored **fake** success envelopes (not captured traffic, not real JWTs):
+
+```text
+app/response_example/User.create.json
+app/response_example/Auth.login.json
+```
+
+```json
 {
-    return match($method) {
-        'read' => [
-            'response_code' => 200,
-            'message' => 'OK',
-            'count' => 1,
-            'service_message' => 'User retrieved successfully',
-            'data' => [
-                'id' => 1,
-                'name' => 'Sample User',
-                'description' => 'User description'
-            ]
-        ],
-        // ... other methods
-    };
+  "response_code": 201,
+  "message": "created",
+  "count": 1,
+  "service_message": "User created successfully",
+  "data": {
+    "id": 1,
+    "name": "Example User",
+    "email": "user@example.com"
+  }
 }
 ```
 
-**Result**: Beautiful JSON response displayed in documentation
+Use placeholders for secrets: `"access_token": "<access_token>"`. Files are optional. Invalid JSON or a CRUD file that exposes non-payload fields (e.g. `password`) is ignored (no example), not a 500.
+
+Partial PHP override:
+
+```php
+public static function mockResponse(string $method): array
+{
+    if ($method === 'login') {
+        return [ /* explicit */ ];
+    }
+    return parent::mockResponse($method);
+}
+```
+
+Custom `match` without `parent::` is unchanged.
 
 ---
 

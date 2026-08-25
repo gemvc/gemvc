@@ -39,7 +39,6 @@ class MockTableForCreateModel extends Table
         // Use reflection to access private $_request property from Table class
         $reflection = new \ReflectionClass(\Gemvc\Database\Table::class);
         $property = $reflection->getProperty('_request');
-        $property->setAccessible(true);
         return $property->getValue($this);
     }
 }
@@ -98,7 +97,6 @@ class ControllerCreateModelTest extends TestCase
         // Call createModel using reflection (protected method)
         $reflection = new \ReflectionClass($controller);
         $method = $reflection->getMethod('createModel');
-        $method->setAccessible(true);
         $result = $method->invoke($controller, $model);
         
         // Verify same instance is returned
@@ -116,7 +114,6 @@ class ControllerCreateModelTest extends TestCase
         // Call createModel using reflection
         $reflection = new \ReflectionClass($controller);
         $method = $reflection->getMethod('createModel');
-        $method->setAccessible(true);
         $result = $method->invoke($controller, $model);
         
         $this->assertSame($model, $result);
@@ -130,7 +127,6 @@ class ControllerCreateModelTest extends TestCase
         // Call createModel using reflection
         $reflection = new \ReflectionClass($controller);
         $method = $reflection->getMethod('createModel');
-        $method->setAccessible(true);
         
         // Should not throw exception
         $result = $method->invoke($controller, $object);
@@ -147,7 +143,6 @@ class ControllerCreateModelTest extends TestCase
         // Call createModel using reflection
         $reflection = new \ReflectionClass($controller);
         $method = $reflection->getMethod('createModel');
-        $method->setAccessible(true);
         $method->invoke($controller, $model);
         
         // Verify Request is set

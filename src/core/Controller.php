@@ -2,6 +2,7 @@
 
 namespace Gemvc\Core;
 
+use Gemvc\Database\Table;
 use Gemvc\Http\JsonResponse;
 use Gemvc\Http\Request;
 use Gemvc\Http\Response;
@@ -429,18 +430,25 @@ class Controller
             throw new \RuntimeException($errorMessage);
         }
         /** @var array<T> $result */
-        // Convert objects to arrays to avoid PHP 8.4+ protected property access issues
-        // get_object_vars() only returns public properties when called from outside the class
-        return array_map(function ($item): array {
+        // Convert objects to arrays to avoid PHP 8.4+ protected property access issues.
+        // get_object_vars() only returns initialized public properties when called from outside the class.
+        // Payload contract filters API exposure; it is not used as the SELECT list.
+        $payloadNames = $model instanceof Table ? $model::payloadFieldNames() : null;
+
+        return array_map(function ($item) use ($payloadNames): array {
             /** @var T $item */
             $vars = get_object_vars($item);
-            $result = [];
+            $mapped = [];
             foreach ($vars as $key => $val) {
-                if ($key[0] === '_')
+                if (!is_string($key) || $key === '' || $key[0] === '_') {
                     continue;
-                $result[$key] = $val;
+                }
+                if ($payloadNames !== null && !in_array($key, $payloadNames, true)) {
+                    continue;
+                }
+                $mapped[$key] = $val;
             }
-            return $result;
+            return $mapped;
         }, $result);
     }
 }

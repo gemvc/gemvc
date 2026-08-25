@@ -45,6 +45,7 @@ abstract class AbstractInit extends Command
         'app/model',
         'app/table',
         'app/graphql',
+        'app/response_example',
         'bin'
     ];
     
@@ -55,6 +56,7 @@ abstract class AbstractInit extends Command
         'model',
         'table',
         'graphql',
+        'response_example',
     ];
     
     /**

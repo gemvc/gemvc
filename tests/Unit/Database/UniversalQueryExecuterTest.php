@@ -180,7 +180,6 @@ class UniversalQueryExecuterTest extends TestCase
         
         $reflection = new \ReflectionClass($executer);
         $dbManagerProperty = $reflection->getProperty('dbManager');
-        $dbManagerProperty->setAccessible(true);
         $dbManagerProperty->setValue($executer, $mockManager);
         
         $executer->query('SELECT * FROM users');
